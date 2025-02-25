@@ -82,6 +82,11 @@ body {
   font-weight: 500;
 }
 
+.font-vietname-thin {
+  font-family: var(--font-be-vietnam), sans-serif;
+  font-weight: 300;
+}
+
 .font-custom {
   font-family: "Tw Cen MT", sans-serif;
 }
