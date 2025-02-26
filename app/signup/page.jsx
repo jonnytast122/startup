@@ -95,14 +95,14 @@ function SignupForm({ handleNextStep, className, ...props }) {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  className="font-custom"
+                  className="font-custom text-light-gray"
                   id="first-name"
                   type="text"
                   placeholder="First Name"
                   required
                 />
                 <Input
-                  className="font-custom"
+                  className="font-custom text-light-gray"
                   id="last-name"
                   type="text"
                   placeholder="Last Name"
@@ -112,7 +112,7 @@ function SignupForm({ handleNextStep, className, ...props }) {
 
               <div className="grid gap-2">
                 <Input
-                  className="font-custom"
+                  className="font-custom text-light-gray"
                   id="phone-number"
                   type="phone-number"
                   placeholder="Phone Number"

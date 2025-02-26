@@ -22,6 +22,6 @@
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/layout.jsx", "components/ui/button.tsx", "components/ui/card.tsx", "components/ui/input.tsx", "components/ui/label.tsx", "components/ui/select.jsx", "app/page.jsx"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "app/layout.jsx", "components/ui/button.tsx", "components/ui/card.tsx", "components/ui/input.tsx", "components/ui/label.tsx", "components/ui/select.jsx", "app/page.jsx", "constant/index.js", "components/Navbar.jsx", "components/Hero.jsx", "components/Footer.jsx"],
   "exclude": ["node_modules"]
 }
