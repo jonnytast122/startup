@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FaCheck, FaAngleLeft } from "react-icons/fa";
 import Account_Created from "./account_created"; // Import Account_Created component
 
-export default function Step5({ onNextStep, onBackStep, currentStep }) {
+export default function OTPVerication({ onNextStep, onBackStep, currentStep }) {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(120); // 2 minutes countdown
   const [isResending, setIsResending] = useState(false);

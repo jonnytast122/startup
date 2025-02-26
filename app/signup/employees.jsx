@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export default function Step2({ onNextStep, onBackStep, currentStep }) {
+export default function Employee({ onNextStep, onBackStep, currentStep }) {
   const [selectedEmployees, setSelectedEmployees] = useState("");
   const [selectedIndustry, setSelectedIndustry] = useState("");
 
