@@ -58,15 +58,23 @@ export default function Employee({ onNextStep, onBackStep, currentStep }) {
       return (
         <div className="flex items-center" key={stepNumber}>
           <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center border-2
-              ${isCompleted ? "bg-blue-500" : "bg-transparent"} 
-              ${isCompleted || isActive ? "border-blue-500" : "border-gray-300"}
-              ${isActive ? "border-2" : ""}`}
+            className={`rounded-full flex items-center justify-center border-2 
+      ${isCompleted ? "bg-blue-500" : "bg-transparent"} 
+      ${isCompleted || isActive ? "border-blue-500" : "border-gray-300"} 
+      w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 lg:w-8 lg:h-8 xl:w-10 xl:h-10`}
           >
-            {isCompleted && <FaCheck className="text-white" size={16} />}
+            {isCompleted && (
+              <FaCheck
+                className="text-white text-[10px] sm:text-[12px] md:text-[14px] lg:text-[16px] xl:text-[18px]"
+              />
+            )}
           </div>
+
+          {/* Connecting Line */}
           {index < steps - 1 && (
-            <div className="w-8 h-0 border-t-2 border-gray-300 mx-2"></div>
+            <div
+              className="border-t-2 border-gray-300 mx-2 w-6 sm:w-8 md:w-10 lg:w-12 xl:w-14"
+            />
           )}
         </div>
       );
@@ -91,7 +99,7 @@ export default function Employee({ onNextStep, onBackStep, currentStep }) {
             </button>
 
             {/* Step Circles */}
-            <div className="flex justify-center gap-2 mb-6">
+            <div className="flex justify-center gap-2 mb-6 mt-2">
               {renderStepCircles()}
             </div>
 

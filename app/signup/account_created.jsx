@@ -25,9 +25,10 @@ export default function Account_Created({ onNextStep }) {
             </div>
 
             {/* Account Created Message */}
-            <h1 className="font-vietname text-xl font-medium text-dark-gray">
+            <h1 className="font-vietname text-xl font-medium text-dark-gray flex text-center">
               Account Created Successfully!
             </h1>
+
             <p className="font-vietname-thin text-sm font-medium text-gray-500 mt-4 text-center">
               Welcome aboard! Start your success journey with ANAN!
             </p>

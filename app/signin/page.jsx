@@ -63,8 +63,9 @@ function LoginForm({ className, ...props }) {
                 <CardContent className="grid p-0 md:grid-cols-[3fr,2.1fr] min-h-[400px] md:min-h-[600px]">
                     {showOtpScreen ? (
                         // OTP Verification Screen
-                        <form className="p-10 md:p-16 flex flex-col justify-center" onSubmit={handleVerify}>
+                        <form className="p-6 md:p-16 flex flex-col justify-center items-center" onSubmit={handleVerify}>
                             <div className="flex flex-col gap-6 items-center">
+                                {/* Back Button */}
                                 <button
                                     type="button"
                                     className="self-start flex items-start text-gray-600"
@@ -72,10 +73,14 @@ function LoginForm({ className, ...props }) {
                                 >
                                     <ArrowLeft className="w-5 h-5 mr-2" /> Back
                                 </button>
-                                <h1 className="font-vietname text-lg font-medium text-dark-gray mt-5">
+
+                                {/* OTP Verification Title */}
+                                <h1 className="font-vietname text-lg font-medium text-dark-gray mt-5 text-center">
                                     OTP Verification
                                 </h1>
-                                <h1 className="font-vietname-thin text-xs font-medium text-dark-gray mt-5 text-gray-500">
+
+                                {/* OTP Instructions */}
+                                <h1 className="font-vietname-thin text-xs font-medium text-dark-gray mt-5 text-gray-500 text-center">
                                     Enter the OTP sent to <span className="text-blue-500">+855 123 456</span>
                                 </h1>
 
@@ -94,15 +99,19 @@ function LoginForm({ className, ...props }) {
                                 </div>
 
                                 {/* OTP Expiration Text */}
-                                <p className="text-xs text-gray-500 mt-3">
-                                    Code expires in <span className="text-black font-bold">{`${Math.floor(timeLeft / 60)}:${timeLeft % 60 < 10 ? `0${timeLeft % 60}` : timeLeft % 60}`}</span>
+                                <p className="text-xs text-gray-500 mt-3 text-center">
+                                    Code expires in{" "}
+                                    <span className="text-black font-bold">
+                                        {`${Math.floor(timeLeft / 60)}:${timeLeft % 60 < 10 ? `0${timeLeft % 60}` : timeLeft % 60}`}
+                                    </span>
                                 </p>
-                                
-                                {/* Verify Button (Redirects to Overview) */}
-                                <Button type="submit" className="w-56 rounded-full font-vietname text-base">
+
+                                {/* Verify Button */}
+                                <Button type="submit" className="w-full sm:w-56 rounded-full font-vietname text-base mt-5">
                                     Verify
                                 </Button>
-                                
+
+                                {/* Resend OTP */}
                                 <p className="text-xs text-center text-gray-500 mt-2">
                                     Don't receive the OTP?{" "}
                                     <button
@@ -114,22 +123,23 @@ function LoginForm({ className, ...props }) {
                                 </p>
                             </div>
                         </form>
+
                     ) : (
                         // Login Screen
-                        <form className="p-14 md:p-16 flex flex-col justify-center" onSubmit={handleSubmit}>
+                        <form className="p-6 md:p-16 flex flex-col justify-center items-center" onSubmit={handleSubmit}>
                             <div className="flex flex-col gap-6 items-center">
-                                <h1 className="font-vietname text-2xl font-medium text-black mt-5">
+                                <h1 className="font-vietname text-2xl font-medium text-black mt-5 text-center">
                                     Welcome back!
                                 </h1>
-                                <h1 className="font-vietname text-base font-medium text-black mt-1">
+                                <h1 className="font-vietname text-base font-medium text-black mt-1 text-center">
                                     Log in to your company app
                                 </h1>
                                 <p className="font-vietname-thin text-sm text-center font-medium text-dark-gray mt-2 text-gray-500">
                                     We will send you a code to verify your number
                                 </p>
-                                
+
                                 {/* Phone Number Input */}
-                                <div className="flex items-center border-2 border-gray-300 rounded-xl px-6 py-2 w-3/4">
+                                <div className="flex items-center border-2 border-gray-300 rounded-xl px-6 py-2 w-full sm:w-3/4">
                                     <PhoneInput
                                         international
                                         defaultCountry={selectedCountry}
@@ -143,13 +153,13 @@ function LoginForm({ className, ...props }) {
                                 {/* Get OTP Button */}
                                 <Button
                                     type="submit"
-                                    className="w-56 rounded-full font-vietname text-base"
+                                    className="w-full sm:w-56 rounded-full font-vietname text-base"
                                     disabled={!phoneNumber}
                                 >
                                     Get OTP
                                 </Button>
-                                
-                                <div className="text-center text-sm font-vietname-thin text-light-gray">
+
+                                <div className="text-center text-sm font-vietname-thin text-light-gray mt-4">
                                     Don't have an account?{" "}
                                     <a href="/signup" className="text-blue">
                                         Create one now
@@ -157,8 +167,9 @@ function LoginForm({ className, ...props }) {
                                 </div>
                             </div>
                         </form>
+
                     )}
-                    
+
                     {/* Logo */}
                     <div className="hidden md:flex items-center justify-center bg-blue-100">
                         <img src="/images/logo.png" alt="Logo" className="w-60 h-60 object-contain" />
