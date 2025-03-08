@@ -11,8 +11,8 @@
   box-sizing: border-box;
 }
 
-body {
-  font-family: "Inter", sans-serif;
+html {
+  scroll-behavior: smooth;
 }
 
 /* Dark & Light Mode Variables */
@@ -53,6 +53,11 @@ body {
 .font-vietname-bold {
   font-family: var(--font-be-vietnam), sans-serif;
   font-weight: 700;
+}
+
+.font-vietname-semibold {
+  font-family: var(--font-be-vietnam), sans-serif;
+  font-weight: 500;
 }
 
 .font-vietname-thin {
@@ -106,7 +111,7 @@ body {
   }
 
   .max-container {
-    @apply mx-auto max-w-[1440px];
+    @apply mx-auto max-w-[1980px];
   }
   .padding-container {
     @apply px-6 lg:px-20 3xl:px-0;

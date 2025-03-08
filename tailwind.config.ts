@@ -92,9 +92,6 @@ export default {
         sm: "calc(var(--radius) - 4px)",
         "5xl": "40px",
       },
-      fontFamily: {
-        sans: ["DM Sans", "sans-serif"], // Default font
-      },
     },
   },
   plugins: [require("tailwindcss-animate")],
