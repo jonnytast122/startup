@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { FaAngleLeft } from "react-icons/fa";
 import { FaCheck } from "react-icons/fa"; // For the checkmark inside completed circles
 
-export default function Step1({ onNextStep, onBackStep, currentStep }) {
+export default function Company({ onNextStep, onBackStep, currentStep }) {
   const [formData, setFormData] = useState({
     CompanyName: "",
     JobTitle: "",

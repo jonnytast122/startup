@@ -7,7 +7,7 @@ import { FaCheck, FaAngleLeft } from "react-icons/fa";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css"; // Styles for PhoneInput
 
-export default function Step4({ onNextStep, onBackStep, currentStep }) {
+export default function MobileNumber({ onNextStep, onBackStep, currentStep }) {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedCountry, setSelectedCountry] = useState("");
 

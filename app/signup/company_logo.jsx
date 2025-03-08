@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { FaAngleLeft, FaCheck, FaDownload } from "react-icons/fa";
 import { useDropzone } from "react-dropzone";
 
-export default function Step3({ onNextStep, onBackStep, currentStep }) {
+export default function CompanyLogo({ onNextStep, onBackStep, currentStep }) {
   const [selectedFile, setSelectedFile] = useState(null);
 
   const onDrop = (acceptedFiles) => {
@@ -97,9 +97,9 @@ export default function Step3({ onNextStep, onBackStep, currentStep }) {
                   ) : (
                     <div className="flex w-full items-center justify-center">
                       {/* Download Icon on the left */}
-                      <FaDownload className="text-gray-400 text-8xl mr-20" />
+                      <FaDownload className="text-gray-400 text-8xl mr-18 ml-10" />
                       {/* Text on the right */}
-                      <p className="text-gray-500 text-sm font-medium mb-5">
+                      <p className="text-gray-500 text-xs font-medium mb-5 ml-3">
                         Drag your logo here <br />Or{" "}
                         <span className="text-blue-500">Browse</span>
                       </p>

@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Step1 from "./step1";
-import Step2 from "./step2";
-import Step3 from "./step3";
-import Step4 from "./step4";
-import Step5 from "./step5";
-// Assuming Step1 is located here
+import Company from "./company";
+import Employee from "./employees";
+import CompanyLogo from "./company_logo";
+import MobileNumber from "./mobilenumber";
+import OTPVerification from "./otpverification";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,35 +37,35 @@ export default function SignupPage() {
           <SignupForm handleNextStep={handleNextStep} />
         )}
         {currentStep === 2 && (
-          <Step1
+          <Company
             currentStep={currentStep}
             onNextStep={handleNextStep}
             onBackStep={handleBackStep}
           />
         )}
         {currentStep === 3 && (
-          <Step2
+          <Employee
             currentStep={currentStep}
             onNextStep={handleNextStep}
             onBackStep={handleBackStep}
           />
         )}
         {currentStep === 4 && (
-          <Step3
+          <CompanyLogo
             currentStep={currentStep}
             onNextStep={handleNextStep}
             onBackStep={handleBackStep}
           />
         )}
         {currentStep === 5 && (
-          <Step4
+          <MobileNumber
             currentStep={currentStep}
             onNextStep={handleNextStep}
             onBackStep={handleBackStep}
           />
         )}
         {currentStep === 6 && (
-          <Step5
+          <OTPVerification
             currentStep={currentStep}
             onNextStep={handleNextStep}
             onBackStep={handleBackStep}
@@ -95,14 +94,14 @@ function SignupForm({ handleNextStep, className, ...props }) {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Input
-                  className="font-custom text-light-gray"
+                  className="font-custom"
                   id="first-name"
                   type="text"
                   placeholder="First Name"
                   required
                 />
                 <Input
-                  className="font-custom text-light-gray"
+                  className="font-custom"
                   id="last-name"
                   type="text"
                   placeholder="Last Name"
@@ -112,7 +111,7 @@ function SignupForm({ handleNextStep, className, ...props }) {
 
               <div className="grid gap-2">
                 <Input
-                  className="font-custom text-light-gray"
+                  className="font-custom"
                   id="phone-number"
                   type="phone-number"
                   placeholder="Phone Number"
@@ -142,9 +141,9 @@ function SignupForm({ handleNextStep, className, ...props }) {
               </div>
               <div className="text-center text-2sm font-vietname-thin text-light-gray">
                 Already had an account?{" "}
-                <a href="#" className="text-blue">
+                <a href="/signin" className="text-blue">
                   Sign in
-                </a>
+                </a>             
               </div>
             </div>
           </form>
@@ -157,6 +156,27 @@ function SignupForm({ handleNextStep, className, ...props }) {
           </div>
         </CardContent>
       </Card>
+      <div className="text-center mt-4 font-custom text-sm text-light-gray [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary sm:max-w-md sm:mx-auto sm:leading-relaxed sm:px-4 lg:max-w-none lg:px-0">
+        By signing up, you agree to our{" "}
+        <a
+          href="https://connecteam.com/terms-conditions/"
+          className="inline-block sm:py-1 lg:py-0"
+        >
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a
+          href="https://connecteam.com/privacy/"
+          className="inline-block sm:py-1 lg:py-0"
+        >
+          Privacy Notice
+        </a>
+        .<br />
+        We use the information provided by you to contact you (including
+        viaemail) about our products and services; You may <br />
+        always opt out from our mailing lists in accordance with the
+        PrivacyNotice.
+      </div>
     </div>
   );
 }
