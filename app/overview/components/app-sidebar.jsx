@@ -45,7 +45,7 @@ const data = {
       url: "#",
       items: [
         { title: "Support", url: "#", icon: Lightbulb },
-        { title: "Setting", url: "#", icon: Settings },
+        { title: "Setting", url: "/overview/setting", icon: Settings },
       ],
     },
   ],
