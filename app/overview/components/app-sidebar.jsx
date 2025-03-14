@@ -37,7 +37,7 @@ const data = {
     {
       title: "Others",
       items: [
-        { title: "Support", url: "/support", icon: Lightbulb },
+        { title: "Support", url: "/overview/support", icon: Lightbulb },
         { title: "Setting", url: "/overview/setting", icon: Settings },
       ],
     },
