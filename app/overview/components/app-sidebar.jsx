@@ -14,31 +14,30 @@ import {
   SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarRail
 } from "@/components/ui/sidebar";
 
-// Sidebar navigation data
 const data = {
   navMain: [
     {
       items: [
         { title: "Overview", url: "/overview", icon: LayoutDashboard },
         { title: "Activity", url: "/overview/activity", icon: ChartNoAxesGantt },
-        { title: "Users & Admin", url: "", icon: User },
-        { title: "Groups", url: "", icon: Users },
+        { title: "Users & Admin", url: "/overview/users-admin", icon: User }, // Ensure this route exists
+        { title: "Groups", url: "/overview/groups", icon: Users }, // Provide a valid URL
       ],
     },
     {
       title: "Operation",
       items: [
-        { title: "Time Clock", url: "", icon: CalendarClock },
-        { title: "Job Schedule", url: "", icon: Calendar1 },
-        { title: "Overtime", url: "", icon: CalendarPlus2 },
-        { title: "Leaves", url: "", icon: LogOut },
-        { title: "Payroll", url: "", icon: CreditCard },
+        { title: "Time Clock", url: "/operation/time-clock", icon: CalendarClock },
+        { title: "Job Schedule", url: "/operation/job-schedule", icon: Calendar1 },
+        { title: "Overtime", url: "/operation/overtime", icon: CalendarPlus2 },
+        { title: "Leaves", url: "/operation/leaves", icon: LogOut },
+        { title: "Payroll", url: "/operation/payroll", icon: CreditCard },
       ],
     },
     {
       title: "Others",
       items: [
-        { title: "Support", url: "", icon: Lightbulb },
+        { title: "Support", url: "/support", icon: Lightbulb },
         { title: "Setting", url: "/overview/setting", icon: Settings },
       ],
     },

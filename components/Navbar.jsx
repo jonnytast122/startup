@@ -17,8 +17,16 @@ function Navbar() {
         <nav className="bg-white border-2 border-gray-100 shadow-lg rounded-full px-6 sm:px-12 md:px-12 lg:px-12 py-4 mt-5 flex items-center justify-between w-full max-w-[1680px] mx-auto relative z-30">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 text-2xl font-semibold text-gray-900">
-              <Image src="/images/logo_2.png" alt="logo" width={70} height={50} />
+            <Link
+              href="/"
+              className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
+            >
+              <Image
+                src="/images/logo_2.png"
+                alt="logo"
+                width={70}
+                height={50}
+              />
               <span className="text-2xl font-custom text-light-blue">ANAN</span>
             </Link>
           </div>
@@ -39,28 +47,21 @@ function Navbar() {
 
           {/* Right Side: Login & Button */}
           <div className="hidden xl:flex items-center gap-9">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-2 cursor-pointer group">
-                  <User className="h-6 w-4 text-gray-700 group-hover:font-bold" />
-                  <span className="text-dark-blue regular-16 font-sans group-hover:font-bold">
-                    Log In
-                  </span>
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-white shadow-md rounded-md">
-                <DropdownMenuItem>
-                  <Link href="/login">Sign In</Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Link href="/register">Register</Link>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              href="/signin"
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <User className="h-6 w-4 text-gray-700 group-hover:font-bold" />
+              <span className="text-dark-blue regular-16 font-sans group-hover:font-semibold">
+                Log In
+              </span>
+            </Link>
 
-            <Button className="bg-blue-500 text-white font-custom text-lg py-3 px-6">
-              Get Started
-            </Button>
+            <Link href="/signup">
+              <Button className="bg-blue-500 text-white font-custom text-lg py-3 px-6">
+                Get Started
+              </Button>
+            </Link>
           </div>
 
           {/* Mobile Dropdown Menu */}
@@ -74,7 +75,10 @@ function Navbar() {
                 className="xl:hidden cursor-pointer"
               />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-white shadow-md rounded-md w-48">
+            <DropdownMenuContent
+              align="end"
+              className="bg-white shadow-md rounded-md w-48"
+            >
               {NAV_LINKS.map((link) => (
                 <DropdownMenuItem key={link.key}>
                   <Link href={link.href}>{link.label}</Link>
