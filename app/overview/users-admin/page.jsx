@@ -7,14 +7,14 @@ import UsersScreen from "./components/userscreen";
 import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
 import AddUserDialog from "./components/adduserdialog"; // Import the dialog
-import AddAdminDialog from "./components/addadmindialog"; 
+import AddAdminDialog from "./components/addadmindialog";
 
 export default function UserAdminPage() {
   const [activeTab, setActiveTab] = useState("Users");
   const [usersCount, setUsersCount] = useState(0);
   const [adminsCount, setAdminsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // Dialog state
+  const [dialogType, setDialogType] = useState(null); // 'user' or 'admin'
 
   return (
     <div>
@@ -43,8 +43,7 @@ export default function UserAdminPage() {
                   : "bg-gray-100 text-gray-500 hover:text-gray-700"
               }`}
             >
-              {tab}{" "}
-              {tab === "Users" && `(${usersCount})`}
+              {tab} {tab === "Users" && `(${usersCount})`}
               {tab === "Admins" && `(${adminsCount})`}
             </button>
           ))}
@@ -59,9 +58,7 @@ export default function UserAdminPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
-                activeTab === "Users"
-                  ? "Search users..."
-                  : "Search admins..."
+                activeTab === "Users" ? "Search users..." : "Search admins..."
               }
               className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -69,9 +66,11 @@ export default function UserAdminPage() {
 
           {/* Hide "Add" button for Archived */}
           {activeTab !== "Archived" && (
-            <Button 
+            <Button
               className="rounded-full px-6 sm:px-10 ml-4"
-              onClick={() => setIsDialogOpen(true)} // Open the dialog
+              onClick={() =>
+                setDialogType(activeTab === "Users" ? "user" : "admin")
+              }
             >
               Add {activeTab}
             </Button>
@@ -80,15 +79,31 @@ export default function UserAdminPage() {
 
         {/* Content */}
         <div className="p-6 font-custom">
-          {activeTab === "Users" && <UsersScreen setUsersCount={setUsersCount} searchQuery={searchQuery} />}
-          {activeTab === "Admins" && <AdminsScreen setAdminsCount={setAdminsCount} searchQuery={searchQuery} />}
-          {activeTab === "Archived" && <ArchivedScreen searchQuery={searchQuery} />}
+          {activeTab === "Users" && (
+            <UsersScreen
+              setUsersCount={setUsersCount}
+              searchQuery={searchQuery}
+            />
+          )}
+          {activeTab === "Admins" && (
+            <AdminsScreen
+              setAdminsCount={setAdminsCount}
+              searchQuery={searchQuery}
+            />
+          )}
+          {activeTab === "Archived" && (
+            <ArchivedScreen searchQuery={searchQuery} />
+          )}
         </div>
       </div>
 
       {/* Add User Dialog */}
-      <AddUserDialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
-      <AddAdminDialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      {dialogType === "user" && (
+        <AddUserDialog open={true} onClose={() => setDialogType(null)} />
+      )}
+      {dialogType === "admin" && (
+        <AddAdminDialog open={true} onClose={() => setDialogType(null)} />
+      )}
     </div>
   );
 }
