@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import UsersScreen from "./components/userscreen";
 import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
+import AddUserDialog from "./components/adduserdialog"; // Import the dialog
+import AddAdminDialog from "./components/addadmindialog"; 
 
 export default function UserAdminPage() {
   const [activeTab, setActiveTab] = useState("Users");
   const [usersCount, setUsersCount] = useState(0);
   const [adminsCount, setAdminsCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState(""); // Search state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Dialog state
 
   return (
     <div>
@@ -47,7 +50,7 @@ export default function UserAdminPage() {
           ))}
         </div>
 
-        {/* Search Bar (For All Tabs) */}
+        {/* Search Bar & Add Button */}
         <div className="flex items-center p-4 bg-white border-b">
           <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
             <Search className="absolute left-3 text-gray-400" size={20} />
@@ -58,7 +61,7 @@ export default function UserAdminPage() {
               placeholder={
                 activeTab === "Users"
                   ? "Search users..."
-                  : "Search appointments..."
+                  : "Search admins..."
               }
               className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -66,7 +69,10 @@ export default function UserAdminPage() {
 
           {/* Hide "Add" button for Archived */}
           {activeTab !== "Archived" && (
-            <Button className="rounded-full px-6 sm:px-10 ml-4">
+            <Button 
+              className="rounded-full px-6 sm:px-10 ml-4"
+              onClick={() => setIsDialogOpen(true)} // Open the dialog
+            >
               Add {activeTab}
             </Button>
           )}
@@ -79,6 +85,10 @@ export default function UserAdminPage() {
           {activeTab === "Archived" && <ArchivedScreen searchQuery={searchQuery} />}
         </div>
       </div>
+
+      {/* Add User Dialog */}
+      <AddUserDialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
+      <AddAdminDialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} />
     </div>
   );
 }

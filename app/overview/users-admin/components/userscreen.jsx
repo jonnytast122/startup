@@ -488,7 +488,21 @@ export default function UsersScreen({ setUsersCount }) {
                     <TableHead>Last Login</TableHead>
                     <TableHead>Bank Name</TableHead>
                     <TableHead>Bank Account</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>
+                      <div className="flex items-center">
+                        Status
+                        <Select onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-12 border-none shadow-none"></SelectTrigger>
+                          <SelectContent className="font-custom text-light-gray">
+                            <SelectItem value="all">All</SelectItem>
+                            <SelectItem value="Active">Active</SelectItem>
+                            <SelectItem value="Inactive">Inactive</SelectItem>
+                            <SelectItem value="Pending">Pending</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </TableHead>
+
                     <TableHead className="flex justify-end py-3 px-3">
                       <DropdownCheckbox
                         options={[
@@ -510,7 +524,7 @@ export default function UsersScreen({ setUsersCount }) {
                 <TableBody>
                   {filteredUsers.map((user) => (
                     <TableRow key={user.id} className="h-12">
-                      <TableCell>
+                      <TableCell className="flex justify-center items-center">
                         {user.profile ? (
                           <a
                             href={user.profile}
