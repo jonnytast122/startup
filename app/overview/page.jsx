@@ -79,7 +79,7 @@ export default function OverviewPage() {
                                         />
                                     </button>
                                     {dropdownOpen && (
-                                        <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg border rounded-md">
+                                        <div className="absolute right-0 mt-2 w-32 bg-white shadow-lg border rounded-md z-50">
                                             {["Daily", "Weekly", "Monthly", "Yearly"].map((period) => (
                                                 <button
                                                     key={period}

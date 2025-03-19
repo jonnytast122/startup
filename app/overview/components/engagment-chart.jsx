@@ -15,8 +15,8 @@ const EngagementChart = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
+    startDate: new Date(2025, 2, 10),
+    endDate: new Date(2025, 2, 20),
     key: "selection",
   });
 

@@ -2,7 +2,7 @@ import React from "react";
 
 const RequestButton = ({ icon: Icon, text, notificationCount }) => {
   return (
-    <button className="flex items-center justify-between gap-3 px-5 py-2 bg-white shadow-lg rounded-lg relative">
+    <button className="flex items-center justify-between gap-3 px-5 py-2 bg-white shadow-md rounded-lg relative">
       {/* Left Icon */}
       <Icon className="w-6 h-6 text-black" />
 
