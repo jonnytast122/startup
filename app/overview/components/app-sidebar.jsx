@@ -30,10 +30,11 @@ const data = {
         { title: "Time Clock", url: "/operation/time-clock", icon: CalendarClock },
         { title: "Job Schedule", url: "/operation/job-schedule", icon: Calendar1 },
         { title: "Overtime", url: "/operation/overtime", icon: CalendarPlus2 },
-        { title: "Leaves", url: "/operation/leaves", icon: LogOut },
+        { title: "Leaves", url: "/overview/leaves", icon: LogOut },
         { title: "Payroll", url: "/operation/payroll", icon: CreditCard },
       ],
     },
+    
     {
       title: "Others",
       items: [
