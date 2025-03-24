@@ -1,14 +1,13 @@
-"use client";
-
-import { useState } from "react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import React, { useEffect } from "react";
 import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -17,7 +16,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import DropdownCheckbox from "@/components/ui/dropdowncheckbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -47,134 +52,192 @@ const exportOptions = [
   { value: "as XLS", label: "as XLS" },
 ];
 
-const admins = [
+const archeive = [
   {
-    id: 1,
     profile: "/avatars/ralph.png",
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "ABA",
-    bankAccount: "123456789",
-    status: "Online",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "online",
   },
   {
-    id: 2,
-    profile: "/avatars/ralph.png",
-    firstname: "Jane",
-    lastname: "Doe",
-    title: "CFO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "WING",
-    bankAccount: "123456789",
-    status: "Offline",
-  },
-  {
-    id: 3,
-    profile: "",
-    firstname: "Alice",
-    lastname: "Doe",
-    title: "CTO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "ABA",
-    bankAccount: "123456789",
-    status: "Offline",
-  },
-  {
-    id: 4,
-    profile: "/avatars/ralph.png",
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "ABA",
-    bankAccount: "123456789",
-    status: "Online",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "offline",
   },
   {
-    id: 5,
-    profile: "/avatars/ralph.png",
-    firstname: "Jane",
-    lastname: "Doe",
-    title: "CFO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "WING",
-    bankAccount: "123456789",
-    status: "Offline",
-  },
-  {
-    id: 6,
-    profile: "",
-    firstname: "Alice",
-    lastname: "Doe",
-    title: "CTO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "ABA",
-    bankAccount: "123456789",
-    status: "Offline",
-  },
-  {
-    id: 7,
-    profile: "/avatars/ralph.png",
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    banktransfer: "$300.00",
-    cash: "$200.00",
-    dateAdded: "2021-10-10",
-    lastLogin: "2021-10-10",
-    bankName: "ABA",
-    bankAccount: "123456789",
-    status: "Online",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "online",
+  },
+  {
+    firstname: "John",
+    lastname: "Doe",
+    title: "CEO",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "online",
+  },
+  {
+    firstname: "John",
+    lastname: "Doe",
+    title: "CEO",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "offline",
+  },
+  {
+    firstname: "John2",
+    lastname: "Doe",
+    title: "CEO",
+    job: "CEO",
+    dateadded: "10-02-2025",
+    lastlogin: "10-02-2025",
+    bankname: "johndoe",
+    banknumber: "1234567890",
+    status: "offline",
   },
 ];
 
-export default function ArchivedScreen() {
-  const [selectedFilters, setSelectedFilters] = useState([]);
-  const [statusFilter, setStatusFilter] = useState(""); // Filter state
+const Dot = ({ color }) => (
+  <span
+    className="w-2 h-2 rounded-full inline-block mr-2"
+    style={{ backgroundColor: color }}
+  />
+);
 
-  const handleFilterChange = (filter) => {
-    setSelectedFilters((prevFilters) =>
-      prevFilters.includes(filter)
-        ? prevFilters.filter((item) => item !== filter)
-        : [...prevFilters, filter]
-    );
-  };
+const statusFilter = ["Online", "Offline"];
 
-  const Dot = ({ color }) => (
-    <span
-      className="w-2 h-2 rounded-full inline-block mr-2"
-      style={{ backgroundColor: color }}
-    />
-  );
+const columns = [
+  {
+    accessorKey: "profile",
+    header: "",
+    cell: ({ row }) => {
+      const profileExists = row.original.profile; // Check if profile exists
+      const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
+      const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
+      
+      return (
+        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
+          {profileExists ? (
+            // Replace with an actual image if available
+            <img src={row.original.profile} alt="Profile" className="w-full h-full rounded-full object-cover" />
+          ) : (
+            <span className="text-xs text-gray-500">{firstNameInitial}{lastNameInitial}</span>
+          )}
+        </div>
+      );
+    },
+  },
+  { accessorKey: "firstname", header: "First name" },
+  { accessorKey: "lastname", header: "Last name" },
+  { accessorKey: "title", header: "Title" },
+  { accessorKey: "job", header: "Job" },
+  { accessorKey: "dateadded", header: "Date Added" },
+  { accessorKey: "lastlogin", header: "Last Login" },
+  { accessorKey: "bankname", header: "Bank Name" },
+  { accessorKey: "banknumber", header: "Bank Account" },
+  {
+    accessorKey: "status",
+    header: ({ column }) => (
+      <div className="flex items-center gap-1">
+        <span>Status</span>
+        <Select
+          onValueChange={(value) => {
+            column.setFilterValue(value === "All" ? "" : value);
+          }}
+        >
+          <SelectTrigger className="border-none p-0 w-6"></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All" className="font-custom">
+              All
+            </SelectItem>
+            {statusFilter.map((status) => (
+              <SelectItem
+                key={status}
+                value={status}
+                className="font-custom text-light-gray"
+              >
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    ),
+    cell: ({ row }) => {
+      const status =
+        row.original.status.charAt(0).toUpperCase() +
+        row.original.status.slice(1).toLowerCase();
 
-  const filteredUsers =
-    statusFilter && statusFilter !== "all"
-      ? admins.filter((admin) => admin.status === statusFilter)
-      : admins;
+      const statusStyles = {
+        Online: "bg-[#05C16833] text-[#14CA74] border-[#14CA74]",
+        Offline: "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]",
+      };
+
+      const dotColor = {
+        Online: "#14CA74",
+        Offline: "#AEB9E1",
+      };
+
+      return (
+        <span
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+          }`}
+          style={{
+            borderWidth: "1px",
+            minWidth: "80px",
+            justifyContent: "center",
+          }}
+        >
+          <Dot color={dotColor[status] || "#999"} />
+          {row.original.status}
+        </span>
+      );
+    },
+  },
+];
+
+const ArchieveScreen = () => {
+  const table = useReactTable({
+    data: archeive,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 25,
+      },
+    },
+  });
 
   return (
-    <div>
-      {/* Filters */}
+    <div className="p-4">
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
         {/* Left Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
@@ -233,124 +296,66 @@ export default function ArchivedScreen() {
           </Select>
         </div>
       </div>
-
-      {/* Table */}
-      <div className="mt-6 overflow-x-auto">
-        <div className="border border-gray-300 rounded-lg overflow-hidden">
-          <ScrollArea
-            className="max-h-[890px] overflow-y-auto scrollbar-hidden"
-            style={{
-              scrollbarWidth: "none", // For Firefox
-              msOverflowStyle: "none", // For Internet Explorer
-            }}
-          >
-            <style jsx>{`
-              /* Hide scrollbar for webkit browsers */
-              .max-h-[400px] ::-webkit-scrollbar {
-                width: 0;
-                height: 0;
-              }
-            `}</style>
-            <Table className="w-full">
-              {/* Sticky Table Header */}
-              <TableHeader className="bg-[#e4e4e4] sticky top-0 z-10">
-                <TableRow>
-                  <TableHead></TableHead>
-                  <TableHead>First name</TableHead>
-                  <TableHead>Last name</TableHead>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Bank Transfer</TableHead>
-                  <TableHead>Cash</TableHead>
-                  <TableHead>Date Added</TableHead>
-                  <TableHead>Last Login</TableHead>
-                  <TableHead>Bank Name</TableHead>
-                  <TableHead>Bank Account</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="flex justify-end py-3 px-3">
-                    <DropdownCheckbox
-                      options={[
-                        "Title",
-                        "Employment Start Date",
-                        "Team",
-                        "Cash",
-                        "Bank Transfer",
-                        "Department",
-                        "Branch",
-                        "Direct manager",
-                      ]}
-                      selectedOptions={selectedFilters}
-                      onChange={handleFilterChange}
-                    />
+      <div className="rounded-md border mt-6">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow
+                key={headerGroup.id}
+                className="bg-gray-200 text-dark-blue"
+              >
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="whitespace-nowrap px-2 min-w-[50px] w-[50px]"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                   </TableHead>
-                </TableRow>
-              </TableHeader>
-
-              {/* Table Body */}
-              <TableBody>
-                {filteredUsers.map((user) => (
-                  <TableRow key={user.id} className="h-12">
-                    <TableCell>
-                      {user.profile ? (
-                        <a
-                          href={user.profile}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <img
-                            src={user.profile}
-                            alt="Profile"
-                            className="w-8 h-8 rounded-full"
-                          />
-                        </a>
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center text-white">
-                          {user.firstname.charAt(0)}
-                          {user.lastname.charAt(0)}
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell>{user.firstname}</TableCell>
-                    <TableCell>{user.lastname}</TableCell>
-                    <TableCell>{user.title}</TableCell>
-                    <TableCell>{user.banktransfer}</TableCell>
-                    <TableCell>{user.cash}</TableCell>
-                    <TableCell>{user.dateAdded}</TableCell>
-                    <TableCell>{user.lastLogin}</TableCell>
-                    <TableCell>{user.bankName}</TableCell>
-                    <TableCell>{user.bankAccount}</TableCell>
-                    <TableCell className="text-start">
-                      <span
-                        className={`px-2.5 py-1.5 text-md font-semibold rounded-md border 
-                    ${
-                      user.status === "Online"
-                        ? "bg-[#05C16833] text-[#14CA74] border-[#14CA74]"
-                        : ""
-                    }
-                    ${
-                      user.status === "Offline"
-                        ? "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]"
-                        : ""
-                    }`}
-                      >
-                        <Dot
-                          color={
-                            user.status === "Online"
-                              ? "#14CA74"
-                              : user.status === "Offline"
-                              ? "#AEB9E1"
-                              : "gray"
-                          }
-                        />
-                        {user.status}
-                      </span>
-                    </TableCell>
-                  </TableRow>
                 ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
-        </div>
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id} className="whitespace-nowrap overflow-hidden text-ellipsis">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      <div className="flex items-center justify-end space-x-2 py-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <span className="font-custom text-gray-400">
+          Page {table.getState().pagination.pageIndex + 1} of{" "}
+          {table.getPageCount()}
+        </span>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
       </div>
     </div>
   );
-}
+};
+
+export default ArchieveScreen;
