@@ -27,11 +27,11 @@ const data = {
     {
       title: "Operation",
       items: [
-        { title: "Time Clock", url: "/operation/time-clock", icon: CalendarClock },
-        { title: "Job Schedule", url: "/operation/job-schedule", icon: Calendar1 },
-        { title: "Overtime", url: "/operation/overtime", icon: CalendarPlus2 },
+        { title: "Time Clock", url: "/overview/time-clock", icon: CalendarClock },
+        { title: "Job Schedule", url: "/overview/job-schedule", icon: Calendar1 },
+        { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
         { title: "Leaves", url: "/overview/leaves", icon: LogOut },
-        { title: "Payroll", url: "/operation/payroll", icon: CreditCard },
+        { title: "Payroll", url: "/overview/payroll", icon: CreditCard },
       ],
     },
     
