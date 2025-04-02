@@ -37,7 +37,7 @@ export default function UserAdminPage() {
                 setActiveTab(tab);
                 setSearchQuery(""); // Reset search when switching tabs
               }}
-              className={`flex-1 py-3 font-custom text-2xl transition-all ${
+              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
                 activeTab === tab
                   ? "bg-white text-blue-500 rounded-t-xl"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700"

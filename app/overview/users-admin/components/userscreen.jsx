@@ -139,14 +139,21 @@ const columns = [
       const profileExists = row.original.profile; // Check if profile exists
       const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
       const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
-      
+
       return (
         <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
           {profileExists ? (
             // Replace with an actual image if available
-            <img src={row.original.profile} alt="Profile" className="w-full h-full rounded-full object-cover" />
+            <img
+              src={row.original.profile}
+              alt="Profile"
+              className="w-full h-full rounded-full object-cover"
+            />
           ) : (
-            <span className="text-xs text-gray-500">{firstNameInitial}{lastNameInitial}</span>
+            <span className="text-xs text-gray-500">
+              {firstNameInitial}
+              {lastNameInitial}
+            </span>
           )}
         </div>
       );
@@ -248,7 +255,7 @@ const UsersScreen = ({ setUsersCount }) => {
         {/* Left Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
           <Select>
-            <SelectTrigger className="w-48 font-custom">
+            <SelectTrigger className="w-48 font-custom rounded-full">
               <SelectValue placeholder="Group" />
             </SelectTrigger>
             <SelectContent className="w-48 font-custom">
@@ -261,7 +268,7 @@ const UsersScreen = ({ setUsersCount }) => {
           </Select>
 
           <Select>
-            <SelectTrigger className="w-48 font-custom">
+            <SelectTrigger className="w-48 font-custom rounded-full">
               <SelectValue placeholder="Job" />
             </SelectTrigger>
             <SelectContent className="w-48 font-custom">
@@ -276,7 +283,7 @@ const UsersScreen = ({ setUsersCount }) => {
         {/* Right Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
           <Select>
-            <SelectTrigger className="w-24 font-custom">
+            <SelectTrigger className="w-24 font-custom rounded-full">
               <SelectValue placeholder="Import" />
             </SelectTrigger>
             <SelectContent className="font-custom">
@@ -289,7 +296,7 @@ const UsersScreen = ({ setUsersCount }) => {
           </Select>
 
           <Select>
-            <SelectTrigger className="w-24 font-custom">
+            <SelectTrigger className="w-24 font-custom rounded-full">
               <SelectValue placeholder="Export" />
             </SelectTrigger>
             <SelectContent className="font-custom">
@@ -328,7 +335,10 @@ const UsersScreen = ({ setUsersCount }) => {
             {table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-nowrap overflow-hidden text-ellipsis">
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

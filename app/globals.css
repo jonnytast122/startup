@@ -91,7 +91,21 @@ html {
 .border-light-gray {
   border-color: #979797;
 }
-
+.border-blue {
+  color: #5494DA
+}
+.text-red {
+  color: #FB5F59
+}
+.text-green {
+  color: #54BD95
+}
+.text-orange {
+  color: #FF9500
+}
+.bg-blue {
+  color: #2196f3
+}
 /* Utility classes */
 @layer utilities {
   .btn_white {

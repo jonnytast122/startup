@@ -242,7 +242,7 @@ const ArchieveScreen = () => {
         {/* Left Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
           <Select>
-            <SelectTrigger className="w-48 font-custom">
+            <SelectTrigger className="w-48 font-custom rounded-full">
               <SelectValue placeholder="Group" />
             </SelectTrigger>
             <SelectContent className="w-48 font-custom">
@@ -255,7 +255,7 @@ const ArchieveScreen = () => {
           </Select>
 
           <Select>
-            <SelectTrigger className="w-48 font-custom">
+            <SelectTrigger className="w-48 font-custom rounded-full">
               <SelectValue placeholder="Job" />
             </SelectTrigger>
             <SelectContent className="w-48 font-custom">
@@ -270,7 +270,7 @@ const ArchieveScreen = () => {
         {/* Right Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
           <Select>
-            <SelectTrigger className="w-24 font-custom">
+            <SelectTrigger className="w-24 font-custom rounded-full">
               <SelectValue placeholder="Import" />
             </SelectTrigger>
             <SelectContent className="font-custom">
@@ -283,7 +283,7 @@ const ArchieveScreen = () => {
           </Select>
 
           <Select>
-            <SelectTrigger className="w-24 font-custom">
+            <SelectTrigger className="w-24 font-custom rounded-full">
               <SelectValue placeholder="Export" />
             </SelectTrigger>
             <SelectContent className="font-custom">
