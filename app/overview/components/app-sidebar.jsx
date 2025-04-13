@@ -27,7 +27,7 @@ const data = {
     {
       title: "Operation",
       items: [
-        { title: "Time Clock", url: "/overview/time-clock", icon: CalendarClock },
+        { title: "Time Clock", url: "/overview/timeclock", icon: CalendarClock },
         { title: "Job Schedule", url: "/overview/job-schedule", icon: Calendar1 },
         { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
         { title: "Leaves", url: "/overview/leaves", icon: LogOut },
