@@ -85,6 +85,9 @@ html {
 .text-dark-blue {
   color: #152c5b;
 }
+.text-light-pearl {
+  color: #7C8DB5;
+}
 .text-blue {
   color: #2196f3;
 }
@@ -121,6 +124,7 @@ html {
     opacity: 0.6;
   }
 }
+
 
 .breathing-animation {
   animation: pulse-animation 2s infinite;

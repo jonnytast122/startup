@@ -2,16 +2,33 @@
 
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, ChartNoAxesGantt, User, Users, 
-  CalendarClock, Calendar1, CalendarPlus2, LogOut, CreditCard, 
-  Lightbulb, Settings 
+import {
+  LayoutDashboard,
+  ChartNoAxesGantt,
+  User,
+  Users,
+  CalendarClock,
+  Calendar1,
+  CalendarPlus2,
+  LogOut,
+  CreditCard,
+  Lightbulb,
+  Settings,
 } from "lucide-react";
 
 import Link from "next/link";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarHeader, SidebarMenu,
-  SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, SidebarRail
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarRail,
 } from "@/components/ui/sidebar";
 
 const data = {
@@ -19,7 +36,11 @@ const data = {
     {
       items: [
         { title: "Overview", url: "/overview", icon: LayoutDashboard },
-        { title: "Activity", url: "/overview/activity", icon: ChartNoAxesGantt },
+        {
+          title: "Activity",
+          url: "/overview/activity",
+          icon: ChartNoAxesGantt,
+        },
         { title: "Users & Admin", url: "/overview/users-admin", icon: User }, // Ensure this route exists
         { title: "Groups", url: "/overview/groups", icon: Users }, // Provide a valid URL
       ],
@@ -27,14 +48,21 @@ const data = {
     {
       title: "Operation",
       items: [
-        { title: "Time Clock", url: "/overview/timeclock", icon: CalendarClock },
-        { title: "Job Schedule", url: "/overview/job-schedule", icon: Calendar1 },
+        {
+          title: "Time Clock",
+          url: "/overview/timeclock",
+          icon: CalendarClock,
+        },
+        {
+          title: "Job Schedule",
+          url: "/overview/job-schedule",
+          icon: Calendar1,
+        },
         { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
         { title: "Leaves", url: "/overview/leaves", icon: LogOut },
         { title: "Payroll", url: "/overview/payroll", icon: CreditCard },
       ],
     },
-    
     {
       title: "Others",
       items: [
@@ -88,7 +116,9 @@ export function AppSidebar(props) {
               <SidebarMenuItem key={index}>
                 {section.title && (
                   <SidebarMenuButton asChild>
-                    <span className="text-xs font-vietname-thin">{section.title}</span>
+                    <span className="text-xs font-vietname-thin">
+                      {section.title}
+                    </span>
                   </SidebarMenuButton>
                 )}
                 <SidebarMenuSub>

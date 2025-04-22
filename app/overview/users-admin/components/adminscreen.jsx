@@ -58,7 +58,8 @@ const admins = [
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "500.00",
+    cash: "300.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -69,7 +70,8 @@ const admins = [
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "300.00",
+    cash: "200.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -80,7 +82,8 @@ const admins = [
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "500.00",
+    cash: "300.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -91,7 +94,8 @@ const admins = [
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "500.00",
+    cash: "300.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -102,7 +106,8 @@ const admins = [
     firstname: "John",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "500.00",
+    cash: "300.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -113,7 +118,8 @@ const admins = [
     firstname: "John2",
     lastname: "Doe",
     title: "CEO",
-    job: "CEO",
+    banktransfer: "500.00",
+    cash: "300.00",
     dateadded: "10-02-2025",
     lastlogin: "10-02-2025",
     bankname: "johndoe",
@@ -155,7 +161,30 @@ const columns = [
   { accessorKey: "firstname", header: "First name" },
   { accessorKey: "lastname", header: "Last name" },
   { accessorKey: "title", header: "Title" },
-  { accessorKey: "job", header: "Job" },
+  {
+    accessorKey: "banktransfer",
+    header: "Bank Transfer",
+    cell: ({ cell }) => {
+      const value = cell.getValue();
+      return (
+        <span className="text-sm font-custom">
+          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "cash",
+    header: "Cash",
+    cell: ({ cell }) => {
+      const value = cell.getValue();
+      return (
+        <span className="text-sm font-custom">
+          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+        </span>
+      );
+    },
+  },
   { accessorKey: "dateadded", header: "Date Added" },
   { accessorKey: "lastlogin", header: "Last Login" },
   { accessorKey: "bankname", header: "Bank Name" },

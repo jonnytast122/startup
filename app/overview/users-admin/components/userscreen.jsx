@@ -23,6 +23,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -54,70 +55,111 @@ const exportOptions = [
 
 const users = [
   {
-    profile: "/avatars/ralph.png",
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/alex.png",
+    firstname: "Alex",
+    lastname: "Thorne",
+    title: "Marketing Manager",
+    banktransfer: "800.00",
+    cash: "150.00",
+    dateadded: "03-15-2025",
+    lastlogin: "04-10-2025",
+    bankname: "alexthorne",
+    banknumber: "9876543210",
+    email: "alex.thorne@example.com",
+    phone: "093456789",
+    department: "Marketing",
+    birthday: "1990-05-12",
+    branch: "BKK1",
     status: "active",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/sara.png",
+    firstname: "Sara",
+    lastname: "Lim",
+    title: "Product Designer",
+    banktransfer: "450.00",
+    cash: "230.00",
+    dateadded: "02-28-2025",
+    lastlogin: "04-01-2025",
+    bankname: "saralim",
+    banknumber: "7766554433",
+    email: "sara.lim@example.com",
+    phone: "087123456",
+    department: "Design",
+    birthday: "1992-11-03",
+    branch: "BKK2",
     status: "inactive",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/kevin.png",
+    firstname: "Kevin",
+    lastname: "Nguyen",
+    title: "CTO",
+    banktransfer: "1200.00",
+    cash: "500.00",
+    dateadded: "01-20-2025",
+    lastlogin: "04-12-2025",
+    bankname: "kevinng",
+    banknumber: "1122334455",
+    email: "kevin.nguyen@example.com",
+    phone: "092345678",
+    department: "Engineering",
+    birthday: "1987-08-22",
+    branch: "BKK3",
     status: "pending",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/emily.png",
+    firstname: "Emily",
+    lastname: "Stone",
+    title: "HR Specialist",
+    banktransfer: "670.00",
+    cash: "310.00",
+    dateadded: "03-01-2025",
+    lastlogin: "04-08-2025",
+    bankname: "emilystone",
+    banknumber: "3344556677",
+    email: "emily.stone@example.com",
+    phone: "098765432",
+    department: "HR",
+    birthday: "1991-01-15",
+    branch: "BKK1",
     status: "active",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/omar.png",
+    firstname: "Omar",
+    lastname: "Khan",
+    title: "Software Engineer",
+    banktransfer: "950.00",
+    cash: "420.00",
+    dateadded: "03-18-2025",
+    lastlogin: "04-10-2025",
+    bankname: "omarkhan",
+    banknumber: "2233445566",
+    email: "omar.khan@example.com",
+    phone: "096654321",
+    department: "Engineering",
+    birthday: "1993-06-30",
+    branch: "BKK2",
     status: "inactive",
   },
   {
-    firstname: "John2",
-    lastname: "Doe",
-    title: "CEO",
-    job: "CEO",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/luna.png",
+    firstname: "Luna",
+    lastname: "Park",
+    title: "Data Analyst",
+    banktransfer: "390.00",
+    cash: "180.00",
+    dateadded: "02-10-2025",
+    lastlogin: "04-09-2025",
+    bankname: "lunapark",
+    banknumber: "6655443322",
+    email: "luna.park@example.com",
+    phone: "097998877",
+    department: "Analytics",
+    birthday: "1995-04-18",
+    branch: "BKK3",
     status: "pending",
   },
 ];
@@ -136,21 +178,22 @@ const columns = [
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
-      const profileExists = row.original.profile; // Check if profile exists
-      const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
-      const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
-
+      const [imageError, setImageError] = React.useState(false);
+      const profile = row.original.profile;
+      const firstNameInitial = row.original.firstname?.charAt(0).toUpperCase() || "";
+      const lastNameInitial = row.original.lastname?.charAt(0).toUpperCase() || "";
+  
       return (
-        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
-          {profileExists ? (
-            // Replace with an actual image if available
+        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
+          {profile && !imageError ? (
             <img
-              src={row.original.profile}
+              src={profile}
               alt="Profile"
-              className="w-full h-full rounded-full object-cover"
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
             />
           ) : (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-600 font-medium">
               {firstNameInitial}
               {lastNameInitial}
             </span>
@@ -158,11 +201,34 @@ const columns = [
         </div>
       );
     },
-  },
+  },  
   { accessorKey: "firstname", header: "First name" },
   { accessorKey: "lastname", header: "Last name" },
   { accessorKey: "title", header: "Title" },
-  { accessorKey: "job", header: "Job" },
+  {
+    accessorKey: "banktransfer",
+    header: "Bank Transfer",
+    cell: ({ cell }) => {
+      const value = cell.getValue();
+      return (
+        <span className="text-sm font-custom">
+          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "cash",
+    header: "Cash",
+    cell: ({ cell }) => {
+      const value = cell.getValue();
+      return (
+        <span className="text-sm font-custom">
+          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+        </span>
+      );
+    },
+  },
   { accessorKey: "dateadded", header: "Date Added" },
   { accessorKey: "lastlogin", header: "Last Login" },
   { accessorKey: "bankname", header: "Bank Name" },
@@ -232,6 +298,7 @@ const columns = [
 ];
 
 const UsersScreen = ({ setUsersCount }) => {
+  const router = useRouter();
   const table = useReactTable({
     data: users,
     columns,
@@ -333,7 +400,16 @@ const UsersScreen = ({ setUsersCount }) => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => {
+                  const { status, ...rest } = row.original; // remove 'status'
+                  const query = new URLSearchParams(rest).toString();
+                  router.push(`/overview/users-admin/profile?${query}`);
+                }}
+                
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
