@@ -84,7 +84,26 @@ const columns = [
       </div>
     ),
   },
-  { accessorKey: "status", header: "Status" },
+  {
+    accessorKey: "status",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.status.trim(); // Remove extra spaces
+
+      const statusClass =
+        status === "On Time"
+          ? "text-green"
+          : status === "Late"
+          ? "text-red"
+          : status === "Early"
+          ? "text-blue"
+          : "text-gray";
+
+      return (
+        <div className={`text-md font-custom ${statusClass}`}>{status}</div>
+      );
+    },
+  },
   { accessorKey: "clockin", header: "Clock In" },
   { accessorKey: "clockout", header: "Clock Out" },
   {
@@ -94,7 +113,7 @@ const columns = [
       const { clockin, clockout } = row.original;
       return calculateTotalHours(clockin, clockout);
     },
-  },  
+  },
 ];
 
 function Dashboard() {
@@ -105,7 +124,7 @@ function Dashboard() {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
-  
+
   return (
     // <-- Add "return" here
     <div>
@@ -121,7 +140,7 @@ function Dashboard() {
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md"
+                    className="whitespace-nowrap px-4 min-w-[50px] w-[50px] text-md"
                   >
                     {flexRender(
                       header.column.columnDef.header,
