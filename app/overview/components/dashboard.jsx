@@ -1,54 +1,61 @@
 import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getPaginationRowModel,
+  useReactTable,
+  getFilteredRowModel,
+} from "@tanstack/react-table";
+import {
   Table,
   TableBody,
-  TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import Column from "antd/es/table/Column";
 
 const employees = [
   {
-    firstName: "John",
-    lastName: "Doe",
+    firstname: "John",
+    lastname: "Doe",
     job: "Software Engineer",
     status: "On Time",
-    clockIn: "08:30",
-    clockOut: "17:30",
+    clockin: "08:30",
+    clockout: "17:30",
   },
   {
-    firstName: "Jane",
-    lastName: "Smith",
+    firstname: "Jane",
+    lastname: "Smith",
     job: "Product Manager",
     status: "Late",
-    clockIn: "09:15",
-    clockOut: "--",
+    clockin: "09:15",
+    clockout: "--",
   },
   {
-    firstName: "David",
-    lastName: "Brown",
+    firstname: "David",
+    lastname: "Brown",
     job: "UI/UX Designer",
     status: "Early",
-    clockIn: "07:45",
-    clockOut: "16:45",
+    clockin: "07:45",
+    clockout: "16:45",
   },
   {
-    firstName: "Emily",
-    lastName: "Davis",
+    firstname: "Emily",
+    lastname: "Davis",
     job: "Data Analyst",
     status: "On Time",
-    clockIn: "08:00",
-    clockOut: "8:30",
+    clockin: "08:00",
+    clockout: "8:30",
   },
   {
-    firstName: "Michael",
-    lastName: "Johnson",
+    firstname: "Michael",
+    lastname: "Johnson",
     job: "DevOps Engineer",
     status: "Late",
-    clockIn: "09:30",
-    clockOut: "--",
+    clockin: "09:30",
+    clockout: "--",
   },
 ];
 
@@ -65,55 +72,84 @@ const calculateTotalHours = (clockIn, clockOut) => {
   return `${Math.floor(diff / 60)}h ${diff % 60}m`;
 };
 
+const columns = [
+  { accessorKey: "firstname", header: "First name" },
+  { accessorKey: "lastname", header: "Last name" },
+  {
+    accessorKey: "job",
+    header: "Job",
+    cell: ({ row }) => (
+      <div className="px-5 py-1 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
+        {row.original.job}
+      </div>
+    ),
+  },
+  { accessorKey: "status", header: "Status" },
+  { accessorKey: "clockin", header: "Clock In" },
+  { accessorKey: "clockout", header: "Clock Out" },
+  {
+    accessorKey: "totalhours",
+    header: "Total Hours",
+    cell: ({ row }) => {
+      const { clockin, clockout } = row.original;
+      return calculateTotalHours(clockin, clockout);
+    },
+  },  
+];
+
 function Dashboard() {
-  return ( // <-- Add "return" here
+  const table = useReactTable({
+    data: employees,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+  });
+  
+  return (
+    // <-- Add "return" here
     <div>
       <h2 className="text-2xl font-medium mb-2 text-black">Dashboard</h2>
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-gray-100">
-            <TableHead className="w-[120px]">First Name</TableHead>
-            <TableHead>Last Name</TableHead>
-            <TableHead>Job</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Clock In</TableHead>
-            <TableHead>Clock Out</TableHead>
-            <TableHead className="text-right">Total Hours</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {employees.map((employee, index) => (
-            <TableRow key={index} className="items-center justify-center">
-              <TableCell className="font-medium">{employee.firstName}</TableCell>
-              <TableCell>{employee.lastName}</TableCell>
-              <TableCell>
-                <span className="text-blue-500 bg-white border border-blue-500 px-3 py-1 rounded-lg">
-                  {employee.job}
-                </span>
-              </TableCell>
-              <TableCell
-                className={
-                  employee.status === "On Time"
-                    ? "text-green-600"
-                    : employee.status === "Late"
-                      ? "text-red-600"
-                      : "text-blue-600"
-                }
+      <div className="rounded-md border mt-2">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow
+                key={headerGroup.id}
+                className="bg-gray-200 text-dark-blue"
               >
-                {employee.status}
-              </TableCell>
-              <TableCell>{employee.clockIn}</TableCell>
-              <TableCell>{employee.clockOut}</TableCell>
-              <TableCell className="text-right">
-                {calculateTotalHours(employee.clockIn, employee.clockOut)}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                {headerGroup.headers.map((header) => (
+                  <TableHead
+                    key={header.id}
+                    className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </TableHead>
+                ))}
+              </TableRow>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
-
 
 export default Dashboard;
