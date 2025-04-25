@@ -4,6 +4,13 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { ListFilter } from "lucide-react";
+
+const Filter = [
+    { value: "Select all", label: "Select all" },
+    { value: "All users group", label: "All users group" },
+    { value: "Assigned features", label: "Assigned features" },
+];
 
 const users = [
     { id: 1, lastName: "Doe", bankName: "ABA", bankAccount: "12345678", cash: 500, bankTransfer: 2000, tax: 30, nssf: 120, total: 2500, status: "Processing" },
@@ -30,13 +37,17 @@ export default function PayrollTable() {
             <div className="flex justify-between items-center my-4">
                 {/* Left: Groups Select */}
                 <Select>
-                    <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder="Groups" />
+                    <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative">
+                        <ListFilter className="text-blue-500" size={20} />
+                        <SelectValue className="text-blue-500" placeholder="Filter" />
+                        {/* Hides default icon */}
                     </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="group1">Group 1</SelectItem>
-                        <SelectItem value="group2">Group 2</SelectItem>
-                        <SelectItem value="group3">Group 3</SelectItem>
+                    <SelectContent className="font-custom">
+                        {Filter.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
 
@@ -66,11 +77,11 @@ export default function PayrollTable() {
                     {/* Export Button */}
                     <Select>
                         <SelectTrigger className="w-[130px]">
-                            <SelectValue placeholder="Export" />
+                            <SelectValue placeholder="Report" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="csv">Export as CSV</SelectItem>
-                            <SelectItem value="pdf">Export as PDF</SelectItem>
+                            <SelectItem value="csv">Report as CSV</SelectItem>
+                            <SelectItem value="pdf">Report as PDF</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
