@@ -56,7 +56,7 @@ const EngagementChart = () => {
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Engagement</h2>
+      <h2 className="text-2xl font-custom font-medium mb-4 text-black">Engagement</h2>
       <div className="flex justify-between items-center mb-4 relative">
         <div className="relative">
           <button

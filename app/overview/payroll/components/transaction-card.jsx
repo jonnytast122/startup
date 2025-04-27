@@ -64,9 +64,7 @@ const transactions = [
   },
 ];
 
-
 export default function TransactionCard() {
-  
   const [open, setOpen] = useState(false);
 
   return (
@@ -75,11 +73,14 @@ export default function TransactionCard() {
         <h1 className="text-2xl font-custom">Transaction</h1>
 
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+          <button className="flex items-center gap-2 bg-blue-100 text-light-blue px-4 py-1.5 rounded-lg hover:bg-blue-200 transition">
             <CirclePlus size={16} />
             New
           </button>
-          <button onClick={() => setOpen(true)} className="flex items-center gap-2 bg-white text-blue-600 shadow-md px-4 py-2 rounded hover:bg-gray-300 transition">
+          <button
+            onClick={() => setOpen(true)}
+            className="flex items-center gap-2 bg-white text-light-blue shadow-md px-4 py-1.5 rounded-lg hover:bg-gray-100 transition"
+          >
             <Pencil size={16} />
             Edit Invoice
           </button>
@@ -88,12 +89,12 @@ export default function TransactionCard() {
       </div>
       <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-4 mt-2">
         {/* Left side (3 boxes vertically stacked) */}
-        <div className="col-span-1 shadow-lg h-full rounded-md mt-3 bg-white md:col-span-2 lg:col-span-3 space-y-4">
+        <div className="col-span-1 shadow-xl h-full rounded-xl mt-3 bg-white md:col-span-2 lg:col-span-3 space-y-4">
           <PayslipCard />
         </div>
 
         {/* Right side (long vertically, w-2/5) */}
-        <div className="col-span-1 font-custom bg-white shadow-lg mt-3 md:col-span-1 lg:col-span-2 h-full rounded-lg order-first md:order-none">
+        <div className="col-span-1 font-custom bg-white shadow-xl mt-3 md:col-span-1 lg:col-span-2 h-full rounded-xl order-first md:order-none">
           <div className="flex items-center justify-between p-4">
             <h1 className="font-custom text-lg">Transaction History</h1>
             <button className="flex items-center gap-2 bg-white text-blue-600 px-4 py-1 hover:bg-blue-50">
@@ -127,8 +128,7 @@ export default function TransactionCard() {
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );
-};
+}

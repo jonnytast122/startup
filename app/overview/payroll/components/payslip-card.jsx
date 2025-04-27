@@ -2,52 +2,52 @@ import { useState } from "react";
 import { CirclePlus, Receipt, X, SendHorizontal } from "lucide-react";
 
 const payslips = [
-    {
-      id: 1,
-      profilePic: "https://randomuser.me/api/portraits/men/32.jpg",
-      name: "John Doe",
-      date: "March 1, 2025",
-      time: "9:00 AM",
-      bankName: "ABA",
-      salary: "$3,000",
-    },
-    {
-      id: 2,
-      profilePic: "https://randomuser.me/api/portraits/women/44.jpg",
-      name: "Jane Smith",
-      date: "March 2, 2025",
-      time: "10:30 AM",
-      bankName: "ABA",
-      salary: "$2,500",
-    },
-    {
-      id: 3,
-      profilePic: "https://randomuser.me/api/portraits/men/50.jpg",
-      name: "Alex Johnson",
-      date: "March 3, 2025",
-      time: "8:15 AM",
-      bankName: "ABA",
-      salary: "$2,800",
-    },
-    {
-      id: 4,
-      profilePic: "https://randomuser.me/api/portraits/women/12.jpg",
-      name: "Emily Davis",
-      date: "March 4, 2025",
-      time: "12:00 PM",
-      bankName: "ABA",
-      salary: "$3,200",
-    },
-    {
-      id: 5,
-      profilePic: "https://randomuser.me/api/portraits/men/34.jpg",
-      name: "Michael Brown",
-      date: "March 5, 2025",
-      time: "3:45 PM",
-      bankName: "ABA",
-      salary: "$3,500",
-    },
-  ];
+  {
+    id: 1,
+    profilePic: "https://randomuser.me/api/portraits/men/32.jpg",
+    name: "John Doe",
+    date: "March 1, 2025",
+    time: "9:00 AM",
+    bankName: "ABA",
+    salary: "$3,000",
+  },
+  {
+    id: 2,
+    profilePic: "https://randomuser.me/api/portraits/women/44.jpg",
+    name: "Jane Smith",
+    date: "March 2, 2025",
+    time: "10:30 AM",
+    bankName: "ABA",
+    salary: "$2,500",
+  },
+  {
+    id: 3,
+    profilePic: "https://randomuser.me/api/portraits/men/50.jpg",
+    name: "Alex Johnson",
+    date: "March 3, 2025",
+    time: "8:15 AM",
+    bankName: "ABA",
+    salary: "$2,800",
+  },
+  {
+    id: 4,
+    profilePic: "https://randomuser.me/api/portraits/women/12.jpg",
+    name: "Emily Davis",
+    date: "March 4, 2025",
+    time: "12:00 PM",
+    bankName: "ABA",
+    salary: "$3,200",
+  },
+  {
+    id: 5,
+    profilePic: "https://randomuser.me/api/portraits/men/34.jpg",
+    name: "Michael Brown",
+    date: "March 5, 2025",
+    time: "3:45 PM",
+    bankName: "ABA",
+    salary: "$3,500",
+  },
+];
 
 export default function PayslipCard() {
   const [selectMode, setSelectMode] = useState(false);
@@ -74,16 +74,16 @@ export default function PayslipCard() {
       {/* Header */}
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
-          <h1 className="font-custom text-lg">Payslip</h1>
-          <div className="flex items-center gap-2 bg-orange-200 text-orange-500 px-2 py-1 rounded-2xl">
-            <span className="w-2.5 h-2.5 rounded-full bg-orange-500" />
+          <h1 className="font-custom text-lg mr-4">Payslip</h1>
+          <div className="flex items-center gap-2 bg-orange-100 text-orange-400 px-2 py-1 rounded-2xl">
+            <span className="w-2.5 h-2.5 rounded-full bg-orange-300" />
             <span className="font-custom text-sm">PENDING</span>
           </div>
         </div>
 
         <button
           onClick={toggleSelectMode}
-          className="flex items-center gap-2 bg-white text-blue-600 px-4 py-1 rounded-2xl border border-blue-600 hover:bg-blue-50"
+          className="flex items-center gap-2 bg-white text-blue-600 px-4 py-1 rounded-2xl border border-gray-300 hover:bg-blue-50"
         >
           <CirclePlus size={16} className="text-blue-600" />
           {selectMode ? "Cancel" : "Select"}
@@ -102,10 +102,10 @@ export default function PayslipCard() {
         {payslips.map((payslip) => (
           <div
             key={payslip.id}
-            className={`grid grid-cols-5 gap-4 items-center py-3 rounded-xl cursor-pointer p-1 ${
+            className={`grid grid-cols-5 gap-4 items-center py-3 rounded-lg cursor-pointer p-1 ${
               selectedIds.includes(payslip.id)
-                ? "bg-green-300 border"
-                : "hover:bg-green-100"
+                ? "bg-blue-200 border border-blue-400" // selected = light blue background with a blue border
+                : "hover:bg-blue-100" // hover = even lighter blue background
             }`}
             onClick={() => selectMode && handleSelect(payslip.id)}
           >
@@ -123,12 +123,12 @@ export default function PayslipCard() {
               <span className="text-sm text-gray-500">{payslip.time}</span>
             </div>
 
-            <div className="text-sm text-gray-700">{payslip.bankName}</div>
+            <div className="text-md text-gray-700">{payslip.bankName}</div>
 
-            <div className="text-sm font-medium">{payslip.salary}</div>
+            <div className="text-md font-medium">{payslip.salary}</div>
 
             <div className="flex justify-end">
-              <button className="flex items-center gap-2 bg-white border border-gray-300 rounded-xl px-4 py-2 hover:bg-blue-700 hover:text-white transition whitespace-nowrap">
+              <button className="flex items-center gap-2 bg-white border border-gray-300 rounded-2xl px-4 py-2 hover:bg-blue-100 hover:border-blue-300 transition whitespace-nowrap">
                 <Receipt size={16} />
                 Send Invoice
               </button>
@@ -139,16 +139,16 @@ export default function PayslipCard() {
 
       {/* Bottom Send Invoice Button */}
       {selectMode && selectedIds.length > 0 && (
-  <div className="px-4 pb-4">
-    <button
-      onClick={handleSendInvoice}
-      className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-3 rounded-2xl text-base hover:bg-green-700 transition"
-    >
-      <SendHorizontal size={18} />
-      Send Invoice ({selectedIds.length})
-    </button>
-  </div>
-)}
+        <div className="px-4 pb-4">
+          <button
+            onClick={handleSendInvoice}
+            className="w-full flex items-center justify-center gap-2 bg-green-600 text-white px-5 py-3 rounded-2xl text-base hover:bg-green-700 transition"
+          >
+            <SendHorizontal size={18} />
+            Send Invoice ({selectedIds.length})
+          </button>
+        </div>
+      )}
 
       {/* Dialog */}
       {showDialog && (
@@ -165,8 +165,12 @@ export default function PayslipCard() {
               alt="Success"
               className="w-32 mx-auto mb-4"
             />
-            <h2 className="text-lg font-semibold mb-2">Send invoice successful</h2>
-            <p className="text-sm text-gray-600">Your invoices have been sent!</p>
+            <h2 className="text-lg font-semibold mb-2">
+              Send invoice successful
+            </h2>
+            <p className="text-sm text-gray-600">
+              Your invoices have been sent!
+            </p>
           </div>
         </div>
       )}

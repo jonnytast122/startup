@@ -288,10 +288,10 @@ const Leaves = () => {
           {/* Left Side Dropdowns */}
           <div className="flex w-full sm:w-auto gap-4">
             <Select>
-              <SelectTrigger className="w-48 font-custom rounded-full">
+              <SelectTrigger className="w-16 font-custom rounded-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
-              <SelectContent className="w-48 font-custom">
+              <SelectContent className="w-16 font-custom">
                 {ALL.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     {role.label}

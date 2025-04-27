@@ -18,7 +18,7 @@ export default function DailyButtons() {
           return (
             <div
               key={index}
-              className="flex flex-col items-start bg-white px-5 py-4 rounded-xl shadow-md relative"
+              className="flex flex-col items-start bg-white px-6 py-4 rounded-xl shadow-md relative"
             >
               {/* Icon with Background Circle */}
               <div className={`absolute top-2 left-4 h-10 w-10 flex items-center justify-center ${bgColor} rounded-full`}>
@@ -26,14 +26,14 @@ export default function DailyButtons() {
               </div>
               
               {/* Title */}
-              <p className="text-gray-700 text-base font-semibold mt-12">{label}</p>
+              <p className="text-[#5A5881] text-base font-custom mt-12">{label}</p>
               
               {/* Value */}
-              <p className="text-xl font-bold text-gray-900">{value}</p>
+              <p className="text-xl font-custom font-bold text-gray-900">{value}</p>
               
               {/* Change Indicator */}
               <div
-                className={`flex items-center py-1 px-2 rounded-md text-xs font-semibold mt-2 ${
+                className={`flex font-custom items-center py-1 px-2 rounded-full text-xs font-semibold mt-2 ${
       isPositive ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
                 }`}
               >

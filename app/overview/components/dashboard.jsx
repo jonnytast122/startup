@@ -128,7 +128,7 @@ function Dashboard() {
   return (
     // <-- Add "return" here
     <div>
-      <h2 className="text-2xl font-medium mb-2 text-black">Dashboard</h2>
+      <h2 className="text-2xl font-custom font-medium mb-4 text-black">Dashboard</h2>
       <div className="rounded-md border mt-2">
         <Table>
           <TableHeader>
