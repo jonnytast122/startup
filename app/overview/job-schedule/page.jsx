@@ -8,12 +8,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  Calendar1,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-} from "lucide-react";
+import { Calendar1, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -46,6 +41,7 @@ const exportOptions = [
 const JobSchedule = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showAddShiftDialog, setShowAddShiftDialog] = useState(false);
+  const [showSettingDialog, setShowSettingDialog] = useState(false);  
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 2, 10),
     endDate: new Date(2025, 2, 16),
@@ -79,7 +75,10 @@ const JobSchedule = () => {
     return dates;
   };
 
-  const dateColumns = getDatesInRange(selectedRange.startDate, selectedRange.endDate);
+  const dateColumns = getDatesInRange(
+    selectedRange.startDate,
+    selectedRange.endDate
+  );
 
   const columns = [
     {
@@ -137,7 +136,7 @@ const JobSchedule = () => {
           );
         },
       };
-    })
+    }),
   ];
 
   const members = [
@@ -202,11 +201,11 @@ const JobSchedule = () => {
   ];
 
   // new states
-  const [showAddMultipleShiftsDialog, setShowAddMultipleShiftsDialog] = useState(false);
+  const [showAddMultipleShiftsDialog, setShowAddMultipleShiftsDialog] =
+    useState(false);
   const [showAddTimeOffDialog, setShowAddTimeOffDialog] = useState(false);
   const [showClearWeekDialog, setShowClearWeekDialog] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
-
 
   return (
     <div>
@@ -214,7 +213,9 @@ const JobSchedule = () => {
         <div className="flex items-center justify-between p-5">
           <div className="flex items-center space-x-3">
             <Calendar1 className="text-[#2998FF]" width={40} height={40} />
-            <span className="font-custom text-3xl text-black">Job Schedule</span>
+            <span className="font-custom text-3xl text-black">
+              Job Schedule
+            </span>
           </div>
           <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
@@ -232,16 +233,18 @@ const JobSchedule = () => {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${badge.bg
-                    } rounded-full flex items-center justify-center border-2 border-white 
-           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${badge.textColor || "text-white"
-                    }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${
+                    badge.bg
+                  } rounded-full flex items-center justify-center border-2 border-white 
+           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${
+             badge.textColor || "text-white"
+           }`}
                 >
                   {badge.text}
                 </div>
               ))}
             </div>
-            <SettingDialog />
+            <SettingDialog open={showSettingDialog} onOpenChange={setShowSettingDialog} />
           </div>
         </div>
       </div>
@@ -267,12 +270,16 @@ const JobSchedule = () => {
               className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
             >
               <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
-              {format(selectedRange.startDate, "MMM dd")} - {format(selectedRange.endDate, "MMM dd")}
+              {format(selectedRange.startDate, "MMM dd")} -{" "}
+              {format(selectedRange.endDate, "MMM dd")}
               <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
             </button>
 
             {showDatePicker && (
-              <div ref={datePickerRef} className="absolute mt-2 bg-white shadow-lg border p-2 rounded-md z-50 font-custom">
+              <div
+                ref={datePickerRef}
+                className="absolute mt-2 bg-white shadow-lg border p-2 rounded-md z-50 font-custom"
+              >
                 <DateRange
                   ranges={[selectedRange]}
                   onChange={(ranges) => setSelectedRange(ranges.selection)}
@@ -283,16 +290,21 @@ const JobSchedule = () => {
           </div>
 
           <div className="flex w-full sm:w-auto gap-4">
-            <Select onValueChange={(value) => {
-              if (value === "add-multiple-shifts") setShowAddMultipleShiftsDialog(true);
-              if (value === "add-time-off") setShowAddTimeOffDialog(true);
-              if (value === "clear-week") setShowClearWeekDialog(true);
-            }}>
+            <Select
+              onValueChange={(value) => {
+                if (value === "add-multiple-shifts")
+                  setShowAddMultipleShiftsDialog(true);
+                if (value === "add-time-off") setShowAddTimeOffDialog(true);
+                if (value === "clear-week") setShowClearWeekDialog(true);
+              }}
+            >
               <SelectTrigger className="w-auto px-4 font-custom rounded-full">
                 <SelectValue placeholder="Action" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="add-multiple-shifts">Add multiple shifts</SelectItem>
+                <SelectItem value="add-multiple-shifts">
+                  Add multiple shifts
+                </SelectItem>
                 <SelectItem value="add-time-off">Add time off</SelectItem>
                 <SelectItem value="clear-week">Clear week</SelectItem>
               </SelectContent>
@@ -311,9 +323,18 @@ const JobSchedule = () => {
             </Select>
           </div>
           {/* Dialogs */}
-          <AddMultipleShiftsDialog open={showAddMultipleShiftsDialog} onOpenChange={setShowAddMultipleShiftsDialog} />
-          <AddTimeOffDialog open={showAddTimeOffDialog} onOpenChange={setShowAddTimeOffDialog} />
-          <ClearWeekDialog open={showClearWeekDialog} onOpenChange={setShowClearWeekDialog} />
+          <AddMultipleShiftsDialog
+            open={showAddMultipleShiftsDialog}
+            onOpenChange={setShowAddMultipleShiftsDialog}
+          />
+          <AddTimeOffDialog
+            open={showAddTimeOffDialog}
+            onOpenChange={setShowAddTimeOffDialog}
+          />
+          <ClearWeekDialog
+            open={showClearWeekDialog}
+            onOpenChange={setShowClearWeekDialog}
+          />
         </div>
       </div>
 
@@ -321,9 +342,15 @@ const JobSchedule = () => {
         <div className="flex font-custom items-center justify-between rounded-md mb-2">
           <div className="text-2xl">Weekly totals</div>
           <div className="flex gap-4">
-            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">Hour: 120:00</div>
-            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">Shift: 12</div>
-            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">Employee: 05</div>
+            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">
+              Hour: 120:00
+            </div>
+            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">
+              Shift: 12
+            </div>
+            <div className="bg-gray-100 py-2 px-8 rounded-lg text-lg font-custom">
+              Employee: 05
+            </div>
           </div>
         </div>
 
@@ -354,12 +381,14 @@ const JobSchedule = () => {
                       <p className="font-medium">{member.name}</p>
                       <p className="text-blue-500">{member.role}</p>
                       <p className="text-gray-500">Shift: {member.shift}</p>
-                      <p className="text-gray-500">Duration: {member.duration}</p>
+                      <p className="text-gray-500">
+                        Duration: {member.duration}
+                      </p>
                     </div>
                   </div>
                 </TableCell>
                 {dateColumns.map((date, i) => {
-                  const key = format(date, 'yyyy-MM-dd');
+                  const key = format(date, "yyyy-MM-dd");
                   const cellData = member.schedule?.[key];
                   return (
                     <TableCell
@@ -377,15 +406,14 @@ const JobSchedule = () => {
                         </div>
                       ) : (
                         <button
-  onClick={() => {
-    setSelectedDate(date); // ← this is the date from the map
-    setShowAddShiftDialog(true);
-  }}
-  className="text-gray-400 hover:text-blue-500"
->
-  <Plus size={16} />
-</button>
-
+                          onClick={() => {
+                            setSelectedDate(date); // ← this is the date from the map
+                            setShowAddShiftDialog(true);
+                          }}
+                          className="text-gray-400 hover:text-blue-500"
+                        >
+                          <Plus size={16} />
+                        </button>
                       )}
                     </TableCell>
                   );
@@ -396,11 +424,10 @@ const JobSchedule = () => {
         </Table>
       </div>
       <AddShiftDialog
-  open={showAddShiftDialog}
-  onOpenChange={setShowAddShiftDialog}
-  date={selectedDate} // ← pass it here
-/>
-
+        open={showAddShiftDialog}
+        onOpenChange={setShowAddShiftDialog}
+        date={selectedDate} // ← pass it here
+      />
     </div>
   );
 };

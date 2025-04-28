@@ -250,10 +250,10 @@ const Overtime = () => {
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div className="flex w-full sm:w-auto gap-4">
             <Select>
-              <SelectTrigger className="w-48 font-custom rounded-full">
+              <SelectTrigger className="w-24 font-custom rounded-full">
                 <SelectValue placeholder="Week" />
               </SelectTrigger>
-              <SelectContent className="w-48 font-custom">
+              <SelectContent className="w-24 font-custom">
                 {ALL.map((role) => (
                   <SelectItem key={role.value} value={role.value}>
                     {role.label}
