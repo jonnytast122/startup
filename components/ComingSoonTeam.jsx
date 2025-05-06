@@ -21,7 +21,7 @@ const people = [
       "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3467.JPG?alt=media&token=4d9ad79e-19f4-4583-a3d9-e0822c73dd9b",
   },
   {
-    name: "Ms. Hai Lyna",
+    name: "Ms. Hay Lyna",
     role: "Co-Founder / Data Analytics",
     imageUrl:
       "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3387.JPG?alt=media&token=04888c0b-c576-4266-9df3-e84f1887d970",
