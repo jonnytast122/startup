@@ -2,13 +2,20 @@ import Link from "next/link";
 import Image from "next/image";
 import { NAV_LINKS } from "@/constant";
 import { Button } from "@/components/ui/button";
-import { User, Menu } from "lucide-react";
+import { User, Menu, Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 function Navbar() {
   return (
@@ -37,7 +44,7 @@ function Navbar() {
               <li key={link.key}>
                 <Link
                   href={link.href}
-                  className="regular-16 font-sans text-dark-blue cursor-pointer pb-1.5 transition-all hover:font-bold"
+                  className="text-xl font-custom text-dark-blue cursor-pointer pb-1.5 transition-all hover:font-bold"
                 >
                   {link.label}
                 </Link>
@@ -46,22 +53,33 @@ function Navbar() {
           </ul>
 
           {/* Right Side: Login & Button */}
-          <div className="hidden xl:flex items-center gap-9">
+          <div className="hidden xl:flex items-center gap-6">
             <Link
               href="/signin"
               className="flex items-center gap-2 cursor-pointer group"
             >
-              <User className="h-6 w-4 text-gray-700 group-hover:font-bold" />
-              <span className="text-dark-blue regular-16 font-sans group-hover:font-semibold">
+              <User className="h-6 w-4 text-gray-700 group-hover:font-semibold" />
+              <span className="text-dark-blue text-xl font-custom group-hover:font-semibold">
                 Log In
               </span>
             </Link>
 
             <Link href="/signup">
-              <Button className="bg-blue-500 text-white font-custom text-lg py-3 px-6">
+              <Button className="bg-blue-500 text-white font-custom text-lg py-3 px-4">
                 Get Started
               </Button>
             </Link>
+
+            <Select>
+              <SelectTrigger className="w-[85px] font-custom border-none shadow-none focus:ring-0 focus:outline-none flex items-center gap-1">
+                <Globe className="w-4 h-4 text-dark-blue" />
+                <SelectValue placeholder="EN" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                <SelectItem value="en">EN</SelectItem>
+                <SelectItem value="kh">KH</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Mobile Dropdown Menu */}

@@ -9,41 +9,41 @@ function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
 
   const pricingPlans = [
-    {
-      name: "Basic",
-      monthly: "$14.99",
-      yearly: "$100",
-      smallText1: "Up to 5 users included",
-      smallText2: "$0.5 / month per additional user",
-      features: [
-        "Basic Reporting",
-        "Notifications & Alerts",
-        "Basic Customization dashboards with basic themes, widgets, and branch",
-        "Export data in basic formats like CSV",
-        "Simple tools for tracking holidays and managing holiday requests",
-        "Do payroll manually",
-        "Claiming Open Shifts",
-        "Time Tracking includes all report types, GPS tracking, and management of unlimited jobs.",
-        "Shift information manage shift details such as location, notes, media, and files",
-      ],
-    },
-    {
-      name: "Advanced",
-      monthly: "$24.99",
-      yearly: "$200",
-      highlight: true,
-      smallText1: "Up to 15 users included",
-      smallText2: "$1.5 / month per additional user",
-      features: [
-        "Advanced Reporting & Analytics for attendance, productivity, and payroll",
-        "Geofence for Time Clock",
-        "Auto Clock Out",
-        "Recurring Shifts and Templates for easy scheduling",
-        "Payroll integration limitation with bank",
-        "Lock Days in Timesheets",
-        "Basic API access for custom integrations and data exchange with Google Sheet"
-      ],
-    },
+    // {
+    //   name: "Basic",
+    //   monthly: "$14.99",
+    //   yearly: "$100",
+    //   smallText1: "Up to 5 users included",
+    //   smallText2: "$0.5 / month per additional user",
+    //   features: [
+    //     "Basic Reporting",
+    //     "Notifications & Alerts",
+    //     "Basic Customization dashboards with basic themes, widgets, and branch",
+    //     "Export data in basic formats like CSV",
+    //     "Simple tools for tracking holidays and managing holiday requests",
+    //     "Do payroll manually",
+    //     "Claiming Open Shifts",
+    //     "Time Tracking includes all report types, GPS tracking, and management of unlimited jobs.",
+    //     "Shift information manage shift details such as location, notes, media, and files",
+    //   ],
+    // },
+    // {
+    //   name: "Advanced",
+    //   monthly: "$24.99",
+    //   yearly: "$200",
+    //   highlight: true,
+    //   smallText1: "Up to 15 users included",
+    //   smallText2: "$1.5 / month per additional user",
+    //   features: [
+    //     "Advanced Reporting & Analytics for attendance, productivity, and payroll",
+    //     "Geofence for Time Clock",
+    //     "Auto Clock Out",
+    //     "Recurring Shifts and Templates for easy scheduling",
+    //     "Payroll integration limitation with bank",
+    //     "Lock Days in Timesheets",
+    //     "Basic API access for custom integrations and data exchange with Google Sheet"
+    //   ],
+    // },
     {
       name: "Expert",
       monthly: "$34.99",
@@ -125,7 +125,7 @@ function Pricing() {
           background: "linear-gradient(to bottom, #0B3858 20%, #ffffff 20%)",
         }}
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-6">
           {pricingPlans.map((plan) => (
             <div
               key={plan.name}
