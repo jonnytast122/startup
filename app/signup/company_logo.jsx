@@ -130,7 +130,7 @@ export default function CompanyLogo({ onNextStep, onBackStep, currentStep }) {
                   </Button>
                 </div>
 
-                <div className="text-center text-2sm font-vietname text-light-gray">
+                <div className="text-center text-2sm font-vietname-thin text-light-gray">
                   Already had an account?{" "}
                   <a href="#" className="text-blue">
                     Sign in

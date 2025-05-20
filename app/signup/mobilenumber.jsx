@@ -90,7 +90,7 @@ export default function MobileNumber({ onNextStep, onBackStep, currentStep }) {
                     defaultCountry={selectedCountry}
                     value={phoneNumber}
                     onChange={setPhoneNumber}
-                    className="w-full px-2 py-1 text-sm sm:text-base md:text-lg text-gray-700 focus:outline-none"
+                    className="w-full px-2 py-1 font-custom text-sm sm:text-base md:text-lg text-gray-700 focus:outline-none"
                     placeholder="Mobile Phone"
                   />
                 </div>
