@@ -5,7 +5,7 @@ import { Card } from "antd";
 import MainScreen from "./components/main";
 import ChatbotScreen from "./components/chatbot";
 import FaqsScreen from "./components/faqs";
-import { Lightbulb } from "lucide-react";
+import { Info } from "lucide-react";
 
 export default function SupportPage() {
     const [showDetail, setShowDetail] = useState(null); // State to manage the current screen
@@ -20,10 +20,10 @@ export default function SupportPage() {
 
     return (
         <div className="font-custom">
-            <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
-                <div className="flex items-center space-x-3 p-5">
-                    <Lightbulb className="text-[#2998FF]" width={40} height={40} />
-                    <span className="font-custom text-3xl text-black">Support</span>
+            <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+                <div className="flex items-center space-x-3 p-6">
+                    <Info className="text-[#2998FF]" width={40} height={40} />
+                    <span className="font-custom text-3xl text-black">Help</span>
                 </div>
             </div>
             {!showDetail ? (

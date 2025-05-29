@@ -1,149 +1,90 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  ChartNoAxesGantt,
-  User,
-  Users,
   CalendarClock,
-  Calendar1,
   CalendarPlus2,
   LogOut,
   CreditCard,
-  Lightbulb,
   Settings,
+  BookCheck,
+  Lightbulb,
+  User,
+  Users,
+  Info,
 } from "lucide-react";
-
-import Link from "next/link";
+import { NavMain } from "./nav-main";
+import { Separator } from "@/components/ui/separator";
 import {
   Sidebar,
   SidebarContent,
-  SidebarGroup,
+  SidebarFooter,
   SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
+// This is sample data.
 const data = {
   navMain: [
     {
+      title: "Main",
       items: [
         { title: "Overview", url: "/overview", icon: LayoutDashboard },
-        {
-          title: "Activity",
-          url: "/overview/activity",
-          icon: ChartNoAxesGantt,
-        },
-        { title: "Users & Admin", url: "/overview/users-admin", icon: User }, // Ensure this route exists
-        { title: "Groups", url: "/overview/groups", icon: Users }, // Provide a valid URL
       ],
     },
     {
       title: "Operation",
       items: [
-        {
-          title: "Time Clock",
-          url: "/overview/timeclock",
-          icon: CalendarClock,
-        },
-        {
-          title: "Job Schedule",
-          url: "/overview/job-schedule",
-          icon: Calendar1,
-        },
-        { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
+        { title: "Attendance", url: "/overview/timeclock", icon: CalendarClock },
         { title: "Leaves", url: "/overview/leaves", icon: LogOut },
+        { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
         { title: "Payroll", url: "/overview/payroll", icon: CreditCard },
       ],
     },
     {
-      title: "Others",
+      title: "Setting",
       items: [
-        { title: "Support", url: "/overview/support", icon: Lightbulb },
-        { title: "Setting", url: "/overview/setting", icon: Settings },
+        { title: "Company", url: "/overview/company", icon: Settings },
+        { title: "Workshift", url: "/overview/workshift", icon: BookCheck },
+        { title: "Policy", url: "/overview/policy", icon: Lightbulb },
+        { title: "Users & Admin", url: "/overview/users-admin", icon: User },
+        { title: "Groups", url: "/overview/group", icon: Users },
+      ],
+    },
+    {
+      title: "Support",
+      items: [
+        { title: "Help", url: "/overview/help", icon: Info },
       ],
     },
   ],
 };
 
 export function AppSidebar(props) {
-  const pathname = usePathname(); // Get current route
+  const { collapsed } = useSidebar()
+
+  // Don't render footer if sidebar is collapsed
+  if (collapsed) return null
 
   return (
-    <Sidebar {...props}>
-      <SidebarHeader className="bg-white">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
-              <a href="#" className="items-center justify-center">
-                <img src="/images/Logo_2.png" alt="Logo" className="h-11" />
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar collapsible="icon" className="z-50 bg-white" {...props}>
+      <SidebarHeader className="items-center bg-white">
+        <img
+          src="/images/Logo_2.png"
+          alt="Logo"
+          className="w-28 h-auto"
+        />
       </SidebarHeader>
-
       <SidebarContent className="bg-white">
-        <SidebarGroup>
-          <SidebarMenu>
-            {/* Render main items */}
-            {data.navMain[0].items.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <Link
-                    href={item.url}
-                    className={`text-base font-custom flex items-center p-2 rounded-lg ${
-                      pathname === item.url
-                        ? "bg-[#5494DA33] text-dark-gray" // Active state styling
-                        : "text-dark-gray hover:bg-[#5494DA33]"
-                    }`}
-                  >
-                    <item.icon className="mr-2" /> {item.title}
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-
-            {/* Render sections like "Operation", "Others" */}
-            {data.navMain.slice(1).map((section, index) => (
-              <SidebarMenuItem key={index}>
-                {section.title && (
-                  <SidebarMenuButton asChild>
-                    <span className="text-xs font-vietname-thin">
-                      {section.title}
-                    </span>
-                  </SidebarMenuButton>
-                )}
-                <SidebarMenuSub>
-                  {section.items.map((item) => (
-                    <SidebarMenuSubItem key={item.title}>
-                      <SidebarMenuSubButton asChild>
-                        <Link
-                          href={item.url}
-                          className={`text-base font-custom flex items-center p-2 rounded-lg ${
-                            pathname === item.url
-                              ? "bg-[#5494DA33] text-dark-gray" // Active state styling
-                              : "text-dark-gray hover:bg-[#5494DA33]"
-                          }`}
-                        >
-                          <item.icon className="mr-2" /> {item.title}
-                        </Link>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarGroup>
+        <NavMain items={data.navMain} />
       </SidebarContent>
+      <SidebarFooter
+        className="bg-white"
+      >
+        <Separator className="mb-2" />
+        <span className="text-xs text-blue-600 text-center">ANAN</span>
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

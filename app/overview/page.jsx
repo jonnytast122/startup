@@ -35,8 +35,8 @@ export default function OverviewPage() {
     return (
         <div className="space-y-2 scrollbar-hide font-custom">
             {/* Full-width box */}
-            <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
-                <div className="flex items-center space-x-3 p-5">
+            <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+                <div className="flex items-center space-x-3 p-6">
                     <LayoutDashboard className='text-[#2998FF]' width={40} height={40} />
                     <span className="font-custom text-3xl text-black">Overview</span>
                 </div>
@@ -52,7 +52,11 @@ export default function OverviewPage() {
                     <RequestButton icon={Bell} text="Notifications" notificationCount={3} />
                     <RequestButton icon={User} text="Profile" notificationCount={2} />
                     <RequestButton icon={Settings} text="Settings" notificationCount={1} />
-
+                    <RequestButton icon={Home} text="Home" notificationCount={2} />
+                    <RequestButton icon={MessageCircle} text="Messages" notificationCount={5} />
+                    <RequestButton icon={Bell} text="Notifications" notificationCount={3} />
+                    <RequestButton icon={User} text="Profile" notificationCount={2} />
+                    <RequestButton icon={Settings} text="Settings" notificationCount={1} />
                 </div>
             </div>
 

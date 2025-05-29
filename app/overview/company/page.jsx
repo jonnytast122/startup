@@ -33,10 +33,10 @@ export default function SettingPage() {
   };
   return (
     <div>
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
-        <div className="flex items-center space-x-3 p-5">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+        <div className="flex items-center space-x-3 p-6">
           <Settings className='text-[#2998FF]' width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Setting</span>
+          <span className="font-custom text-3xl text-black">Company</span>
         </div>
       </div>
       <div className="bg-white rounded-xl shadow-md py-6 px-6">
