@@ -113,12 +113,10 @@ export default function AddAdminDialog({ open, onClose }) {
           <Table className="w-full min-w-max rounded-lg overflow-hidden">
             <TableHeader className="bg-[#e4e4e4] rounded-lg">
               <TableRow>
-                <TableHead>First Name*</TableHead>
-                <TableHead>Last Name</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Phone Number</TableHead>
-                <TableHead>Cash</TableHead>
-                <TableHead>Assigned Group</TableHead>
-                <TableHead>Assigned Feature</TableHead>
+                <TableHead>Branch</TableHead>
+                <TableHead>Shift Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -126,21 +124,11 @@ export default function AddAdminDialog({ open, onClose }) {
                 <TableRow key={admin.id}>
                   <TableCell>
                     <Input
-                      value={admin.firstname}
+                      value={admin.name}
                       onChange={(e) =>
-                        handleInputChange(admin.id, "firstname", e.target.value)
+                        handleInputChange(admin.id, "name", e.target.value)
                       }
                       placeholder="First Name"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={admin.lastname}
-                      onChange={(e) =>
-                        handleInputChange(admin.id, "lastname", e.target.value)
-                      }
-                      placeholder="Last Name"
                       className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
                     />
                   </TableCell>
@@ -197,49 +185,28 @@ export default function AddAdminDialog({ open, onClose }) {
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={admin.cash}
+                      value={admins.branch}
                       onChange={(e) =>
-                        handleInputChange(admin.id, "cash", e.target.value)
+                        handleInputChange(admins.id, "branch", e.target.value)
                       }
-                      placeholder="Cash"
+                      placeholder="Branch Name"
                       className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
                     />
                   </TableCell>
                   <TableCell>
                     <Select
-                      value={admin.assignedGroup}
+                      value={admins.shifttype}
                       onValueChange={(value) =>
-                        handleInputChange(admin.id, "assignedGroup", value)
+                        handleInputChange(admins.id, "shifttype", value)
                       }
                     >
-                      <SelectTrigger className="w-full font-custom border-gray-300">
-                        <SelectValue placeholder="Select Group" />
+                      <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+                        <SelectValue placeholder="Select Shift Type" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {assignedGroups.map((group) => (
-                          <SelectItem key={group} value={group}>
-                            {group}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={admin.assignedFeature}
-                      onValueChange={(value) =>
-                        handleInputChange(admin.id, "assignedFeature", value)
-                      }
-                    >
-                      <SelectTrigger className="w-full font-custom border-gray-300">
-                        <SelectValue placeholder="Select Feature" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {assignedFeatures.map((feature) => (
-                          <SelectItem key={feature} value={feature}>
-                            {feature}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="font-custom">
+                        <SelectItem value="schedule">Schedule</SelectItem>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                        <SelectItem value="part-time">Part-Time</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
@@ -260,11 +227,20 @@ export default function AddAdminDialog({ open, onClose }) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
             Cancel
           </Button>
-          <Button>
-            <UserPlus className="w-4 h-4 mr-2" /> Send an Invite
+
+          <Button
+            variant="outline"
+            className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-100"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Send an Invite
           </Button>
         </DialogFooter>
       </DialogContent>

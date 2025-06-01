@@ -7,16 +7,18 @@ import {
   Ellipsis,
   Landmark,
   Percent,
+  CirclePlus,
 } from "lucide-react";
 import { useState } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
-import { Switch } from "@/components/ui/switch";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import UpdateCashDialog from "../components/updatecashdialog";
+import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
 
 export default function UserProfile() {
   const searchParams = useSearchParams();
@@ -41,13 +43,142 @@ export default function UserProfile() {
   const lastInitial = lastname.charAt(0).toUpperCase();
 
   const [imageError, setImageError] = useState(false);
+  const [isDialogOpen, setDialogOpen] = useState(false);
+
+  const [selectedPolicies, setSelectedPolicies] = useState([
+    "Leave Policy",
+    "Overtime Policy",
+  ]);
+
+  const togglePolicy = (policy) => {
+    setSelectedPolicies((prev) =>
+      prev.includes(policy)
+        ? prev.filter((p) => p !== policy)
+        : [...prev, policy]
+    );
+  };
+
+  const [selectedWorkShift, setSelectedWorkShift] = useState([
+    "Morning",
+    "Afternoon",
+  ]);
+
+  const toggleWorkShift = (shift) => {
+    setSelectedWorkShift((prev) =>
+      prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
+    );
+  };
+
+  const [selectedGroup, setSelectedGroup] = useState(["Admin", "HR Manager"]);
+
+  const toggleGroup = (value) => {
+    setSelectedGroup((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const [selectedLocation, setSelectedLocation] = useState([
+    "Geo Fence",
+    "Flexible",
+    "GPS",
+  ]);
+
+  const toggleLocation = (value) => {
+    setSelectedLocation((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+    );
+  };
+
+  const DropdownSection = ({
+    title,
+    items,
+    selectedItems,
+    toggleItem,
+    dropdownWidth = "w-40",
+  }) => (
+    <>
+      <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
+      <div className="flex justify-between items-start flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4">
+          {items.map(
+            (item) =>
+              selectedItems.includes(item) && (
+                <div
+                  key={item}
+                  className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm w-auto max-w-full"
+                >
+                  <h2 className="text-sm font-custom text-blue">{item}</h2>
+                </div>
+              )
+          )}
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+            >
+              <span className="relative w-3 h-3">
+                <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
+                <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
+              </span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
+          >
+            <div className="space-y-1">
+              {items.map((item) => (
+                <DropdownMenuItem
+                  key={item}
+                  onClick={() => toggleItem(item)}
+                  className={
+                    selectedItems.includes(item)
+                      ? "bg-blue-100 text-blue-700"
+                      : "hover:bg-blue-50"
+                  }
+                >
+                  {item}
+                </DropdownMenuItem>
+              ))}
+            </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </>
+  );
+
+  const InputDisplay = ({ label, value }) => (
+    <>
+      <label className="text-sm font-custom text-[#3F4648] w-full">
+        {label}
+      </label>
+      <input
+        type="text"
+        placeholder={value}
+        disabled
+        className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+      />
+    </>
+  );
+
+  const InfoRow = ({ label, value }) => (
+    <div className="flex items-center justify-between">
+      <p className="text-md font-custom text-light-pearl">{label}</p>
+      <p className="font-custom text-md text-dark-blue font-semibold">
+        {value}
+      </p>
+    </div>
+  );
 
   return (
     <>
       <div className="bg-white rounded-xl shadow-md py-6 px-6">
         <div className="flex items-center space-x-3 p-5">
           <CreditCard className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Payroll</span>
+          <span className="font-custom text-3xl text-black">Profile</span>
         </div>
       </div>
 
@@ -91,218 +222,69 @@ export default function UserProfile() {
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Personal details
             </h2>
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              First Name
-            </label>
-            <input
-              id="firstname"
-              type="text"
-              placeholder={firstname}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Last Name
-            </label>
-            <input
-              id="lastname"
-              type="text"
-              placeholder={lastname}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Mobile Phone
-            </label>
-            <input
-              id="mobilephone"
-              type="text"
-              placeholder={mobile}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Email
-            </label>
-            <input
-              id="email"
-              type="text"
-              placeholder={email}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
+
+            <InputDisplay label="First Name" value={firstname} />
+            <InputDisplay label="Last Name" value={lastname} />
+            <InputDisplay label="Mobile Phone" value={mobile} />
+            <InputDisplay label="Birthday" value={birthday} />
+
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              placeholder={title}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+
+            <InputDisplay label="Branch" value={branch} />
+            <InputDisplay label="Department" value="Junior Marketing" />
+            <InputDisplay label="Title" value={title} />
+            <InputDisplay
+              label="Employment Start Date"
+              value={employmentstartdate}
             />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Employment Start Date
-            </label>
-            <input
-              id="employmentstartdate"
-              type="text"
-              placeholder={employmentstartdate}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+
+            <DropdownSection
+              title="Policies"
+              items={["Leave Policy", "Overtime Policy"]}
+              selectedItems={selectedPolicies}
+              toggleItem={togglePolicy}
+              dropdownWidth="w-38"
             />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Team
-            </label>
-            <input
-              id="team"
-              type="text"
-              placeholder="Office"
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+
+            <DropdownSection
+              title="Work Shift"
+              items={["Morning", "Afternoon", "Full Day"]}
+              selectedItems={selectedWorkShift}
+              toggleItem={toggleWorkShift}
             />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Department
-            </label>
-            <input
-              id="department"
-              type="text"
-              placeholder="Junior Marketing"
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+
+            <DropdownSection
+              title="Group"
+              items={["Admin", "HR Manager", "Employee"]}
+              selectedItems={selectedGroup}
+              toggleItem={toggleGroup}
+              dropdownWidth="w-44"
             />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Branch
-            </label>
-            <input
-              id="department"
-              type="text"
-              placeholder={branch}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Birthday
-            </label>
-            <input
-              id="department"
-              type="text"
-              placeholder={birthday}
-              disabled
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
-            />
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Signature
-            </label>
-            <input
-              id="department"
-              type="text"
-              placeholder=""
-              disabled
-              className="text-sm font-custom rounded-lg p-12 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+
+            <DropdownSection
+              title="Location"
+              items={["Geo Fence", "Flexible", "GPS"]}
+              selectedItems={selectedLocation}
+              toggleItem={toggleLocation}
             />
           </div>
 
           {/* Right container with text aligned left */}
           <div className="w-full md:w-[60%] p-6">
-            <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
-              Employee Card
-            </h2>
-
-            {/* Card and text side-by-side */}
-            <div className="flex items-start justify-start mt-4 gap-6 w-full">
-              {/* Credit Card */}
-              <div className="bg-gradient-to-r from-blue-600 to-blue-400 text-white p-6 sm:p-8 lg:p-10 xl:p-8 rounded-xl w-80 sm:w-[300px] md:w-[400px] lg:w-[400px] xl:w-[400px] xl:h-[200px] shadow-lg font-custom transition-all duration-300">
-                <div className="flex justify-between items-center mb-6">
-                  <div className="text-lg md:text-xl font-semibold">
-                    Employee Card
-                  </div>
-                  <div className="text-xs md:text-sm">12/25</div>
-                </div>
-                <div className="text-xl md:text-2xl tracking-widest mb-4">
-                  •••• •••• •••• 1234
-                </div>
-                <div className="flex justify-between items-center">
-                  <div className="text-sm md:text-base">
-                    {firstname} {lastname}
-                  </div>
-                  <div className="text-sm md:text-base">CVC: 123</div>
-                </div>
-              </div>
-
-              {/* Info next to card - full width side */}
-              <div className="flex flex-col justify-center space-y-6 flex-1">
-                <p className="text-xl font-semibold font-custom text-dark-blue">
-                  Information on card
-                </p>
-
-                <div className="flex items-center justify-between">
-                  <p className="text-md font-custom text-light-pearl">
-                    1st info layer
-                  </p>
-                  <Switch />
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <p className="text-md font-custom text-light-pearl">
-                    2nd info layer
-                  </p>
-                  <Switch />
-                </div>
-              </div>
-            </div>
-
-            {/* Text under the card and info section */}
-            <div className="mt-4 text-md font-custom text-light-pearl w-full">
-              <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
-                QR code
-              </h2>
-              <div className="flex items-center justify-between">
-                <p className="text-md font-custom text-light-pearl">
-                  Add QR codes to employee cards for quick, secure access to
-                  digital information and resources
-                </p>
-                <Switch />
-              </div>
-              {/* Button moved to the right */}
-              <div className="mt-4 flex justify-end">
-                <button className="bg-white text-light-blue shadow-md py-2 px-8 rounded-full hover:bg-blue-600 hover:text-white transform hover:scale-105 transition-all duration-300">
-                  Save
-                </button>
-              </div>
-            </div>
-
-            <div className="mt-4 text-md font-custom text-light-pearl w-ful space-y-2">
+            <div className="text-md font-custom text-light-pearl w-full space-y-2">
               <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
                 Payroll Info
               </h2>
-              <div className="flex items-center justify-between">
-                <p className="text-md font-custom text-light-pearl">
-                  Employee Name
-                </p>
-                <p className="font-custom text-md text-dark-blue font-semibold">
-                  {firstname} {lastname}
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-md font-custom text-light-pearl">
-                  Employee ID
-                </p>
-                <p className="font-custom text-md text-dark-blue font-semibold">
-                  #1234565
-                </p>
-              </div>
-              <div className="flex items-center justify-between">
-                <p className="text-md font-custom text-light-pearl">
-                  Account Number
-                </p>
-                <p className="font-custom text-md text-dark-blue font-semibold">
-                  {accountnumber}
-                </p>
-              </div>
+
+              <InfoRow
+                label="Employee Name"
+                value={`${firstname} ${lastname}`}
+              />
+              <InfoRow label="Employee ID" value="#1234565" />
+              <InfoRow label="Bank Name" value="--------------" />
+              <InfoRow label="Account Number" value={accountnumber} />
             </div>
 
             <div className="relative">
@@ -318,9 +300,10 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => setDialogOpen(true)}>
                       Edit
                     </DropdownMenuItem>
+
                     <DropdownMenuItem onClick={() => {}}>
                       Arhieve
                     </DropdownMenuItem>
@@ -332,6 +315,11 @@ export default function UserProfile() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <UpdateCashDialog
+                  open={isDialogOpen}
+                  onOpenChange={setDialogOpen}
+                  oldCash={cash}
+                />
               </div>
 
               {/* Card container */}
@@ -360,7 +348,7 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => setDialogOpen(true)}>
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {}}>
@@ -374,6 +362,11 @@ export default function UserProfile() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                <UpdateBankTransferDialog
+                  open={isDialogOpen}
+                  onOpenChange={setDialogOpen}
+                  oldCash={cash}
+                />
               </div>
 
               {/* Card container */}
@@ -437,12 +430,12 @@ export default function UserProfile() {
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <p className="font-custom text-md font-semibold">
+                    <p className="font-custom text-lg font-semibold">
                       Estimated
                     </p>
                   </div>
                 </div>
-                <hr className="border-t border-blue-500 my-4" />
+                <hr className="border-t border-blue-500" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
                     <Banknote className="text-blue w-8 h-8 mr-6" />
@@ -460,7 +453,7 @@ export default function UserProfile() {
                     <Banknote className="text-blue w-8 h-8 mr-6" />
                     <div>
                       <p className="font-custom text-md font-semibold">
-                        No Children
+                        Bank Transfer
                       </p>
                     </div>
                   </div>
@@ -469,12 +462,11 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                <div className="border-t border-blue-500 my-2"></div>
+                <div className="border-t border-blue-500"></div>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <p className="font-custom text-md font-semibold">
-                      Sub total Salary
+                  <div className="flex items-center">
+                    <p className="font-custom text-lg font-semibold">
+                      Net Salary
                     </p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
@@ -482,6 +474,20 @@ export default function UserProfile() {
                   </p>
                 </div>
               </div>
+              <h2 className="text-2xl font-semibold font-custom text-black mt-6">
+                Attachment
+                <button
+                  type="button"
+                  className="inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition ml-4"
+                >
+                  <span className="relative w-3 h-3">
+                    {/* Vertical Line */}
+                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
+                    {/* Horizontal Line */}
+                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
+                  </span>
+                </button>
+              </h2>
             </div>
           </div>
         </div>

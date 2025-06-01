@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -24,6 +24,13 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import { List, ChevronDown } from "lucide-react";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -71,6 +78,7 @@ const users = [
     birthday: "1990-05-12",
     branch: "BKK1",
     status: "active",
+    shiftType: "Scheduled",
   },
   {
     profile: "/avatars/sara.png",
@@ -89,6 +97,7 @@ const users = [
     birthday: "1992-11-03",
     branch: "BKK2",
     status: "inactive",
+    shiftType: "Scheduled",
   },
   {
     profile: "/avatars/kevin.png",
@@ -107,6 +116,7 @@ const users = [
     birthday: "1987-08-22",
     branch: "BKK3",
     status: "pending",
+    shiftType: "Scheduled",
   },
   {
     profile: "/avatars/emily.png",
@@ -125,6 +135,7 @@ const users = [
     birthday: "1991-01-15",
     branch: "BKK1",
     status: "active",
+    shiftType: "Scheduled",
   },
   {
     profile: "/avatars/omar.png",
@@ -143,6 +154,7 @@ const users = [
     birthday: "1993-06-30",
     branch: "BKK2",
     status: "inactive",
+    shiftType: "Scheduled",
   },
   {
     profile: "/avatars/luna.png",
@@ -161,6 +173,7 @@ const users = [
     birthday: "1995-04-18",
     branch: "BKK3",
     status: "pending",
+    shiftType: "Scheduled",
   },
 ];
 
@@ -180,9 +193,11 @@ const columns = [
     cell: ({ row }) => {
       const [imageError, setImageError] = React.useState(false);
       const profile = row.original.profile;
-      const firstNameInitial = row.original.firstname?.charAt(0).toUpperCase() || "";
-      const lastNameInitial = row.original.lastname?.charAt(0).toUpperCase() || "";
-  
+      const firstNameInitial =
+        row.original.firstname?.charAt(0).toUpperCase() || "";
+      const lastNameInitial =
+        row.original.lastname?.charAt(0).toUpperCase() || "";
+
       return (
         <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
           {profile && !imageError ? (
@@ -201,22 +216,65 @@ const columns = [
         </div>
       );
     },
-  },  
-  { accessorKey: "firstname", header: "First name" },
-  { accessorKey: "lastname", header: "Last name" },
-  { accessorKey: "title", header: "Title" },
+  },
   {
-    accessorKey: "banktransfer",
-    header: "Bank Transfer",
-    cell: ({ cell }) => {
-      const value = cell.getValue();
+    accessorFn: (row) => `${row.firstname} ${row.lastname}`,
+    id: "fullName",
+    header: "Name",
+    cell: ({ row }) => {
+      const name = row.original.firstname + " " + row.original.lastname;
+      return <span className="text-sm font-custom">{name}</span>;
+    },
+  },
+  { accessorKey: "phone", header: "Phone" },
+  { accessorKey: "branch", header: "Branch" },
+  { accessorKey: "shiftType", header: "Shift Type" },
+  {
+    accessorKey: "accessLevel",
+    header: "Access Level",
+    cell: ({ row }) => {
+      const userId = row.index; // or row.original.id if you have an id
+      const value = row.original.accessLevel;
+      const [userData, setUserData] = useState(
+        users.map((user) => ({
+          ...user,
+          accessLevel: user.accessLevel || "owner", // set default
+        }))
+      );
+
+      const handleChange = (newValue) => {
+        const updated = [...userData];
+        updated[userId] = { ...updated[userId], accessLevel: newValue };
+        setUserData(updated);
+      };
+
       return (
-        <span className="text-sm font-custom">
-          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
-        </span>
+        <Select value={value} onValueChange={handleChange}>
+          <SelectTrigger className="w-[100px] border-none shadow-none focus:ring-0 focus:outline-none">
+            <SelectValue placeholder="Owner" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            <SelectItem value="owner">Owner</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
       );
     },
   },
+
+  // { accessorKey: "title", header: "Title" },
+  // {
+  //   accessorKey: "banktransfer",
+  //   header: "Bank Transfer",
+  //   cell: ({ cell }) => {
+  //     const value = cell.getValue();
+  //     return (
+  //       <span className="text-sm font-custom">
+  //         {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+  //       </span>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "cash",
     header: "Cash",
@@ -235,12 +293,17 @@ const columns = [
   { accessorKey: "banknumber", header: "Bank Account" },
   {
     accessorKey: "status",
+    filterFn: (row, columnId, filterValue) => {
+      return (
+        row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase()
+      );
+    },
     header: ({ column }) => (
       <div className="flex items-center gap-1">
         <span>Status</span>
         <Select
           onValueChange={(value) => {
-            column.setFilterValue(value === "All" ? "" : value);
+            column.setFilterValue(value === "All" ? "" : value.toLowerCase());
           }}
         >
           <SelectTrigger className="border-none p-0 w-6"></SelectTrigger>
@@ -290,10 +353,40 @@ const columns = [
           }}
         >
           <Dot color={dotColor[status] || "#999"} />
-          {row.original.status}
+          {status}
         </span>
       );
     },
+  },
+  {
+    id: "filter",
+    header: ({ table }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="p-1 h-auto">
+            <List size={16} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          align="end"
+          className="bg-white shadow-md border p-2 font-custom z-10"
+        >
+          {table
+            .getAllColumns()
+            .filter((column) => column.getCanHide())
+            .map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                className="capitalize"
+                checked={column.getIsVisible()}
+                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+              >
+                {column.id}
+              </DropdownMenuCheckboxItem>
+            ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
   },
 ];
 
@@ -306,8 +399,23 @@ const UsersScreen = ({ setUsersCount }) => {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     initialState: {
-      pagination: {
-        pageSize: 25,
+      pagination: { pageSize: 25 },
+      columnVisibility: {
+        profile: true,
+        fullName: true,
+        phone: true,
+        title: false,
+        banktransfer: false,
+        branch: true,
+        shiftType: true,
+        accessLevel: true,
+        cash: false,
+        dateadded: true,
+        lastlogin: true,
+        bankname: false,
+        banknumber: false,
+        status: true,
+        filter: true,
       },
     },
   });
@@ -408,7 +516,6 @@ const UsersScreen = ({ setUsersCount }) => {
                   const query = new URLSearchParams(rest).toString();
                   router.push(`/overview/users-admin/profile?${query}`);
                 }}
-                
               >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell

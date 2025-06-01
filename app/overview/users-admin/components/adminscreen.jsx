@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ColumnDef,
   flexRender,
@@ -23,6 +23,13 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import { List, ChevronDown } from "lucide-react";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -54,77 +61,118 @@ const exportOptions = [
 
 const admins = [
   {
-    profile: "/avatars/ralph.png",
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "500.00",
-    cash: "300.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/alex.png",
+    firstname: "Alex",
+    lastname: "Thorne",
+    title: "Marketing Manager",
+    banktransfer: "800.00",
+    cash: "150.00",
+    dateadded: "03-15-2025",
+    lastlogin: "04-10-2025",
+    bankname: "alexthorne",
+    banknumber: "9876543210",
+    email: "alex.thorne@example.com",
+    phone: "093456789",
+    department: "Marketing",
+    birthday: "1990-05-12",
+    branch: "BKK1",
     status: "active",
+    shiftType: "Scheduled",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "300.00",
-    cash: "200.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/sara.png",
+    firstname: "Sara",
+    lastname: "Lim",
+    title: "Product Designer",
+    banktransfer: "450.00",
+    cash: "230.00",
+    dateadded: "02-28-2025",
+    lastlogin: "04-01-2025",
+    bankname: "saralim",
+    banknumber: "7766554433",
+    email: "sara.lim@example.com",
+    phone: "087123456",
+    department: "Design",
+    birthday: "1992-11-03",
+    branch: "BKK2",
     status: "inactive",
+    shiftType: "Scheduled",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "500.00",
-    cash: "300.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/kevin.png",
+    firstname: "Kevin",
+    lastname: "Nguyen",
+    title: "CTO",
+    banktransfer: "1200.00",
+    cash: "500.00",
+    dateadded: "01-20-2025",
+    lastlogin: "04-12-2025",
+    bankname: "kevinng",
+    banknumber: "1122334455",
+    email: "kevin.nguyen@example.com",
+    phone: "092345678",
+    department: "Engineering",
+    birthday: "1987-08-22",
+    branch: "BKK3",
     status: "pending",
+    shiftType: "Scheduled",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "500.00",
-    cash: "300.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/emily.png",
+    firstname: "Emily",
+    lastname: "Stone",
+    title: "HR Specialist",
+    banktransfer: "670.00",
+    cash: "310.00",
+    dateadded: "03-01-2025",
+    lastlogin: "04-08-2025",
+    bankname: "emilystone",
+    banknumber: "3344556677",
+    email: "emily.stone@example.com",
+    phone: "098765432",
+    department: "HR",
+    birthday: "1991-01-15",
+    branch: "BKK1",
     status: "active",
+    shiftType: "Scheduled",
   },
   {
-    firstname: "John",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "500.00",
-    cash: "300.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/omar.png",
+    firstname: "Omar",
+    lastname: "Khan",
+    title: "Software Engineer",
+    banktransfer: "950.00",
+    cash: "420.00",
+    dateadded: "03-18-2025",
+    lastlogin: "04-10-2025",
+    bankname: "omarkhan",
+    banknumber: "2233445566",
+    email: "omar.khan@example.com",
+    phone: "096654321",
+    department: "Engineering",
+    birthday: "1993-06-30",
+    branch: "BKK2",
     status: "inactive",
+    shiftType: "Scheduled",
   },
   {
-    firstname: "John2",
-    lastname: "Doe",
-    title: "CEO",
-    banktransfer: "500.00",
-    cash: "300.00",
-    dateadded: "10-02-2025",
-    lastlogin: "10-02-2025",
-    bankname: "johndoe",
-    banknumber: "1234567890",
+    profile: "/avatars/luna.png",
+    firstname: "Luna",
+    lastname: "Park",
+    title: "Data Analyst",
+    banktransfer: "390.00",
+    cash: "180.00",
+    dateadded: "02-10-2025",
+    lastlogin: "04-09-2025",
+    bankname: "lunapark",
+    banknumber: "6655443322",
+    email: "luna.park@example.com",
+    phone: "097998877",
+    department: "Analytics",
+    birthday: "1995-04-18",
+    branch: "BKK3",
     status: "pending",
+    shiftType: "Scheduled",
   },
 ];
 
@@ -142,37 +190,89 @@ const columns = [
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
-      const profileExists = row.original.profile; // Check if profile exists
-      const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
-      const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
-      
+      const [imageError, setImageError] = React.useState(false);
+      const profile = row.original.profile;
+      const firstNameInitial =
+        row.original.firstname?.charAt(0).toUpperCase() || "";
+      const lastNameInitial =
+        row.original.lastname?.charAt(0).toUpperCase() || "";
+
       return (
-        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
-          {profileExists ? (
-            // Replace with an actual image if available
-            <img src={row.original.profile} alt="Profile" className="w-full h-full rounded-full object-cover" />
+        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300 overflow-hidden">
+          {profile && !imageError ? (
+            <img
+              src={profile}
+              alt="Profile"
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
           ) : (
-            <span className="text-xs text-gray-500">{firstNameInitial}{lastNameInitial}</span>
+            <span className="text-xs text-gray-600 font-medium">
+              {firstNameInitial}
+              {lastNameInitial}
+            </span>
           )}
         </div>
       );
     },
   },
-  { accessorKey: "firstname", header: "First name" },
-  { accessorKey: "lastname", header: "Last name" },
-  { accessorKey: "title", header: "Title" },
   {
-    accessorKey: "banktransfer",
-    header: "Bank Transfer",
-    cell: ({ cell }) => {
-      const value = cell.getValue();
+    accessorFn: (row) => `${row.firstname} ${row.lastname}`,
+    id: "fullName",
+    header: "Name",
+    cell: ({ row }) => {
+      const name = row.original.firstname + " " + row.original.lastname;
+      return <span className="text-sm font-custom">{name}</span>;
+    },
+  },
+  { accessorKey: "phone", header: "Phone" },
+  { accessorKey: "branch", header: "Branch" },
+  { accessorKey: "shiftType", header: "Shift Type" },
+  {
+    accessorKey: "accessLevel",
+    header: "Access Level",
+    cell: ({ row }) => {
+      const userId = row.index; // or row.original.id if you have an id
+      const value = row.original.accessLevel;
+      const [userData, setUserData] = useState(
+        admins.map((admin) => ({
+          ...admin,
+          accessLevel: admin.accessLevel || "owner", // set default
+        }))
+      );
+
+      const handleChange = (newValue) => {
+        const updated = [...userData];
+        updated[userId] = { ...updated[userId], accessLevel: newValue };
+        setUserData(updated);
+      };
+
       return (
-        <span className="text-sm font-custom">
-          {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
-        </span>
+        <Select value={value} onValueChange={handleChange}>
+          <SelectTrigger className="w-[100px] border-none shadow-none focus:ring-0 focus:outline-none">
+            <SelectValue placeholder="Owner" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            <SelectItem value="owner">Owner</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
       );
     },
   },
+  // { accessorKey: "title", header: "Title" },
+  // {
+  //   accessorKey: "banktransfer",
+  //   header: "Bank Transfer",
+  //   cell: ({ cell }) => {
+  //     const value = cell.getValue();
+  //     return (
+  //       <span className="text-sm font-custom">
+  //         {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
+  //       </span>
+  //     );
+  //   },
+  // },
   {
     accessorKey: "cash",
     header: "Cash",
@@ -191,12 +291,17 @@ const columns = [
   { accessorKey: "banknumber", header: "Bank Account" },
   {
     accessorKey: "status",
+    filterFn: (row, columnId, filterValue) => {
+      return (
+        row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase()
+      );
+    },
     header: ({ column }) => (
       <div className="flex items-center gap-1">
         <span>Status</span>
         <Select
           onValueChange={(value) => {
-            column.setFilterValue(value === "All" ? "" : value);
+            column.setFilterValue(value === "All" ? "" : value.toLowerCase());
           }}
         >
           <SelectTrigger className="border-none p-0 w-6"></SelectTrigger>
@@ -246,26 +351,68 @@ const columns = [
           }}
         >
           <Dot color={dotColor[status] || "#999"} />
-          {row.original.status}
+          {status}
         </span>
       );
     },
   },
+  {
+    id: "filter",
+    header: ({ table }) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="p-1 h-auto">
+            <List size={16} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-white shadow-md border p-2 font-custom z-10">
+          {table
+            .getAllColumns()
+            .filter((column) => column.getCanHide())
+            .map((column) => (
+              <DropdownMenuCheckboxItem
+                key={column.id}
+                className="capitalize"
+                checked={column.getIsVisible()}
+                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+              >
+                {column.id}
+              </DropdownMenuCheckboxItem>
+            ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    ),
+  },
 ];
 
 const AdminsScreen = ({ setAdminsCount }) => {
-  const table = useReactTable({
-    data: admins,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 25,
+    const table = useReactTable({
+      data: admins,
+      columns,
+      getCoreRowModel: getCoreRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      initialState: {
+        pagination: { pageSize: 25 },
+        columnVisibility: {
+          profile: true,
+          fullName: true,
+          phone: true,
+          title: false,
+          banktransfer: false,
+          branch: true,
+          shiftType: true,
+          accessLevel: true,
+          cash: false,
+          dateadded: true,
+          lastlogin: true,
+          bankname: false,
+          banknumber: false,
+          status: true,
+          filter: true,
+        },
       },
-    },
-  });
+    });
 
   useEffect(() => {
     setAdminsCount(admins.length); // Call setUsersCount to update the count

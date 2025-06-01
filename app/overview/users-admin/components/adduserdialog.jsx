@@ -24,8 +24,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 const countryCodes = [
   { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" }, // Set Cambodia as default
@@ -104,13 +109,10 @@ export default function AddUserDialog({ open, onClose }) {
           <Table className="w-full min-w-max rounded-lg overflow-hidden">
             <TableHeader className="bg-[#e4e4e4] rounded-lg">
               <TableRow>
-                <TableHead>First Name*</TableHead>
-                <TableHead>Last Name</TableHead>
+                <TableHead>Name</TableHead>
                 <TableHead>Phone Number</TableHead>
-                <TableHead>Bank Transfer</TableHead>
-                <TableHead>Cash</TableHead>
-                <TableHead>Employment Start Date</TableHead>
-                <TableHead>Birthday</TableHead>
+                <TableHead>Branch</TableHead>
+                <TableHead>Shift Type</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -118,21 +120,11 @@ export default function AddUserDialog({ open, onClose }) {
                 <TableRow key={user.id}>
                   <TableCell>
                     <Input
-                      value={user.firstname}
+                      value={user.name}
                       onChange={(e) =>
-                        handleInputChange(user.id, "firstname", e.target.value)
+                        handleInputChange(user.id, "name", e.target.value)
                       }
                       placeholder="First Name"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={user.lastname}
-                      onChange={(e) =>
-                        handleInputChange(user.id, "lastname", e.target.value)
-                      }
-                      placeholder="Last Name"
                       className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
                     />
                   </TableCell>
@@ -189,99 +181,30 @@ export default function AddUserDialog({ open, onClose }) {
                   </TableCell>
                   <TableCell>
                     <Input
-                      value={user.bankTransfer}
+                      value={user.branch}
                       onChange={(e) =>
-                        handleInputChange(
-                          user.id,
-                          "bankTransfer",
-                          e.target.value
-                        )
+                        handleInputChange(user.id, "branch", e.target.value)
                       }
-                      placeholder="Bank Transfer"
+                      placeholder="Branch Name"
                       className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
                     />
                   </TableCell>
                   <TableCell>
-                    <Input
-                      value={user.cash}
-                      onChange={(e) =>
-                        handleInputChange(user.id, "cash", e.target.value)
+                    <Select
+                      value={user.shifttype}
+                      onValueChange={(value) =>
+                        handleInputChange(user.id, "shifttype", value)
                       }
-                      placeholder="Cash"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full flex items-center justify-between font-custom h-9 text-black"
-                        >
-                          {user.employment_start_date ? (
-                            format(new Date(user.employment_start_date), "PPP")
-                          ) : (
-                            <span className="text-gray-500">Pick a date</span>
-                          )}
-                          <ChevronDown className="w-6 h-6 text-light-gray" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="p-0 bg-white border shadow-md rounded-md"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={
-                            user.employment_start_date
-                              ? new Date(user.employment_start_date)
-                              : undefined
-                          }
-                          onSelect={(date) =>
-                            handleInputChange(
-                              user.id,
-                              "employment_start_date",
-                              date ? date.toISOString() : ""
-                            )
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                  <TableCell>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full flex items-center justify-between font-custom h-9 text-black"
-                        >
-                          {user.birthday ? (
-                            format(new Date(user.birthday), "PPP")
-                          ) : (
-                            <span className="text-gray-500">Pick a date</span>
-                          )}
-                          <ChevronDown className="w-6 h-6 text-light-gray" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="p-0 bg-white border shadow-md rounded-md"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={
-                            user.birthday ? new Date(user.birthday) : undefined
-                          }
-                          onSelect={(date) =>
-                            handleInputChange(
-                              user.id,
-                              "birthday",
-                              date ? date.toISOString() : ""
-                            )
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    >
+                      <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+                        <SelectValue placeholder="Select Shift Type" />
+                      </SelectTrigger>
+                      <SelectContent className="font-custom">
+                        <SelectItem value="schedule">Schedule</SelectItem>
+                        <SelectItem value="flexible">Flexible</SelectItem>
+                        <SelectItem value="part-time">Part-Time</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                 </TableRow>
               ))}
@@ -300,11 +223,20 @@ export default function AddUserDialog({ open, onClose }) {
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="rounded-full border border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
             Cancel
           </Button>
-          <Button>
-            <UserPlus className="w-4 h-4 mr-2" /> Send an Invite
+
+          <Button
+            variant="outline"
+            className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-100"
+          >
+            <UserPlus className="w-4 h-4 mr-2" />
+            Send an Invite
           </Button>
         </DialogFooter>
       </DialogContent>
