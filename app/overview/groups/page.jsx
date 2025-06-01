@@ -1,45 +1,19 @@
+// GroupPage.jsx
 "use client";
 
 import { useState } from "react";
 import { Users, Plus } from "lucide-react";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-  TableFooter,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import AddGroupDialog from "./components/add-group-dialog";
+import AddSectionDialog from "./components/add-section-dialog";
 
 const Members = [
-  "John Doe",
-  "Jane Smith",
-  "Emily Johnson",
-  "Michael Brown",
-  "Sarah Davis",
-  "David Wilson",
-  "Jessica Moore",
-  "James Taylor",
-  "Amanda Anderson",
-  "William Thomas",
+  "John Doe", "Jane Smith", "Emily Johnson", "Michael Brown", "Sarah Davis",
+  "David Wilson", "Jessica Moore", "James Taylor", "Amanda Anderson", "William Thomas"
 ];
 
 const initialGroupsData = {
@@ -185,9 +159,7 @@ export default function GroupPage() {
                           key={admin}
                           src={`/path/to/profiles/${admin.replace(/\s+/g, "").toLowerCase()}.jpg`}
                           alt={admin}
-                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
-                            i === 0 ? "ml-0" : ""
-                          }`}
+                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${i === 0 ? "ml-0" : ""}`}
                           title={admin}
                         />
                       ))}
@@ -222,9 +194,34 @@ export default function GroupPage() {
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
-        <div className="flex items-center space-x-3 p-5">
-          <Users className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Groups</span>
+        <div className="flex items-center justify-between p-5">
+          <div className="flex items-center space-x-3">
+            <Users className="text-[#2998FF]" width={40} height={40} />
+            <span className="font-custom text-3xl text-black">Groups</span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {/* Label with line break */}
+            <p className="text-right text-sm font-medium text-gray-600 leading-tight">
+              Asset<br />Admins
+            </p>
+
+            {/* Profile bubbles with colors */}
+            <div className="flex -space-x-3">
+              <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
+                W
+              </div>
+              <div className="w-8 h-8 rounded-full bg-lime-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
+                L
+              </div>
+              <div className="w-8 h-8 rounded-full bg-pink-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
+                S
+              </div>
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 text-sm font-bold flex items-center justify-center border-2 border-white">
+                2+
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -242,80 +239,22 @@ export default function GroupPage() {
         </Button>
       </div>
 
-      {/* Add Group Modal */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Group Setting</DialogTitle>
-          </DialogHeader>
-          <Separator orientation="horizontal" className="my-2 w-full mb-4 mt-2" />
-          <Input
-            placeholder="Group Name"
-            value={newGroup.name}
-            onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-          />
-          <Select
-            onValueChange={(value) => {
-              if (!newGroup.admins.includes(value)) {
-                setNewGroup({ ...newGroup, admins: [...newGroup.admins, value] });
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Members" />
-            </SelectTrigger>
-            <SelectContent>
-              {Members.map((member) => (
-                <SelectItem key={member} value={member}>
-                  {member}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex flex-wrap mt-2">
-            {newGroup.admins.map((admin) => (
-              <div
-                key={admin}
-                className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full mr-2 mb-2 text-sm flex items-center space-x-1"
-              >
-                <span>{admin}</span>
-                <button
-                  onClick={() =>
-                    setNewGroup({
-                      ...newGroup,
-                      admins: newGroup.admins.filter((a) => a !== admin),
-                    })
-                  }
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleConfirm}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddGroupDialog
+        open={isOpen}
+        setOpen={setIsOpen}
+        newGroup={newGroup}
+        setNewGroup={setNewGroup}
+        members={Members}
+        onConfirm={handleConfirm}
+      />
 
-      {/* Add Section Modal */}
-      <Dialog open={isSectionOpen} onOpenChange={setIsSectionOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Section Setting</DialogTitle>
-          </DialogHeader>
-          <Separator orientation="horizontal" className="my-2 w-full mb-4 mt-2" />
-          <Input
-            placeholder="Section name"
-            value={newSection}
-            onChange={(e) => setNewSection(e.target.value)}
-          />
-          <DialogFooter>
-            <Button onClick={handleConfirmSection}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddSectionDialog
+        open={isSectionOpen}
+        setOpen={setIsSectionOpen}
+        newSection={newSection}
+        setNewSection={setNewSection}
+        onConfirm={handleConfirmSection}
+      />
     </div>
   );
 }

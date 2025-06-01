@@ -49,7 +49,7 @@ const data = {
         { title: "Workshift", url: "/overview/workshift", icon: BookCheck },
         { title: "Policy", url: "/overview/policy", icon: Lightbulb },
         { title: "Users & Admin", url: "/overview/users-admin", icon: User },
-        { title: "Groups", url: "/overview/group", icon: Users },
+        { title: "Groups", url: "/overview/groups", icon: Users },
       ],
     },
     {
