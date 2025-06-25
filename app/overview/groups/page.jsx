@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
 } from "@/components/ui/table";
@@ -10,6 +10,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import AddGroupDialog from "./components/add-group-dialog";
 import AddSectionDialog from "./components/add-section-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Members = [
   "John Doe", "Jane Smith", "Emily Johnson", "Michael Brown", "Sarah Davis",
@@ -76,6 +83,7 @@ export default function GroupPage() {
   const [isSectionOpen, setIsSectionOpen] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: "", admins: [], category: "general" });
   const [newSection, setNewSection] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const openModal = (category) => {
     setNewGroup({ name: "", admins: [], category });
@@ -135,6 +143,8 @@ export default function GroupPage() {
                 <TableHead className="w-[120px]">Members</TableHead>
                 <TableHead className="w-[200px]">Created By</TableHead>
                 <TableHead className="w-[200px]">Administered By</TableHead>
+                <TableHead className="w-[80px] text-right">Edit</TableHead>
+                <TableHead className="w-[130px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -170,6 +180,26 @@ export default function GroupPage() {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1 rounded hover:bg-gray-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        side="right" align="start"
+                        className="bg-white border border-gray-200 shadow-lg rounded-md"
+                      >
+                        <DropdownMenuItem onClick={() => console.log("Edit", group)}>
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setConfirmDelete({ category, group })}>
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -201,12 +231,9 @@ export default function GroupPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Label with line break */}
             <p className="text-right text-sm font-medium text-gray-600 leading-tight">
               Asset<br />Admins
             </p>
-
-            {/* Profile bubbles with colors */}
             <div className="flex -space-x-3">
               <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
                 W
@@ -255,6 +282,43 @@ export default function GroupPage() {
         setNewSection={setNewSection}
         onConfirm={handleConfirmSection}
       />
+
+      {confirmDelete && (
+        <Dialog open onOpenChange={() => setConfirmDelete(null)}>
+          <DialogContent
+            className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
+            style={{ minHeight: "280px", display: "flex" }}
+          >
+            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+              Do you want to delete?
+            </h2>
+            <div className="flex items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                className="rounded-full px-7 font-custom"
+                onClick={() => setConfirmDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full px-7 font-custom"
+                style={{ backgroundColor: "#fb5f59", color: "white" }}
+                onClick={() => {
+                  const { category, group } = confirmDelete;
+                  setGroupsData((prev) => ({
+                    ...prev,
+                    [category]: prev[category].filter((g) => g.id !== group.id),
+                  }));
+                  setConfirmDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

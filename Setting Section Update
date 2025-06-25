@@ -1,0 +1,228 @@
+[33mcommit ccc20c6443b94f34cad8edb4f4667601a969ada3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Sun Jun 1 21:41:04 2025 +0700
+
+    Setting Section Update
+
+[33mcommit 4e415a29e37c36df77b4b4d562e3f9c284ec5c62[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Thu May 29 22:39:42 2025 +0700
+
+    Update
+
+[33mcommit df6ea0ca4a4914811d3730e585aaa1919f20f7fe[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Tue May 20 15:37:56 2025 +0700
+
+    landing page modified
+
+[33mcommit e24d36003b6600decb8d86e1a753877623864394[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Tue May 20 15:36:10 2025 +0700
+
+    signup modified
+
+[33mcommit 5c76cb046f3ab0369d03b5895c324f7d339fb762[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Apr 28 16:20:03 2025 +0700
+
+    Setting job schedule and overtime
+
+[33mcommit 2f406cda61a8dbb913dc688dfebc9d4be482d853[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Mon Apr 28 14:01:59 2025 +0700
+
+    job schedule and overtime setting dialog
+
+[33mcommit a03663a2ed945f837c2d5eb4657e353c7cf1ee9d[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Apr 28 01:15:04 2025 +0700
+
+    Modified UI
+
+[33mcommit 65ea08cad8b984752ec5b8b4e43a454afeab8352[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Sat Apr 26 20:24:24 2025 +0700
+
+    job schedule and overtime
+
+[33mcommit 2e8698ef239fc11e506b97370724ec422e0b7d49[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Fri Apr 25 15:15:19 2025 +0700
+
+    payroll screen
+
+[33mcommit 4d840fd6a5e21852b49f77bb61d96da5899881f5[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Thu Apr 24 16:28:47 2025 +0700
+
+    dashboard table redesign
+
+[33mcommit 21edfd55f55151df0b8cba2e1989113c9d0ede13[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Thu Apr 24 16:22:12 2025 +0700
+
+    dashboard table redesign
+
+[33mcommit 6fd5a7b3f5153b6b631155e3d1f5b50fcaa4f3f7[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Apr 23 01:38:04 2025 +0700
+
+    users-admin-payroll
+
+[33mcommit a61c5488d92a4654b14fa41e572a90af6b3c434f[m[33m ([m[1;31morigin/testing[m[33m)[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Sun Apr 13 16:38:14 2025 +0700
+
+    Time Clock done
+
+[33mcommit 5f588c852ccda1c804976290d7db307f7647c54c[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Wed Apr 2 18:35:52 2025 +0700
+
+    sidebar route
+
+[33mcommit 659bde4f70223f2e8063e39b65b85f454649793e[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Wed Apr 2 18:34:45 2025 +0700
+
+    Payroll
+
+[33mcommit a9cc4ad380f5620e8a18e746853ea11fe4d38a64[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Apr 2 18:30:37 2025 +0700
+
+    leaves page done
+
+[33mcommit b7c9bb954ec6e6906f81f9f08232c61f6419ad27[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Mar 24 16:15:51 2025 +0700
+
+    Modify Leaves
+
+[33mcommit b1c6ab5197e66402c41f56f7e6788e9f64e0f0ad[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Mar 24 16:03:34 2025 +0700
+
+    Modify Users & Admin
+
+[33mcommit 77b85f8da99ebef54d57d3853a9b512452af3418[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Mon Mar 24 15:54:10 2025 +0700
+
+    Groups Page
+
+[33mcommit 8879d50bc50b9fbab4bb366577e486a3d642fd82[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Wed Mar 19 13:23:01 2025 +0700
+
+    Activity
+
+[33mcommit 8d78d34c4b658e8436fd95662b2534b9b45c2cba[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Mar 19 05:13:15 2025 +0700
+
+    modify Users & Admins pt3
+
+[33mcommit 3e850b82ec69c330e9ccb3c9a3580e55efb97a9b[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Mar 19 05:06:49 2025 +0700
+
+    modify Users & Admins pt2
+
+[33mcommit 791849b60498c55f37f784930835a90b3d47c392[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Fri Mar 14 21:26:48 2025 +0700
+
+    Overview and Support
+
+[33mcommit bb69a8a69efe14a7c9da5525b4e6432eb8b30b12[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Fri Mar 14 20:29:03 2025 +0700
+
+    modify admins & users page
+
+[33mcommit d2aae3d74828bcb424516dd32adbeddd51da45c8[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Mar 10 15:58:15 2025 +0700
+
+    app-sidebar and layout modified.
+
+[33mcommit d4f7ce6d310e06c8510c8a362108749f89fca2ce[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Mar 10 15:01:12 2025 +0700
+
+    setting page reworked.
+
+[33mcommit 35f0c25cde57718282261688e639593987cbcee6[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Sun Mar 9 21:49:22 2025 +0700
+
+    setting page done.
+
+[33mcommit aec04048e1cfec8170ef74c595d981441b159252[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Sat Mar 8 16:29:09 2025 +0700
+
+    Sidebar, Overview Page
+
+[33mcommit 2c46d3cf34429b93e3f1fcdf7c53995d858d5970[m
+Merge: 2df501a 1d02e8d
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Sat Mar 8 15:57:36 2025 +0700
+
+    Merge branch 'main' of https://github.com/jonnytast122/startup
+
+[33mcommit 2df501a5badf365d749f710c72dbacd6bed70bc1[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Sat Mar 8 15:50:45 2025 +0700
+
+    landing page done
+
+[33mcommit 1d02e8db17519ad8be2a82887f9b85c2d109f4f4[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Wed Feb 26 13:52:48 2025 +0700
+
+    Signup modify
+
+[33mcommit 9976535ce7caa9265f9cddd662b5b542cdbf3aaa[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Feb 26 13:47:03 2025 +0700
+
+    select.tsx and navbar modify
+
+[33mcommit c36d6e9220689db43e5cfcef677eb65c1d9ef09b[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Wed Feb 26 13:11:44 2025 +0700
+
+    global.css and tailwind.css modify
+
+[33mcommit 4e3fe24cb6b89cb4027d3545f14931dc1fb72b07[m
+Author: ySall <hassan.faysall.2821@rupp.edu.kh>
+Date:   Tue Feb 25 14:40:51 2025 +0700
+
+    Signup page
+
+[33mcommit 94d7227b43394e455a16ce4879517506b681d735[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Feb 24 14:03:01 2025 +0700
+
+    change tsx to jsx
+
+[33mcommit d80e764780c9863cc6bf0f667b476ed9548cf837[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Mon Feb 24 13:50:41 2025 +0700
+
+    first commit
+
+[33mcommit 3fa871339434960f7376507f3403a18196fd2309[m
+Author: sengngoun <gov.sengngoun.2821@rupp.edu.kh>
+Date:   Fri Feb 21 19:29:54 2025 +0700
+
+    first commit
+
+[33mcommit b8b9116f12a991c4e77a207f5d6f2db7e8c9512e[m
+Author: JamesChristos <ouksereiraksa123@gmail.com>
+Date:   Fri Feb 21 16:00:22 2025 +0700
+
+    Initial commit from Create Next App

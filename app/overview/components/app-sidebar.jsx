@@ -46,8 +46,8 @@ const data = {
       title: "Setting",
       items: [
         { title: "Company", url: "/overview/company", icon: Settings },
-        { title: "Workshift", url: "/overview/workshift", icon: BookCheck },
         { title: "Policy", url: "/overview/policy", icon: Lightbulb },
+        { title: "Workshift", url: "/overview/workshift", icon: BookCheck },
         { title: "Users & Admin", url: "/overview/users-admin", icon: User },
         { title: "Groups", url: "/overview/groups", icon: Users },
       ],

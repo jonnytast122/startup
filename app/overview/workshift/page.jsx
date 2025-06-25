@@ -1,7 +1,8 @@
+// WorkShiftPage.jsx
 "use client";
 
 import { useState } from "react";
-import { BookCheck, Plus, MoreHorizontal } from "lucide-react";
+import { BookCheck, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Table, TableHeader, TableRow, TableHead, TableBody, TableCell
@@ -11,12 +12,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AddWorkShiftDialog from "./components/add-shift-dialog";
 import CambodiaCalendar from "./components/calendar-screen";
 
 export default function WorkShiftPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Shift");
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [shifts, setShifts] = useState([
     {
       id: 1,
@@ -40,7 +43,6 @@ export default function WorkShiftPage() {
 
   return (
     <div>
-      {/* Header */}
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
         <div className="flex items-center justify-between p-5">
           <div className="flex items-center space-x-3">
@@ -49,40 +51,26 @@ export default function WorkShiftPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Label with line break */}
             <p className="text-right text-sm font-medium text-gray-600 leading-tight">
               Asset<br />Admins
             </p>
-
-            {/* Profile bubbles with colors */}
             <div className="flex -space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                W
-              </div>
-              <div className="w-8 h-8 rounded-full bg-lime-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                L
-              </div>
-              <div className="w-8 h-8 rounded-full bg-pink-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                S
-              </div>
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 text-sm font-bold flex items-center justify-center border-2 border-white">
-                2+
-              </div>
+              <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">W</div>
+              <div className="w-8 h-8 rounded-full bg-lime-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">L</div>
+              <div className="w-8 h-8 rounded-full bg-pink-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">S</div>
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 text-sm font-bold flex items-center justify-center border-2 border-white">2+</div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="bg-white rounded-xl shadow-md">
         <div className="flex">
           {["Shift", "Calendar"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 font-custom text-lg transition-all ${activeTab === tab
-                ? "bg-white text-blue-500 rounded-t-xl text-xl"
-                : "bg-gray-100 text-gray-500 hover:text-gray-700"
+              className={`flex-1 py-3 font-custom text-lg transition-all ${activeTab === tab ? "bg-white text-blue-500 rounded-t-xl text-xl" : "bg-gray-100 text-gray-500 hover:text-gray-700"
                 }`}
             >
               {tab}
@@ -90,7 +78,6 @@ export default function WorkShiftPage() {
           ))}
         </div>
 
-        {/* Shift tab content */}
         {activeTab === "Shift" && (
           <div className="m-5">
             <div className="bg-green-100 px-6 py-4">
@@ -104,7 +91,9 @@ export default function WorkShiftPage() {
                   <TableHead>Shift name</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created by</TableHead>
-                  <TableHead>Edit</TableHead>
+                  <TableHead className="text-center align-middle">Edit</TableHead>
+                  <TableHead className="text-center align-middle"></TableHead>
+                  <TableHead className="text-center align-middle"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -114,8 +103,8 @@ export default function WorkShiftPage() {
                     <TableCell>
                       <span
                         className={`px-3 py-1 text-xs rounded-full font-medium ${shift.status === "Active"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-red-100 text-red-600"
                           }`}
                       >
                         {shift.status}
@@ -128,25 +117,24 @@ export default function WorkShiftPage() {
                           alt={shift.createdBy}
                           className="w-6 h-6 rounded-full"
                         />
-                        <span className="text-sm text-blue-600">
-                          {shift.createdBy}
-                        </span>
+                        <span className="text-sm text-blue-600">{shift.createdBy}</span>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-center align-middle">
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <div className="p-1 rounded hover:bg-gray-100 inline-flex items-center justify-center">
                             <MoreHorizontal className="w-4 h-4" />
-                          </Button>
+                          </div>
                         </PopoverTrigger>
-                        <PopoverContent className="w-32 p-2 space-y-1">
+                        <PopoverContent side="right" align="start" className="w-32 p-2 space-y-1 bg-white">
                           <Button variant="ghost" className="w-full text-left text-sm">
                             Edit
                           </Button>
                           <Button
                             variant="ghost"
                             className="w-full text-left text-sm text-red-500"
+                            onClick={() => setConfirmDelete(shift)}
                           >
                             Delete
                           </Button>
@@ -167,7 +155,6 @@ export default function WorkShiftPage() {
               </Button>
             </div>
 
-            {/* Add Dialog */}
             <AddWorkShiftDialog
               open={dialogOpen}
               onClose={() => setDialogOpen(false)}
@@ -182,6 +169,39 @@ export default function WorkShiftPage() {
           </div>
         )}
       </div>
+
+      {confirmDelete && (
+        <Dialog open onOpenChange={() => setConfirmDelete(null)}>
+          <DialogContent
+            className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
+            style={{ minHeight: "280px", display: "flex" }}
+          >
+            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+              Do you want to delete?
+            </h2>
+            <div className="flex items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                className="rounded-full px-7 font-custom"
+                onClick={() => setConfirmDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full px-7 font-custom"
+                style={{ backgroundColor: "#fb5f59", color: "white" }}
+                onClick={() => {
+                  setShifts((prev) => prev.filter((s) => s.id !== confirmDelete.id));
+                  setConfirmDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

@@ -114,7 +114,7 @@ const PolicyOvertime = ({ open, onClose, onSubmit }) => {
               className="py-4 px-6 text-lg font-semibold rounded-full"
               onClick={handleConfirm}
             >
-              Done
+              Save
             </Button>
           </div>
         </div>

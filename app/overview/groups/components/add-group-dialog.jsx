@@ -1,4 +1,3 @@
-// components/add-group-dialog.jsx
 "use client";
 
 import {
@@ -11,11 +10,25 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
 import { useState } from "react";
 
-export default function AddGroupDialog({ open, setOpen, newGroup, setNewGroup, members, onConfirm }) {
+export default function AddGroupDialog({
+  open,
+  setOpen,
+  newGroup,
+  setNewGroup,
+  members,
+  onConfirm,
+}) {
   const [error, setError] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("Filter");
 
   const handleFinish = () => {
     if (!newGroup.name.trim()) {
@@ -44,10 +57,24 @@ export default function AddGroupDialog({ open, setOpen, newGroup, setNewGroup, m
             />
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" className="flex items-center gap-2 h-10">
-              <Filter className="w-4 h-4" />
-              Filter
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center gap-2 h-10 text-blue">
+                  <Filter className="w-4 h-4" />
+                  {selectedFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-white text-blue">
+                {["User", "Group", "Department", "Branch"].map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setSelectedFilter(option)}
+                  >
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <span className="text-sm text-gray-500 whitespace-nowrap">{newGroup.admins.length} selected</span>
           </div>
         </div>
@@ -96,9 +123,10 @@ export default function AddGroupDialog({ open, setOpen, newGroup, setNewGroup, m
                 <div className="col-span-1">{member.last}</div>
                 <div className="col-span-1">{member.dept}</div>
                 <div className="col-span-1">
-                  <span className="text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full text-xs">
-                    {member.job}
-                  </span>
+<span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
+  {member.job}
+</span>
+
                 </div>
               </div>
             ))}

@@ -165,32 +165,32 @@ export default function OverviewPage() {
                     <h2 className="text-2xl font-medium text-black mb-4">Statistics</h2>
                     <StatisticCard />
                     <div className="w-full mt-5 mb-5 px-5 py-5 bg-white shadow-md rounded-lg">
-      <h2 className="text-2xl font-medium text-black mb-5">Daily Activity</h2>
+                        <h2 className="text-2xl font-medium text-black mb-5">Daily Activity</h2>
 
-      <div className="flex flex-col space-y-6 p-5 relative">
-        {activities.map((activity, index) => (
-          <div key={index} className="flex items-center space-x-4 relative">
-            {/* Container for the vertical line and dot */}
-            <div className="relative flex items-center justify-center">
-              {/* Vertical Line */}
-              {index !== activities.length - 1 && (
-                <div className="absolute top-5 left-1 h-[calc(100%-10px)] w-0.5 bg-gray-300"></div>
-              )}
-              {/* Dot */}
-              <div className="relative z-10 w-2 h-2 bg-blue-500 rounded-full"></div>
-            </div>
+                        <div className="flex flex-col space-y-6 p-5 relative">
+                            {activities.map((activity, index) => (
+                                <div key={index} className="flex items-center space-x-4 relative">
+                                    {/* Container for the vertical line and dot */}
+                                    <div className="relative flex items-center justify-center">
+                                        {/* Vertical Line */}
+                                        {index !== activities.length - 1 && (
+                                            <div className="absolute top-5 left-1 h-[calc(100%-10px)] w-0.5 bg-gray-300"></div>
+                                        )}
+                                        {/* Dot */}
+                                        <div className="relative z-10 w-2 h-2 bg-blue-500 rounded-full"></div>
+                                    </div>
 
-            {/* User Activity */}
-            <div className="flex items-center space-x-3">
-              <img src={activity.img} alt={activity.name} className="w-10 h-10 rounded-full border border-gray-300" />
-              <p className="text-gray-700">
-                <span className="font-medium text-black">{activity.name}</span> {activity.action} at <span className="font-medium text-blue-500">{activity.time}</span>
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
+                                    {/* User Activity */}
+                                    <div className="flex items-center space-x-3">
+                                        <img src={activity.img} alt={activity.name} className="w-10 h-10 rounded-full border border-gray-300" />
+                                        <p className="text-gray-700">
+                                            <span className="font-medium text-black">{activity.name}</span> {activity.action} at <span className="font-medium text-blue-500">{activity.time}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Lightbulb, Plus, MoreHorizontal } from "lucide-react";
+import { Lightbulb, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,15 +13,17 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+} from "@/components/ui/dialog";
 import PolicyLeave from "./components/add-policyleave-dialog";
-import PolicyOvertime from "./components/add-policyovertime-dialog"; // You’ll create this next
-
-const Members = ["Admin"];
+import PolicyOvertime from "./components/add-policyovertime-dialog";
 
 const initialPolicies = {
   leave: [
@@ -60,15 +62,11 @@ const initialPolicies = {
 
 export default function PolicyPage() {
   const [policyData, setPolicyData] = useState(initialPolicies);
-  const [openDialogType, setOpenDialogType] = useState(null); // 'leave' or 'overtime'
+  const [openDialogType, setOpenDialogType] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const openModal = (category) => {
-    setOpenDialogType(category);
-  };
-
-  const closeModal = () => {
-    setOpenDialogType(null);
-  };
+  const openModal = (category) => setOpenDialogType(category);
+  const closeModal = () => setOpenDialogType(null);
 
   const renderPolicySection = (title, data, category, colorClass) => (
     <div key={category} className="mb-7 overflow-hidden">
@@ -86,7 +84,8 @@ export default function PolicyPage() {
               <TableHead className="w-[250px]">Policy Name</TableHead>
               <TableHead className="w-[120px]">Status</TableHead>
               <TableHead className="w-[200px]">Created By</TableHead>
-              <TableHead className="w-[100px]">Edit</TableHead>
+              <TableHead className="w-[100px] text-center align-middle">Edit</TableHead>
+              <TableHead className="w-[100px] text-right"> </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -95,10 +94,7 @@ export default function PolicyPage() {
                 <TableCell>{policy.name}</TableCell>
                 <TableCell>
                   <span
-                    className={`px-3 py-1 text-sm rounded-full font-medium ${policy.status === "Active"
-                      ? "bg-green-100 text-green-600"
-                      : "bg-gray-100 text-gray-500"
-                      }`}
+                    className={`px-3 py-1 text-sm rounded-full font-medium ${policy.status === "Active" ? "bg-green-100 text-green-600" : "bg-gray-100 text-gray-500"}`}
                   >
                     {policy.status}
                   </span>
@@ -113,25 +109,28 @@ export default function PolicyPage() {
                     <span>{policy.createdBy}</span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" size="icon">
-                        <MoreHorizontal size={16} />
+                <TableCell className="text-center align-middle">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="mx-auto">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-32 p-2 space-y-2">
-                      <Button variant="ghost" className="w-full justify-start text-sm">
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm text-red-500"
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      align="start" side="right"
+                      className="bg-white border px-4 border-gray-200 shadow-lg rounded-md"
+                    >
+                      <DropdownMenuItem onClick={() => console.log(`Edit ${category}`, policy)}>
+                        Edit {category === "leave" ? "Leave Policy" : "Overtime Policy"}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => setConfirmDelete({ category, policy })}
+                        className="text-red-500"
                       >
-                        Delete
-                      </Button>
-                    </PopoverContent>
-                  </Popover>
+                        Delete {category === "leave" ? "Leave Policy" : "Overtime Policy"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}
@@ -161,14 +160,10 @@ export default function PolicyPage() {
             <Lightbulb className="text-[#2998FF]" width={40} height={40} />
             <span className="font-custom text-3xl text-black">Policy</span>
           </div>
-
           <div className="flex items-center gap-4">
-            {/* Label with line break */}
             <p className="text-right text-sm font-medium text-gray-600 leading-tight">
               Asset<br />Admins
             </p>
-
-            {/* Profile bubbles with colors */}
             <div className="flex -space-x-3">
               <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
                 W
@@ -198,7 +193,6 @@ export default function PolicyPage() {
         })}
       </div>
 
-      {/* Dialogs */}
       <PolicyLeave
         open={openDialogType === "leave"}
         onClose={closeModal}
@@ -220,6 +214,48 @@ export default function PolicyPage() {
         }}
       />
 
+      ;
+      {confirmDelete && (
+        <Dialog open onOpenChange={() => setConfirmDelete(null)}>
+          <DialogContent
+            className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
+            style={{ minHeight: "280px", display: "flex" }}
+          >
+            {/* Circle X Icon with custom color */}
+            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+
+            {/* Title */}
+            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+              Do you want to delete?
+            </h2>
+
+            {/* Buttons */}
+            <div className="flex items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                className="rounded-full px-10 font-custom"
+                onClick={() => setConfirmDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full px-14 font-custom"
+                style={{ backgroundColor: "#fb5f59", color: "white" }}
+                onClick={() => {
+                  const { category, policy } = confirmDelete;
+                  setPolicyData((prev) => ({
+                    ...prev,
+                    [category]: prev[category].filter((p) => p.id !== policy.id),
+                  }));
+                  setConfirmDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

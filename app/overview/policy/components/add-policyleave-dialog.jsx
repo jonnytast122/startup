@@ -108,15 +108,9 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   placeholder="0"
                 />
-                <select
-                  value={unit}
-                  onChange={(e) => setUnit(e.target.value)}
-                  className="border border-gray-300 rounded-lg p-2 w-24 text-sm"
-                >
-                  <option value="days">days</option>
-                  <option value="minutes">minutes</option>
-                  <option value="hours">hours</option>
-                </select>
+                <span className="border border-gray-300 rounded-lg p-2 w-24 text-sm block text-center">
+                  days
+                </span>
                 <select
                   value={durationType}
                   onChange={(e) => setDurationType(e.target.value)}
@@ -214,7 +208,7 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
               className="py-4 px-6 text-lg font-semibold rounded-full"
               onClick={handleConfirm}
             >
-              Confirm
+              Save
             </Button>
           </div>
         </div>
