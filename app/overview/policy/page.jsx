@@ -226,7 +226,7 @@ export default function PolicyPage() {
 
             {/* Title */}
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete?
+              Do you want to delete this policy?
             </h2>
 
             {/* Buttons */}

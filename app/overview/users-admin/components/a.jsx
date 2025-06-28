@@ -23,15 +23,16 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { List, ChevronDown } from "lucide-react";
-import { ar } from "date-fns/locale";
-import { Crown, Star, Trash2, ArchiveX, UserPlus, UserMinus } from "lucide-react";
+import { List, Download, PanelTopOpen } from "lucide-react";
+import UploadDialog from "./uploaddialog";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -51,6 +52,11 @@ const statusOptions = [
   { value: "Others", label: "Others" },
 ];
 
+const importOptions = [
+  { value: "as CSV", label: "as CSV" },
+  { value: "as XLS", label: "as XLS" },
+];
+
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
@@ -58,7 +64,6 @@ const exportOptions = [
 
 const users = [
   {
-    accessLevel: "owner",
     profile: "/avatars/alex.png",
     firstname: "Alex",
     lastname: "Thorne",
@@ -76,12 +81,8 @@ const users = [
     branch: "BKK1",
     status: "active",
     shiftType: "Scheduled",
-    archived: "no",
-    archivedAt: "2025-06-03",
-    archivedBy: "admin3"
   },
   {
-    accessLevel: "admin",
     profile: "/avatars/sara.png",
     firstname: "Sara",
     lastname: "Lim",
@@ -99,12 +100,8 @@ const users = [
     branch: "BKK2",
     status: "inactive",
     shiftType: "Scheduled",
-    archived: "yes",
-    archivedAt: "2025-06-03",
-    archivedBy: "hay lyna"
   },
   {
-    accessLevel: "admin",
     profile: "/avatars/kevin.png",
     firstname: "Kevin",
     lastname: "Nguyen",
@@ -122,12 +119,8 @@ const users = [
     branch: "BKK3",
     status: "pending",
     shiftType: "Scheduled",
-    archived: "yes",
-    archivedAt: "2025-01-02",
-    archivedBy: "admin3"
   },
   {
-    accessLevel: "user",
     profile: "/avatars/emily.png",
     firstname: "Emily",
     lastname: "Stone",
@@ -145,12 +138,8 @@ const users = [
     branch: "BKK1",
     status: "active",
     shiftType: "Scheduled",
-    archived: "yes",
-    archivedAt: "2025-06-03",
-    archivedBy: "admin3"
   },
   {
-    accessLevel: "user",
     profile: "/avatars/omar.png",
     firstname: "Omar",
     lastname: "Khan",
@@ -168,12 +157,8 @@ const users = [
     branch: "BKK2",
     status: "inactive",
     shiftType: "Scheduled",
-    archived: "no",
-    archivedAt: "2025-06-03",
-    archivedBy: "admin3"
   },
   {
-    accessLevel: "user",
     profile: "/avatars/luna.png",
     firstname: "Luna",
     lastname: "Park",
@@ -191,9 +176,6 @@ const users = [
     branch: "BKK3",
     status: "pending",
     shiftType: "Scheduled",
-    archived: "yes",
-    archivedAt: "2025-06-03",
-    archivedBy: "admin3"
   },
 ];
 
@@ -204,29 +186,9 @@ const Dot = ({ color }) => (
   />
 );
 
-const statusFilter = ["Online", "Offline"];
+const statusFilter = ["Active", "Inactive", "Pending"];
 
 const columns = [
-  {
-    id: "role",
-    header: "",
-    cell: ({ row }) => {
-      const role = row.original.accessLevel;
-
-      let icon = null;
-      if (role === "owner") {
-        icon = <Crown className="text-yellow-500 w-4 h-4" title="Owner" />;
-      } else if (role === "admin") {
-        icon = <Star className="text-blue-500 w-4 h-4" title="Admin" />;
-      }
-
-      return (
-        <div className="flex justify-center items-center w-full h-full">
-          {icon}
-        </div>
-      );
-    },
-  },
   {
     accessorKey: "profile",
     header: "",
@@ -267,8 +229,41 @@ const columns = [
     },
   },
   { accessorKey: "phone", header: "Phone" },
-  // { accessorKey: "branch", header: "Branch" },
+  { accessorKey: "branch", header: "Branch" },
   { accessorKey: "shiftType", header: "Shift Type" },
+  {
+    accessorKey: "accessLevel",
+    header: "Access Level",
+    cell: ({ row }) => {
+      const userId = row.index; // or row.original.id if you have an id
+      const value = row.original.accessLevel;
+      const [userData, setUserData] = useState(
+        users.map((user) => ({
+          ...user,
+          accessLevel: user.accessLevel || "owner", // set default
+        }))
+      );
+
+      const handleChange = (newValue) => {
+        const updated = [...userData];
+        updated[userId] = { ...updated[userId], accessLevel: newValue };
+        setUserData(updated);
+      };
+
+      return (
+        <Select value={value} onValueChange={handleChange}>
+          <SelectTrigger className="w-[100px] border-none shadow-none focus:ring-0 focus:outline-none">
+            <SelectValue placeholder="Owner" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            <SelectItem value="owner">Owner</SelectItem>
+            <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+      );
+    },
+  },
+
   {
     accessorKey: "cash",
     header: "Cash",
@@ -337,8 +332,9 @@ const columns = [
 
       return (
         <span
-          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
-            }`}
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+          }`}
           style={{
             borderWidth: "1px",
             minWidth: "80px",
@@ -348,53 +344,6 @@ const columns = [
           <Dot color={dotColor[status] || "#999"} />
           {status}
         </span>
-      );
-    },
-  },
-  {
-    accessorKey: "archivedAt",
-    header: "Archived At",
-    cell: ({ cell }) => <span>{cell.getValue()}</span>,
-  },
-  {
-    accessorKey: "archivedBy",
-    header: "Archived By",
-    cell: ({ cell }) => <span>{cell.getValue()}</span>,
-  },
-  {
-    id: "actions",
-    header: "",
-    cell: ({ row }) => {
-      const [dialogOpen, setDialogOpen] = useState(false);
-      const [actionType, setActionType] = useState(null); // "promote" or "demote"
-
-      const role = row.original.accessLevel;
-
-      const handleOpen = (type) => {
-        setActionType(type);
-        setDialogOpen(true);
-      };
-
-      return (
-        <div className="flex items-center justify-end gap-2">
-          <ArchiveX
-            className="w-4 h-4 text-gray-500 cursor-pointer"
-            title="Archive"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log("Archive", row.original);
-            }}
-          />
-          <Trash2
-            className="w-4 h-4 text-red-500 cursor-pointer"
-            title="Delete"
-            onClick={(e) => {
-              e.stopPropagation();
-              setConfirmDelete(row.original); // Just store the user
-            }}
-          />
-
-        </div>
       );
     },
   },
@@ -435,7 +384,9 @@ const columns = [
   },
 ];
 
-const ArchieveScreen = () => {
+const UsersScreen = ({ setUsersCount, onAddUser }) => {
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const router = useRouter();
   const table = useReactTable({
     data: users,
     columns,
@@ -463,6 +414,10 @@ const ArchieveScreen = () => {
       },
     },
   });
+
+  useEffect(() => {
+    setUsersCount(users.length); // Call setUsersCount to update the count
+  }, []);
 
   return (
     <div className="p-4">
@@ -497,18 +452,44 @@ const ArchieveScreen = () => {
         </div>
         {/* Right Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
-          <Select>
-            <SelectTrigger className="w-24 font-custom rounded-full">
-              <SelectValue placeholder="Export" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {exportOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex w-full sm:w-auto gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
+                  Add User
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
+                <DropdownMenuItem
+                  onClick={() => setShowUploadDialog(true)}
+                  className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Import
+                </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  onClick={() => alert("Importing...")}
+                  className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+                >
+                  <PanelTopOpen className="w-4 h-4 mr-2" />
+                  Download Template
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select>
+              <SelectTrigger className="w-24 font-custom rounded-full">
+                <SelectValue placeholder="Export" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                {exportOptions.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       <div className="rounded-md border mt-6">
@@ -535,7 +516,15 @@ const ArchieveScreen = () => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
+              <TableRow
+                key={row.id}
+                className="cursor-pointer hover:bg-gray-100"
+                onClick={() => {
+                  const { status, ...rest } = row.original;
+                  const query = new URLSearchParams(rest).toString();
+                  router.push(`/overview/users-admin/profile?${query}`);
+                }}
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}
@@ -572,8 +561,13 @@ const ArchieveScreen = () => {
           Next
         </Button>
       </div>
+      {/* ⬇️ Add UploadDialog here */}
+      <UploadDialog
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+      />
     </div>
   );
 };
 
-export default ArchieveScreen;
+export default UsersScreen;

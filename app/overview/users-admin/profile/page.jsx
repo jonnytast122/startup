@@ -7,7 +7,8 @@ import {
   Ellipsis,
   Landmark,
   Percent,
-  CirclePlus,
+  Trash2,
+  Download
 } from "lucide-react";
 import { useState } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
@@ -44,6 +45,25 @@ export default function UserProfile() {
 
   const [imageError, setImageError] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
+
+  const [files, setFiles] = useState([]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file && file.type === "application/pdf") {
+      const newFile = {
+        name: file.name,
+        size: (file.size / 1024).toFixed(1) + " KB",
+        date: new Date().toLocaleDateString(),
+        file: URL.createObjectURL(file),
+      };
+      setFiles((prev) => [...prev, newFile]);
+    }
+  };
+
+  const handleDelete = (index) => {
+    setFiles(files.filter((_, i) => i !== index));
+  };
 
   const [selectedPolicies, setSelectedPolicies] = useState([
     "Leave Policy",
@@ -175,7 +195,7 @@ export default function UserProfile() {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-md py-6 px-6">
+      <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
         <div className="flex items-center space-x-3 p-5">
           <CreditCard className="text-[#2998FF]" width={40} height={40} />
           <span className="font-custom text-3xl text-black">Profile</span>
@@ -304,11 +324,11 @@ export default function UserProfile() {
                       Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => { }}>
                       Arhieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => {}}
+                      onClick={() => { }}
                       className="text-red-500"
                     >
                       Delete
@@ -351,11 +371,11 @@ export default function UserProfile() {
                     <DropdownMenuItem onClick={() => setDialogOpen(true)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => { }}>
                       Archieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => {}}
+                      onClick={() => { }}
                       className="text-red-500"
                     >
                       Delete
@@ -474,20 +494,62 @@ export default function UserProfile() {
                   </p>
                 </div>
               </div>
-              <h2 className="text-2xl font-semibold font-custom text-black mt-6">
-                Attachment
-                <button
-                  type="button"
-                  className="inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition ml-4"
-                >
-                  <span className="relative w-3 h-3">
-                    {/* Vertical Line */}
-                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
-                    {/* Horizontal Line */}
-                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
-                  </span>
-                </button>
-              </h2>
+              <div>
+                <h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
+                  Attachment
+                  <label
+                    htmlFor="pdf-upload"
+                    className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+                  >
+                    <span className="relative w-3 h-3">
+                      {/* Plus Icon */}
+                      <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
+                      <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
+                    </span>
+                    <input
+                      id="pdf-upload"
+                      type="file"
+                      accept=".pdf"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                  </label>
+                </h2>
+
+                {/* File List */}
+                <div className="mt-4 flex flex-col items-start gap-3">
+                  {files.map((f, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm"
+                    >
+                      <div className="flex items-center gap-4">
+                        <img
+                          src="/images/Pdf_icon.png"
+                          alt="PDF Icon"
+                          className="h-10 w-auto object-contain"
+                        />
+                        <div>
+                          <p className="font-medium text-gray-800">{f.name}</p>
+                          <p className="text-sm text-gray-500">{f.size} • {f.date}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 ml-6">
+                        <a href={f.file} download={f.name}>
+                          <Download className="w-5 h-5 text-blue-600 hover:text-blue-800 cursor-pointer" />
+                        </a>
+                        <Trash2
+                          className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
+                          onClick={() => handleDelete(idx)}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+
+
+              </div>
             </div>
           </div>
         </div>

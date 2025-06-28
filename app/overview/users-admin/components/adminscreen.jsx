@@ -31,6 +31,8 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { List, Download, PanelTopOpen } from "lucide-react";
+import { Crown, Star, Trash2, Archive, UserPlus, UserMinus } from "lucide-react";
+import PromoteDemoteDialog from "./promotedemotedialog";
 import UploadDialog from "./uploaddialog";
 
 const roleOptions = [
@@ -61,8 +63,9 @@ const exportOptions = [
   { value: "as XLS", label: "as XLS" },
 ];
 
-const admins = [
+const users = [
   {
+    accessLevel: "owner",
     profile: "/avatars/alex.png",
     firstname: "Alex",
     lastname: "Thorne",
@@ -82,6 +85,7 @@ const admins = [
     shiftType: "Scheduled",
   },
   {
+    accessLevel: "admin",
     profile: "/avatars/sara.png",
     firstname: "Sara",
     lastname: "Lim",
@@ -101,6 +105,7 @@ const admins = [
     shiftType: "Scheduled",
   },
   {
+    accessLevel: "admin",
     profile: "/avatars/kevin.png",
     firstname: "Kevin",
     lastname: "Nguyen",
@@ -120,6 +125,7 @@ const admins = [
     shiftType: "Scheduled",
   },
   {
+    accessLevel: "user",
     profile: "/avatars/emily.png",
     firstname: "Emily",
     lastname: "Stone",
@@ -139,6 +145,7 @@ const admins = [
     shiftType: "Scheduled",
   },
   {
+    accessLevel: "user",
     profile: "/avatars/omar.png",
     firstname: "Omar",
     lastname: "Khan",
@@ -158,6 +165,7 @@ const admins = [
     shiftType: "Scheduled",
   },
   {
+    accessLevel: "user",
     profile: "/avatars/luna.png",
     firstname: "Luna",
     lastname: "Park",
@@ -188,6 +196,26 @@ const Dot = ({ color }) => (
 const statusFilter = ["Active", "Inactive", "Pending"];
 
 const columns = [
+  {
+    id: "role",
+    header: "",
+    cell: ({ row }) => {
+      const role = row.original.accessLevel;
+
+      let icon = null;
+      if (role === "owner") {
+        icon = <Crown className="text-yellow-500 w-4 h-4" title="Owner" />;
+      } else if (role === "admin") {
+        icon = <Star className="text-blue-500 w-4 h-4" title="Admin" />;
+      }
+
+      return (
+        <div className="flex justify-center items-center w-full h-full">
+          {icon}
+        </div>
+      );
+    },
+  },
   {
     accessorKey: "profile",
     header: "",
@@ -230,51 +258,6 @@ const columns = [
   { accessorKey: "phone", header: "Phone" },
   { accessorKey: "branch", header: "Branch" },
   { accessorKey: "shiftType", header: "Shift Type" },
-  {
-    accessorKey: "accessLevel",
-    header: "Access Level",
-    cell: ({ row }) => {
-      const userId = row.index; // or row.original.id if you have an id
-      const value = row.original.accessLevel;
-      const [userData, setUserData] = useState(
-        admins.map((admin) => ({
-          ...admin,
-          accessLevel: admin.accessLevel || "owner", // set default
-        }))
-      );
-
-      const handleChange = (newValue) => {
-        const updated = [...userData];
-        updated[userId] = { ...updated[userId], accessLevel: newValue };
-        setUserData(updated);
-      };
-
-      return (
-        <Select value={value} onValueChange={handleChange}>
-          <SelectTrigger className="w-[100px] border-none shadow-none focus:ring-0 focus:outline-none">
-            <SelectValue placeholder="Owner" />
-          </SelectTrigger>
-          <SelectContent className="font-custom">
-            <SelectItem value="owner">Owner</SelectItem>
-            <SelectItem value="admin">Admin</SelectItem>
-          </SelectContent>
-        </Select>
-      );
-    },
-  },
-  // { accessorKey: "title", header: "Title" },
-  // {
-  //   accessorKey: "banktransfer",
-  //   header: "Bank Transfer",
-  //   cell: ({ cell }) => {
-  //     const value = cell.getValue();
-  //     return (
-  //       <span className="text-sm font-custom">
-  //         {value ? `$${parseFloat(value).toFixed(2)}` : "$0.00"}
-  //       </span>
-  //     );
-  //   },
-  // },
   {
     accessorKey: "cash",
     header: "Cash",
@@ -343,9 +326,8 @@ const columns = [
 
       return (
         <span
-          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
-            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
-          }`}
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+            }`}
           style={{
             borderWidth: "1px",
             minWidth: "80px",
@@ -355,6 +337,71 @@ const columns = [
           <Dot color={dotColor[status] || "#999"} />
           {status}
         </span>
+      );
+    },
+  },
+  {
+    id: "actions",
+    header: "",
+    cell: ({ row }) => {
+      const [dialogOpen, setDialogOpen] = useState(false);
+      const [actionType, setActionType] = useState(null); // "promote" or "demote"
+
+      const role = row.original.accessLevel;
+
+      const handleOpen = (type) => {
+        setActionType(type);
+        setDialogOpen(true);
+      };
+
+      return (
+        <div className="flex items-center justify-end gap-2">
+          {role === "admin" || role === "owner" ? (
+            <UserMinus
+              className="w-4 h-4 text-orange-500 cursor-pointer"
+              title="Demote"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpen("demote");
+              }}
+            />
+          ) : (
+            <UserPlus
+              className="w-4 h-4 text-green-600 cursor-pointer"
+              title="Promote"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpen("promote");
+              }}
+            />
+          )}
+          <Trash2
+            className="w-4 h-4 text-red-500 cursor-pointer"
+            title="Delete"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log("Delete", row.original);
+            }}
+          />
+          <Archive
+            className="w-4 h-4 text-gray-500 cursor-pointer"
+            title="Archive"
+            onClick={(e) => {
+              e.stopPropagation();
+              console.log("Archive", row.original);
+            }}
+          />
+          <PromoteDemoteDialog
+            open={dialogOpen}
+            setOpen={setDialogOpen}
+            type={actionType}
+            user={row.original}
+            onConfirm={(newRole, branch, features) => {
+              console.log("Update role to:", newRole, branch, features);
+              setDialogOpen(false);
+            }}
+          />
+        </div>
       );
     },
   },
@@ -398,7 +445,10 @@ const columns = [
 const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const table = useReactTable({
-    data: admins,
+    data: users.filter((a) =>
+      ["owner", "admin"].includes((a.accessLevel || "admin").toLowerCase())
+    ),
+
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -426,8 +476,14 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
   });
 
   useEffect(() => {
-    setAdminsCount(admins.length); // Call setUsersCount to update the count
+    const count = users.filter(
+      (user) =>
+        ["owner", "admin"].includes((user.accessLevel || "").toLowerCase())
+    ).length;
+
+    setAdminsCount(count);
   }, []);
+
 
   return (
     <div className="p-4">

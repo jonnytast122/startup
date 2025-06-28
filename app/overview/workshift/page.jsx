@@ -178,7 +178,7 @@ export default function WorkShiftPage() {
           >
             <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete?
+              Do you want to delete this workshift?
             </h2>
             <div className="flex items-center gap-4 mt-8">
               <Button
