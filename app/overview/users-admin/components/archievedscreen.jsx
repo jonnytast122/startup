@@ -50,18 +50,13 @@ const statusOptions = [
   { value: "Others", label: "Others" },
 ];
 
-const importOptions = [
-  { value: "as CSV", label: "as CSV" },
-  { value: "as XLS", label: "as XLS" },
-];
-
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
 ];
 
 const archeives = [
-{
+  {
     profile: "/avatars/alex.png",
     firstname: "Alex",
     lastname: "Thorne",
@@ -366,19 +361,27 @@ const columns = [
             <List size={16} />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-white shadow-md border p-2 font-custom z-10">
+        <DropdownMenuContent
+          align="end"
+          className="bg-white shadow-md border p-2 font-custom z-10"
+        >
           {table
             .getAllColumns()
-            .filter((column) => column.getCanHide())
+            .filter((column) => column.getCanHide() && column.id !== "filter")
             .map((column) => (
-              <DropdownMenuCheckboxItem
+              <div
                 key={column.id}
-                className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer rounded-md text-sm"
+                onClick={() => column.toggleVisibility()}
               >
-                {column.id}
-              </DropdownMenuCheckboxItem>
+                <input
+                  type="checkbox"
+                  checked={column.getIsVisible()}
+                  onChange={() => column.toggleVisibility()}
+                  className="accent-blue-400 w-4 h-4 rounded border-gray-300"
+                />
+                <span className="capitalize">{column.id}</span>
+              </div>
             ))}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -387,33 +390,33 @@ const columns = [
 ];
 
 const ArchieveScreen = () => {
-    const table = useReactTable({
-      data: archeives,
-      columns,
-      getCoreRowModel: getCoreRowModel(),
-      getPaginationRowModel: getPaginationRowModel(),
-      getFilteredRowModel: getFilteredRowModel(),
-      initialState: {
-        pagination: { pageSize: 25 },
-        columnVisibility: {
-          profile: true,
-          fullName: true,
-          phone: true,
-          title: false,
-          banktransfer: false,
-          branch: true,
-          shiftType: true,
-          accessLevel: true,
-          cash: false,
-          dateadded: true,
-          lastlogin: true,
-          bankname: false,
-          banknumber: false,
-          status: true,
-          filter: true,
-        },
+  const table = useReactTable({
+    data: archeives,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: { pageSize: 25 },
+      columnVisibility: {
+        profile: true,
+        fullName: true,
+        phone: true,
+        title: false,
+        banktransfer: false,
+        branch: true,
+        shiftType: true,
+        accessLevel: true,
+        cash: false,
+        dateadded: true,
+        lastlogin: true,
+        bankname: false,
+        banknumber: false,
+        status: true,
+        filter: true,
       },
-    });
+    },
+  });
 
   return (
     <div className="p-4">
@@ -448,19 +451,6 @@ const ArchieveScreen = () => {
         </div>
         {/* Right Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
-          <Select>
-            <SelectTrigger className="w-24 font-custom rounded-full">
-              <SelectValue placeholder="Import" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {importOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           <Select>
             <SelectTrigger className="w-24 font-custom rounded-full">
               <SelectValue placeholder="Export" />
@@ -501,7 +491,10 @@ const ArchieveScreen = () => {
             {table.getRowModel().rows.map((row) => (
               <TableRow key={row.id}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id} className="whitespace-nowrap overflow-hidden text-ellipsis">
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

@@ -65,7 +65,7 @@ export default function UserAdminPage() {
           </div>
 
           {/* Hide "Add" button for Archived */}
-          {activeTab !== "Archived" && (
+          {/* {activeTab !== "Archived" && (
             <Button
               className="rounded-full px-6 sm:px-10 ml-4"
               onClick={() =>
@@ -74,21 +74,23 @@ export default function UserAdminPage() {
             >
               Add {activeTab}
             </Button>
-          )}
+          )} */}
         </div>
 
         {/* Content */}
-        <div className="p-6 font-custom">
+        <div className="p-3 font-custom">
           {activeTab === "Users" && (
             <UsersScreen
               setUsersCount={setUsersCount}
               searchQuery={searchQuery}
+              onAddUser={() => setDialogType("user")}
             />
           )}
           {activeTab === "Admins" && (
             <AdminsScreen
               setAdminsCount={setAdminsCount}
               searchQuery={searchQuery}
+              onAddAdmin={() => setDialogType("admin")}
             />
           )}
           {activeTab === "Archived" && (

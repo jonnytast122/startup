@@ -29,8 +29,10 @@ import {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { List, ChevronDown } from "lucide-react";
+import { List, Download, PanelTopOpen } from "lucide-react";
+import UploadDialog from "./uploaddialog";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -373,16 +375,21 @@ const columns = [
         >
           {table
             .getAllColumns()
-            .filter((column) => column.getCanHide())
+            .filter((column) => column.getCanHide() && column.id !== "filter")
             .map((column) => (
-              <DropdownMenuCheckboxItem
+              <div
                 key={column.id}
-                className="capitalize"
-                checked={column.getIsVisible()}
-                onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 cursor-pointer rounded-md text-sm"
+                onClick={() => column.toggleVisibility()}
               >
-                {column.id}
-              </DropdownMenuCheckboxItem>
+                <input
+                  type="checkbox"
+                  checked={column.getIsVisible()}
+                  onChange={() => column.toggleVisibility()}
+                  className="accent-blue-400 w-4 h-4 rounded border-gray-300"
+                />
+                <span className="capitalize">{column.id}</span>
+              </div>
             ))}
         </DropdownMenuContent>
       </DropdownMenu>
@@ -390,7 +397,8 @@ const columns = [
   },
 ];
 
-const UsersScreen = ({ setUsersCount }) => {
+const UsersScreen = ({ setUsersCount, onAddUser }) => {
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
   const router = useRouter();
   const table = useReactTable({
     data: users,
@@ -457,31 +465,44 @@ const UsersScreen = ({ setUsersCount }) => {
         </div>
         {/* Right Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
-          <Select>
-            <SelectTrigger className="w-24 font-custom rounded-full">
-              <SelectValue placeholder="Import" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {importOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex w-full sm:w-auto gap-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
+                  Add User
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
+                <DropdownMenuItem
+                  onClick={() => setShowUploadDialog(true)}
+                  className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Import
+                </DropdownMenuItem>
 
-          <Select>
-            <SelectTrigger className="w-24 font-custom rounded-full">
-              <SelectValue placeholder="Export" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {exportOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                <DropdownMenuItem
+                  onClick={() => alert("Importing...")}
+                  className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+                >
+                  <PanelTopOpen className="w-4 h-4 mr-2" />
+                  Download Template
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select>
+              <SelectTrigger className="w-24 font-custom rounded-full">
+                <SelectValue placeholder="Export" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                {exportOptions.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
       <div className="rounded-md border mt-6">
@@ -512,7 +533,7 @@ const UsersScreen = ({ setUsersCount }) => {
                 key={row.id}
                 className="cursor-pointer hover:bg-gray-100"
                 onClick={() => {
-                  const { status, ...rest } = row.original; // remove 'status'
+                  const { status, ...rest } = row.original;
                   const query = new URLSearchParams(rest).toString();
                   router.push(`/overview/users-admin/profile?${query}`);
                 }}
@@ -553,6 +574,11 @@ const UsersScreen = ({ setUsersCount }) => {
           Next
         </Button>
       </div>
+      {/* ⬇️ Add UploadDialog here */}
+      <UploadDialog
+        open={showUploadDialog}
+        onOpenChange={setShowUploadDialog}
+      />
     </div>
   );
 };

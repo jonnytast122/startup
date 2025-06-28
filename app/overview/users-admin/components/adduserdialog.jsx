@@ -236,7 +236,7 @@ export default function AddUserDialog({ open, onClose }) {
             className="rounded-full border-blue-500 text-blue-500 hover:bg-blue-100"
           >
             <UserPlus className="w-4 h-4 mr-2" />
-            Send an Invite
+            Confirm
           </Button>
         </DialogFooter>
       </DialogContent>
