@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,13 +8,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch"; // ShadCN switch
+import { Switch } from "@/components/ui/switch";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
-  const [shiftDays, setShiftDays] = useState(["Mon", "Tue", "Wed", "Thu", "Fri"]);
-  const [reminderDays, setReminderDays] = useState(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+export default function WorkShiftDialog({
+  open,
+  onClose,
+  onSubmit,
+  shift = null,
+  viewOnly = false,
+}) {
+  const [shiftDays, setShiftDays] = useState([]);
+  const [reminderDays, setReminderDays] = useState([]);
   const [startTime, setStartTime] = useState("09:00");
   const [endTime, setEndTime] = useState("17:00");
   const [breakStart, setBreakStart] = useState("12:00");
@@ -23,7 +29,33 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
   const [clockOutReminder, setClockOutReminder] = useState("14:40");
   const [activeReminder, setActiveReminder] = useState(true);
 
+  useEffect(() => {
+    if (shift) {
+      setShiftDays(shift.shiftDays || []);
+      setReminderDays(shift.reminderDays || []);
+      setStartTime(shift.startTime || "09:00");
+      setEndTime(shift.endTime || "17:00");
+      setBreakStart(shift.breakStart || "12:00");
+      setBreakEnd(shift.breakEnd || "13:00");
+      setClockInReminder(shift.clockInReminder || "08:40");
+      setClockOutReminder(shift.clockOutReminder || "14:40");
+      setActiveReminder(shift.activeReminder ?? true);
+    } else {
+      // reset
+      setShiftDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+      setReminderDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+      setStartTime("09:00");
+      setEndTime("17:00");
+      setBreakStart("12:00");
+      setBreakEnd("13:00");
+      setClockInReminder("08:40");
+      setClockOutReminder("14:40");
+      setActiveReminder(true);
+    }
+  }, [shift, open]);
+
   const toggleDay = (state, setter, day) => {
+    if (viewOnly) return;
     setter(state.includes(day) ? state.filter(d => d !== day) : [...state, day]);
   };
 
@@ -32,12 +64,13 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
       {days.map((day) => (
         <button
           key={day}
+          disabled={viewOnly}
           onClick={() => toggleDay(selectedDays, setter, day)}
           className={`min-w-[60px] px-3 py-2 text-sm rounded-xl border text-center ${
             selectedDays.includes(day)
               ? "bg-blue-100 text-blue-600 border-blue-300"
               : "bg-white text-gray-600 border-gray-300"
-          }`}
+          } ${viewOnly ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {day}
         </button>
@@ -46,12 +79,13 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
   );
 
   const handleConfirm = () => {
-    const newShift = {
-      id: Date.now(),
-      name: "New Shift",
-      status: "Active",
-      createdBy: "Admin",
-      profilePic: "/path/to/default.jpg",
+    const updatedShift = {
+      ...(shift || {}),
+      id: shift?.id || Date.now(),
+      name: shift?.name || "New Shift",
+      status: shift?.status || "Active",
+      createdBy: shift?.createdBy || "Admin",
+      profilePic: shift?.profilePic || "/path/to/default.jpg",
       shiftDays,
       reminderDays,
       startTime,
@@ -62,7 +96,7 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
       clockOutReminder,
       activeReminder,
     };
-    onSubmit(newShift);
+    onSubmit(updatedShift);
     onClose();
   };
 
@@ -70,7 +104,9 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl px-6">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl">Work shift details</DialogTitle>
+          <DialogTitle className="text-center text-2xl">
+            {viewOnly ? "Work Shift Details" : shift ? "Edit Work Shift" : "Add Work Shift"}
+          </DialogTitle>
           <div className="w-full h-[1px] bg-gray-300 my-4" />
         </DialogHeader>
 
@@ -87,9 +123,21 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
               <div className="w-1/3 font-medium">Work duration:</div>
               <div className="w-2/3 flex items-center gap-4 flex-wrap">
                 <span>Start at:</span>
-                <input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="border rounded px-2 py-1" />
+                <input
+                  type="time"
+                  value={startTime}
+                  disabled={viewOnly}
+                  onChange={(e) => setStartTime(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
                 <span>End at:</span>
-                <input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="border rounded px-2 py-1" />
+                <input
+                  type="time"
+                  value={endTime}
+                  disabled={viewOnly}
+                  onChange={(e) => setEndTime(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
               </div>
             </div>
 
@@ -98,9 +146,21 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
               <div className="w-1/3 font-medium">Break:</div>
               <div className="w-2/3 flex items-center gap-4 flex-wrap">
                 <span>Start at:</span>
-                <input type="time" value={breakStart} onChange={(e) => setBreakStart(e.target.value)} className="border rounded px-2 py-1" />
+                <input
+                  type="time"
+                  value={breakStart}
+                  disabled={viewOnly}
+                  onChange={(e) => setBreakStart(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
                 <span>End at:</span>
-                <input type="time" value={breakEnd} onChange={(e) => setBreakEnd(e.target.value)} className="border rounded px-2 py-1" />
+                <input
+                  type="time"
+                  value={breakEnd}
+                  disabled={viewOnly}
+                  onChange={(e) => setBreakEnd(e.target.value)}
+                  className="border rounded px-2 py-1"
+                />
               </div>
             </div>
 
@@ -112,13 +172,17 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
                   <Switch
                     checked={activeReminder}
                     onCheckedChange={setActiveReminder}
-                    className={activeReminder ? "bg-green-500 data-[state=checked]:bg-green-500" : ""}
+                    disabled={viewOnly}
+                    className={
+                      activeReminder
+                        ? "bg-green-500 data-[state=checked]:bg-green-500"
+                        : ""
+                    }
                   />
                 </div>
               </div>
             </div>
 
-            {/* Reminder Section (conditional) */}
             {activeReminder && (
               <>
                 {/* Reminder Days */}
@@ -133,23 +197,42 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
                   <div className="w-2/3 space-y-2">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span>Remind employees to <strong>clock in</strong> at:</span>
-                      <input type="time" value={clockInReminder} onChange={(e) => setClockInReminder(e.target.value)} className="border rounded px-2 py-1 ml-2" />
+                      <input
+                        type="time"
+                        value={clockInReminder}
+                        disabled={viewOnly}
+                        onChange={(e) => setClockInReminder(e.target.value)}
+                        className="border rounded px-2 py-1 ml-2"
+                      />
                     </div>
                     <div className="flex items-center gap-3 flex-wrap">
                       <span>Remind employees to <strong>clock out</strong> at:</span>
-                      <input type="time" value={clockOutReminder} onChange={(e) => setClockOutReminder(e.target.value)} className="border rounded px-2 py-1" />
+                      <input
+                        type="time"
+                        value={clockOutReminder}
+                        disabled={viewOnly}
+                        onChange={(e) => setClockOutReminder(e.target.value)}
+                        className="border rounded px-2 py-1"
+                      />
                     </div>
                   </div>
                 </div>
               </>
             )}
 
-            <div className="w-full h-[1px] bg-gray-300 mt-6" />
-            <div className="flex justify-end">
-              <Button onClick={handleConfirm} className="mt-4 px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white">
-                Save Changes
-              </Button>
-            </div>
+            {!viewOnly && (
+              <>
+                <div className="w-full h-[1px] bg-gray-300 mt-6" />
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleConfirm}
+                    className="mt-4 px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </DialogContent>

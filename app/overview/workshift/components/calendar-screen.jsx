@@ -11,8 +11,13 @@ import {
   subMonths,
   isToday,
 } from "date-fns";
-import { ChevronLeft, ChevronRight, MoreHorizontal, CircleX } from "lucide-react";
-import EventDialog from "./event-dialog";
+import {
+  ChevronLeft,
+  ChevronRight,
+  MoreHorizontal,
+  CircleX,
+} from "lucide-react";
+import EditEventDialog from "./edit-event-dialog"; // renamed import
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
@@ -86,6 +91,7 @@ export default function CambodiaHolidayCalendar() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-4">
+      {/* Calendar Panel */}
       <div className="bg-white rounded-lg shadow w-full lg:w-2/3 p-4">
         <div className="flex justify-between items-center mb-4">
           <button onClick={() => setCurrentDate(subMonths(currentDate, 1))}>
@@ -115,17 +121,19 @@ export default function CambodiaHolidayCalendar() {
               <div
                 key={idx}
                 onClick={() => day && setSelectedDate(dateStr)}
-                className={`border h-20 p-1 flex justify-center items-start cursor-pointer hover:bg-blue-50 ${today ? "bg-blue-200" : ""
-                  }`}
+                className={`border h-20 p-1 flex justify-center items-start cursor-pointer hover:bg-blue-50 ${
+                  today ? "bg-blue-200" : ""
+                }`}
               >
                 {day && (
                   <span
-                    className={`text-xs ${event?.color === "red"
+                    className={`text-xs ${
+                      event?.color === "red"
                         ? "text-red-500 font-semibold"
                         : event?.color === "blue"
-                          ? "text-blue-500 font-semibold"
-                          : ""
-                      }`}
+                        ? "text-blue-500 font-semibold"
+                        : ""
+                    }`}
                   >
                     {format(day, "d")}
                   </span>
@@ -136,6 +144,7 @@ export default function CambodiaHolidayCalendar() {
         </div>
       </div>
 
+      {/* Event List Panel */}
       <div className="bg-white rounded-lg shadow w-full lg:w-1/3 p-4 border">
         <h3 className="text-md font-semibold mb-2">
           Events in {format(currentDate, "MMMM")}
@@ -160,10 +169,11 @@ export default function CambodiaHolidayCalendar() {
                     <div>{format(dateObj, "d")}</div>
                   </div>
                   <div
-                    className={`flex-1 text-xs rounded-md px-3 py-1 font-medium text-center border ${item.color === "red"
+                    className={`flex-1 text-xs rounded-md px-3 py-1 font-medium text-center border ${
+                      item.color === "red"
                         ? "border-red-400 text-red-500"
                         : "border-blue-400 text-blue-500"
-                      }`}
+                    }`}
                   >
                     {item.name}
                   </div>
@@ -182,7 +192,9 @@ export default function CambodiaHolidayCalendar() {
                       >
                         Edit
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setConfirmDelete(item)}>
+                      <DropdownMenuItem
+                        onClick={() => setConfirmDelete(item)}
+                      >
                         Delete
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -193,8 +205,9 @@ export default function CambodiaHolidayCalendar() {
         </div>
       </div>
 
+      {/* Edit / Add Dialog */}
       {(selectedDate || editEvent) && (
-        <EventDialog
+        <EditEventDialog
           date={selectedDate}
           onClose={() => {
             setSelectedDate(null);
@@ -205,14 +218,18 @@ export default function CambodiaHolidayCalendar() {
         />
       )}
 
-
+      {/* Confirm Delete Dialog */}
       {confirmDelete && (
         <Dialog open={true} onOpenChange={() => setConfirmDelete(null)}>
           <DialogContent
             className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
             style={{ minHeight: "280px", display: "flex" }}
           >
-            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+            <CircleX
+              className="w-12 h-12"
+              style={{ color: "#fb5f59" }}
+              strokeWidth={1.5}
+            />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
               Do you want to delete this event?
             </h2>
@@ -240,5 +257,4 @@ export default function CambodiaHolidayCalendar() {
       )}
     </div>
   );
-
 }

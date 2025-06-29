@@ -1,14 +1,20 @@
-// GroupPage.jsx
 "use client";
 
 import { useState } from "react";
 import { Users, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TableFooter,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import AddGroupDialog from "./components/add-group-dialog";
+import EditGroupDialog from "./components/edit-group-dialog";
 import AddSectionDialog from "./components/add-section-dialog";
 import {
   DropdownMenu,
@@ -19,8 +25,41 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Members = [
-  "John Doe", "Jane Smith", "Emily Johnson", "Michael Brown", "Sarah Davis",
-  "David Wilson", "Jessica Moore", "James Taylor", "Amanda Anderson", "William Thomas"
+  {
+    first: "Lucy",
+    last: "Trevo",
+    dept: "Marketing",
+    job: "Accountant",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "John",
+    last: "Mark",
+    dept: "Marketing",
+    job: "Marketing",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Doe",
+    last: "Ibrahim",
+    dept: "Officer",
+    job: "HR",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Luke",
+    last: "Kai",
+    dept: "Officer",
+    job: "General",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Bob",
+    last: "Mako",
+    dept: "Marketing",
+    job: "Accountant",
+    avatar: "https://via.placeholder.com/28",
+  },
 ];
 
 const initialGroupsData = {
@@ -31,7 +70,7 @@ const initialGroupsData = {
       members: 2,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["John Doe", "Jane Smith"],
+      admins: ["Lucy Trevo", "John Mark"],
     },
     {
       id: 2,
@@ -39,7 +78,7 @@ const initialGroupsData = {
       members: 1,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile3.jpg",
-      admins: ["Emily Johnson"],
+      admins: ["Doe Ibrahim"],
     },
   ],
   highPayment: [
@@ -49,7 +88,7 @@ const initialGroupsData = {
       members: 3,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["David Wilson", "Sarah Davis", "Jessica Moore"],
+      admins: ["Luke Kai", "Bob Mako", "John Mark"],
     },
   ],
   outdoor: [
@@ -59,7 +98,13 @@ const initialGroupsData = {
       members: 5,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile6.jpg",
-      admins: ["Amanda Anderson", "William Thomas", "James Taylor", "Jane Smith", "John Doe"],
+      admins: [
+        "Bob Mako",
+        "John Mark",
+        "Luke Kai",
+        "Doe Ibrahim",
+        "Lucy Trevo",
+      ],
     },
   ],
 };
@@ -79,18 +124,25 @@ const sectionColors = [
 
 export default function GroupPage() {
   const [groupsData, setGroupsData] = useState(initialGroupsData);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSectionOpen, setIsSectionOpen] = useState(false);
-  const [newGroup, setNewGroup] = useState({ name: "", admins: [], category: "general" });
-  const [newSection, setNewSection] = useState("");
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    admins: [],
+    category: "general",
+  });
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  const openModal = (category) => {
+  // For editing
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+
+  const openAddModal = (category) => {
     setNewGroup({ name: "", admins: [], category });
-    setIsOpen(true);
+    setIsAddOpen(true);
   };
 
-  const handleConfirm = () => {
+  const handleAddConfirm = () => {
     if (!newGroup.name || newGroup.admins.length === 0) return;
 
     setGroupsData((prevData) => ({
@@ -108,19 +160,33 @@ export default function GroupPage() {
       ],
     }));
 
-    setIsOpen(false);
+    setIsAddOpen(false);
+  };
+
+  const openEditModal = (category, group) => {
+    setEditingGroup({ ...group, category });
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEditedGroup = (updatedGroup) => {
+    setGroupsData((prevData) => {
+      const updatedCategory = updatedGroup.category;
+      const newGroups = prevData[updatedCategory].map((g) =>
+        g.id === updatedGroup.id
+          ? {
+              ...g,
+              groupName: updatedGroup.groupName,
+              admins: updatedGroup.admins,
+              members: updatedGroup.admins.length,
+            }
+          : g
+      );
+      return { ...prevData, [updatedCategory]: newGroups };
+    });
   };
 
   const handleConfirmSection = () => {
-    if (!newSection.trim()) return;
-
-    setGroupsData((prevData) => ({
-      ...prevData,
-      [newSection]: [],
-    }));
-
-    setIsSectionOpen(false);
-    setNewSection("");
+    // implement if you want to add new section
   };
 
   const renderGroupSection = (title, groupData, category, index) => {
@@ -128,7 +194,9 @@ export default function GroupPage() {
 
     return (
       <div key={category} className="mb-7 overflow-hidden">
-        <div className={`${color.bg} py-3 px-4 flex justify-between items-center`}>
+        <div
+          className={`${color.bg} py-3 px-4 flex justify-between items-center`}
+        >
           <div>
             <h2 className={`font-semibold text-xl ${color.text}`}>{title}</h2>
             <span className="text-gray-600">{groupData.length} groups</span>
@@ -149,7 +217,7 @@ export default function GroupPage() {
             </TableHeader>
             <TableBody>
               {groupData.map((group) => (
-                <TableRow key={group.id}>
+                <TableRow key={group.id} className="cursor-pointer" onClick={() => openEditModal(category, group)}>
                   <TableCell>{group.groupName}</TableCell>
                   <TableCell>{group.members}</TableCell>
                   <TableCell>
@@ -167,9 +235,13 @@ export default function GroupPage() {
                       {group.admins.slice(0, 3).map((admin, i) => (
                         <img
                           key={admin}
-                          src={`/path/to/profiles/${admin.replace(/\s+/g, "").toLowerCase()}.jpg`}
+                          src={`/path/to/profiles/${admin
+                            .replace(/\s+/g, "")
+                            .toLowerCase()}.jpg`}
                           alt={admin}
-                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${i === 0 ? "ml-0" : ""}`}
+                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
+                            i === 0 ? "ml-0" : ""
+                          }`}
                           title={admin}
                         />
                       ))}
@@ -188,13 +260,19 @@ export default function GroupPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        side="right" align="start"
+                        side="right"
+                        align="start"
                         className="bg-white border border-gray-200 shadow-lg rounded-md"
+                        onClick={(e) => e.stopPropagation()} // prevent row click
                       >
-                        <DropdownMenuItem onClick={() => console.log("Edit", group)}>
+                        <DropdownMenuItem
+                          onClick={() => openEditModal(category, group)}
+                        >
                           Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setConfirmDelete({ category, group })}>
+                        <DropdownMenuItem
+                          onClick={() => setConfirmDelete({ category, group })}
+                        >
                           Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -208,7 +286,7 @@ export default function GroupPage() {
                 <TableCell colSpan={4} className="text-left">
                   <Button
                     className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                    onClick={() => openModal(category)}
+                    onClick={() => openAddModal(category)}
                   >
                     <Plus size={12} className="mr-2" /> Add Group
                   </Button>
@@ -229,26 +307,7 @@ export default function GroupPage() {
             <Users className="text-[#2998FF]" width={40} height={40} />
             <span className="font-custom text-3xl text-black">Groups</span>
           </div>
-
-          <div className="flex items-center gap-4">
-            <p className="text-right text-sm font-medium text-gray-600 leading-tight">
-              Asset<br />Admins
-            </p>
-            <div className="flex -space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                W
-              </div>
-              <div className="w-8 h-8 rounded-full bg-lime-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                L
-              </div>
-              <div className="w-8 h-8 rounded-full bg-pink-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                S
-              </div>
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 text-sm font-bold flex items-center justify-center border-2 border-white">
-                2+
-              </div>
-            </div>
-          </div>
+          {/* You can add extra header info here */}
         </div>
       </div>
 
@@ -267,20 +326,20 @@ export default function GroupPage() {
       </div>
 
       <AddGroupDialog
-        open={isOpen}
-        setOpen={setIsOpen}
+        open={isAddOpen}
+        setOpen={setIsAddOpen}
         newGroup={newGroup}
         setNewGroup={setNewGroup}
         members={Members}
-        onConfirm={handleConfirm}
+        onConfirm={handleAddConfirm}
       />
 
-      <AddSectionDialog
-        open={isSectionOpen}
-        setOpen={setIsSectionOpen}
-        newSection={newSection}
-        setNewSection={setNewSection}
-        onConfirm={handleConfirmSection}
+      <EditGroupDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        group={editingGroup}
+        onSave={handleSaveEditedGroup}
+        members={Members}
       />
 
       {confirmDelete && (
@@ -289,7 +348,11 @@ export default function GroupPage() {
             className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
             style={{ minHeight: "280px", display: "flex" }}
           >
-            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+            <CircleX
+              className="w-12 h-12"
+              style={{ color: "#fb5f59" }}
+              strokeWidth={1.5}
+            />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
               Do you want to delete this group?
             </h2>

@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -35,6 +34,10 @@ export default function AddGroupDialog({
       setError("Group name is required.");
       return;
     }
+    if (newGroup.admins.length === 0) {
+      setError("Select at least one admin.");
+      return;
+    }
     setError("");
     onConfirm();
   };
@@ -43,12 +46,16 @@ export default function AddGroupDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-semibold mb-4">Group settings</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-semibold mb-4">
+            Group settings
+          </DialogTitle>
         </DialogHeader>
 
         <div className="w-full flex flex-wrap sm:flex-nowrap sm:items-center gap-4 mb-4">
           <div className="flex items-center gap-2 flex-1 min-w-0">
-            <label className="text-sm font-medium whitespace-nowrap">Group's name:</label>
+            <label className="text-sm font-medium whitespace-nowrap">
+              Group's name:
+            </label>
             <Input
               placeholder="Group's name"
               value={newGroup.name}
@@ -75,7 +82,9 @@ export default function AddGroupDialog({
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-            <span className="text-sm text-gray-500 whitespace-nowrap">{newGroup.admins.length} selected</span>
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              {newGroup.admins.length} selected
+            </span>
           </div>
         </div>
         {error && <p className="text-red-500 text-sm -mt-3 mb-2">{error}</p>}
@@ -88,48 +97,52 @@ export default function AddGroupDialog({
               <div className="col-span-1">Department</div>
               <div className="col-span-1">Job</div>
             </div>
-            {[
-              { first: "Lucy", last: "Trevo", dept: "Marketing", job: "Accountant" },
-              { first: "John", last: "Mark", dept: "Marketing", job: "Marketing" },
-              { first: "Doe", last: "Ibrahim", dept: "Officer", job: "HR" },
-              { first: "Luke", last: "Kai", dept: "Officer", job: "General" },
-              { first: "Bob", last: "Mako", dept: "Marketing", job: "Accountant" },
-            ].map((member, i) => (
-              <div key={i} className="grid grid-cols-4 items-center px-4 py-2 border-t text-sm">
-                <div className="col-span-1 flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="accent-blue-500"
-                    checked={newGroup.admins.includes(member.first)}
-                    onChange={() => {
-                      const exists = newGroup.admins.includes(member.first);
-                      setNewGroup({
-                        ...newGroup,
-                        admins: exists
-                          ? newGroup.admins.filter((a) => a !== member.first)
-                          : [...newGroup.admins, member.first],
-                      });
-                    }}
-                  />
-                  <div className="flex items-center gap-2">
-                    <img
-                      src="https://via.placeholder.com/28"
-                      alt="avatar"
-                      className="w-7 h-7 rounded-full"
+            {(members || []).map((member, i) => {
+              const fullName = `${member.first} ${member.last}`;
+              const checked = newGroup.admins.includes(fullName);
+              return (
+                <div
+                  key={i}
+                  className="grid grid-cols-4 items-center px-4 py-2 border-t text-sm"
+                >
+                  <div className="col-span-1 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="accent-blue-500"
+                      checked={checked}
+                      onChange={() => {
+                        if (checked) {
+                          setNewGroup({
+                            ...newGroup,
+                            admins: newGroup.admins.filter((a) => a !== fullName),
+                          });
+                        } else {
+                          setNewGroup({
+                            ...newGroup,
+                            admins: [...newGroup.admins, fullName],
+                          });
+                        }
+                      }}
                     />
-                    <span>{member.first}</span>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={member.avatar}
+                        alt={fullName}
+                        className="w-7 h-7 rounded-full"
+                      />
+                      <span>{member.first}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-1">{member.last}</div>
+                  <div className="col-span-1">{member.dept}</div>
+                  <div className="col-span-1">
+                    <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
+                      {member.job}
+                    </span>
                   </div>
                 </div>
-                <div className="col-span-1">{member.last}</div>
-                <div className="col-span-1">{member.dept}</div>
-                <div className="col-span-1">
-<span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
-  {member.job}
-</span>
-
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
