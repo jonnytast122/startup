@@ -28,15 +28,16 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
   };
 
   const renderDays = (selectedDays, setter) => (
-    <div className="flex flex-wrap gap-2 w-full">
+    <div className="flex gap-2 w-full flex-nowrap">
       {days.map((day) => (
         <button
           key={day}
           onClick={() => toggleDay(selectedDays, setter, day)}
-          className={`min-w-[60px] px-3 py-2 text-sm rounded-xl border text-center ${selectedDays.includes(day)
+          className={`min-w-[60px] px-3 py-2 text-sm rounded-xl border text-center ${
+            selectedDays.includes(day)
               ? "bg-blue-100 text-blue-600 border-blue-300"
               : "bg-white text-gray-600 border-gray-300"
-            }`}
+          }`}
         >
           {day}
         </button>
@@ -67,7 +68,7 @@ export default function AddWorkShiftDialog({ open, onClose, onSubmit }) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-3xl px-6">
+      <DialogContent className="sm:max-w-4xl px-6">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">Work shift details</DialogTitle>
           <div className="w-full h-[1px] bg-gray-300 my-4" />

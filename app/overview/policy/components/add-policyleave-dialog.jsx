@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { ChevronDown } from 'lucide-react';
 
 const PolicyLeave = ({ open, onClose, onSubmit }) => {
   const [policyName, setPolicyName] = useState("");
@@ -18,7 +19,83 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
   const [durationType, setDurationType] = useState("month");
   const [timeOffValue, setTimeOffValue] = useState("");
   const [timeOffUnit, setTimeOffUnit] = useState("days");
-  const [assignment, setAssignment] = useState("all");
+  const [selectedFirstLevel, setSelectedFirstLevel] = useState(null);
+
+   const firstLevelOptions = [
+    { key: "user", label: "User" },
+    { key: "department", label: "Department" },
+    { key: "group", label: "Group" },
+    { key: "branch", label: "Branch" }
+  ];
+
+  const secondLevelData = {
+    user: ["User 1", "User 2", "User 3"],
+    department: ["Dept 1", "Dept 2"],
+    group: ["Group 1", "Group 2"],
+    branch: ["Branch 1", "Branch 2"]
+  };
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [selectedFirstLevels, setSelectedFirstLevels] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
+  const [hoveredItem, setHoveredItem] = useState(null);
+
+  const handleToggleMenu = () => {
+    setMenuOpen((prev) => !prev);
+    setHoveredItem(null);
+  };
+
+  const handleFirstLevelChange = (key) => {
+    let newSelection = [];
+
+    if (key === "all") {
+      if (selectedFirstLevels.length === firstLevelOptions.length) {
+        newSelection = [];
+      } else {
+        newSelection = firstLevelOptions.map((item) => item.key);
+      }
+      setHoveredItem(null);
+    } else {
+      const exists = selectedFirstLevels.includes(key);
+      if (exists) {
+        newSelection = selectedFirstLevels.filter((k) => k !== key);
+      } else {
+        newSelection = [...selectedFirstLevels, key];
+      }
+    }
+    setSelectedFirstLevels(newSelection);
+  };
+
+  const handleSecondLevelChange = (firstKey, value) => {
+    setSelectedItems((prev) => {
+      const existing = prev[firstKey] || [];
+      const alreadyChecked = existing.includes(value);
+      return {
+        ...prev,
+        [firstKey]: alreadyChecked
+          ? existing.filter((v) => v !== value)
+          : [...existing, value]
+      };
+    });
+  };
+
+  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+    const count = selectedItems[key]?.length || 0;
+    return acc + count;
+  }, 0);
+
+  const isAllSelected =
+    selectedFirstLevels.length === firstLevelOptions.length &&
+    firstLevelOptions.length > 0;
+
+  const firstLevelLabel = isAllSelected
+    ? "All"
+    : selectedFirstLevels
+        .map(
+          (key) =>
+            firstLevelOptions.find((item) => item.key === key)?.label
+        )
+        .join(", ") || "Select...";
 
   const handleMonthChange = (e) => {
     const month = e.target.value;
@@ -48,6 +125,11 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
     onClose();
     setPolicyName(""); // reset for reuse
   };
+
+  const selectedCount =
+    selectedFirstLevel && selectedItems[selectedFirstLevel.key]
+      ? selectedItems[selectedFirstLevel.key].length
+      : 0;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -82,10 +164,10 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                 <div
                   key={type}
                   onClick={() => setSelectedType(type)}
-                  className={`flex-1 border rounded-lg px-6 py-3 cursor-pointer transition-colors ${selectedType === type ? "border-blue-500" : "border-gray-300"
+                  className={`flex-1 border rounded-lg px-2 py-6 text-center cursor-pointer transition-colors ${selectedType === type ? "border-blue-500 bg-blue-300" : "border-gray-300"
                     }`}
                 >
-                  <span className="text-gray-700 text-base">
+                  <span className="text-gray-700 text-xl">
                     {type === "paid" ? "Paid Leave" : "Unpaid Leave"}
                   </span>
                 </div>
@@ -182,24 +264,105 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
           </div>
 
           {/* Assignment */}
-          <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Assignment
-            </label>
-            <div className="w-full md:w-2/3">
-              <select
-                value={assignment}
-                onChange={(e) => setAssignment(e.target.value)}
-                className="border border-gray-300 rounded-lg p-2 w-full text-sm"
+    <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
+      {/* Label */}
+      <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
+        Assignment
+      </label>
+
+      {/* Button and count */}
+      <div className="w-full md:w-2/3 relative flex items-center">
+        {/* Button */}
+        <button
+          onClick={handleToggleMenu}
+          className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
+        >
+          <span className="truncate">{firstLevelLabel}</span>
+          <ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
+        </button>
+
+        {/* Count outside the button */}
+        {totalSecondLevelSelected > 0 && (
+          <span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
+            {totalSecondLevelSelected} selected
+          </span>
+        )}
+
+        {menuOpen && (
+          <>
+            {/* First-level panel */}
+            <div
+              className="absolute top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-10"
+            >
+              {/* All option */}
+              <label
+                className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                onMouseEnter={() => setHoveredItem(null)}
               >
-                <option value="all">All</option>
-                <option value="user">User</option>
-                <option value="department">Department</option>
-                <option value="group">Group</option>
-                <option value="branch">Branch</option>
-              </select>
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={() => handleFirstLevelChange("all")}
+                  className="mr-2"
+                />
+                All
+              </label>
+
+              {firstLevelOptions.map((item) => (
+                <label
+                  key={item.key}
+                  className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseEnter={() => setHoveredItem(item.key)}
+                  onClick={() => setHoveredItem(item.key)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedFirstLevels.includes(item.key)}
+                    onChange={() => handleFirstLevelChange(item.key)}
+                    className="mr-2"
+                  />
+                  {item.label}
+                </label>
+              ))}
             </div>
-          </div>
+
+            {/* Only one second-level panel */}
+            {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
+              <div
+                className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20"
+              >
+                <div className="px-3 py-2 font-semibold border-b border-gray-200">
+                  {
+                    firstLevelOptions.find((o) => o.key === hoveredItem)
+                      ?.label
+                  }{" "}
+                  Options
+                </div>
+                {secondLevelData[hoveredItem].map((value) => (
+                  <label
+                    key={value}
+                    className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={
+                        selectedItems[hoveredItem]?.includes(value) ||
+                        false
+                      }
+                      onChange={() =>
+                        handleSecondLevelChange(hoveredItem, value)
+                      }
+                      className="mr-2"
+                    />
+                    {value}
+                  </label>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
 
           {/* Footer */}
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10" />

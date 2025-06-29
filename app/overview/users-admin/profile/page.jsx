@@ -10,7 +10,7 @@ import {
   Trash2,
   Download
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -22,21 +22,43 @@ import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
 
 export default function UserProfile() {
-  const searchParams = useSearchParams();
-  const firstname = searchParams.get("firstname") || "";
-  const lastname = searchParams.get("lastname") || "";
-  const title = searchParams.get("title") || "";
-  const profile = searchParams.get("profile");
-  const mobile = searchParams.get("phone") || "";
-  const email = searchParams.get("email") || "";
-  const employmentstartdate = searchParams.get("dateadded") || "";
-  const branch = searchParams.get("branch") || "";
-  const birthday = searchParams.get("birthday") || "";
-  const accountnumber = searchParams.get("banknumber") || "";
-  const cash = parseFloat(searchParams.get("cash") || "0");
-  const banktransfer = parseFloat(searchParams.get("banktransfer") || "0");
-  const single = parseFloat(searchParams.get("single") || "25.00");
-  const nochildren = parseFloat(searchParams.get("nochildren") || "0.60");
+  const rawParams = useSearchParams();
+
+  // ✅ Memoize searchParams to avoid unnecessary rerenders
+  const params = useMemo(() => {
+    return {
+      firstname: rawParams.get("firstname") || "",
+      lastname: rawParams.get("lastname") || "",
+      title: rawParams.get("title") || "",
+      phone: rawParams.get("phone") || "",
+      birthday: rawParams.get("birthday") || "",
+      branch: rawParams.get("branch") || "",
+      dateadded: rawParams.get("dateadded") || "",
+      profile: rawParams.get("profile"),
+      banknumber: rawParams.get("banknumber") || "",
+      cash: parseFloat(rawParams.get("cash") || "0"),
+      banktransfer: parseFloat(rawParams.get("banktransfer") || "0"),
+      single: parseFloat(rawParams.get("single") || "25.00"),
+      nochildren: parseFloat(rawParams.get("nochildren") || "0.60"),
+    };
+  }, []);
+
+  // ✅ Use memoized values to initialize state
+  const [firstname, setFirstname] = useState(params.firstname);
+  const [lastname, setLastname] = useState(params.lastname);
+  const [title, setTitle] = useState(params.title);
+  const [mobile, setMobile] = useState(params.phone);
+  const [birthday, setBirthday] = useState(params.birthday);
+  const [branch, setBranch] = useState(params.branch);
+  const [employmentstartdate, setEmploymentstartdate] = useState(params.dateadded);
+  const [department, setDepartment] = useState("Junior Marketing");
+
+  const profile = params.profile;
+  const accountnumber = params.banknumber;
+  const cash = params.cash;
+  const banktransfer = params.banktransfer;
+  const single = params.single;
+  const nochildren = params.nochildren;
   const subtotal = banktransfer - (single + nochildren);
   const netsalary = cash + subtotal;
 
@@ -109,6 +131,8 @@ export default function UserProfile() {
     );
   };
 
+  // ... Rest of your code continues unchanged (EditableInput, DropdownSection, JSX etc)
+
   const DropdownSection = ({
     title,
     items,
@@ -170,16 +194,16 @@ export default function UserProfile() {
     </>
   );
 
-  const InputDisplay = ({ label, value }) => (
+  // Editable input with label
+  const EditableInput = ({ label, value, onChange, type = "text" }) => (
     <>
-      <label className="text-sm font-custom text-[#3F4648] w-full">
-        {label}
-      </label>
+      <label className="text-sm font-custom text-[#3F4648] w-full">{label}</label>
       <input
-        type="text"
-        placeholder={value}
-        disabled
-        className="text-sm font-custom rounded-lg p-3 w-full mt-2 bg-gray-100 text-gray-500 cursor-not-allowed mb-6"
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+        spellCheck={false}
       />
     </>
   );
@@ -192,6 +216,34 @@ export default function UserProfile() {
       </p>
     </div>
   );
+
+  // Handle Save Changes button click
+  const handleSaveChanges = () => {
+    // Replace with your save logic
+    console.log("Save Changes clicked");
+    console.log({
+      firstname,
+      lastname,
+      mobile,
+      birthday,
+      branch,
+      department,
+      title,
+      employmentstartdate,
+      selectedPolicies,
+      selectedWorkShift,
+      selectedGroup,
+      selectedLocation,
+      files,
+    });
+  };
+
+  // Handle Save All button click
+  const handleSaveAll = () => {
+    // Replace with your save all logic
+    console.log("Save All clicked");
+    handleSaveChanges(); // just reuse for demo
+  };
 
   return (
     <>
@@ -243,21 +295,23 @@ export default function UserProfile() {
               Personal details
             </h2>
 
-            <InputDisplay label="First Name" value={firstname} />
-            <InputDisplay label="Last Name" value={lastname} />
-            <InputDisplay label="Mobile Phone" value={mobile} />
-            <InputDisplay label="Birthday" value={birthday} />
+            <EditableInput label="First Name" value={firstname} onChange={setFirstname} />
+            <EditableInput label="Last Name" value={lastname} onChange={setLastname} />
+            <EditableInput label="Mobile Phone" value={mobile} onChange={setMobile} />
+            <EditableInput label="Birthday" value={birthday} onChange={setBirthday} type="date" />
 
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
 
-            <InputDisplay label="Branch" value={branch} />
-            <InputDisplay label="Department" value="Junior Marketing" />
-            <InputDisplay label="Title" value={title} />
-            <InputDisplay
+            <EditableInput label="Branch" value={branch} onChange={setBranch} />
+            <EditableInput label="Department" value={department} onChange={setDepartment} />
+            <EditableInput label="Title" value={title} onChange={setTitle} />
+            <EditableInput
               label="Employment Start Date"
               value={employmentstartdate}
+              onChange={setEmploymentstartdate}
+              type="date"
             />
 
             <DropdownSection
@@ -289,6 +343,15 @@ export default function UserProfile() {
               selectedItems={selectedLocation}
               toggleItem={toggleLocation}
             />
+
+            {/* Save Changes button inside left container
+            <button
+              onClick={handleSaveChanges}
+              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
+              type="button"
+            >
+              Save Changes
+            </button> */}
           </div>
 
           {/* Right container with text aligned left */}
@@ -546,14 +609,20 @@ export default function UserProfile() {
                     </div>
                   ))}
                 </div>
-
-
-
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Fixed Save All button at bottom right */}
+      <button
+        onClick={handleSaveAll}
+        className="fixed bottom-8 right-8 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg shadow-lg z-50 transition"
+        type="button"
+      >
+        Save changes
+      </button>
     </>
   );
 }
