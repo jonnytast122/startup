@@ -32,13 +32,17 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { List, Download, PanelTopOpen } from "lucide-react";
-import { Crown, Star, Trash2, Archive, UserPlus, UserMinus, CircleX } from "lucide-react";
+import {
+  Crown,
+  Star,
+  Trash2,
+  Archive,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
 import PromoteDemoteDialog from "./promotedemotedialog";
 import UploadDialog from "./uploaddialog";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import DeleteDialog from "./deletedialog";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -58,16 +62,10 @@ const statusOptions = [
   { value: "Others", label: "Others" },
 ];
 
-const importOptions = [
-  { value: "as CSV", label: "as CSV" },
-  { value: "as XLS", label: "as XLS" },
-];
-
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
 ];
-
 
 const users = [
   {
@@ -332,7 +330,9 @@ const columns = [
 
       return (
         <span
-          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"}`}
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+          }`}
           style={{
             borderWidth: "1px",
             minWidth: "80px",
@@ -354,6 +354,8 @@ const columns = [
     cell: ({ row }) => {
       const [dialogOpen, setDialogOpen] = useState(false);
       const [actionType, setActionType] = useState(null); // "promote" or "demote"
+
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
       const role = row.original.accessLevel;
 
@@ -388,10 +390,9 @@ const columns = [
             title="Delete"
             onClick={(e) => {
               e.stopPropagation();
-              setConfirmDelete(row.original); // Just store the user
+              setDeleteDialogOpen(true);
             }}
           />
-
 
           <Archive
             className="w-4 h-4 text-gray-500 cursor-pointer"
@@ -409,6 +410,16 @@ const columns = [
             onConfirm={(newRole, branch, features) => {
               console.log("Update role to:", newRole, branch, features);
               setDialogOpen(false);
+            }}
+          />
+          <DeleteDialog
+            open={deleteDialogOpen}
+            setOpen={setDeleteDialogOpen}
+            user={row.original}
+            onConfirm={() => {
+              console.log("User deleted:", row.original);
+              setDeleteDialogOpen(false);
+              // Put your deletion logic here
             }}
           />
         </div>
@@ -450,7 +461,6 @@ const columns = [
       </DropdownMenu>
     ),
   },
-
 ];
 
 const UsersScreen = ({ setUsersCount, onAddUser }) => {
@@ -587,23 +597,29 @@ const UsersScreen = ({ setUsersCount, onAddUser }) => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="cursor-pointer hover:bg-gray-100"
-                onClick={() => {
-                  const { status, ...rest } = row.original;
-                  const query = new URLSearchParams(rest).toString();
-                  router.push(`/overview/users-admin/profile?${query}`);
-                }}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+              <TableRow key={row.id} className="hover:bg-gray-100">
+                {row.getVisibleCells().map((cell) => {
+                  const isActions = cell.column.id === "actions";
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      className="whitespace-nowrap overflow-hidden text-ellipsis"
+                      onClick={() => {
+                        if (!isActions) {
+                          const { status, ...rest } = row.original;
+                          const query = new URLSearchParams(rest).toString();
+                          router.push(`/overview/users-admin/profile?${query}`);
+                        }
+                      }}
+                      style={{ cursor: isActions ? "default" : "pointer" }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
@@ -637,44 +653,8 @@ const UsersScreen = ({ setUsersCount, onAddUser }) => {
         open={showUploadDialog}
         onOpenChange={setShowUploadDialog}
       />
-      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
-        <DialogContent
-          className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
-          style={{ minHeight: "280px", display: "flex" }}
-        >
-          <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
-
-          <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-            Do you want to delete?
-          </h2>
-
-          <div className="flex items-center gap-4 mt-8">
-            <Button
-              variant="outline"
-              className="rounded-full px-10 font-custom"
-              onClick={() => setConfirmDelete(null)}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="rounded-full px-14 font-custom"
-              style={{ backgroundColor: "#fb5f59", color: "white" }}
-              onClick={() => {
-                console.log("Call API to delete:", confirmDelete);
-                setConfirmDelete(null);
-              }}
-            >
-              Delete
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-
-
     </div>
   );
-
 };
 
 export default UsersScreen;

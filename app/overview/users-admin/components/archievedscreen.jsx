@@ -31,7 +31,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { List, ChevronDown } from "lucide-react";
 import { ar } from "date-fns/locale";
-import { Crown, Star, Trash2, ArchiveX, UserPlus, UserMinus } from "lucide-react";
+import {
+  Crown,
+  Star,
+  Trash2,
+  ArchiveX,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
+import DeleteDialog from "./deletedialog";
+import RestoreDialog from "./retoredialog";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -78,7 +87,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "no",
     archivedAt: "2025-06-03",
-    archivedBy: "admin3"
+    archivedBy: "admin3",
   },
   {
     accessLevel: "admin",
@@ -101,7 +110,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "yes",
     archivedAt: "2025-06-03",
-    archivedBy: "hay lyna"
+    archivedBy: "hay lyna",
   },
   {
     accessLevel: "admin",
@@ -124,7 +133,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "yes",
     archivedAt: "2025-01-02",
-    archivedBy: "admin3"
+    archivedBy: "admin3",
   },
   {
     accessLevel: "user",
@@ -147,7 +156,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "yes",
     archivedAt: "2025-06-03",
-    archivedBy: "admin3"
+    archivedBy: "admin3",
   },
   {
     accessLevel: "user",
@@ -170,7 +179,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "no",
     archivedAt: "2025-06-03",
-    archivedBy: "admin3"
+    archivedBy: "admin3",
   },
   {
     accessLevel: "user",
@@ -193,7 +202,7 @@ const users = [
     shiftType: "Scheduled",
     archived: "yes",
     archivedAt: "2025-06-03",
-    archivedBy: "admin3"
+    archivedBy: "admin3",
   },
 ];
 
@@ -337,8 +346,9 @@ const columns = [
 
       return (
         <span
-          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
-            }`}
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+          }`}
           style={{
             borderWidth: "1px",
             minWidth: "80px",
@@ -365,35 +375,47 @@ const columns = [
     id: "actions",
     header: "",
     cell: ({ row }) => {
-      const [dialogOpen, setDialogOpen] = useState(false);
-      const [actionType, setActionType] = useState(null); // "promote" or "demote"
-
-      const role = row.original.accessLevel;
-
-      const handleOpen = (type) => {
-        setActionType(type);
-        setDialogOpen(true);
-      };
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+      const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
 
       return (
         <div className="flex items-center justify-end gap-2">
-          <ArchiveX
-            className="w-4 h-4 text-gray-500 cursor-pointer"
-            title="Archive"
-            onClick={(e) => {
-              e.stopPropagation();
-              console.log("Archive", row.original);
-            }}
-          />
+        <ArchiveX
+          className="w-4 h-4 text-gray-500 cursor-pointer"
+          title="Archive"
+          onClick={(e) => {
+            e.stopPropagation();
+            setArchiveDialogOpen(true);
+          }}
+        />
           <Trash2
             className="w-4 h-4 text-red-500 cursor-pointer"
             title="Delete"
             onClick={(e) => {
               e.stopPropagation();
-              setConfirmDelete(row.original); // Just store the user
+              setDeleteDialogOpen(true);
             }}
           />
-
+          <DeleteDialog
+            open={deleteDialogOpen}
+            setOpen={setDeleteDialogOpen}
+            user={row.original}
+            onConfirm={() => {
+              console.log("User deleted:", row.original);
+              setDeleteDialogOpen(false);
+              // Put your deletion logic here
+            }}
+          />
+          <RestoreDialog
+            open={archiveDialogOpen}
+            setOpen={setArchiveDialogOpen}
+            user={row.original}
+            onConfirm={() => {
+              console.log("User archived:", row.original);
+              setArchiveDialogOpen(false);
+              // Your archive logic here
+            }}
+          />
         </div>
       );
     },

@@ -33,7 +33,7 @@ export default function AddDepartmentDialog() {
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle></DialogTitle>
           <h1 className="font-custom text-light-gray text-2xl sm:text-lg md:text-xl lg:text-3xl py-6">
-            Title Details
+            Department details
           </h1>
           <div className="w-full h-[1px] bg-[#A6A6A6]"></div>
         </DialogHeader>
@@ -84,8 +84,8 @@ export default function AddDepartmentDialog() {
 
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
           <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
-            <Button className="py-4 px-6 text-lg font-custom rounded-full">
-              Next
+            <Button className="py-4 px-6 text-md font-custom rounded-full">
+              Save
             </Button>
           </div>
         </div>

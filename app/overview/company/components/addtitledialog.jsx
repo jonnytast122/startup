@@ -58,8 +58,8 @@ export default function AddTitleDialog() {
 
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
           <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
-            <Button className="py-4 px-6 text-lg font-custom rounded-full">
-              Next
+            <Button className="py-4 px-6 text-md font-custom rounded-full">
+              Save
             </Button>
           </div>
         </div>

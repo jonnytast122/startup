@@ -31,9 +31,17 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { List, Download, PanelTopOpen } from "lucide-react";
-import { Crown, Star, Trash2, Archive, UserPlus, UserMinus } from "lucide-react";
+import {
+  Crown,
+  Star,
+  Trash2,
+  Archive,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
 import PromoteDemoteDialog from "./promotedemotedialog";
 import UploadDialog from "./uploaddialog";
+import DeleteDialog from "./deletedialog";
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -326,8 +334,9 @@ const columns = [
 
       return (
         <span
-          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
-            }`}
+          className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+            statusStyles[status] || "bg-gray-200 text-gray-700 border-gray-400"
+          }`}
           style={{
             borderWidth: "1px",
             minWidth: "80px",
@@ -346,6 +355,8 @@ const columns = [
     cell: ({ row }) => {
       const [dialogOpen, setDialogOpen] = useState(false);
       const [actionType, setActionType] = useState(null); // "promote" or "demote"
+
+      const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
       const role = row.original.accessLevel;
 
@@ -380,7 +391,7 @@ const columns = [
             title="Delete"
             onClick={(e) => {
               e.stopPropagation();
-              console.log("Delete", row.original);
+              setDeleteDialogOpen(true);
             }}
           />
           <Archive
@@ -399,6 +410,16 @@ const columns = [
             onConfirm={(newRole, branch, features) => {
               console.log("Update role to:", newRole, branch, features);
               setDialogOpen(false);
+            }}
+          />
+          <DeleteDialog
+            open={deleteDialogOpen}
+            setOpen={setDeleteDialogOpen}
+            user={row.original}
+            onConfirm={() => {
+              console.log("User deleted:", row.original);
+              setDeleteDialogOpen(false);
+              // Put your deletion logic here
             }}
           />
         </div>
@@ -476,14 +497,12 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
   });
 
   useEffect(() => {
-    const count = users.filter(
-      (user) =>
-        ["owner", "admin"].includes((user.accessLevel || "").toLowerCase())
+    const count = users.filter((user) =>
+      ["owner", "admin"].includes((user.accessLevel || "").toLowerCase())
     ).length;
 
     setAdminsCount(count);
   }, []);
-
 
   return (
     <div className="p-4">
