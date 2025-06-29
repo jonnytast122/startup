@@ -1,22 +1,14 @@
 "use client";
+
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogFooter,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
-import { UserMinus, UserPlus } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { UserMinus, UserPlus, ChevronDown } from "lucide-react";
 
 export default function PromoteDemoteDialog({
   open,
@@ -25,23 +17,55 @@ export default function PromoteDemoteDialog({
   user,
   onConfirm,
 }) {
-  const [branch, setBranch] = useState("");
-  const [feature, setFeature] = useState("");
+  const [selectedBranches, setSelectedBranches] = useState([]);
+  const [selectedFeatures, setSelectedFeatures] = useState([]);
   const [imageError, setImageError] = useState(false);
+  const [menuBranchOpen, setMenuBranchOpen] = useState(false);
+  const [menuFeatureOpen, setMenuFeatureOpen] = useState(false);
+
+  const allBranches = ["BKK1", "BKK2", "BKK3"];
+  const allFeatures = ["Dashboard", "User Management", "Reports"];
+
+  const branchRef = useRef(null);
+  const featureRef = useRef(null);
+
+  const toggleSelection = (item, setFn, selected) => {
+    setFn((prev) =>
+      prev.includes(item)
+        ? prev.filter((i) => i !== item)
+        : [...prev, item]
+    );
+  };
 
   const handleConfirm = () => {
     const newRole = type === "promote" ? "admin" : "user";
-    onConfirm(newRole, branch, feature);
+    onConfirm(newRole, selectedBranches, selectedFeatures);
     setOpen(false);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (branchRef.current && !branchRef.current.contains(event.target)) {
+        setMenuBranchOpen(false);
+      }
+      if (featureRef.current && !featureRef.current.contains(event.target)) {
+        setMenuFeatureOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="font-custom w-[460px]">
-        <DialogTitle></DialogTitle>
         {type === "promote" ? (
           <>
-            <div className="flex flex-col items-center justify-center space-y-2 pt-4 relative">
+            <div className="flex flex-col items-center space-y-2 pt-4 relative">
               <div className="relative w-20 h-20">
                 <div className="w-full h-full rounded-full bg-gray-300 flex justify-center items-center overflow-hidden">
                   {user.profile && !imageError ? (
@@ -58,10 +82,7 @@ export default function PromoteDemoteDialog({
                     </span>
                   )}
                 </div>
-                <UserPlus
-                  className="absolute -bottom-0 -right-0 w-6 h-6 bg-white rounded-full p-1 text-blue-600 border shadow-sm"
-                  title="Promote"
-                />
+                <UserPlus className="absolute -bottom-0 -right-0 w-6 h-6 bg-white rounded-full p-1 text-blue-600 border shadow-sm" />
               </div>
 
               <p className="text-center text-md font-custom">
@@ -75,35 +96,79 @@ export default function PromoteDemoteDialog({
 
             <Separator className="my-4" />
 
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">Assign Branch:</p>
-                <Select value={branch} onValueChange={setBranch}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="BKK1">BKK1</SelectItem>
-                    <SelectItem value="BKK2">BKK2</SelectItem>
-                    <SelectItem value="BKK3">BKK3</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Assign Branch */}
+            <div className="flex justify-between items-center mb-4 relative" ref={branchRef}>
+              <p className="text-sm font-medium">Assign Branch:</p>
+              <div className="w-40">
+                <button
+                  onClick={() => setMenuBranchOpen(!menuBranchOpen)}
+                  className="w-full flex justify-between items-center border rounded px-3 py-2 text-sm bg-white hover:bg-gray-100"
+                >
+                  <span className="truncate">
+                    {selectedBranches.length > 0
+                      ? `${selectedBranches.length} selected`
+                      : "Select branches"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
+                {menuBranchOpen && (
+                  <div className="absolute right-0 mt-1 w-46 bg-white border rounded shadow-md z-10">
+                    {allBranches.map((branch) => (
+                      <label
+                        key={branch}
+                        className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedBranches.includes(branch)}
+                          onChange={() =>
+                            toggleSelection(branch, setSelectedBranches, selectedBranches)
+                          }
+                          className="mr-2"
+                        />
+                        {branch}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
+            </div>
 
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-medium">Assign Feature:</p>
-                <Select value={feature} onValueChange={setFeature}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Select feature" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Dashboard">Dashboard</SelectItem>
-                    <SelectItem value="User Management">
-                      User Management
-                    </SelectItem>
-                    <SelectItem value="Reports">Reports</SelectItem>
-                  </SelectContent>
-                </Select>
+            {/* Assign Feature */}
+            <div className="flex justify-between items-center relative" ref={featureRef}>
+              <p className="text-sm font-medium">Assign Features:</p>
+              <div className="w-40">
+                <button
+                  onClick={() => setMenuFeatureOpen(!menuFeatureOpen)}
+                  className="w-full flex justify-between items-center border rounded px-3 py-2 text-sm bg-white hover:bg-gray-100"
+                >
+                  <span className="truncate">
+                    {selectedFeatures.length > 0
+                      ? `${selectedFeatures.length} selected`
+                      : "Select features"}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-500" />
+                </button>
+                {menuFeatureOpen && (
+                  <div className="absolute right-0 mt-1 w-46 bg-white border rounded shadow-md z-10">
+                    {allFeatures.map((feature) => (
+                      <label
+                        key={feature}
+                        className="flex items-center px-3 py-2 text-sm hover:bg-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFeatures.includes(feature)}
+                          onChange={() =>
+                            toggleSelection(feature, setSelectedFeatures, selectedFeatures)
+                          }
+                          className="mr-2"
+                        />
+                        {feature}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

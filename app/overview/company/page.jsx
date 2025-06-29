@@ -370,7 +370,8 @@ export default function SettingPage() {
             className="font-custom border border-gray-300 rounded-lg p-2 w-full sm:w-1/2 lg:w-1/3 xl:w-2/4"
             defaultValue=""
           >
-            <option value="">English</option>
+            <option value="">Eng</option>
+            <option value="">Kh</option>
           </select>
         </div>
         <div className="flex flex-wrap sm:flex-nowrap items-center mt-6 justify-center lg:justify-center">

@@ -175,12 +175,14 @@ function AddBranchDialog() {
                 />
               </div>
 
-              <Button
-                onClick={handleAddressSearch}
-                className="py-4 px-6 text-md font-custom rounded-full"
-              >
-                Save Branch
-              </Button>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddressSearch}
+                  className="py-4 px-6 text-md font-custom rounded-full"
+                >
+                  Save Branch
+                </Button>
+              </div>
             </div>
           </div>
 

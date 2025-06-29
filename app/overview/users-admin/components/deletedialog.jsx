@@ -2,17 +2,12 @@ import React from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogFooter,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CircleX } from "lucide-react";
 
-export default function DeleteDialog({ open, setOpen, user, onConfirm }) {
-  if (!user) return null;
-
+export default function DeleteDialog({ open, setOpen }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
@@ -24,7 +19,7 @@ export default function DeleteDialog({ open, setOpen, user, onConfirm }) {
           style={{ color: "#fb5f59" }}
           strokeWidth={1.5}
         />
-        <DialogTitle></DialogTitle>
+        <DialogTitle className="sr-only">Delete Confirmation</DialogTitle>
         <h2 className="text-xl text-gray-900 font-custom">
           Do you want to delete?
         </h2>
@@ -32,13 +27,16 @@ export default function DeleteDialog({ open, setOpen, user, onConfirm }) {
           <Button
             variant="outline"
             className="rounded-full px-7 font-custom border-gray-300 text-gray-700 hover:bg-gray-100 transition"
-            onClick={() => setConfirmDelete(null)}
+            onClick={() => setOpen(false)}
           >
             Cancel
           </Button>
 
           <Button
-            onClick={onConfirm}
+            onClick={() => {
+              console.log("Confirmed delete");
+              setOpen(false);
+            }}
             className="rounded-full px-7 font-custom bg-red-500 text-white hover:bg-red-600 transition"
           >
             Delete

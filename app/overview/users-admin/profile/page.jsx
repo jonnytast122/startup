@@ -8,9 +8,9 @@ import {
   Landmark,
   Percent,
   Trash2,
-  Download
+  Download,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -20,54 +20,44 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
+import DeleteDialog from "../components/deletedialog";
+import { Button } from "@/components/ui/button";
 
 export default function UserProfile() {
-  const rawParams = useSearchParams();
+  const searchParams = useSearchParams();
 
-  // ✅ Memoize searchParams to avoid unnecessary rerenders
-  const params = useMemo(() => {
-    return {
-      firstname: rawParams.get("firstname") || "",
-      lastname: rawParams.get("lastname") || "",
-      title: rawParams.get("title") || "",
-      phone: rawParams.get("phone") || "",
-      birthday: rawParams.get("birthday") || "",
-      branch: rawParams.get("branch") || "",
-      dateadded: rawParams.get("dateadded") || "",
-      profile: rawParams.get("profile"),
-      banknumber: rawParams.get("banknumber") || "",
-      cash: parseFloat(rawParams.get("cash") || "0"),
-      banktransfer: parseFloat(rawParams.get("banktransfer") || "0"),
-      single: parseFloat(rawParams.get("single") || "25.00"),
-      nochildren: parseFloat(rawParams.get("nochildren") || "0.60"),
-    };
-  }, []);
+  const [firstname, setFirstname] = useState(
+    () => searchParams.get("firstname") || ""
+  );
+  const [lastname, setLastname] = useState(
+    () => searchParams.get("lastname") || ""
+  );
+  const [title, setTitle] = useState(() => searchParams.get("title") || "");
+  const [mobile, setMobile] = useState(() => searchParams.get("phone") || "");
+  const [birthday, setBirthday] = useState(
+    () => searchParams.get("birthday") || ""
+  );
+  const [branch, setBranch] = useState(() => searchParams.get("branch") || "");
+  const [employmentstartdate, setEmploymentstartdate] = useState(
+    () => searchParams.get("dateadded") || ""
+  );
+  const [department, setDepartment] = useState(
+    () => searchParams.get("department") || ""
+  );
 
-  // ✅ Use memoized values to initialize state
-  const [firstname, setFirstname] = useState(params.firstname);
-  const [lastname, setLastname] = useState(params.lastname);
-  const [title, setTitle] = useState(params.title);
-  const [mobile, setMobile] = useState(params.phone);
-  const [birthday, setBirthday] = useState(params.birthday);
-  const [branch, setBranch] = useState(params.branch);
-  const [employmentstartdate, setEmploymentstartdate] = useState(params.dateadded);
-  const [department, setDepartment] = useState("Junior Marketing");
-
-  const profile = params.profile;
-  const accountnumber = params.banknumber;
-  const cash = params.cash;
-  const banktransfer = params.banktransfer;
-  const single = params.single;
-  const nochildren = params.nochildren;
+  const profile = searchParams.get("profile") || "";
+  const accountnumber = searchParams.get("banknumber") || "";
+  const cash = parseFloat(searchParams.get("cash") || "0");
+  const banktransfer = parseFloat(searchParams.get("banktransfer") || "0");
+  const single = parseFloat(searchParams.get("single") || "25.00");
+  const nochildren = parseFloat(searchParams.get("nochildren") || "0.60");
   const subtotal = banktransfer - (single + nochildren);
   const netsalary = cash + subtotal;
-
   const firstInitial = firstname.charAt(0).toUpperCase();
   const lastInitial = lastname.charAt(0).toUpperCase();
-
   const [imageError, setImageError] = useState(false);
   const [isDialogOpen, setDialogOpen] = useState(false);
-
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [files, setFiles] = useState([]);
 
   const handleFileChange = (e) => {
@@ -130,8 +120,6 @@ export default function UserProfile() {
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
-
-  // ... Rest of your code continues unchanged (EditableInput, DropdownSection, JSX etc)
 
   const DropdownSection = ({
     title,
@@ -197,7 +185,9 @@ export default function UserProfile() {
   // Editable input with label
   const EditableInput = ({ label, value, onChange, type = "text" }) => (
     <>
-      <label className="text-sm font-custom text-[#3F4648] w-full">{label}</label>
+      <label className="text-sm font-custom text-[#3F4648] w-full">
+        {label}
+      </label>
       <input
         type={type}
         value={value}
@@ -295,17 +285,38 @@ export default function UserProfile() {
               Personal details
             </h2>
 
-            <EditableInput label="First Name" value={firstname} onChange={setFirstname} />
-            <EditableInput label="Last Name" value={lastname} onChange={setLastname} />
-            <EditableInput label="Mobile Phone" value={mobile} onChange={setMobile} />
-            <EditableInput label="Birthday" value={birthday} onChange={setBirthday} type="date" />
+            <EditableInput
+              label="First Name"
+              value={firstname}
+              onChange={setFirstname}
+            />
+            <EditableInput
+              label="Last Name"
+              value={lastname}
+              onChange={setLastname}
+            />
+            <EditableInput
+              label="Mobile Phone"
+              value={mobile}
+              onChange={setMobile}
+            />
+            <EditableInput
+              label="Birthday"
+              value={birthday}
+              onChange={setBirthday}
+              type="date"
+            />
 
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
 
             <EditableInput label="Branch" value={branch} onChange={setBranch} />
-            <EditableInput label="Department" value={department} onChange={setDepartment} />
+            <EditableInput
+              label="Department"
+              value={department}
+              onChange={setDepartment}
+            />
             <EditableInput label="Title" value={title} onChange={setTitle} />
             <EditableInput
               label="Employment Start Date"
@@ -343,15 +354,6 @@ export default function UserProfile() {
               selectedItems={selectedLocation}
               toggleItem={toggleLocation}
             />
-
-            {/* Save Changes button inside left container
-            <button
-              onClick={handleSaveChanges}
-              className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
-              type="button"
-            >
-              Save Changes
-            </button> */}
           </div>
 
           {/* Right container with text aligned left */}
@@ -387,11 +389,11 @@ export default function UserProfile() {
                       Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => { }}>
+                    <DropdownMenuItem onClick={() => {}}>
                       Arhieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => { }}
+                      onClick={() => setIsDeleteDialogOpen(true)}
                       className="text-red-500"
                     >
                       Delete
@@ -402,6 +404,10 @@ export default function UserProfile() {
                   open={isDialogOpen}
                   onOpenChange={setDialogOpen}
                   oldCash={cash}
+                />
+                <DeleteDialog
+                  open={isDeleteDialogOpen}
+                  setOpen={setIsDeleteDialogOpen}
                 />
               </div>
 
@@ -434,11 +440,11 @@ export default function UserProfile() {
                     <DropdownMenuItem onClick={() => setDialogOpen(true)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { }}>
+                    <DropdownMenuItem onClick={() => {}}>
                       Archieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => { }}
+                      onClick={() => setIsDeleteDialogOpen(true)}
                       className="text-red-500"
                     >
                       Delete
@@ -449,6 +455,10 @@ export default function UserProfile() {
                   open={isDialogOpen}
                   onOpenChange={setDialogOpen}
                   oldCash={cash}
+                />
+                <DeleteDialog
+                  open={isDeleteDialogOpen}
+                  setOpen={setIsDeleteDialogOpen}
                 />
               </div>
 
@@ -594,7 +604,9 @@ export default function UserProfile() {
                         />
                         <div>
                           <p className="font-medium text-gray-800">{f.name}</p>
-                          <p className="text-sm text-gray-500">{f.size} • {f.date}</p>
+                          <p className="text-sm text-gray-500">
+                            {f.size} • {f.date}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 ml-6">
@@ -614,15 +626,14 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-
-      {/* Fixed Save All button at bottom right */}
-      <button
-        onClick={handleSaveAll}
-        className="fixed bottom-8 right-8 bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 px-6 rounded-lg shadow-lg z-50 transition"
-        type="button"
-      >
-        Save changes
-      </button>
+      <div className="w-full flex justify-end mt-6 mb-12">
+        <Button
+          onClick={handleSaveChanges}
+          className="bg-blue-400 hover:bg-blue-600 text-white font-semibold px-6 py-6 rounded-xl shadow-md transition"
+        >
+          Save Changes
+        </Button>
+      </div>
     </>
   );
 }
