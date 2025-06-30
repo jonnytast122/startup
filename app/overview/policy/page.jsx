@@ -18,10 +18,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PolicyLeave from "./components/add-policyleave-dialog";
 import PolicyOvertime from "./components/add-policyovertime-dialog";
 
@@ -65,19 +62,22 @@ export default function PolicyPage() {
   const [openDialogType, setOpenDialogType] = useState(null);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
 
-  const openModal = (category, policy = null) => {
+  const openModal = (category, policy = null, viewOnly = false) => {
     setSelectedPolicy(policy);
     setOpenDialogType(category);
+    setIsViewOnly(viewOnly);
   };
 
   const closeModal = () => {
     setOpenDialogType(null);
     setSelectedPolicy(null);
+    setIsViewOnly(false);
   };
 
   const handleRowClick = (category, policy) => {
-    openModal(category, policy);
+    openModal(category, policy, true); // view mode
   };
 
   const handleDelete = () => {
@@ -93,13 +93,9 @@ export default function PolicyPage() {
 
   const renderPolicySection = (title, data, category, colorClass) => (
     <div key={category} className="mb-7 overflow-hidden">
-      <div
-        className={`${colorClass.bg} py-3 px-4 flex justify-between items-center`}
-      >
+      <div className={`${colorClass.bg} py-3 px-4 flex justify-between items-center`}>
         <div>
-          <h2 className={`font-semibold text-xl ${colorClass.text}`}>
-            {title}
-          </h2>
+          <h2 className={`font-semibold text-xl ${colorClass.text}`}>{title}</h2>
           <span className="text-gray-600">{data.length} policies</span>
         </div>
       </div>
@@ -111,26 +107,25 @@ export default function PolicyPage() {
               <TableHead className="w-[250px]">Policy Name</TableHead>
               <TableHead className="w-[120px]">Status</TableHead>
               <TableHead className="w-[200px]">Created By</TableHead>
-              <TableHead className="w-[100px] text-center align-middle">
-                Edit
-              </TableHead>
-              <TableHead className="w-[100px] text-right">  </TableHead>
+              <TableHead className="w-[100px] text-center align-middle">Edit</TableHead>
+              <TableHead className="w-[100px] text-right"> </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((policy) => (
               <TableRow
                 key={policy.id}
-                onClick={() => handleRowClick(category, policy)}
                 className="cursor-pointer hover:bg-gray-100"
+                onClick={() => handleRowClick(category, policy)}
               >
                 <TableCell>{policy.name}</TableCell>
                 <TableCell>
                   <span
-                    className={`px-3 py-1 text-sm rounded-full font-medium ${policy.status === "Active"
+                    className={`px-3 py-1 text-sm rounded-full font-medium ${
+                      policy.status === "Active"
                         ? "bg-green-100 text-green-600"
                         : "bg-gray-100 text-gray-500"
-                      }`}
+                    }`}
                   >
                     {policy.status}
                   </span>
@@ -161,30 +156,20 @@ export default function PolicyPage() {
                       className="bg-white border px-4 border-gray-200 shadow-lg rounded-md"
                     >
                       <DropdownMenuItem
-                        onClick={() => openModal(category, policy)}
+                        onClick={() => openModal(category, policy, false)}
                       >
-                        Edit{" "}
-                        {category === "leave"
-                          ? "Leave Policy"
-                          : "Overtime Policy"}
+                        Edit {category === "leave" ? "Leave" : "Overtime"} Policy
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          setConfirmDelete({ category, policy })
-                        }
+                        onClick={() => setConfirmDelete({ category, policy })}
                         className="text-red-500"
                       >
-                        Delete{" "}
-                        {category === "leave"
-                          ? "Leave Policy"
-                          : "Overtime Policy"}
+                        Delete {category === "leave" ? "Leave" : "Overtime"} Policy
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
-                <TableCell className="text-right">
-                  &nbsp;
-                </TableCell>
+                <TableCell className="text-right">&nbsp;</TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -213,59 +198,29 @@ export default function PolicyPage() {
             <Lightbulb className="text-[#2998FF]" width={40} height={40} />
             <span className="font-custom text-3xl text-black">Policy</span>
           </div>
-          <div className="flex items-center gap-4">
-            <p className="text-right text-sm font-medium text-gray-600 leading-tight">
-              Asset
-              <br />
-              Admins
-            </p>
-            <div className="flex -space-x-3">
-              <div className="w-8 h-8 rounded-full bg-gray-600 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                W
-              </div>
-              <div className="w-8 h-8 rounded-full bg-lime-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                L
-              </div>
-              <div className="w-8 h-8 rounded-full bg-pink-400 text-white text-sm font-bold flex items-center justify-center border-2 border-white">
-                S
-              </div>
-              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-500 text-sm font-bold flex items-center justify-center border-2 border-white">
-                2+
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4">
-        {renderPolicySection(
-          "Leave Policy",
-          policyData.leave,
-          "leave",
-          {
-            bg: "bg-green-200",
-            text: "text-green-600",
-          }
-        )}
-        {renderPolicySection(
-          "Overtime Policy",
-          policyData.overtime,
-          "overtime",
-          {
-            bg: "bg-red-200",
-            text: "text-red-600",
-          }
-        )}
+        {renderPolicySection("Leave Policy", policyData.leave, "leave", {
+          bg: "bg-green-200",
+          text: "text-green-600",
+        })}
+        {renderPolicySection("Overtime Policy", policyData.overtime, "overtime", {
+          bg: "bg-red-200",
+          text: "text-red-600",
+        })}
       </div>
 
+      {/* Dialogs */}
       <PolicyLeave
         open={openDialogType === "leave"}
         policy={selectedPolicy}
         onClose={closeModal}
+        isViewMode={isViewOnly}
         onSubmit={(newPolicy) => {
           setPolicyData((prev) => {
             if (selectedPolicy) {
-              // edit
               return {
                 ...prev,
                 leave: prev.leave.map((p) =>
@@ -273,7 +228,6 @@ export default function PolicyPage() {
                 ),
               };
             } else {
-              // add
               return {
                 ...prev,
                 leave: [...prev.leave, newPolicy],
@@ -288,10 +242,10 @@ export default function PolicyPage() {
         open={openDialogType === "overtime"}
         policy={selectedPolicy}
         onClose={closeModal}
+        isViewMode={isViewOnly}
         onSubmit={(newPolicy) => {
           setPolicyData((prev) => {
             if (selectedPolicy) {
-              // edit
               return {
                 ...prev,
                 overtime: prev.overtime.map((p) =>
@@ -299,7 +253,6 @@ export default function PolicyPage() {
                 ),
               };
             } else {
-              // add
               return {
                 ...prev,
                 overtime: [...prev.overtime, newPolicy],
@@ -310,22 +263,14 @@ export default function PolicyPage() {
         }}
       />
 
+      {/* Delete Dialog */}
       {confirmDelete && (
         <Dialog open onOpenChange={() => setConfirmDelete(null)}>
-          <DialogContent
-            className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
-            style={{ minHeight: "280px", display: "flex" }}
-          >
-            <CircleX
-              className="w-12 h-12"
-              style={{ color: "#fb5f59" }}
-              strokeWidth={1.5}
-            />
-
+          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center">
+            <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
               Do you want to delete this policy?
             </h2>
-
             <div className="flex items-center gap-4 mt-8">
               <Button
                 variant="outline"

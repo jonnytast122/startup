@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,16 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
-const PolicyLeave = ({ open, onClose, onSubmit }) => {
+const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [policyName, setPolicyName] = useState("");
   const [selectedType, setSelectedType] = useState("paid");
   const [selectedMonth, setSelectedMonth] = useState("January");
   const [days, setDays] = useState([...Array(31).keys()].map((d) => d + 1));
-  const [unit, setUnit] = useState("days");
+  const [selectedDay, setSelectedDay] = useState(1);
   const [durationType, setDurationType] = useState("month");
   const [timeOffValue, setTimeOffValue] = useState("");
   const [timeOffUnit, setTimeOffUnit] = useState("days");
-  const [selectedFirstLevel, setSelectedFirstLevel] = useState(null);
 
   const firstLevelOptions = [
     { key: "user", label: "User" },
@@ -40,28 +39,39 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
   const [selectedItems, setSelectedItems] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
 
+  useEffect(() => {
+    if (policy) {
+      setPolicyName(policy.name || "");
+    } else {
+      setPolicyName("");
+      setSelectedType("paid");
+      setSelectedMonth("January");
+      setSelectedDay(1);
+      setDurationType("month");
+      setTimeOffValue("");
+      setTimeOffUnit("days");
+      setSelectedFirstLevels([]);
+      setSelectedItems({});
+    }
+  }, [policy]);
+
   const handleToggleMenu = () => {
-    setMenuOpen((prev) => !prev);
-    setHoveredItem(null);
+    if (!isViewMode) {
+      setMenuOpen((prev) => !prev);
+      setHoveredItem(null);
+    }
   };
 
   const handleFirstLevelChange = (key) => {
     let newSelection = [];
 
     if (key === "all") {
-      if (selectedFirstLevels.length === firstLevelOptions.length) {
-        newSelection = [];
-      } else {
-        newSelection = firstLevelOptions.map((item) => item.key);
-      }
+      newSelection = selectedFirstLevels.length === firstLevelOptions.length ? [] : firstLevelOptions.map((item) => item.key);
       setHoveredItem(null);
     } else {
-      const exists = selectedFirstLevels.includes(key);
-      if (exists) {
-        newSelection = selectedFirstLevels.filter((k) => k !== key);
-      } else {
-        newSelection = [...selectedFirstLevels, key];
-      }
+      newSelection = selectedFirstLevels.includes(key)
+        ? selectedFirstLevels.filter((k) => k !== key)
+        : [...selectedFirstLevels, key];
     }
     setSelectedFirstLevels(newSelection);
   };
@@ -79,25 +89,9 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
     });
   };
 
-  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
-    const count = selectedItems[key]?.length || 0;
-    return acc + count;
-  }, 0);
-
-  const isAllSelected =
-    selectedFirstLevels.length === firstLevelOptions.length &&
-    firstLevelOptions.length > 0;
-
-  const firstLevelLabel = isAllSelected
-    ? "All"
-    : selectedFirstLevels
-        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
-        .join(", ") || "Select...";
-
   const handleMonthChange = (e) => {
     const month = e.target.value;
     setSelectedMonth(month);
-
     const daysInMonth = {
       January: 31,
       February: 28,
@@ -112,37 +106,44 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
       November: 30,
       December: 31,
     };
-
     setDays([...Array(daysInMonth[month]).keys()].map((d) => d + 1));
   };
 
   const handleConfirm = () => {
     if (!policyName.trim()) return;
-
     const newPolicy = {
-      id: Date.now(),
+      ...policy,
+      id: policy?.id ?? Date.now(),
       name: policyName,
       status: "Active",
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile-default.jpg",
     };
-
     onSubmit(newPolicy);
     onClose();
-    setPolicyName(""); // reset for reuse
   };
 
-  const selectedCount =
-    selectedFirstLevel && selectedItems[selectedFirstLevel.key]
-      ? selectedItems[selectedFirstLevel.key].length
-      : 0;
+  const isAllSelected =
+    selectedFirstLevels.length === firstLevelOptions.length &&
+    firstLevelOptions.length > 0;
+
+  const firstLevelLabel = isAllSelected
+    ? "All"
+    : selectedFirstLevels
+        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+        .join(", ") || "Select...";
+
+  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+    const count = selectedItems[key]?.length || 0;
+    return acc + count;
+  }, 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl text-center">
-            Leave Details
+            {isViewMode ? "View Leave Policy" : policy ? "Edit Leave Policy" : "Add Leave Policy"}
           </DialogTitle>
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
@@ -150,33 +151,29 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
         <div className="space-y-6">
           {/* Policy Name */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Policy Name
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Policy Name</label>
             <input
               type="text"
               value={policyName}
               onChange={(e) => setPolicyName(e.target.value)}
-              placeholder="Policy Name"
               className="border border-gray-300 rounded-lg p-2 w-full md:w-2/3"
+              disabled={isViewMode}
             />
           </div>
 
           {/* Leave Type */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Leave Type
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Leave Type</label>
             <div className="flex gap-3 w-full md:w-2/3">
               {["paid", "unpaid"].map((type) => (
                 <div
                   key={type}
-                  onClick={() => setSelectedType(type)}
-                  className={`flex-1 border rounded-lg px-2 py-6 text-center cursor-pointer transition-colors ${
+                  onClick={() => !isViewMode && setSelectedType(type)}
+                  className={`flex-1 border rounded-lg px-2 py-6 text-center transition-colors ${
                     selectedType === type
                       ? "border-blue-500 bg-blue-300"
                       : "border-gray-300"
-                  }`}
+                  } ${isViewMode ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
                 >
                   <span className="text-gray-700 text-xl">
                     {type === "paid" ? "Paid Leave" : "Unpaid Leave"}
@@ -186,28 +183,24 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
             </div>
           </div>
 
-          {/* Total per Duration */}
+          {/* Total */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Total
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Total</label>
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
-              <p className="text-sm text-[#3F4648]">
-                The amount of hours that will be used
-              </p>
+              <p className="text-sm text-[#3F4648]">The amount of hours that will be used</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   placeholder="0"
+                  disabled={isViewMode}
                 />
-                <span className="border border-gray-300 rounded-lg p-2 w-24 text-sm block text-center">
-                  days
-                </span>
+                <span className="border border-gray-300 rounded-lg p-2 w-24 text-sm block text-center">days</span>
                 <select
                   value={durationType}
                   onChange={(e) => setDurationType(e.target.value)}
                   className="border border-gray-300 rounded-lg p-2 w-28 text-sm"
+                  disabled={isViewMode}
                 >
                   <option value="month">per month</option>
                   <option value="year">per year</option>
@@ -218,14 +211,13 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
 
           {/* Month & Day */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Select Month & Day
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Select Month & Day</label>
             <div className="flex gap-3 w-full md:w-2/3">
               <select
                 value={selectedMonth}
                 onChange={handleMonthChange}
                 className="border border-gray-300 rounded-lg p-2 w-1/2"
+                disabled={isViewMode}
               >
                 {Object.keys({
                   January: 31,
@@ -246,7 +238,12 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                   </option>
                 ))}
               </select>
-              <select className="border border-gray-300 rounded-lg p-2 w-1/2">
+              <select
+                value={selectedDay}
+                onChange={(e) => setSelectedDay(Number(e.target.value))}
+                className="border border-gray-300 rounded-lg p-2 w-1/2"
+                disabled={isViewMode}
+              >
                 {days.map((day) => (
                   <option key={day} value={day}>
                     {day}
@@ -258,13 +255,9 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
 
           {/* Time Off Limitation */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Time Off Limitation
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Time Off Limitation</label>
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
-              <p className="text-sm text-[#3F4648]">
-                A leave can be requested no less than
-              </p>
+              <p className="text-sm text-[#3F4648]">A leave can be requested no less than</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -272,11 +265,13 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                   onChange={(e) => setTimeOffValue(e.target.value)}
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   placeholder="0"
+                  disabled={isViewMode}
                 />
                 <select
                   value={timeOffUnit}
                   onChange={(e) => setTimeOffUnit(e.target.value)}
                   className="border border-gray-300 rounded-lg p-2 w-28 text-sm"
+                  disabled={isViewMode}
                 >
                   <option value="days">days</option>
                   <option value="minutes">minutes</option>
@@ -289,14 +284,8 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
 
           {/* Assignment */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            {/* Label */}
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mb-2 md:mb-0">
-              Assignment
-            </label>
-
-            {/* Button and count */}
-            <div className="w-full md:w-2/3 relative flex items-center">
-              {/* Button */}
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Assignment</label>
+            <div className={`w-full md:w-2/3 relative flex items-center ${isViewMode ? "pointer-events-none opacity-60" : ""}`}>
               <button
                 onClick={handleToggleMenu}
                 className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
@@ -305,22 +294,16 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                 <ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
               </button>
 
-              {/* Count outside the button */}
               {totalSecondLevelSelected > 0 && (
                 <span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
                   {totalSecondLevelSelected} selected
                 </span>
               )}
 
-              {menuOpen && (
+              {!isViewMode && menuOpen && (
                 <>
-                  {/* First-level panel */}
                   <div className="absolute top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-10">
-                    {/* All option */}
-                    <label
-                      className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                      onMouseEnter={() => setHoveredItem(null)}
-                    >
+                    <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer">
                       <input
                         type="checkbox"
                         checked={isAllSelected}
@@ -329,13 +312,11 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                       />
                       All
                     </label>
-
                     {firstLevelOptions.map((item) => (
                       <label
                         key={item.key}
                         className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
                         onMouseEnter={() => setHoveredItem(item.key)}
-                        onClick={() => setHoveredItem(item.key)}
                       >
                         <input
                           type="checkbox"
@@ -348,15 +329,10 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                     ))}
                   </div>
 
-                  {/* Only one second-level panel */}
                   {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
                     <div className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20">
                       <div className="px-3 py-2 font-semibold border-b border-gray-200">
-                        {
-                          firstLevelOptions.find((o) => o.key === hoveredItem)
-                            ?.label
-                        }{" "}
-                        Options
+                        {firstLevelOptions.find((o) => o.key === hoveredItem)?.label} Options
                       </div>
                       {secondLevelData[hoveredItem].map((value) => (
                         <label
@@ -365,13 +341,8 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
                         >
                           <input
                             type="checkbox"
-                            checked={
-                              selectedItems[hoveredItem]?.includes(value) ||
-                              false
-                            }
-                            onChange={() =>
-                              handleSecondLevelChange(hoveredItem, value)
-                            }
+                            checked={selectedItems[hoveredItem]?.includes(value) || false}
+                            onChange={() => handleSecondLevelChange(hoveredItem, value)}
                             className="mr-2"
                           />
                           {value}
@@ -386,14 +357,13 @@ const PolicyLeave = ({ open, onClose, onSubmit }) => {
 
           {/* Footer */}
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10" />
-          <div className="w-full flex justify-end mt-4">
-            <Button
-              className="py-4 px-6 text-lg font-semibold rounded-full"
-              onClick={handleConfirm}
-            >
-              Save
-            </Button>
-          </div>
+          {!isViewMode && (
+            <div className="w-full flex justify-end mt-4">
+              <Button className="py-4 px-6 text-lg font-semibold rounded-full" onClick={handleConfirm}>
+                Save
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

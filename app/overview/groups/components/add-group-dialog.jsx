@@ -25,6 +25,7 @@ export default function AddGroupDialog({
   setNewGroup,
   members,
   onConfirm,
+  isViewMode = false,
 }) {
   const [error, setError] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("Filter");
@@ -47,7 +48,7 @@ export default function AddGroupDialog({
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-semibold mb-4">
-            Group settings
+            {isViewMode ? "View Group" : "Group Settings"}
           </DialogTitle>
         </DialogHeader>
 
@@ -61,12 +62,17 @@ export default function AddGroupDialog({
               value={newGroup.name}
               onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
               className="w-full"
+              disabled={isViewMode}
             />
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className={`flex items-center gap-2 ${isViewMode ? "pointer-events-none opacity-60" : ""}`}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 h-10 text-blue">
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 h-10 text-blue"
+                >
                   <Filter className="w-4 h-4" />
                   {selectedFilter}
                 </Button>
@@ -110,7 +116,9 @@ export default function AddGroupDialog({
                       type="checkbox"
                       className="accent-blue-500"
                       checked={checked}
+                      disabled={isViewMode}
                       onChange={() => {
+                        if (isViewMode) return;
                         if (checked) {
                           setNewGroup({
                             ...newGroup,
@@ -146,14 +154,16 @@ export default function AddGroupDialog({
           </div>
         </div>
 
-        <DialogFooter className="justify-end mt-6">
-          <Button
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-            onClick={handleFinish}
-          >
-            Finish
-          </Button>
-        </DialogFooter>
+        {!isViewMode && (
+          <DialogFooter className="justify-end mt-6">
+            <Button
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+              onClick={handleFinish}
+            >
+              Finish
+            </Button>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

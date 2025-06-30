@@ -3,7 +3,7 @@
 import AddGroupDialog from "./add-group-dialog";
 import { useState, useEffect } from "react";
 
-export default function EditGroupDialog({ open, setOpen, group, onSave, members }) {
+export default function EditGroupDialog({ open, setOpen, group, onSave, members, isViewMode = false }) {
   const [editableGroup, setEditableGroup] = useState({
     name: "",
     admins: [],
@@ -40,6 +40,7 @@ export default function EditGroupDialog({ open, setOpen, group, onSave, members 
       setNewGroup={setEditableGroup}
       members={members}
       onConfirm={handleSave}
+      isViewMode={isViewMode} // ✅ Pass down view mode
     />
   );
 }
