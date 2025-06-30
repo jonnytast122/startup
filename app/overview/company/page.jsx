@@ -270,21 +270,24 @@ export default function SettingPage() {
             {departments.map((dept) => (
               <div
                 key={dept.id}
-                className="font-custom border border-gray-300 rounded-lg p-2 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
+                className="font-custom border border-gray-300 rounded-lg p-2 flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
               >
-                <div className="flex items-center space-x-1 min-w-0">
+                {/* LEFT section */}
+                <div className="flex items-center space-x-1 min-w-0 flex-1">
                   <MdPeopleOutline className="text-gray-500 flex-shrink-0" />
                   <span className="text-[#3F4648] truncate">{dept.name}</span>
                 </div>
 
-                <div className="flex items-center space-x-1 min-w-0 mx-auto">
+                {/* MIDDLE section */}
+                <div className="flex items-center space-x-1 min-w-0 justify-center flex-1">
                   <FiMapPin className="text-gray-500 flex-shrink-0" />
                   <span className="text-gray-700 font-medium truncate">
                     {dept.location}
                   </span>
                 </div>
 
-                <div className="flex items-center space-x-2 min-w-0 ml-auto">
+                {/* RIGHT section */}
+                <div className="flex items-center space-x-2 min-w-0 justify-end flex-1">
                   <span className="text-gray-500 text-sm flex-shrink-0">
                     Manager
                   </span>

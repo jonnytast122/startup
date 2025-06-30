@@ -58,7 +58,11 @@ export default function UserAdminPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
-                activeTab === "Users" ? "Search users..." : "Search admins..."
+                activeTab === "Users"
+                  ? "Search users..."
+                  : activeTab === "Admins"
+                  ? "Search admins..."
+                  : "Search users..."
               }
               className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
