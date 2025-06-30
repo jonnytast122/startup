@@ -207,11 +207,8 @@ export default function UserProfile() {
     </div>
   );
 
-  // Handle Save Changes button click
   const handleSaveChanges = () => {
-    // Replace with your save logic
-    console.log("Save Changes clicked");
-    console.log({
+    const userProfile = {
       firstname,
       lastname,
       mobile,
@@ -225,14 +222,9 @@ export default function UserProfile() {
       selectedGroup,
       selectedLocation,
       files,
-    });
-  };
-
-  // Handle Save All button click
-  const handleSaveAll = () => {
-    // Replace with your save all logic
-    console.log("Save All clicked");
-    handleSaveChanges(); // just reuse for demo
+    };
+    localStorage.setItem("userProfile", JSON.stringify(userProfile));
+    alert("Saved to localStorage");
   };
 
   return (
@@ -252,7 +244,6 @@ export default function UserProfile() {
           Good morning!
         </p>
 
-        {/* Profile Holder Container with fallback initials */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
           <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
             {profile && !imageError ? (
@@ -277,7 +268,6 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Two-column layout: left has container, right has text */}
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left container */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
@@ -356,7 +346,6 @@ export default function UserProfile() {
             />
           </div>
 
-          {/* Right container with text aligned left */}
           <div className="w-full md:w-[60%] p-6">
             <div className="text-md font-custom text-light-pearl w-full space-y-2">
               <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
@@ -373,7 +362,6 @@ export default function UserProfile() {
             </div>
 
             <div className="relative">
-              {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

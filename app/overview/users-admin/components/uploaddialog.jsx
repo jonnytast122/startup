@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { CloudUpload } from "lucide-react";
 import { useState } from "react";
-import AddUserDialog from "./adduserdialog"; // 👈 import it
+import AddUserDialog from "./adduserdialog";
 
 export default function UploadDialog({ open, onOpenChange }) {
   const [showAddUserDialog, setShowAddUserDialog] = useState(false);

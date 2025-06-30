@@ -76,8 +76,8 @@ const users = [
     title: "Marketing Manager",
     banktransfer: "800.00",
     cash: "150.00",
-    dateadded: "03-15-2025",
-    lastlogin: "04-10-2025",
+    dateadded: "2025-03-15",
+    lastlogin: "2025-04-15",
     bankname: "alexthorne",
     banknumber: "9876543210",
     email: "alex.thorne@example.com",
@@ -96,8 +96,8 @@ const users = [
     title: "Product Designer",
     banktransfer: "450.00",
     cash: "230.00",
-    dateadded: "02-28-2025",
-    lastlogin: "04-01-2025",
+    dateadded: "2025-02-25",
+    lastlogin: "2025-04-05",
     bankname: "saralim",
     banknumber: "7766554433",
     email: "sara.lim@example.com",
@@ -116,8 +116,8 @@ const users = [
     title: "CTO",
     banktransfer: "1200.00",
     cash: "500.00",
-    dateadded: "01-20-2025",
-    lastlogin: "04-12-2025",
+    dateadded: "2025-01-25",
+    lastlogin: "2025-04-15",
     bankname: "kevinng",
     banknumber: "1122334455",
     email: "kevin.nguyen@example.com",
@@ -136,8 +136,8 @@ const users = [
     title: "HR Specialist",
     banktransfer: "670.00",
     cash: "310.00",
-    dateadded: "03-01-2025",
-    lastlogin: "04-08-2025",
+    dateadded: "2025-03-05",
+    lastlogin: "2025-04-05",
     bankname: "emilystone",
     banknumber: "3344556677",
     email: "emily.stone@example.com",
@@ -156,8 +156,8 @@ const users = [
     title: "Software Engineer",
     banktransfer: "950.00",
     cash: "420.00",
-    dateadded: "03-18-2025",
-    lastlogin: "04-10-2025",
+    dateadded: "2025-03-15",
+    lastlogin: "2025-04-15",
     bankname: "omarkhan",
     banknumber: "2233445566",
     email: "omar.khan@example.com",
@@ -176,8 +176,8 @@ const users = [
     title: "Data Analyst",
     banktransfer: "390.00",
     cash: "180.00",
-    dateadded: "02-10-2025",
-    lastlogin: "04-09-2025",
+    dateadded: "2025-02-15",
+    lastlogin: "2025-04-05",
     bankname: "lunapark",
     banknumber: "6655443322",
     email: "luna.park@example.com",
@@ -465,7 +465,6 @@ const columns = [
 
 const UsersScreen = ({ setUsersCount, onAddUser }) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const router = useRouter();
   const table = useReactTable({
@@ -536,7 +535,10 @@ const UsersScreen = ({ setUsersCount, onAddUser }) => {
           <div className="flex w-full sm:w-auto gap-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
+                <Button
+                  className="rounded-full font-custom px-4 py-2 flex items-center gap-2"
+                  onClick={onAddUser}
+                >
                   Add User
                 </Button>
               </DropdownMenuTrigger>
