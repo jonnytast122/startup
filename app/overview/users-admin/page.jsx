@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import UsersScreen from "./components/userscreen";
 import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
-import AddUserDialog from "./components/adduserdialog"; // Import the dialog
+import AddUserDialog from "./components/adduserdialog";
 import AddAdminDialog from "./components/addadmindialog";
 
 export default function UserAdminPage() {
@@ -14,7 +14,7 @@ export default function UserAdminPage() {
   const [usersCount, setUsersCount] = useState(0);
   const [adminsCount, setAdminsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dialogType, setDialogType] = useState(null); // 'user' or 'admin'
+  const [dialogType, setDialogType] = useState(null);
 
   return (
     <div>
@@ -35,7 +35,7 @@ export default function UserAdminPage() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setSearchQuery(""); // Reset search when switching tabs
+                setSearchQuery("");
               }}
               className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
                 activeTab === tab
@@ -103,7 +103,6 @@ export default function UserAdminPage() {
         </div>
       </div>
 
-      {/* Add User Dialog */}
       {dialogType === "user" && (
         <AddUserDialog open={true} onClose={() => setDialogType(null)} />
       )}

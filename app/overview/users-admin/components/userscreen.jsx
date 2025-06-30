@@ -419,7 +419,6 @@ const columns = [
             onConfirm={() => {
               console.log("User deleted:", row.original);
               setDeleteDialogOpen(false);
-              // Put your deletion logic here
             }}
           />
         </div>

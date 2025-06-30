@@ -30,6 +30,7 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/navigation";
 import { List, Download, PanelTopOpen } from "lucide-react";
 import {
   Crown,
@@ -465,6 +466,7 @@ const columns = [
 
 const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const router = useRouter();
   const table = useReactTable({
     data: users.filter((a) =>
       ["owner", "admin"].includes((a.accessLevel || "admin").toLowerCase())
@@ -539,11 +541,6 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
         <div className="flex w-full sm:w-auto gap-4">
           <div className="flex w-full sm:w-auto gap-4">
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
-                  Add Admin
-                </Button>
-              </DropdownMenuTrigger>
               <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
                 <DropdownMenuItem
                   onClick={() => setShowUploadDialog(true)}
@@ -601,15 +598,29 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+              <TableRow key={row.id} className="hover:bg-gray-100">
+                {row.getVisibleCells().map((cell) => {
+                  const isActions = cell.column.id === "actions";
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      className="whitespace-nowrap overflow-hidden text-ellipsis"
+                      onClick={() => {
+                        if (!isActions) {
+                          const { status, ...rest } = row.original;
+                          const query = new URLSearchParams(rest).toString();
+                          router.push(`/overview/users-admin/profile?${query}`);
+                        }
+                      }}
+                      style={{ cursor: isActions ? "default" : "pointer" }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>

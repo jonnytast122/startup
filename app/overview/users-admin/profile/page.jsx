@@ -22,8 +22,10 @@ import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
 import DeleteDialog from "../components/deletedialog";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function UserProfile() {
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [firstname, setFirstname] = useState(
@@ -230,9 +232,14 @@ export default function UserProfile() {
   return (
     <>
       <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
-        <div className="flex items-center space-x-3 p-5">
+        <div
+          className="flex items-center space-x-3 p-5 cursor-pointer"
+          onClick={() => router.push("/overview/users-admin")}
+        >
           <CreditCard className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Profile</span>
+          <span className="font-custom text-3xl text-black">
+            Profile
+          </span>
         </div>
       </div>
 
@@ -614,7 +621,7 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-      <div className="w-full flex justify-end mt-6 mb-12">
+      <div className="w-full flex justify-center mt-6 mb-12">
         <Button
           onClick={handleSaveChanges}
           className="bg-blue-400 hover:bg-blue-600 text-white font-semibold px-6 py-6 rounded-xl shadow-md transition"

@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useRouter } from "next/navigation";
 import {
   Select,
   SelectTrigger,
@@ -458,6 +459,7 @@ const columns = [
 ];
 
 const ArchieveScreen = () => {
+  const router = useRouter();
   const table = useReactTable({
     data: users,
     columns,
@@ -557,15 +559,29 @@ const ArchieveScreen = () => {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
+              <TableRow key={row.id} className="hover:bg-gray-100">
+                {row.getVisibleCells().map((cell) => {
+                  const isActions = cell.column.id === "actions";
+                  return (
+                    <TableCell
+                      key={cell.id}
+                      className="whitespace-nowrap overflow-hidden text-ellipsis"
+                      onClick={() => {
+                        if (!isActions) {
+                          const { status, ...rest } = row.original;
+                          const query = new URLSearchParams(rest).toString();
+                          router.push(`/overview/users-admin/profile?${query}`);
+                        }
+                      }}
+                      style={{ cursor: isActions ? "default" : "pointer" }}
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  );
+                })}
               </TableRow>
             ))}
           </TableBody>
