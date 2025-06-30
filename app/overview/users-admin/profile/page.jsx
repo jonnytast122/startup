@@ -53,6 +53,8 @@ export default function UserProfile() {
   const banktransfer = parseFloat(searchParams.get("banktransfer") || "0");
   const single = parseFloat(searchParams.get("single") || "25.00");
   const nochildren = parseFloat(searchParams.get("nochildren") || "0.60");
+  const accessLevel = searchParams.get("accessLevel") || "";
+
   const subtotal = banktransfer - (single + nochildren);
   const netsalary = cash + subtotal;
   const firstInitial = firstname.charAt(0).toUpperCase();
@@ -271,7 +273,7 @@ export default function UserProfile() {
             <div className="text-2xl font-bold font-custom">
               {firstname} {lastname}
             </div>
-            <div className="text-sm font-custom text-gray-500">admin</div>
+            <div className="text-sm font-custom text-gray-500">{accessLevel}</div>
           </div>
         </div>
 
