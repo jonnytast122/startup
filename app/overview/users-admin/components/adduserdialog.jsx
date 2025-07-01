@@ -468,7 +468,13 @@ export default function AddUserDialog({ open, onClose }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <SuccessDialog open={successOpen} onClose={() => setSuccessOpen(false)} />
+      <SuccessDialog
+        open={successOpen}
+        onClose={() => {
+          setSuccessOpen(false);
+          onClose();
+        }}
+      />
       ;
     </>
   );

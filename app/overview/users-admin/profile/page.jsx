@@ -10,7 +10,7 @@ import {
   Trash2,
   Download,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -20,12 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
+import { Button } from "react-scroll";
 import DeleteDialog from "../components/deletedialog";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 
 export default function UserProfile() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [firstname, setFirstname] = useState(
@@ -34,34 +32,38 @@ export default function UserProfile() {
   const [lastname, setLastname] = useState(
     () => searchParams.get("lastname") || ""
   );
-  const [title, setTitle] = useState(() => searchParams.get("title") || "");
   const [mobile, setMobile] = useState(() => searchParams.get("phone") || "");
   const [birthday, setBirthday] = useState(
     () => searchParams.get("birthday") || ""
   );
   const [branch, setBranch] = useState(() => searchParams.get("branch") || "");
-  const [employmentstartdate, setEmploymentstartdate] = useState(
-    () => searchParams.get("dateadded") || ""
-  );
   const [department, setDepartment] = useState(
     () => searchParams.get("department") || ""
   );
+  const [title, setTitle] = useState(() => searchParams.get("title") || "");
+  const [employmentstartdate, setEmploymentStartDate] = useState(
+    () => searchParams.get("dateadded") || ""
+  );
 
-  const profile = searchParams.get("profile") || "";
+  const profile = searchParams.get("profile");
   const accountnumber = searchParams.get("banknumber") || "";
   const cash = parseFloat(searchParams.get("cash") || "0");
+  const AccessLevel = searchParams.get("accessLevel");
   const banktransfer = parseFloat(searchParams.get("banktransfer") || "0");
   const single = parseFloat(searchParams.get("single") || "25.00");
   const nochildren = parseFloat(searchParams.get("nochildren") || "0.60");
-  const accessLevel = searchParams.get("accessLevel") || "";
 
   const subtotal = banktransfer - (single + nochildren);
   const netsalary = cash + subtotal;
+
   const firstInitial = firstname.charAt(0).toUpperCase();
   const lastInitial = lastname.charAt(0).toUpperCase();
+
   const [imageError, setImageError] = useState(false);
-  const [isDialogOpen, setDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isUpdateCashDialog, setIsUpdateCashDialog] = useState(false);
+  const [isBankTransferOpen, setBankTransferOpen] = useState(false);
+  const [isDeleteOpen, setDeleteOpen] = useState(false);
+
   const [files, setFiles] = useState([]);
 
   const handleFileChange = (e) => {
@@ -186,22 +188,6 @@ export default function UserProfile() {
     </>
   );
 
-  // Editable input with label
-  const EditableInput = ({ label, value, onChange, type = "text" }) => (
-    <>
-      <label className="text-sm font-custom text-[#3F4648] w-full">
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-        spellCheck={false}
-      />
-    </>
-  );
-
   const InfoRow = ({ label, value }) => (
     <div className="flex items-center justify-between">
       <p className="text-md font-custom text-light-pearl">{label}</p>
@@ -211,8 +197,8 @@ export default function UserProfile() {
     </div>
   );
 
-  const handleSaveChanges = () => {
-    const userProfile = {
+  const handleSave = () => {
+    const updatedProfile = {
       firstname,
       lastname,
       mobile,
@@ -221,27 +207,20 @@ export default function UserProfile() {
       department,
       title,
       employmentstartdate,
-      selectedPolicies,
-      selectedWorkShift,
-      selectedGroup,
-      selectedLocation,
-      files,
     };
-    localStorage.setItem("userProfile", JSON.stringify(userProfile));
-    alert("Saved to localStorage");
+
+    console.log("✅ Saving profile:", updatedProfile);
+
+    // TODO: Send to backend or update database here.
+    alert("Changes saved successfully!");
   };
 
   return (
     <>
       <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
-        <div
-          className="flex items-center space-x-3 p-5 cursor-pointer"
-          onClick={() => router.push("/overview/users-admin")}
-        >
+        <div className="flex items-center space-x-3 p-5">
           <CreditCard className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">
-            Profile
-          </span>
+          <span className="font-custom text-3xl text-black">Profile</span>
         </div>
       </div>
 
@@ -253,6 +232,7 @@ export default function UserProfile() {
           Good morning!
         </p>
 
+        {/* Profile Holder Container with fallback initials */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
           <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
             {profile && !imageError ? (
@@ -273,10 +253,13 @@ export default function UserProfile() {
             <div className="text-2xl font-bold font-custom">
               {firstname} {lastname}
             </div>
-            <div className="text-sm font-custom text-gray-500">{accessLevel}</div>
+            <div className="text-sm font-custom text-gray-500">
+              {AccessLevel}
+            </div>
           </div>
         </div>
 
+        {/* Two-column layout: left has container, right has text */}
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left container */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
@@ -284,44 +267,88 @@ export default function UserProfile() {
               Personal details
             </h2>
 
-            <EditableInput
-              label="First Name"
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              First Name
+            </label>
+            <input
+              type="text"
               value={firstname}
-              onChange={setFirstname}
+              onChange={(e) => setFirstname(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-            <EditableInput
-              label="Last Name"
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Last Name
+            </label>
+            <input
+              type="text"
               value={lastname}
-              onChange={setLastname}
+              onChange={(e) => setLastname(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-            <EditableInput
-              label="Mobile Phone"
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Mobile Phone
+            </label>
+            <input
+              type="text"
               value={mobile}
-              onChange={setMobile}
+              onChange={(e) => setMobile(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-            <EditableInput
-              label="Birthday"
-              value={birthday}
-              onChange={setBirthday}
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Birthday
+            </label>
+            <input
               type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
 
-            <EditableInput label="Branch" value={branch} onChange={setBranch} />
-            <EditableInput
-              label="Department"
-              value={department}
-              onChange={setDepartment}
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Branch
+            </label>
+            <input
+              type="text"
+              value={branch}
+              onChange={(e) => setBranch(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-            <EditableInput label="Title" value={title} onChange={setTitle} />
-            <EditableInput
-              label="Employment Start Date"
-              value={employmentstartdate}
-              onChange={setEmploymentstartdate}
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Department
+            </label>
+            <input
+              type="text"
+              value={department}
+              onChange={(e) => setDepartment(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Title
+            </label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Employment Start Date
+            </label>
+            <input
               type="date"
+              value={employmentstartdate}
+              onChange={(e) => setEmploymentStartDate(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
             <DropdownSection
@@ -355,6 +382,7 @@ export default function UserProfile() {
             />
           </div>
 
+          {/* Right container with text aligned left */}
           <div className="w-full md:w-[60%] p-6">
             <div className="text-md font-custom text-light-pearl w-full space-y-2">
               <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
@@ -371,6 +399,7 @@ export default function UserProfile() {
             </div>
 
             <div className="relative">
+              {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -382,7 +411,9 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setDialogOpen(true)}>
+                    <DropdownMenuItem
+                      onClick={() => setIsUpdateCashDialog(true)}
+                    >
                       Edit
                     </DropdownMenuItem>
 
@@ -390,7 +421,7 @@ export default function UserProfile() {
                       Arhieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setIsDeleteDialogOpen(true)}
+                      onClick={() => setDeleteOpen(true)}
                       className="text-red-500"
                     >
                       Delete
@@ -398,14 +429,11 @@ export default function UserProfile() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <UpdateCashDialog
-                  open={isDialogOpen}
-                  onOpenChange={setDialogOpen}
+                  open={isUpdateCashDialog}
+                  onOpenChange={setIsUpdateCashDialog}
                   oldCash={cash}
                 />
-                <DeleteDialog
-                  open={isDeleteDialogOpen}
-                  setOpen={setIsDeleteDialogOpen}
-                />
+                <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
 
               {/* Card container */}
@@ -434,14 +462,14 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setDialogOpen(true)}>
+                    <DropdownMenuItem onClick={() => setBankTransferOpen(true)}>
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => {}}>
                       Archieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setIsDeleteDialogOpen(true)}
+                      onClick={() => setDeleteOpen(true)}
                       className="text-red-500"
                     >
                       Delete
@@ -449,14 +477,11 @@ export default function UserProfile() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <UpdateBankTransferDialog
-                  open={isDialogOpen}
-                  onOpenChange={setDialogOpen}
+                  open={isBankTransferOpen}
+                  onOpenChange={setBankTransferOpen}
                   oldCash={cash}
                 />
-                <DeleteDialog
-                  open={isDeleteDialogOpen}
-                  setOpen={setIsDeleteDialogOpen}
-                />
+                <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
 
               {/* Card container */}
@@ -623,10 +648,10 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
-      <div className="w-full flex justify-center mt-6 mb-12">
+      <div className="flex justify-center">
         <Button
-          onClick={handleSaveChanges}
-          className="bg-blue-400 hover:bg-blue-600 text-white font-semibold px-6 py-6 rounded-xl shadow-md transition"
+          onClick={handleSave}
+          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition"
         >
           Save Changes
         </Button>
