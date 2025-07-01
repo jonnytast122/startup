@@ -218,7 +218,7 @@ export default function UserProfile() {
   const [showFirstMenu, setShowFirstMenu] = useState(false);
   const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
 
-  const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
+  const [leaveSubPolicies, setLeaveSubPolicies] = useState(["Annual Leave"]);
   const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
 
   const toggleLeaveSubPolicy = (opt) => {
