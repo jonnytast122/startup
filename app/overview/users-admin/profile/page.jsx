@@ -215,6 +215,27 @@ export default function UserProfile() {
     alert("Changes saved successfully!");
   };
 
+  const [showFirstMenu, setShowFirstMenu] = useState(false);
+  const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
+
+  const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
+  const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
+
+  const toggleLeaveSubPolicy = (opt) => {
+    setLeaveSubPolicies((prev) =>
+      prev.includes(opt) ? prev : [...prev, opt]
+    );
+    setShowFirstMenu(false);
+    setOpenSecondLayerFor("");
+  };
+
+  const toggleOvertimeSubPolicy = (opt) => {
+    setOvertimeSubPolicies((prev) =>
+      prev.includes(opt) ? prev : [...prev, opt]
+    );
+    setShowFirstMenu(false);
+    setOpenSecondLayerFor("");
+  };
   return (
     <>
       <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
@@ -351,13 +372,89 @@ export default function UserProfile() {
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
-            <DropdownSection
-              title="Policies"
-              items={["Leave Policy", "Overtime Policy"]}
-              selectedItems={selectedPolicies}
-              toggleItem={togglePolicy}
-              dropdownWidth="w-38"
-            />
+            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">Policies</h2>
+            <div className="relative flex justify-between items-start flex-wrap gap-4">
+              {/* Display Selected Tags */}
+              <div className="flex flex-wrap gap-4">
+                {leaveSubPolicies.map((item) => (
+                  <div key={item} className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm">
+                    <h2 className="text-sm font-custom text-blue">Leave - {item}</h2>
+                  </div>
+                ))}
+                {overtimeSubPolicies.map((item) => (
+                  <div key={item} className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm">
+                    <h2 className="text-sm font-custom text-blue">Overtime - {item}</h2>
+                  </div>
+                ))}
+              </div>
+
+              {/* + Button */}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowFirstMenu((prev) => !prev);
+                    setOpenSecondLayerFor(""); // Reset second layer when reopening first
+                  }}
+                  className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+                >
+                  <span className="relative w-3 h-3">
+                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
+                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
+                  </span>
+                </button>
+
+                {/* First Menu */}
+                {showFirstMenu && (
+                  <div className="absolute top-10 left-0 z-50 font-custom text-sm w-40 bg-white shadow-md rounded-md">
+                    {["Leave Policy", "Overtime Policy"].map((item) => (
+                      <div
+                        key={item}
+                        onClick={() => setOpenSecondLayerFor(item)}
+                        className="px-4 py-2 cursor-pointer hover:bg-blue-50"
+                      >
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Second Menu */}
+                {openSecondLayerFor === "Leave Policy" && showFirstMenu && (
+                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
+                    {["Sick Leave", "Annual Leave"].map((opt) => (
+                      <div
+                        key={opt}
+                        onClick={() => toggleLeaveSubPolicy(opt)}
+                        className={`px-4 py-2 cursor-pointer rounded ${leaveSubPolicies.includes(opt)
+                            ? "bg-blue-100 text-blue-700"
+                            : "hover:bg-blue-50"
+                          }`}
+                      >
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {openSecondLayerFor === "Overtime Policy" && showFirstMenu && (
+                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
+                    {["Morning", "Weekend"].map((opt) => (
+                      <div
+                        key={opt}
+                        onClick={() => toggleOvertimeSubPolicy(opt)}
+                        className={`px-4 py-2 cursor-pointer rounded ${overtimeSubPolicies.includes(opt)
+                            ? "bg-blue-100 text-blue-700"
+                            : "hover:bg-blue-50"
+                          }`}
+                      >
+                        {opt}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
 
             <DropdownSection
               title="Work Shift"
@@ -417,7 +514,7 @@ export default function UserProfile() {
                       Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => { }}>
                       Arhieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -465,7 +562,7 @@ export default function UserProfile() {
                     <DropdownMenuItem onClick={() => setBankTransferOpen(true)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onClick={() => { }}>
                       Archieve
                     </DropdownMenuItem>
                     <DropdownMenuItem
