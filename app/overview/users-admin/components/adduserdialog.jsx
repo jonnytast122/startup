@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -103,6 +103,17 @@ export default function AddUserDialog({ open, onClose }) {
       row.banknumber.trim()
     );
   };
+
+  useEffect(() => {
+    if (successOpen) {
+      const timer = setTimeout(() => {
+        setSuccessOpen(false);
+        onClose();
+      }, 3000); // 3 seconds
+
+      return () => clearTimeout(timer); // cleanup
+    }
+  }, [successOpen, onClose]);
 
   const getDuplicateCount = () => {
     const completeRows = data.filter(isRowComplete);

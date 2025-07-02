@@ -45,9 +45,12 @@ export default function UserProfile() {
     () => searchParams.get("dateadded") || ""
   );
 
+  const [cash, setCash] = useState(() =>
+    parseFloat(searchParams.get("cash") || "0")
+  );
+
   const profile = searchParams.get("profile");
   const accountnumber = searchParams.get("banknumber") || "";
-  const cash = parseFloat(searchParams.get("cash") || "0");
   const AccessLevel = searchParams.get("accessLevel");
   const banktransfer = parseFloat(searchParams.get("banktransfer") || "0");
   const single = parseFloat(searchParams.get("single") || "25.00");
@@ -60,7 +63,7 @@ export default function UserProfile() {
   const lastInitial = lastname.charAt(0).toUpperCase();
 
   const [imageError, setImageError] = useState(false);
-  const [isUpdateCashDialog, setIsUpdateCashDialog] = useState(false);
+  const [isCashDialogOpen, setCashDialogOpen] = useState(false);
   const [isBankTransferOpen, setBankTransferOpen] = useState(false);
   const [isDeleteOpen, setDeleteOpen] = useState(false);
 
@@ -222,9 +225,7 @@ export default function UserProfile() {
   const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
 
   const toggleLeaveSubPolicy = (opt) => {
-    setLeaveSubPolicies((prev) =>
-      prev.includes(opt) ? prev : [...prev, opt]
-    );
+    setLeaveSubPolicies((prev) => (prev.includes(opt) ? prev : [...prev, opt]));
     setShowFirstMenu(false);
     setOpenSecondLayerFor("");
   };
@@ -372,18 +373,30 @@ export default function UserProfile() {
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
-            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">Policies</h2>
+            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
+              Policies
+            </h2>
             <div className="relative flex justify-between items-start flex-wrap gap-4">
               {/* Display Selected Tags */}
               <div className="flex flex-wrap gap-4">
                 {leaveSubPolicies.map((item) => (
-                  <div key={item} className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm">
-                    <h2 className="text-sm font-custom text-blue">Leave - {item}</h2>
+                  <div
+                    key={item}
+                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
+                  >
+                    <h2 className="text-sm font-custom text-blue">
+                      Leave - {item}
+                    </h2>
                   </div>
                 ))}
                 {overtimeSubPolicies.map((item) => (
-                  <div key={item} className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm">
-                    <h2 className="text-sm font-custom text-blue">Overtime - {item}</h2>
+                  <div
+                    key={item}
+                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
+                  >
+                    <h2 className="text-sm font-custom text-blue">
+                      Overtime - {item}
+                    </h2>
                   </div>
                 ))}
               </div>
@@ -426,10 +439,11 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${leaveSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${
+                          leaveSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                          }`}
+                        }`}
                       >
                         {opt}
                       </div>
@@ -443,10 +457,11 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${overtimeSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${
+                          overtimeSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                          }`}
+                        }`}
                       >
                         {opt}
                       </div>
@@ -508,14 +523,12 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem
-                      onClick={() => setIsUpdateCashDialog(true)}
-                    >
+                    <DropdownMenuItem onClick={() => setCashDialogOpen(true)}>
                       Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => { }}>
-                      Arhieve
+                    <DropdownMenuItem onClick={() => {}}>
+                      Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDeleteOpen(true)}
@@ -526,9 +539,10 @@ export default function UserProfile() {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <UpdateCashDialog
-                  open={isUpdateCashDialog}
-                  onOpenChange={setIsUpdateCashDialog}
+                  open={isCashDialogOpen}
+                  onOpenChange={setCashDialogOpen}
                   oldCash={cash}
+                  onSubmit={(newAmount) => setCash(newAmount)}
                 />
                 <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
@@ -562,8 +576,8 @@ export default function UserProfile() {
                     <DropdownMenuItem onClick={() => setBankTransferOpen(true)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { }}>
-                      Archieve
+                    <DropdownMenuItem onClick={() => {}}>
+                      Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => setDeleteOpen(true)}
@@ -577,6 +591,10 @@ export default function UserProfile() {
                   open={isBankTransferOpen}
                   onOpenChange={setBankTransferOpen}
                   oldCash={cash}
+                  onSubmit={(data) => {
+                    console.log("🧾 Updated bank transfer data:", data);
+                    // You can update local state here, or call an API
+                  }}
                 />
                 <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
