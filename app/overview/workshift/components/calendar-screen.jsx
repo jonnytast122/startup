@@ -247,7 +247,7 @@ export default function CambodiaHolidayCalendar() {
       {/* +N More Dialog */}
       {selectedDateEvents.length > 0 && (
         <Dialog open={true} onOpenChange={() => setSelectedDateEvents([])}>
-          <DialogContent className="bg-white max-w-md">
+          <DialogContent className="bg-white w-fit">
             <DialogHeader>
               <DialogTitle>Events on {selectedDate}</DialogTitle>
             </DialogHeader>
