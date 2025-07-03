@@ -19,6 +19,7 @@ export default function WorkShiftDialog({
   shift = null,
   viewOnly = false,
 }) {
+  const [shiftName, setShiftName] = useState("New Shift");
   const [shiftDays, setShiftDays] = useState([]);
   const [reminderDays, setReminderDays] = useState([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -31,6 +32,7 @@ export default function WorkShiftDialog({
 
   useEffect(() => {
     if (shift) {
+      setShiftName(shift.name || "New Shift");
       setShiftDays(shift.shiftDays || []);
       setReminderDays(shift.reminderDays || []);
       setStartTime(shift.startTime || "09:00");
@@ -41,7 +43,7 @@ export default function WorkShiftDialog({
       setClockOutReminder(shift.clockOutReminder || "14:40");
       setActiveReminder(shift.activeReminder ?? true);
     } else {
-      // reset
+      setShiftName("New Shift");
       setShiftDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
       setReminderDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
       setStartTime("09:00");
@@ -82,7 +84,7 @@ export default function WorkShiftDialog({
     const updatedShift = {
       ...(shift || {}),
       id: shift?.id || Date.now(),
-      name: shift?.name || "New Shift",
+      name: shiftName,
       status: shift?.status || "Active",
       createdBy: shift?.createdBy || "Admin",
       profilePic: shift?.profilePic || "/path/to/default.jpg",
@@ -112,13 +114,25 @@ export default function WorkShiftDialog({
 
         <div className="mx-auto max-w-2xl w-full">
           <div className="space-y-6 text-sm text-[#3F4648]">
-            {/* Work days */}
+            <div className="flex gap-4 items-start">
+              <div className="w-1/3 font-medium">Shift name:</div>
+              <div className="w-2/3">
+                <input
+                  type="text"
+                  value={shiftName}
+                  disabled={viewOnly}
+                  onChange={(e) => setShiftName(e.target.value)}
+                  placeholder="Enter shift name"
+                  className="w-full px-3 py-2 border rounded-md text-sm"
+                />
+              </div>
+            </div>
+
             <div className="flex gap-4 items-start">
               <div className="w-1/3 font-medium">Work days:</div>
               <div className="w-2/3">{renderDays(shiftDays, setShiftDays)}</div>
             </div>
 
-            {/* Work duration */}
             <div className="flex gap-4 items-start">
               <div className="w-1/3 font-medium">Work duration:</div>
               <div className="w-2/3 flex items-center gap-4 flex-wrap">
@@ -141,7 +155,6 @@ export default function WorkShiftDialog({
               </div>
             </div>
 
-            {/* Break */}
             <div className="flex gap-4 items-start">
               <div className="w-1/3 font-medium">Break:</div>
               <div className="w-2/3 flex items-center gap-4 flex-wrap">
@@ -164,7 +177,6 @@ export default function WorkShiftDialog({
               </div>
             </div>
 
-            {/* Active Reminder toggle */}
             <div className="w-full border-t pt-4">
               <div className="flex gap-4 items-start">
                 <div className="w-1/3 font-medium">Active Reminder</div>
@@ -185,13 +197,11 @@ export default function WorkShiftDialog({
 
             {activeReminder && (
               <>
-                {/* Reminder Days */}
                 <div className="flex gap-4 items-start">
                   <div className="w-1/3 font-medium">Reminders active on:</div>
                   <div className="w-2/3">{renderDays(reminderDays, setReminderDays)}</div>
                 </div>
 
-                {/* Employee Reminders */}
                 <div className="flex gap-4 items-start">
                   <div className="w-1/3 font-medium">Employee reminders:</div>
                   <div className="w-2/3 space-y-2">

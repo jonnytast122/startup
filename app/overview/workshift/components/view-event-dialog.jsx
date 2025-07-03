@@ -39,7 +39,6 @@ export default function CambodiaHolidayCalendar() {
   const [viewEvent, setViewEvent] = useState(null);
   const [editEvent, setEditEvent] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [creatingEvent, setCreatingEvent] = useState(false); // ✅ new state
 
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
@@ -74,19 +73,9 @@ export default function CambodiaHolidayCalendar() {
     fetchHolidays();
   }, [currentDate]);
 
+  // ✅ Append new event instead of replacing
   const addEvent = (event) => {
-    setEvents((prev) => {
-      const isEditing = prev.some(
-        (e) => e.date === event.date && e.name === event.name
-      );
-      if (isEditing) {
-        return prev.map((e) =>
-          e.date === event.date && e.name === event.name ? event : e
-        );
-      } else {
-        return [...prev, event];
-      }
-    });
+    setEvents((prev) => [...prev, event]);
   };
 
   const deleteEvent = (event) => {
@@ -134,7 +123,6 @@ export default function CambodiaHolidayCalendar() {
                   if (day) {
                     setSelectedDate(dateStr);
                     setEditEvent(null);
-                    setCreatingEvent(true); // ✅ mark as add-event
                   }
                 }}
                 className={`relative border h-28 p-1 cursor-pointer hover:bg-blue-50 overflow-hidden ${
@@ -164,12 +152,11 @@ export default function CambodiaHolidayCalendar() {
                   ))}
                   {dayEvents.length > 2 && (
                     <div
-                      className="text-[11px] text-white w-fit rounded-sm bg-gray-500 px-1 cursor-pointer hover:underline"
+                      className="text-[11px] text-gray-500 px-1 cursor-pointer hover:underline"
                       onClick={(e) => {
-                        e.stopPropagation(); // ✅ prevent triggering day click
+                        e.stopPropagation();
                         setSelectedDate(dateStr);
                         setSelectedDateEvents(dayEvents);
-                        setCreatingEvent(false); // ✅ cancel add dialog
                       }}
                     >
                       +{dayEvents.length - 2} more
@@ -226,7 +213,6 @@ export default function CambodiaHolidayCalendar() {
                         onClick={() => {
                           setEditEvent(item);
                           setSelectedDate(item.date);
-                          setCreatingEvent(false); // prevent add
                         }}
                       >
                         Edit
@@ -274,17 +260,11 @@ export default function CambodiaHolidayCalendar() {
       )}
 
       {/* Add Event Dialog */}
-      {selectedDate && creatingEvent && (
+      {selectedDate && editEvent === null && (
         <EditEventDialog
           date={selectedDate}
-          onClose={() => {
-            setSelectedDate(null);
-            setCreatingEvent(false);
-          }}
-          onSave={(data) => {
-            addEvent(data);
-            setCreatingEvent(false);
-          }}
+          onClose={() => setSelectedDate(null)}
+          onSave={addEvent}
           event={null}
         />
       )}
@@ -302,7 +282,7 @@ export default function CambodiaHolidayCalendar() {
         />
       )}
 
-      {/* Confirm Delete Dialog */}
+      {/* Delete Confirm */}
       {confirmDelete && (
         <Dialog open={true} onOpenChange={() => setConfirmDelete(null)}>
           <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center text-center">
