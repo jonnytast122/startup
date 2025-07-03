@@ -124,7 +124,7 @@ export default function UpdateBankTransferDialog({
           {/* Payment Info Section */}
           <div className="bg-white shadow-sm rounded-xl px-6 py-4 max-w-xl mx-auto mt-6">
             <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
-              Payment Info
+              Nssf
             </h2>
 
             {/* Type Select */}

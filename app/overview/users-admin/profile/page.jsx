@@ -1,5 +1,4 @@
 "use client";
-
 import { useSearchParams } from "next/navigation";
 import {
   CreditCard,
@@ -9,6 +8,8 @@ import {
   Percent,
   Trash2,
   Download,
+  PersonStanding,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
@@ -71,9 +72,15 @@ export default function UserProfile() {
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file && file.type === "application/pdf") {
+    if (
+      file &&
+      ["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(
+        file.type
+      )
+    ) {
       const newFile = {
         name: file.name,
+        type: file.type,
         size: (file.size / 1024).toFixed(1) + " KB",
         date: new Date().toLocaleDateString(),
         file: URL.createObjectURL(file),
@@ -241,7 +248,7 @@ export default function UserProfile() {
     <>
       <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
         <div className="flex items-center space-x-3 p-5">
-          <CreditCard className="text-[#2998FF]" width={40} height={40} />
+          <User className="text-[#2998FF]" width={40} height={40} />
           <span className="font-custom text-3xl text-black">Profile</span>
         </div>
       </div>
@@ -719,7 +726,7 @@ export default function UserProfile() {
                     <input
                       id="pdf-upload"
                       type="file"
-                      accept=".pdf"
+                      accept=".pdf,.png,.jpg,.jpeg"
                       className="hidden"
                       onChange={handleFileChange}
                     />
@@ -734,11 +741,20 @@ export default function UserProfile() {
                       className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm"
                     >
                       <div className="flex items-center gap-4">
-                        <img
-                          src="/images/Pdf_icon.png"
-                          alt="PDF Icon"
-                          className="h-10 w-auto object-contain"
-                        />
+                        {f.type === "application/pdf" ? (
+                          <img
+                            src="/images/Pdf_icon.png"
+                            alt="PDF Icon"
+                            className="h-10 w-auto object-contain"
+                          />
+                        ) : (
+                          <img
+                            src={f.file}
+                            alt={f.name}
+                            className="h-10 w-10 rounded object-cover"
+                          />
+                        )}
+
                         <div>
                           <p className="font-medium text-gray-800">{f.name}</p>
                           <p className="text-sm text-gray-500">
