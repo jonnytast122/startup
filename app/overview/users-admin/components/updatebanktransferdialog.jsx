@@ -62,7 +62,7 @@ export default function UpdateBankTransferDialog({
 
         <div>
           {/* Tax Section */}
-          <div className="bg-white shadow-sm rounded-xl px-6 max-w-xl mx-auto">
+          <div className="px-6 max-w-xl mx-auto">
             <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
               Tax
             </h2>
@@ -122,7 +122,7 @@ export default function UpdateBankTransferDialog({
           </div>
 
           {/* Payment Info Section */}
-          <div className="bg-white shadow-sm rounded-xl px-6 py-4 max-w-xl mx-auto mt-6">
+          <div className="px-6 py-4 max-w-xl mx-auto mt-6">
             <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
               Nssf
             </h2>
@@ -155,7 +155,7 @@ export default function UpdateBankTransferDialog({
           </div>
 
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-4"></div>
-          <div className="w-full flex justify-center px-4 md:px-6 lg:px-32 mt-4">
+          <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
             <Button onClick={handleSave} className="py-4 px-6 text-lg font-custom rounded-full">
               Save Changes
             </Button>
