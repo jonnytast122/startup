@@ -14,9 +14,9 @@ import {
 import RequestButton from "./components/request-button";
 import DailyButton from "./components/daily-button";
 import { useState } from "react";
-import { DateRangePicker } from "react-date-range"; // Make sure to install `react-date-range`
-import "react-date-range/dist/styles.css"; // Main style file
-import "react-date-range/dist/theme/default.css"; // Theme file
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 import EngagementChart from "./components/engagment-chart";
 import StatisticCard from "./components/statistic-button";
 import Dashboard from "./components/dashboard";

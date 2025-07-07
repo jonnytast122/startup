@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { UserRound, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import UsersScreen from "./components/userscreen";
 import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
