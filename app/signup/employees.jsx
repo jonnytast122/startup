@@ -141,7 +141,7 @@ export default function Employee({ onNextStep, onBackStep, currentStep }) {
                     <SelectTrigger className="w-1/2 text-dark-gray font-custom mt-2 rounded-xl">
                       <SelectValue placeholder="Industry" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="w-full font-custom">
                       {industryOptions.map((industry) => (
                         <SelectItem key={industry} value={industry}>
                           {industry}

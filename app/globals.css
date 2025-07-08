@@ -109,6 +109,9 @@ html {
 .bg-blue {
   color: #2196f3
 }
+.bg-light-blue {
+  color: #E6EFFF
+}
 
 @keyframes pulse-animation {
   0% {

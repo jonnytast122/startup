@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus } from "lucide-react";
+import { Users, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -12,34 +12,23 @@ import {
   TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import AddGroupDialog from "./components/add-group-dialog";
+import EditGroupDialog from "./components/edit-group-dialog";
+import AddSectionDialog from "./components/add-section-dialog";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const Members = [
-  "John Doe",
-  "Jane Smith",
-  "Emily Johnson",
-  "Michael Brown",
-  "Sarah Davis",
-  "David Wilson",
-  "Jessica Moore",
-  "James Taylor",
-  "Amanda Anderson",
-  "William Thomas",
+  { first: "Lucy", last: "Trevo", dept: "Marketing", job: "Accountant", avatar: "https://via.placeholder.com/28" },
+  { first: "John", last: "Mark", dept: "Marketing", job: "Marketing", avatar: "https://via.placeholder.com/28" },
+  { first: "Doe", last: "Ibrahim", dept: "Officer", job: "HR", avatar: "https://via.placeholder.com/28" },
+  { first: "Luke", last: "Kai", dept: "Officer", job: "General", avatar: "https://via.placeholder.com/28" },
+  { first: "Bob", last: "Mako", dept: "Marketing", job: "Accountant", avatar: "https://via.placeholder.com/28" },
 ];
 
 const initialGroupsData = {
@@ -50,7 +39,7 @@ const initialGroupsData = {
       members: 2,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["John Doe", "Jane Smith"],
+      admins: ["Lucy Trevo", "John Mark"],
     },
     {
       id: 2,
@@ -58,7 +47,7 @@ const initialGroupsData = {
       members: 1,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile3.jpg",
-      admins: ["Emily Johnson"],
+      admins: ["Doe Ibrahim"],
     },
   ],
   highPayment: [
@@ -68,7 +57,7 @@ const initialGroupsData = {
       members: 3,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["David Wilson", "Sarah Davis", "Jessica Moore"],
+      admins: ["Luke Kai", "Bob Mako", "John Mark"],
     },
   ],
   outdoor: [
@@ -78,7 +67,7 @@ const initialGroupsData = {
       members: 5,
       createdBy: "Admin",
       createdByProfilePic: "/path/to/profile6.jpg",
-      admins: ["Amanda Anderson", "William Thomas", "James Taylor", "Jane Smith", "John Doe"],
+      admins: ["Bob Mako", "John Mark", "Luke Kai", "Doe Ibrahim", "Lucy Trevo"],
     },
   ],
 };
@@ -98,17 +87,21 @@ const sectionColors = [
 
 export default function GroupPage() {
   const [groupsData, setGroupsData] = useState(initialGroupsData);
-  const [isOpen, setIsOpen] = useState(false);
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSectionOpen, setIsSectionOpen] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: "", admins: [], category: "general" });
   const [newSection, setNewSection] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
+  const [isViewOnly, setIsViewOnly] = useState(false);
 
-  const openModal = (category) => {
+  const openAddModal = (category) => {
     setNewGroup({ name: "", admins: [], category });
-    setIsOpen(true);
+    setIsAddOpen(true);
   };
 
-  const handleConfirm = () => {
+  const handleAddConfirm = () => {
     if (!newGroup.name || newGroup.admins.length === 0) return;
 
     setGroupsData((prevData) => ({
@@ -126,17 +119,40 @@ export default function GroupPage() {
       ],
     }));
 
-    setIsOpen(false);
+    setIsAddOpen(false);
+  };
+
+  const openEditModal = (category, group, view = false) => {
+    setEditingGroup({ ...group, category });
+    setIsViewOnly(view);
+    setEditDialogOpen(true);
+  };
+
+  const handleSaveEditedGroup = (updatedGroup) => {
+    setGroupsData((prevData) => {
+      const updatedCategory = updatedGroup.category;
+      const newGroups = prevData[updatedCategory].map((g) =>
+        g.id === updatedGroup.id
+          ? {
+              ...g,
+              groupName: updatedGroup.groupName,
+              admins: updatedGroup.admins,
+              members: updatedGroup.admins.length,
+            }
+          : g
+      );
+      return { ...prevData, [updatedCategory]: newGroups };
+    });
   };
 
   const handleConfirmSection = () => {
-    if (!newSection.trim()) return;
-
-    setGroupsData((prevData) => ({
-      ...prevData,
-      [newSection]: [],
-    }));
-
+    const key = newSection.toLowerCase().replace(/\s+/g, "");
+    if (!groupsData[key]) {
+      setGroupsData((prev) => ({
+        ...prev,
+        [key]: [],
+      }));
+    }
     setIsSectionOpen(false);
     setNewSection("");
   };
@@ -161,11 +177,17 @@ export default function GroupPage() {
                 <TableHead className="w-[120px]">Members</TableHead>
                 <TableHead className="w-[200px]">Created By</TableHead>
                 <TableHead className="w-[200px]">Administered By</TableHead>
+                <TableHead className="w-[80px] text-right">Edit</TableHead>
+                <TableHead className="w-[130px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {groupData.map((group) => (
-                <TableRow key={group.id}>
+                <TableRow
+                  key={group.id}
+                  className="cursor-pointer"
+                  onClick={() => openEditModal(category, group, true)}
+                >
                   <TableCell>{group.groupName}</TableCell>
                   <TableCell>{group.members}</TableCell>
                   <TableCell>
@@ -185,9 +207,7 @@ export default function GroupPage() {
                           key={admin}
                           src={`/path/to/profiles/${admin.replace(/\s+/g, "").toLowerCase()}.jpg`}
                           alt={admin}
-                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
-                            i === 0 ? "ml-0" : ""
-                          }`}
+                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${i === 0 ? "ml-0" : ""}`}
                           title={admin}
                         />
                       ))}
@@ -198,6 +218,32 @@ export default function GroupPage() {
                       )}
                     </div>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="p-1 rounded hover:bg-gray-100">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        side="right"
+                        align="start"
+                        className="bg-white border border-gray-200 shadow-lg rounded-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <DropdownMenuItem
+                          onClick={() => openEditModal(category, group, false)}
+                        >
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => setConfirmDelete({ category, group })}
+                        >
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -206,7 +252,7 @@ export default function GroupPage() {
                 <TableCell colSpan={4} className="text-left">
                   <Button
                     className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                    onClick={() => openModal(category)}
+                    onClick={() => openAddModal(category)}
                   >
                     <Plus size={12} className="mr-2" /> Add Group
                   </Button>
@@ -222,9 +268,11 @@ export default function GroupPage() {
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
-        <div className="flex items-center space-x-3 p-5">
-          <Users className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Groups</span>
+        <div className="flex items-center justify-between p-5">
+          <div className="flex items-center space-x-3">
+            <Users className="text-[#2998FF]" width={40} height={40} />
+            <span className="font-custom text-3xl text-black">Groups</span>
+          </div>
         </div>
       </div>
 
@@ -242,80 +290,65 @@ export default function GroupPage() {
         </Button>
       </div>
 
-      {/* Add Group Modal */}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Group Setting</DialogTitle>
-          </DialogHeader>
-          <Separator orientation="horizontal" className="my-2 w-full mb-4 mt-2" />
-          <Input
-            placeholder="Group Name"
-            value={newGroup.name}
-            onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-          />
-          <Select
-            onValueChange={(value) => {
-              if (!newGroup.admins.includes(value)) {
-                setNewGroup({ ...newGroup, admins: [...newGroup.admins, value] });
-              }
-            }}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select Members" />
-            </SelectTrigger>
-            <SelectContent>
-              {Members.map((member) => (
-                <SelectItem key={member} value={member}>
-                  {member}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <div className="flex flex-wrap mt-2">
-            {newGroup.admins.map((admin) => (
-              <div
-                key={admin}
-                className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full mr-2 mb-2 text-sm flex items-center space-x-1"
-              >
-                <span>{admin}</span>
-                <button
-                  onClick={() =>
-                    setNewGroup({
-                      ...newGroup,
-                      admins: newGroup.admins.filter((a) => a !== admin),
-                    })
-                  }
-                  className="text-red-500 hover:text-red-700"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleConfirm}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AddGroupDialog
+        open={isAddOpen}
+        setOpen={setIsAddOpen}
+        newGroup={newGroup}
+        setNewGroup={setNewGroup}
+        members={Members}
+        onConfirm={handleAddConfirm}
+      />
 
-      {/* Add Section Modal */}
-      <Dialog open={isSectionOpen} onOpenChange={setIsSectionOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Section Setting</DialogTitle>
-          </DialogHeader>
-          <Separator orientation="horizontal" className="my-2 w-full mb-4 mt-2" />
-          <Input
-            placeholder="Section name"
-            value={newSection}
-            onChange={(e) => setNewSection(e.target.value)}
-          />
-          <DialogFooter>
-            <Button onClick={handleConfirmSection}>Confirm</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <EditGroupDialog
+        open={editDialogOpen}
+        setOpen={setEditDialogOpen}
+        group={editingGroup}
+        onSave={handleSaveEditedGroup}
+        members={Members}
+        isViewMode={isViewOnly}
+      />
+
+      <AddSectionDialog
+        open={isSectionOpen}
+        setOpen={setIsSectionOpen}
+        newSection={newSection}
+        setNewSection={setNewSection}
+        onConfirm={handleConfirmSection}
+      />
+
+      {confirmDelete && (
+        <Dialog open onOpenChange={() => setConfirmDelete(null)}>
+          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center" style={{ minHeight: "280px" }}>
+            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+              Do you want to delete this group?
+            </h2>
+            <div className="flex items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                className="rounded-full px-7 font-custom"
+                onClick={() => setConfirmDelete(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full px-7 font-custom"
+                style={{ backgroundColor: "#fb5f59", color: "white" }}
+                onClick={() => {
+                  const { category, group } = confirmDelete;
+                  setGroupsData((prev) => ({
+                    ...prev,
+                    [category]: prev[category].filter((g) => g.id !== group.id),
+                  }));
+                  setConfirmDelete(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

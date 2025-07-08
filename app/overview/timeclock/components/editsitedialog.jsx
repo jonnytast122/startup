@@ -10,10 +10,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 
 function EditSiteDialog() {
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
+  const [circle, setCircle] = useState(null);
   const [googleMaps, setGoogleMaps] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [centerCoords, setCenterCoords] = useState({
@@ -21,6 +23,7 @@ function EditSiteDialog() {
     lng: 104.89005,
   });
   const [siteAddress, setSiteAddress] = useState("");
+  const [fenceSize, setFenceSize] = useState(300); // in meters
 
   // Get current location on open
   useEffect(() => {
@@ -57,6 +60,19 @@ function EditSiteDialog() {
       });
 
       setMap(newMap);
+
+      const newCircle = new google.maps.Circle({
+        map: newMap,
+        center: centerCoords,
+        radius: fenceSize,
+        fillColor: "#4285F4",
+        fillOpacity: 0.2,
+        strokeColor: "#4285F4",
+        strokeOpacity: 0.5,
+        strokeWeight: 2,
+      });
+
+      setCircle(newCircle);
     };
 
     if (isOpen && !map) {
@@ -65,13 +81,18 @@ function EditSiteDialog() {
       }, 300);
     } else if (map) {
       map.setCenter(centerCoords);
+      if (circle) circle.setCenter(centerCoords);
     }
   }, [isOpen, centerCoords]);
 
-  const handleOpenChange = (open) => {
-    setIsOpen(open);
-  };
+  // Update circle radius when fence size changes
+  useEffect(() => {
+    if (circle) {
+      circle.setRadius(fenceSize);
+    }
+  }, [fenceSize]);
 
+  // Geocode address to center map and move circle
   const handleAddressSearch = async () => {
     if (!googleMaps || !siteAddress) return;
 
@@ -83,8 +104,9 @@ function EditSiteDialog() {
           lat: location.lat(),
           lng: location.lng(),
         };
-        setCenterCoords(newCoords); // updates map center
+        setCenterCoords(newCoords);
         if (map) map.setCenter(newCoords);
+        if (circle) circle.setCenter(newCoords);
       } else {
         alert("Geocoding failed: " + status);
       }
@@ -92,7 +114,7 @@ function EditSiteDialog() {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <button className="font-custom border border-gray text-blue px-4 py-2 rounded-lg text-sm whitespace-nowrap hover:bg-blue-400 hover:text-white transition-colors">
           Edit site
@@ -116,7 +138,7 @@ function EditSiteDialog() {
                 </label>
                 <input
                   type="text"
-                  className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
+                  className="font-custom border text-dark-gray border-gray-300 rounded-xl p-2 w-full"
                   placeholder="Enter site name"
                 />
               </div>
@@ -130,23 +152,31 @@ function EditSiteDialog() {
                     type="text"
                     value={siteAddress}
                     onChange={(e) => setSiteAddress(e.target.value)}
-                    className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
+                    className="font-custom border text-dark-gray border-gray-300 rounded-xl p-2 w-full"
                     placeholder="Enter site address"
                   />
-                  <button
-                    onClick={handleAddressSearch}
-                    className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-4 py-2 rounded-lg"
-                  >
-                    Find
-                  </button>
                 </div>
               </div>
 
               <div>
                 <label className="text-lg text-dark-gray font-custom mb-2">
-                  Fence size:
+                  Fence size (meters): {fenceSize}m
                 </label>
-                <Slider />
+                <Slider
+                  min={100}
+                  max={1000}
+                  step={50}
+                  value={[fenceSize]}
+                  onValueChange={(value) => setFenceSize(value[0])}
+                />
+              </div>
+              <div className="flex justify-end">
+                <Button
+                  onClick={handleAddressSearch}
+                  className="py-4 px-6 text-md font-custom rounded-full"
+                >
+                  Save Branch
+                </Button>
               </div>
             </div>
           </div>

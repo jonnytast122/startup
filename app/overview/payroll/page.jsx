@@ -12,10 +12,10 @@ export default function PayrollPage() {
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-        <div className="flex items-center space-x-3 p-5">
-          <CreditCard className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Payroll</span>
-        </div>
+                <div className="flex items-center space-x-3 p-6">
+                    <CreditCard className='text-[#2998FF]' width={40} height={40} />
+                    <span className="font-custom text-3xl text-black">Payroll</span>
+                </div>
       </div>
 
       {/* Tabs */}

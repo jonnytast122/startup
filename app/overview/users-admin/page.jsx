@@ -2,11 +2,10 @@
 
 import { useState } from "react";
 import { UserRound, Search } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import UsersScreen from "./components/userscreen";
 import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
-import AddUserDialog from "./components/adduserdialog"; // Import the dialog
+import AddUserDialog from "./components/adduserdialog";
 import AddAdminDialog from "./components/addadmindialog";
 
 export default function UserAdminPage() {
@@ -14,7 +13,7 @@ export default function UserAdminPage() {
   const [usersCount, setUsersCount] = useState(0);
   const [adminsCount, setAdminsCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dialogType, setDialogType] = useState(null); // 'user' or 'admin'
+  const [dialogType, setDialogType] = useState(null);
 
   return (
     <div>
@@ -35,7 +34,7 @@ export default function UserAdminPage() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setSearchQuery(""); // Reset search when switching tabs
+                setSearchQuery("");
               }}
               className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
                 activeTab === tab
@@ -58,14 +57,18 @@ export default function UserAdminPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={
-                activeTab === "Users" ? "Search users..." : "Search admins..."
+                activeTab === "Users"
+                  ? "Search users..."
+                  : activeTab === "Admins"
+                  ? "Search admins..."
+                  : "Search users..."
               }
               className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           {/* Hide "Add" button for Archived */}
-          {activeTab !== "Archived" && (
+          {/* {activeTab !== "Archived" && (
             <Button
               className="rounded-full px-6 sm:px-10 ml-4"
               onClick={() =>
@@ -74,21 +77,23 @@ export default function UserAdminPage() {
             >
               Add {activeTab}
             </Button>
-          )}
+          )} */}
         </div>
 
         {/* Content */}
-        <div className="p-6 font-custom">
+        <div className="p-3 font-custom">
           {activeTab === "Users" && (
             <UsersScreen
               setUsersCount={setUsersCount}
               searchQuery={searchQuery}
+              onAddUser={() => setDialogType("user")}
             />
           )}
           {activeTab === "Admins" && (
             <AdminsScreen
               setAdminsCount={setAdminsCount}
               searchQuery={searchQuery}
+              onAddAdmin={() => setDialogType("admin")}
             />
           )}
           {activeTab === "Archived" && (
@@ -97,7 +102,6 @@ export default function UserAdminPage() {
         </div>
       </div>
 
-      {/* Add User Dialog */}
       {dialogType === "user" && (
         <AddUserDialog open={true} onClose={() => setDialogType(null)} />
       )}

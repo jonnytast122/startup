@@ -66,6 +66,7 @@ export default {
         },
         blue: {
           70: "#021639",
+          100: "#E6EFFF"
         },
         yellow: {
           50: "#FEC601",

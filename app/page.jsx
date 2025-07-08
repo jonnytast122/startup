@@ -14,13 +14,12 @@ export default function Home() {
     <div>
       {/* <Navbar />
       <Hero />
-      <Feature />
-      <Solution />
+      {/* <Feature />
+      <Solution /> */}
       <Pricing />
       <Features />
       <Customer />
       <Footer /> */}
-
       <ComingSoon />
     </div>
   );

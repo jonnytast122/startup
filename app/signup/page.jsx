@@ -123,7 +123,7 @@ function SignupForm({ handleNextStep, className, ...props }) {
                   <SelectTrigger className="w-full text-dark-gray font-custom">
                     <SelectValue placeholder="Where did you first hear about us?" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="w-full font-custom">
                     <SelectItem value="social_media">Social Media</SelectItem>
                     <SelectItem value="friend or family">Friend or Family</SelectItem>
                     <SelectItem value="advertisement">Advertisement</SelectItem>

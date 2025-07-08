@@ -1,313 +1,492 @@
 "use client";
 
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogFooter,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
-import { UserPlus, ChevronDown, Plus } from "lucide-react";
 import {
   Table,
   TableHeader,
+  TableBody,
   TableRow,
   TableHead,
-  TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
-
-const countryCodes = [
-  { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" }, // Set Cambodia as default
-  { code: "+81", flag: "https://flagcdn.com/w40/jp.png", name: "Japan" },
-  { code: "+82", flag: "https://flagcdn.com/w40/kr.png", name: "South Korea" },
-  { code: "+60", flag: "https://flagcdn.com/w40/my.png", name: "Malaysia" },
-  { code: "+63", flag: "https://flagcdn.com/w40/ph.png", name: "Philippines" },
-  { code: "+65", flag: "https://flagcdn.com/w40/sg.png", name: "Singapore" },
-  { code: "+66", flag: "https://flagcdn.com/w40/th.png", name: "Thailand" },
-  { code: "+84", flag: "https://flagcdn.com/w40/vn.png", name: "Vietnam" },
-];
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from "@tanstack/react-table";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
+import { List, Plus, Trash2 } from "lucide-react";
+import SuccessDialog from "./successdialog";
 
 export default function AddUserDialog({ open, onClose }) {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      firstname: "",
-      lastname: "",
-      phonenumber: "",
-      bankTransfer: "",
-      cash: "",
-      employment_start_date: "",
-      birthday: "",
-    },
-  ]);
+  const [data, setData] = useState(
+    Array.from({ length: 2 }, (_, i) => ({
+      id: i + 1,
+      profile: "",
+      fullName: "",
+      phone: "",
+      branch: "",
+      shiftType: "",
+      accessLevel: "user",
+      cash: 0,
+      dateadded: "",
+      lastlogin: "",
+      bankname: "",
+      banknumber: "",
+      status: "active",
+    }))
+  );
+  const [addedRowIds, setAddedRowIds] = useState([]);
+  const [errorsMap, setErrorsMap] = useState({});
+  const [successOpen, setSuccessOpen] = useState(false);
 
-  const handleInputChange = (id, field, value) => {
-    setUsers((prevUsers) =>
-      prevUsers.map((user) =>
-        user.id === id ? { ...user, [field]: value } : user
-      )
+  const handleAddRow = useCallback(() => {
+    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
+    const newRow = {
+      id: newId,
+      profile: "",
+      fullName: "",
+      phone: "",
+      branch: "",
+      shiftType: "",
+      accessLevel: "user",
+      cash: 0,
+      dateadded: "",
+      lastlogin: "",
+      bankname: "",
+      banknumber: "",
+      status: "active",
+    };
+    setData((prev) => [...prev, newRow]);
+    setAddedRowIds((prev) => [...prev, newId]);
+  }, [data]);
+
+  const handleDeleteRow = useCallback((id) => {
+    setData((prev) => prev.filter((row) => row.id !== id));
+    setAddedRowIds((prev) => prev.filter((rowId) => rowId !== id));
+  }, []);
+
+  const handleInputChange = useCallback((id, field, value) => {
+    setData((prevData) =>
+      prevData.map((row) => (row.id === id ? { ...row, [field]: value } : row))
+    );
+  }, []);
+
+  const isRowComplete = (row) => {
+    return (
+      row.fullName.trim() &&
+      row.phone.trim() &&
+      row.branch.trim() &&
+      row.shiftType.trim() &&
+      String(row.cash).trim() &&
+      row.bankname.trim() &&
+      row.banknumber.trim()
     );
   };
 
-  const addNewRow = () => {
-    setUsers((prevUsers) => [
-      ...prevUsers,
+  useEffect(() => {
+    if (successOpen) {
+      const timer = setTimeout(() => {
+        setSuccessOpen(false);
+        onClose();
+      }, 3000); // 3 seconds
+
+      return () => clearTimeout(timer); // cleanup
+    }
+  }, [successOpen, onClose]);
+
+  const getDuplicateCount = () => {
+    const completeRows = data.filter(isRowComplete);
+    const seen = new Map();
+    let count = 0;
+
+    for (const row of completeRows) {
+      const key = JSON.stringify([
+        row.fullName,
+        row.phone,
+        row.branch,
+        row.shiftType,
+        row.cash,
+        row.bankname,
+        row.banknumber,
+      ]);
+      if (seen.has(key)) {
+        count++;
+      } else {
+        seen.set(key, true);
+      }
+    }
+
+    return count;
+  };
+
+  const countryCodes = [
+    { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
+    { code: "+81", flag: "https://flagcdn.com/w40/jp.png", name: "Japan" },
+    {
+      code: "+82",
+      flag: "https://flagcdn.com/w40/kr.png",
+      name: "South Korea",
+    },
+    { code: "+60", flag: "https://flagcdn.com/w40/my.png", name: "Malaysia" },
+    {
+      code: "+63",
+      flag: "https://flagcdn.com/w40/ph.png",
+      name: "Philippines",
+    },
+    { code: "+65", flag: "https://flagcdn.com/w40/sg.png", name: "Singapore" },
+    { code: "+66", flag: "https://flagcdn.com/w40/th.png", name: "Thailand" },
+    { code: "+84", flag: "https://flagcdn.com/w40/vn.png", name: "Vietnam" },
+  ];
+
+  const columns = useMemo(
+    () => [
       {
-        id: prevUsers.length + 1,
-        firstname: "",
-        lastname: "",
-        phonenumber: "",
-        bankTransfer: "",
-        cash: "",
-        employment_start_date: "",
-        birthday: "",
+        accessorKey: "fullName",
+        header: "Name",
+        cell: ({ row }) => (
+          <Input
+            value={row.original.fullName}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "fullName", e.target.value)
+            }
+            placeholder="Full Name"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
       },
-    ]);
-  };
+      {
+        accessorKey: "phone",
+        header: "Phone Number",
+        cell: ({ row }) => (
+          <div className="flex gap-2 items-center">
+            <Select
+              value={row.original.countryCode || "+855"}
+              onValueChange={(code) =>
+                handleInputChange(row.original.id, "countryCode", code)
+              }
+            >
+              <SelectTrigger className="w-[115px] h-9 border-gray-300 font-custom text-black placeholder:text-gray-400 rounded-md">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="max-h-60 overflow-y-auto">
+                {countryCodes.map((country) => (
+                  <SelectItem key={country.code} value={country.code}>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={country.flag}
+                        alt={country.name}
+                        className="w-4 h-4"
+                      />
+                      {country.code}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <div className="flex-1">
+              <Input
+                value={row.original.phone}
+                onChange={(e) =>
+                  handleInputChange(row.original.id, "phone", e.target.value)
+                }
+                placeholder="Phone Number"
+                className={`font-custom h-9 text-black placeholder:text-gray-400 rounded-md border-gray-300 ${
+                  errorsMap[row.original.id]?.phone ? "border-red-500" : ""
+                }`}
+              />
+              {errorsMap[row.original.id]?.phone && (
+                <p className="text-xs text-red-500 mt-1">
+                  {errorsMap[row.original.id]?.phone}
+                </p>
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "branch",
+        header: "Branch",
+        cell: ({ row }) => (
+          <Input
+            value={row.original.branch}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "branch", e.target.value)
+            }
+            placeholder="Branch"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        accessorKey: "shiftType",
+        header: "Shift Type",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.shiftType}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "shiftType", value)
+            }
+          >
+            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+              <SelectValue placeholder="Select Shift Type" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="schedule">Schedule</SelectItem>
+              <SelectItem value="flexible">Flexible</SelectItem>
+              <SelectItem value="part-time">Part-Time</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "cash",
+        header: "Cash",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            value={row.original.cash}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "cash", e.target.value)
+            }
+            placeholder="Cash"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        accessorKey: "bankname",
+        header: "Bank Name",
+        cell: ({ row }) => (
+          <Input
+            value={row.original.bankname}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "bankname", e.target.value)
+            }
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        accessorKey: "banknumber",
+        header: "Bank Account",
+        cell: ({ row }) => (
+          <Input
+            value={row.original.banknumber}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "banknumber", e.target.value)
+            }
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        id: "actions",
+        header: ({ table }) => (
+          <div className="flex justify-end pr-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-auto bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                >
+                  <List size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="bg-white shadow-md border p-2 font-custom">
+                {table
+                  .getAllColumns()
+                  .filter(
+                    (column) => column.getCanHide() && column.id !== "actions"
+                  )
+                  .map((column) => (
+                    <div
+                      key={column.id}
+                      className="flex items-center gap-2 py-1 cursor-pointer rounded-md text-md"
+                      onClick={() => column.toggleVisibility()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={column.getIsVisible()}
+                        onChange={() => column.toggleVisibility()}
+                        className="accent-blue-400 w-4 h-4 rounded border-gray-300"
+                      />
+                      <span className="capitalize">{column.id}</span>
+                    </div>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className="flex justify-end gap-1 pr-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleDeleteRow(row.original.id)}
+              className="text-black hover:text-red-500 bg-transparent hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+            >
+              <Trash2 className="w-3 h-3" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [handleInputChange, handleDeleteRow]
+  );
 
-  const [selectedCountry, setSelectedCountry] = useState(countryCodes[0]);
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    meta: {
+      handleInputChange,
+      data,
+    },
+    initialState: {
+      pagination: { pageSize: 25 },
+      columnVisibility: {
+        fullName: true,
+        phone: true,
+        title: false,
+        banktransfer: false,
+        branch: true,
+        shiftType: true,
+        cash: false,
+        bankname: false,
+        banknumber: false,
+        filter: true,
+      },
+    },
+  });
 
-  const handleSelectCountry = (country) => {
-    setSelectedCountry(country);
-    handleInputChange(users.id, "countryCode", country.code);
-  };
+  const duplicateCount = getDuplicateCount();
+  const addedCount = addedRowIds.length;
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
-        <DialogHeader className="text-center">
-          <DialogTitle className="sr-only">Add New User</DialogTitle>
-          <div className="flex items-center justify-center space-x-3">
-            <UserPlus className="w-6 h-6 text-light-blue mb-6" />
-            <h1 className="text-2xl font-custom text-light-gray mb-6">
-              Add New User
-            </h1>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-6xl">
+          <DialogHeader className="text-center">
+            <DialogTitle className="sr-only">Add New User</DialogTitle>
+            <div className="flex items-center justify-center space-x-3">
+              <h1 className="text-2xl font-custom text-light-gray">
+                Step 2: Review
+              </h1>
+            </div>
+            {(addedCount > 0 || duplicateCount > 0) && (
+              <div className="flex justify-start gap-6 pt-2 pl-2">
+                {addedCount > 0 && (
+                  <p className="text-red-500 font-medium text-sm">
+                    {addedCount} Added
+                  </p>
+                )}
+                {duplicateCount > 0 && (
+                  <p className="text-blue-500 font-medium text-sm">
+                    {duplicateCount} Duplicated
+                  </p>
+                )}
+              </div>
+            )}
+          </DialogHeader>
+
+          <div className="mt-6 overflow-x-auto">
+            <Table className="w-full min-w-max rounded-lg overflow-hidden">
+              <TableHeader className="bg-[#e4e4e4] rounded-lg font-custom text-md">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className={
+                          header.id === "actions" ? "w-[60px]" : "min-w-[100px]"
+                        }
+                      >
+                        {flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
-          <p className="text-center text-md font-custom">
-            Users login to the mobile and web app using their mobile phone
-            number
-          </p>
-        </DialogHeader>
 
-        <div className="overflow-x-auto">
-          <Table className="w-full min-w-max rounded-lg overflow-hidden">
-            <TableHeader className="bg-[#e4e4e4] rounded-lg">
-              <TableRow>
-                <TableHead>First Name*</TableHead>
-                <TableHead>Last Name</TableHead>
-                <TableHead>Phone Number</TableHead>
-                <TableHead>Bank Transfer</TableHead>
-                <TableHead>Cash</TableHead>
-                <TableHead>Employment Start Date</TableHead>
-                <TableHead>Birthday</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <Input
-                      value={user.firstname}
-                      onChange={(e) =>
-                        handleInputChange(user.id, "firstname", e.target.value)
-                      }
-                      placeholder="First Name"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={user.lastname}
-                      onChange={(e) =>
-                        handleInputChange(user.id, "lastname", e.target.value)
-                      }
-                      placeholder="Last Name"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell className="flex space-x-2 items-center">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="flex items-center space-x-2 px-5 h-9"
-                        >
-                          <img
-                            src={selectedCountry.flag}
-                            alt={selectedCountry.name}
-                            className="w-4 h-3"
-                          />
-                          <span className="font-custom">
-                            {selectedCountry.code}
-                          </span>
-                          <ChevronDown className="w-4 h-4" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-40 p-2 bg-white border rounded-md shadow-md">
-                        {countryCodes.map((country) => (
-                          <div
-                            key={country.code}
-                            onClick={() => handleSelectCountry(country)}
-                            className="flex items-center space-x-2 p-2 cursor-pointer hover:bg-gray-100 rounded-md"
-                          >
-                            <img
-                              src={country.flag}
-                              alt={country.name}
-                              className="w-5 h-4"
-                            />
-                            <span className="font-custom text-sm">
-                              {country.code}
-                            </span>
-                          </div>
-                        ))}
-                      </PopoverContent>
-                    </Popover>
-                    <Input
-                      type="text"
-                      value={user.phonenumber}
-                      onChange={(e) =>
-                        handleInputChange(
-                          user.id,
-                          "phonenumber",
-                          e.target.value
-                        )
-                      }
-                      placeholder="Phone Number"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={user.bankTransfer}
-                      onChange={(e) =>
-                        handleInputChange(
-                          user.id,
-                          "bankTransfer",
-                          e.target.value
-                        )
-                      }
-                      placeholder="Bank Transfer"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Input
-                      value={user.cash}
-                      onChange={(e) =>
-                        handleInputChange(user.id, "cash", e.target.value)
-                      }
-                      placeholder="Cash"
-                      className="font-custom border border-gray-300 focus:border-gray-500 text-black placeholder:text-gray-400"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full flex items-center justify-between font-custom h-9 text-black"
-                        >
-                          {user.employment_start_date ? (
-                            format(new Date(user.employment_start_date), "PPP")
-                          ) : (
-                            <span className="text-gray-500">Pick a date</span>
-                          )}
-                          <ChevronDown className="w-6 h-6 text-light-gray" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="p-0 bg-white border shadow-md rounded-md"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={
-                            user.employment_start_date
-                              ? new Date(user.employment_start_date)
-                              : undefined
-                          }
-                          onSelect={(date) =>
-                            handleInputChange(
-                              user.id,
-                              "employment_start_date",
-                              date ? date.toISOString() : ""
-                            )
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                  <TableCell>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="w-full flex items-center justify-between font-custom h-9 text-black"
-                        >
-                          {user.birthday ? (
-                            format(new Date(user.birthday), "PPP")
-                          ) : (
-                            <span className="text-gray-500">Pick a date</span>
-                          )}
-                          <ChevronDown className="w-6 h-6 text-light-gray" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="p-0 bg-white border shadow-md rounded-md"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={
-                            user.birthday ? new Date(user.birthday) : undefined
-                          }
-                          onSelect={(date) =>
-                            handleInputChange(
-                              user.id,
-                              "birthday",
-                              date ? date.toISOString() : ""
-                            )
-                          }
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+          <div className="flex justify-center mt-4">
+            <Button
+              onClick={handleAddRow}
+              className="bg-white border rounded-full text-blue-500 hover:bg-blue-100 flex items-center space-x-2 font-custom py-2 px-4"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add Row</span>
+            </Button>
+          </div>
 
-        <div className="flex justify-center mt-4 mb-2">
-          <Button
-            onClick={addNewRow}
-            className="bg-white border rounded-full border-blue-500 text-blue-500 hover:bg-blue-100 flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Row</span>
-          </Button>
-        </div>
+          <DialogFooter className="flex justify-end gap-2 mt-6">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="rounded-full border border-gray-300 text-blue-500 hover:bg-gray-100 font-custom py-6 px-9"
+            >
+              Cancel
+            </Button>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button>
-            <UserPlus className="w-4 h-4 mr-2" /> Send an Invite
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <Button
+              onClick={() => {
+                setSuccessOpen(true);
+              }}
+              className="rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9"
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <SuccessDialog
+        open={successOpen}
+        onClose={() => {
+          setSuccessOpen(false);
+          onClose();
+        }}
+      />
+      ;
+    </>
   );
 }

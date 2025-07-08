@@ -1,10 +1,17 @@
 "use client";
 
 import React, { useState } from "react"; // Explicitly import React
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 export default function Account_Created({ onNextStep }) {
+    const router = useRouter(); // ✅ initialize router
+
+  const handleStart = () => {
+    router.push("/overview"); // ✅ navigate to /dashboard
+  };
+
   return (
     <div className="bg-white flex h-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm md:max-w-4xl flex justify-center">
@@ -38,7 +45,7 @@ export default function Account_Created({ onNextStep }) {
               <Button
                 type="button"
                 className="w-56 rounded-full mt-4 font-vietname text-2sm"
-                onClick={onNextStep} // Navigate to next step
+                onClick={handleStart} // Navigate to next step
               >
                 Let's Start!
               </Button>

@@ -36,7 +36,12 @@ function Footer() {
         {/* Left Side (40%) */}
         <div className="flex flex-col items-center md:items-start w-full md:w-[40%]">
           <div className="flex items-center space-x-4">
-            <Image src="/images/white_logo.png" alt="ANAN Logo" width={90} height={90} />
+            <Image
+              src="/images/white_logo.png"
+              alt="ANAN Logo"
+              width={90}
+              height={90}
+            />
             <h2 className="text-xl">ANAN</h2>
           </div>
           <p className="font-custom mt-4 text-lg text-center md:text-left">
@@ -51,21 +56,21 @@ function Footer() {
         {/* Spacer (20%) */}
         <div className="hidden md:block w-[20%]"></div>
 
-        {/* Right Side (40%) */}
-        <div className="grid grid-cols-4 gap-6 w-full md:w-[50%] text-sm mt-10 md:mt-0">
+        {/* Right Side (40%)
+        <div className="grid grid-cols-4 gap-6 w-full md:w-[40%] text-sm mt-10 md:mt-0">
           {[
-            {
-              heading: "Product",
-              features: ["Overview", "Pricing", "Custom stories"],
-            },
-            {
-              heading: "Resources",
-              features: ["Blog", "Guides & tutorials", "Help center"],
-            },
-            {
-              heading: "Company",
-              features: ["About us", "Careers", "Partnership"],
-            },
+            // {
+            //   heading: "Product",
+            //   features: ["Overview", "Pricing", "Custom stories"],
+            // },
+            // {
+            //   heading: "Resources",
+            //   features: ["Blog", "Guides & tutorials", "Help center"],
+            // },
+            // {
+            //   heading: "Company",
+            //   features: ["About us", "Careers", "Partnership"],
+            // },
             {
               heading: "Talk with sales",
               features: ["+855 123456789", "Available Date", "Available Time"],
@@ -84,6 +89,25 @@ function Footer() {
               </ul>
             </div>
           ))}
+        </div> */}
+
+        <div className="w-full md:w-[40%] text-sm mt-10 md:mt-0 flex justify-end">
+          <div>
+            <h4 className="font-custom font-semibold text-lg mb-4">
+              Talk with sales
+            </h4>
+            <ul className="font-custom space-y-4">
+              {["+855 123456789", "Available Date", "Available Time"].map(
+                (feature, i) => (
+                  <li key={i} className="mt-2">
+                    <a href="#" className="hover:underline">
+                      {feature}
+                    </a>
+                  </li>
+                )
+              )}
+            </ul>
+          </div>
         </div>
       </div>
 
@@ -91,15 +115,26 @@ function Footer() {
       <div className="mt-12 px-6 mx-auto max-container flex flex-col md:flex-row justify-between items-center text-sm border-t border-white/30 pt-6">
         {/* Left: Terms & Privacy */}
         <p className="text-center md:text-left">
-          English | <a href="#" className="hover:underline">Term & Privacy</a> | <a href="#" className="hover:underline">Security</a> | ©2024 ANAN.
+          <a href="#" className="hover:underline">
+            Term & Privacy
+          </a>{" "}
+          | ©2024 ANAN.
         </p>
 
         {/* Right: Social Icons */}
         <div className="flex space-x-6 mt-4 md:mt-0">
-          <a href="#" aria-label="Facebook"><FaFacebook className="text-xl hover:text-gray-300" /></a>
-          <a href="#" aria-label="TikTok"><FaTiktok className="text-xl hover:text-gray-300" /></a>
-          <a href="#" aria-label="Instagram"><FaInstagram className="text-xl hover:text-gray-300" /></a>
-          <a href="#" aria-label="YouTube"><FaYoutube className="text-xl hover:text-gray-300" /></a>
+          <a href="#" aria-label="Facebook">
+            <FaFacebook className="text-xl hover:text-gray-300" />
+          </a>
+          <a href="#" aria-label="TikTok">
+            <FaTiktok className="text-xl hover:text-gray-300" />
+          </a>
+          <a href="#" aria-label="Instagram">
+            <FaInstagram className="text-xl hover:text-gray-300" />
+          </a>
+          <a href="#" aria-label="YouTube">
+            <FaYoutube className="text-xl hover:text-gray-300" />
+          </a>
         </div>
       </div>
     </footer>
