@@ -1,48 +1,363 @@
-"use client"
+"use client";
 
 import { useState } from "react";
-import { CreditCard } from "lucide-react";
-import DashboardScreen from "./components/dashboard-screen";
-import IntegrationScreen from "./components/integration-screen";
-import PayrollScreen from "./components/payroll-screen";
+import {
+  CreditCard,
+  Settings,
+  ListFilter,
+  ChevronDown,
+  Search,
+  List,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
+import { DateRangePicker } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+import AddPayrollDialog from "./components/add-payroll-dialog";
+import CustomizeReportDialog from "./components/customize-report-dialog";
+import UserProfileSection from "./components/user-profile-section";
 
 export default function PayrollPage() {
-  const [activeTab, setActiveTab] = useState("Dashboard");
+  const [selectedRange, setSelectedRange] = useState({
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
+    key: "selection",
+  });
+
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [sections, setSections] = useState([]);
+  const [showCustomizeDialog, setShowCustomizeDialog] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+const handleRowClick = (emp) => {
+  setSelectedEmployee(emp);
+};
+
+  const handleAddSection = (newSection) => {
+    setSections((prev) => [...prev, newSection]);
+  };
+
+  const exportOptions = [
+    { value: "as CSV", label: "as CSV" },
+    { value: "as XLS", label: "as XLS" },
+  ];
+
+  const Filter = [
+    { value: "Select all", label: "Select all" },
+    { value: "All users group", label: "All users group" },
+    { value: "Assigned features", label: "Assigned features" },
+  ];
+
+  const employeeData = [
+    {
+      profile: "/avatar.png",
+      firstName: "John",
+      lastName: "Doe",
+      department: "Operations",
+      job: "Technician",
+      shift: "Day",
+      regularHour: 8,
+      dailyRate: 25,
+      regularPay: 200,
+      overtimePay: 50,
+      grossSalary: 250,
+      taxNassf: 20,
+      netSalary: 230,
+    },
+    {
+      profile: "/avatar.png",
+      firstName: "Jane",
+      lastName: "Smith",
+      department: "Security",
+      job: "Guard",
+      shift: "Night",
+      regularHour: 8,
+      dailyRate: 20,
+      regularPay: 160,
+      overtimePay: 40,
+      grossSalary: 200,
+      taxNassf: 25,
+      netSalary: 175,
+    },
+  ];
+
+  const allColumns = [
+    { key: "firstName", label: "First Name" },
+    { key: "lastName", label: "Last Name" },
+    { key: "department", label: "Department" },
+    { key: "job", label: "Job" },
+    { key: "shift", label: "Shift Type" },
+    { key: "regularHour", label: "Regular Hour" },
+    { key: "dailyRate", label: "Daily Rate" },
+    { key: "regularPay", label: "Regular Pay" },
+    { key: "overtimePay", label: "Overtime Pay" },
+    { key: "grossSalary", label: "Gross Salary" },
+    { key: "taxNassf", label: "Tax Nassf" },
+    { key: "netSalary", label: "Net Salary" },
+  ];
+
+  const [visibleCols, setVisibleCols] = useState(
+    Object.fromEntries(allColumns.map((col) => [col.key, true]))
+  );
+
+  const toggleCol = (key) => {
+    setVisibleCols((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const PayrollSection = ({ title, totalPay }) => (
+    <div className="border rounded-xl mb-6 p-4">
+      <div className="flex justify-between items-center mb-4">
+        <Select>
+          <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative text-[#5494DA]">
+            <ListFilter size={20} />
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            {Filter.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex gap-2 items-center">
+          <div className="relative">
+            <Search className="absolute right-3 top-2 text-gray-400" size={20} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search"
+              className="pl-2 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <Separator orientation="vertical" className="h-6 mx-2" />
+          <Select
+            onValueChange={(value) => {
+              if (value === "as CSV") {
+                // Do nothing or show a success toast
+                console.log("Exported as CSV");
+              } else if (value === "as XLS") {
+                setShowCustomizeDialog(true);
+              }
+            }}
+          >
+            <SelectTrigger className="w-24 font-custom rounded-full text-[#5494DA]">
+              <SelectValue placeholder="Export" />
+            </SelectTrigger>
+            <SelectContent className="font-custom text-[#5494DA] bg-white">
+              <SelectItem
+                value="as CSV"
+                className="text-[#5494DA] data-[state=checked]:font-semibold"
+              >
+                as CSV
+              </SelectItem>
+              <SelectItem
+                value="as XLS"
+                className="text-[#5494DA] data-[state=checked]:font-semibold"
+              >
+                as XLS
+              </SelectItem>
+            </SelectContent>
+          </Select>
+          <CustomizeReportDialog
+            open={showCustomizeDialog}
+            setOpen={setShowCustomizeDialog}
+          />
+
+        </div>
+      </div>
+      <div className="flex justify-between items-center p-2 ">
+        <h2 className="font-semibold text-lg text-[#5494DA]">{title}</h2>
+        <p className="text-sm font-semibold text-right">Total Pay: {totalPay}</p>
+      </div>
+      <div className="overflow-auto mt-2">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-gray-100">
+              {allColumns.map(
+                (col) =>
+                  visibleCols[col.key] && <TableHead key={col.key}>{col.label}</TableHead>
+              )}
+              <TableHead className="w-12 text-right">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <List size={18} />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 bg-white">
+                    {allColumns.map((col) => (
+                      <DropdownMenuCheckboxItem
+                        key={col.key}
+                        checked={visibleCols[col.key]}
+                        onCheckedChange={() => toggleCol(col.key)}
+                      >
+                        {col.label}
+                      </DropdownMenuCheckboxItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {employeeData.map((emp, idx) => (
+              <TableRow key={idx}
+  onClick={() => handleRowClick(emp)}
+  className="cursor-pointer hover:bg-gray-100 transition-colors">
+                {visibleCols.firstName && (
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <img src={emp.profile} alt="Avatar" className="w-8 h-8 rounded-full" />
+                      <span>{emp.firstName}</span>
+                    </div>
+                  </TableCell>
+                )}
+                {visibleCols.lastName && <TableCell>{emp.lastName}</TableCell>}
+                {visibleCols.department && <TableCell>{emp.department}</TableCell>}
+                {visibleCols.job && (
+                  <TableCell>
+                    <div className="px-5 py-1 text-md font-custom rounded-xl border inline-flex items-center gap-1 border-[#5494DA] text-blue">
+                      {emp.job}
+                    </div>
+                  </TableCell>
+                )}
+                {visibleCols.shift && <TableCell>{emp.shift}</TableCell>}
+                {visibleCols.regularHour && <TableCell>{emp.regularHour}</TableCell>}
+                {visibleCols.dailyRate && <TableCell>${emp.dailyRate}</TableCell>}
+                {visibleCols.regularPay && <TableCell>${emp.regularPay}</TableCell>}
+                {visibleCols.overtimePay && <TableCell>${emp.overtimePay}</TableCell>}
+                {visibleCols.grossSalary && <TableCell>${emp.grossSalary}</TableCell>}
+                {visibleCols.taxNassf && <TableCell>${emp.taxNassf}</TableCell>}
+                {visibleCols.netSalary && <TableCell>${emp.netSalary}</TableCell>}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
 
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-                <div className="flex items-center space-x-3 p-6">
-                    <CreditCard className='text-[#2998FF]' width={40} height={40} />
-                    <span className="font-custom text-3xl text-black">Payroll</span>
+        <div className="flex items-center justify-between p-5">
+          <div className="flex items-center space-x-3">
+            <CreditCard className="text-[#2998FF]" width={40} height={40} />
+            <span className="font-custom text-3xl text-black">Payroll</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
+              Asset <br /> admins
+            </p>
+            <div className="flex items-center -space-x-4">
+              {[
+                { text: "W", bg: "bg-gray-600" },
+                { text: "LH", bg: "bg-lime-400" },
+                { text: "SK", bg: "bg-pink-400" },
+                { text: "2+", bg: "bg-blue-100", textColor: "text-blue-500" },
+              ].map((badge, index) => (
+                <div
+                  key={index}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 ${badge.bg} rounded-full flex items-center justify-center border-2 border-white text-xs font-bold ${badge.textColor || "text-white"}`}
+                >
+                  {badge.text}
                 </div>
+              ))}
+            </div>
+            <Button className="text-blue font-custom h-12 border border-gray-400 bg-transparent rounded-full flex items-center px-6 hover:bg-blue-500 hover:text-white transition-colors duration-200">
+              <Settings />
+              <span>Setting</span>
+            </Button>
+          </div>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="relative bg-white min-h-screen rounded-xl shadow-md">
-        <div className="flex">
-          {["Dashboard", "Integration", "Payroll"].map((tab) => (
+      {!selectedEmployee ? (
+        <div className="bg-white rounded-xl shadow-md py-6 px-6">
+          <div className="mb-4 relative">
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 font-custom text-2xl transition-all ${activeTab === tab
-                  ? "bg-white text-blue-500 rounded-t-xl"
-                  : "bg-gray-100 text-gray-500 hover:text-gray-700"
-                }`}
+              onClick={() => setShowDatePicker(!showDatePicker)}
+              className="flex items-center justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
             >
-              {tab}
+              {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
             </button>
+            {showDatePicker && (
+              <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
+                <DateRangePicker
+                  ranges={[selectedRange]}
+                  onChange={(ranges) => setSelectedRange(ranges.selection)}
+                  rangeColors={["#3b82f6"]}
+                />
+              </div>
+            )}
+          </div>
+
+          <PayrollSection
+            title="Site A Payroll"
+            totalPay="$1905"
+            onRowClick={(emp) => setSelectedEmployee(emp)}
+          />
+          <PayrollSection
+            title="Security Payroll"
+            totalPay="$375"
+            onRowClick={(emp) => setSelectedEmployee(emp)}
+          />
+          {sections.map((section, index) => (
+            <PayrollSection
+              key={index}
+              title={section.name}
+              totalPay="$405"
+              onRowClick={(emp) => setSelectedEmployee(emp)}
+            />
           ))}
-        </div>
+          <div className="flex justify-center">
+            <Button
+              onClick={() => setDialogOpen(true)}
+              className="mt-4 px-6 py-2 rounded-full bg-[#5494DA] shadow-lg hover:bg-blue-600 text-white"
+            >
+              + Add Payroll Table
+            </Button>
+          </div>
 
-        {/* Content */}
-        <div className="p-4 font-custom">
-          {activeTab === "Dashboard" && <DashboardScreen setActiveTab={setActiveTab} />}
-          {activeTab === "Integration" && <IntegrationScreen />}
-          {activeTab === "Payroll" && <PayrollScreen />}
+          <AddPayrollDialog
+            open={dialogOpen}
+            setOpen={setDialogOpen}
+            onAdd={handleAddSection}
+          />
         </div>
-      </div>
-
+      ) : (
+        <UserProfileSection
+          employee={selectedEmployee}
+          onClose={() => setSelectedEmployee(null)}
+        />
+      )}
     </div>
   );
 }
