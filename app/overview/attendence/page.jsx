@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ListFilter, AlarmClock } from "lucide-react";
+import { Search, ListFilter, AlarmClock, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -17,24 +17,76 @@ import SettingDialog from "./components/settingdialog";
 export default function TimeClock() {
   const [activeTab, setActiveTab] = useState("TODAY");
   const [searchQuery, setSearchQuery] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [selectedFirstLevels, setSelectedFirstLevels] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
 
   const exportOptions = [
     { value: "as CSV", label: "as CSV" },
     { value: "as XLS", label: "as XLS" },
   ];
 
-  const Status = [
-    { value: "On Time", label: "On Time" },
-    { value: "Late", label: "Late" },
-    { value: "On Leave", label: "On Leave" },
+  const firstLevelOptions = [
+    { key: "user", label: "User" },
+    { key: "department", label: "Department" },
+    { key: "group", label: "Group" },
+    { key: "branch", label: "Branch" },
   ];
 
-  const Filter = [
-    { value: "User", label: "User" },
-    { value: "Group", label: "Group" },
-    { value: "Department", label: "Department" },
-    { value: "Branch", label: "Branch" },
-  ]
+  const secondLevelData = {
+    user: ["User 1", "User 2", "User 3"],
+    department: ["Dept 1", "Dept 2"],
+    group: ["Group 1", "Group 2"],
+    branch: ["Branch 1", "Branch 2"],
+  };
+
+  const handleToggleMenu = () => setMenuOpen((prev) => !prev);
+
+  const handleFirstLevelChange = (key) => {
+    let newSelection = [];
+
+    if (key === "all") {
+      newSelection =
+        selectedFirstLevels.length === firstLevelOptions.length
+          ? []
+          : firstLevelOptions.map((item) => item.key);
+      setHoveredItem(null);
+    } else {
+      newSelection = selectedFirstLevels.includes(key)
+        ? selectedFirstLevels.filter((k) => k !== key)
+        : [...selectedFirstLevels, key];
+    }
+    setSelectedFirstLevels(newSelection);
+  };
+
+  const handleSecondLevelChange = (firstKey, value) => {
+    setSelectedItems((prev) => {
+      const existing = prev[firstKey] || [];
+      const alreadyChecked = existing.includes(value);
+      return {
+        ...prev,
+        [firstKey]: alreadyChecked
+          ? existing.filter((v) => v !== value)
+          : [...existing, value],
+      };
+    });
+  };
+
+  const isAllSelected =
+    selectedFirstLevels.length === firstLevelOptions.length &&
+    firstLevelOptions.length > 0;
+
+  const firstLevelLabel = isAllSelected
+    ? "All"
+    : selectedFirstLevels
+        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+        .join(", ") || "Select...";
+
+  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+    const count = selectedItems[key]?.length || 0;
+    return acc + count;
+  }, 0);
 
   return (
     <div>
@@ -85,7 +137,7 @@ export default function TimeClock() {
               key={tab}
               onClick={() => {
                 setActiveTab(tab);
-                setSearchQuery(""); // reset search when switching tab
+                setSearchQuery(""); // reset search
               }}
               className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
                 activeTab === tab
@@ -100,49 +152,114 @@ export default function TimeClock() {
 
         {/* Toolbar (Only for TIMESHEETS) */}
         {activeTab === "TIMESHEETS" && (
-          <div className="flex items-center p-4 bg-white border-b">
-            {/* Filter Select */}
-            <div className="flex items-center space-x-2">
+          <div className="flex flex-wrap justify-between items-center p-4 bg-white border-b gap-4">
+            {/* Left: Filter */}
+            <div className="relative flex items-center">
+              <button
+                onClick={handleToggleMenu}
+                className="flex items-center justify-between border border-gray-300 rounded-full px-6 py-2 text-blue-400 text-md bg-white hover:bg-gray-100 w-32 md:w-32 lg:w-40 font-custom"
+              >
+                <ListFilter className="text-gray-500 mr-2" size={18} />
+                <span className="truncate flex-1">{firstLevelLabel}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
+              </button>
+
+              {totalSecondLevelSelected > 0 && (
+                <span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
+                  {totalSecondLevelSelected} selected
+                </span>
+              )}
+
+              {menuOpen && (
+                <div
+                  className="absolute top-full left-0 mt-2 z-10 flex"
+                  onMouseLeave={() => setHoveredItem(null)}
+                >
+                  {/* First-level dropdown */}
+                  <div className="w-48 border border-gray-300 bg-white shadow-lg font-custom rounded-xl">
+                    <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-blue-500">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={() => handleFirstLevelChange("all")}
+                        className="mr-2"
+                      />
+                      All
+                    </label>
+                    {firstLevelOptions.map((item) => (
+                      <label
+                        key={item.key}
+                        className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-blue-500"
+                        onMouseEnter={() => setHoveredItem(item.key)}
+                        onClick={() => setHoveredItem(item.key)}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedFirstLevels.includes(item.key)}
+                          onChange={() => handleFirstLevelChange(item.key)}
+                          className="mr-2"
+                        />
+                        {item.label}
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Second-level dropdown */}
+                  {hoveredItem &&
+                    selectedFirstLevels.includes(hoveredItem) &&
+                    secondLevelData[hoveredItem]?.length > 0 && (
+                      <div className="ml-2 w-48 border border-gray-300 bg-white shadow-lg font-custom rounded-xl z-20">
+                        {secondLevelData[hoveredItem].map((value) => (
+                          <label
+                            key={value}
+                            className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-blue-500"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={
+                                selectedItems[hoveredItem]?.includes(value) ||
+                                false
+                              }
+                              onChange={() =>
+                                handleSecondLevelChange(hoveredItem, value)
+                              }
+                              className="mr-2"
+                            />
+                            {value}
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              )}
+            </div>
+
+            {/* Right: Search + Export */}
+            <div className="flex items-center space-x-4">
+              <div className="relative flex items-center w-full sm:w-auto max-w-md">
+                <Search className="absolute left-3 text-gray-400" size={20} />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search"
+                  className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+
               <Select>
-                <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative">
-                  <ListFilter className="text-gray-500" size={20} />
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-24 font-custom rounded-full">
+                  <SelectValue placeholder="Export" />
                 </SelectTrigger>
                 <SelectContent className="font-custom">
-                  {Status.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                  {exportOptions.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
-            {/* Search Input */}
-            <div className="relative flex items-center ml-auto mr-10 w-full sm:w-auto flex-1 max-w-md">
-              <Search className="absolute left-3 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search"
-                className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            {/* Export Select */}
-            <Select>
-              <SelectTrigger className="w-24 font-custom rounded-full">
-                <SelectValue placeholder="Export" />
-              </SelectTrigger>
-              <SelectContent className="font-custom">
-                {exportOptions.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
           </div>
         )}
 
@@ -150,7 +267,10 @@ export default function TimeClock() {
         <div className="p-6 font-custom">
           {activeTab === "TODAY" && <TodayScreen />}
           {activeTab === "TIMESHEETS" && (
-            <TimesheetScreen searchQuery={searchQuery} />
+            <TimesheetScreen
+              searchQuery={searchQuery}
+              filters={{ selectedFirstLevels, selectedItems }}
+            />
           )}
         </div>
       </div>
