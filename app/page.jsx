@@ -7,8 +7,6 @@ import Pricing from "@/components/Pricing";
 import Features from "@/components/Features";
 import Footer from "@/components/Footer";
 
-import ComingSoon from "@/components/ComingSoon";
-
 export default function Home() {
   return (
     <div>
@@ -19,7 +17,7 @@ export default function Home() {
       <Pricing />
       <Features />
       <Customer />
-      <Footer /> */}
+      <Footer />
       <ComingSoon />
     </div>
   );
