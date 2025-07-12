@@ -24,7 +24,7 @@ import {
   DialogTitle,
   DialogHeader,
 } from "@/components/ui/dialog";
-import { CalendarPlus2, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarPlus2, ChevronLeft, ChevronRight, X } from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
@@ -102,23 +102,31 @@ const columns = [
     accessorKey: "date",
     header: "OT Date",
     cell: ({ row }) => (
-      <div className="font-custom">{format(parseISO(row.original.date), "yyyy-MM-dd")}</div>
+      <div className="font-custom">
+        {format(parseISO(row.original.date), "yyyy-MM-dd")}
+      </div>
     ),
   },
   {
     accessorKey: "starttime",
     header: "Start Time",
-    cell: ({ row }) => <div className="font-custom">{row.original.starttime}</div>,
+    cell: ({ row }) => (
+      <div className="font-custom">{row.original.starttime}</div>
+    ),
   },
   {
     accessorKey: "endtime",
     header: "End Time",
-    cell: ({ row }) => <div className="font-custom">{row.original.endtime}</div>,
+    cell: ({ row }) => (
+      <div className="font-custom">{row.original.endtime}</div>
+    ),
   },
   {
     accessorKey: "totalhours",
     header: "Total Hours",
-    cell: ({ row }) => <div className="font-custom">{row.original.totalhours}</div>,
+    cell: ({ row }) => (
+      <div className="font-custom">{row.original.totalhours}</div>
+    ),
   },
   {
     accessorKey: "note",
@@ -136,7 +144,9 @@ const columns = [
       return (
         <div key={row.id} className="py-2 max-w-[300px] break-words">
           {rows.map((rowText, index) => (
-            <p key={index} className="whitespace-normal">{rowText}</p> // Each row will be a new <p> tag
+            <p key={index} className="whitespace-normal">
+              {rowText}
+            </p> // Each row will be a new <p> tag
           ))}
         </div>
       );
@@ -147,21 +157,16 @@ const columns = [
     header: "",
     cell: ({ row }) => (
       <div className="flex justify-center gap-6">
-        <Button
-          className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-5 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
-        >
-          Decline
-        </Button>
-
-        <ApproveDialog
+        <DeclineDialog
           employee={row.original.employee}
+          startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
         />
+
+        <ApproveDialog employee={row.original.employee} />
       </div>
     ),
-
   },
 ];
-
 
 const PendingDialog = ({ onClose }) => {
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -273,16 +278,17 @@ const PendingDialog = ({ onClose }) => {
 
           {/* Right Side Dropdowns */}
           <div className="flex w-full sm:w-auto gap-4">
-          <div className="relative w-64">
-  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-  <Input
-    type="text"
-    placeholder="Search..."
-    className="pl-10 pr-4 py-2 rounded-full font-custom bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5494DA]"
-  />
-</div>
-
-
+            <div className="relative w-64">
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+              <Input
+                type="text"
+                placeholder="Search..."
+                className="pl-10 pr-4 py-2 rounded-full font-custom bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5494DA]"
+              />
+            </div>
           </div>
         </div>
 
@@ -319,7 +325,9 @@ const PendingDialog = ({ onClose }) => {
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${cell.column.id === 'actions' ? 'text-right' : ''}`}
+                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${
+                          cell.column.id === "actions" ? "text-right" : ""
+                        }`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -352,6 +360,62 @@ const PendingDialog = ({ onClose }) => {
   );
 };
 
+const DeclineDialog = ({ employee, startdate }) => {
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-5 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
+          onClick={() => setOpen(true)}
+        >
+          {" "}
+          Decline{" "}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
+        <DialogHeader className="flex items-center gap-2 justify-center">
+          <X className="h-12 w-12 text-[#FB5F59]" />
+          <DialogTitle></DialogTitle>
+        </DialogHeader>
+        <p className="text-gray text-2xl font-custom mb-6">
+          Do you want to decline{" "}
+          <span className="text-[#5494DA] font-custom">{employee}</span>'s leave
+          on <span className="font-custom">{startdate}</span>?
+        </p>
+        <input
+          id="note_request"
+          type="text"
+          placeholder="✏️ Add note to the request"
+          className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
+        />
+
+        <div className="flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="border-gray-400 rounded-full"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              alert(`Declined ${employee}'s request!\nComment: ${comment}`);
+              setComment("");
+              // Run your API call here
+            }}
+            className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full transition-colors"
+          >
+            Decline
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
 const ApproveDialog = ({ employee }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
@@ -373,7 +437,8 @@ const ApproveDialog = ({ employee }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT request <span className="font-custom"></span>?
+          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT
+          request <span className="font-custom"></span>?
         </p>
         <input
           id="note_request"
