@@ -119,7 +119,7 @@ const AddAttendanceTableDialog = ({ open, onOpenChange, onConfirm }) => {
             className="py-4 px-6 text-lg font-custom rounded-full"
             onClick={handleDone}
           >
-            Done
+            Publish
           </Button>
         </div>
       </DialogContent>
