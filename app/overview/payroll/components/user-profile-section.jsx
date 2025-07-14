@@ -70,13 +70,6 @@ export default function UserProfileSection({ employee, onClose }) {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button
-                        variant="outline"
-                        className="rounded-full px-4 text-sm"
-                        onClick={onClose}
-                    >
-                        Back
-                    </Button>
                 </div>
             </div>
 

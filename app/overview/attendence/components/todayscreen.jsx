@@ -46,6 +46,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import AddAttendanceDialog from "./addattendencedialog";
 import AddAttendanceTableDialog from "./addattendencetabledialog";
+import UserProfileSection from "./user-profile-section"; // adjust the path if needed
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -59,7 +60,7 @@ const exportOptions = [
 ];
 
 const data = [
-  {
+    {
     profile: "/avatars/ralph.png",
     firstname: "Lucy",
     lastname: "Trevo",
@@ -68,10 +69,10 @@ const data = [
     shifttype: "Scheduled",
     status: "On time",
     Clockin: "08:11",
-    Clockout: "",
+    Clockout: "17:11",
     regularhours: "",
     overtime: "",
-    date: "2025-07-10",
+    date: "2025-07-14",
     lat: 11.56786,
     lng: 104.89005,
   },
@@ -84,10 +85,10 @@ const data = [
     shifttype: "Scheduled",
     status: "Late",
     Clockin: "08.31",
-    Clockout: "",
+    Clockout: "17:11",
     regularhours: "",
     overtime: "",
-    date: "2025-07-10",
+    date: "2025-07-14",
     lat: 11.568,
     lng: 104.891,
   },
@@ -103,7 +104,103 @@ const data = [
     Clockout: "17:10",
     regularhours: "8.01",
     overtime: "8.01",
-    date: "2025-07-10",
+    date: "2025-07-14",
+    lat: 11.569,
+    lng: 104.892,
+  },
+      {
+    profile: "/avatars/ralph.png",
+    firstname: "Lucy",
+    lastname: "Trevo",
+    department: "Marketing",
+    job: "Accountant",
+    shifttype: "Scheduled",
+    status: "On time",
+    Clockin: "08:11",
+    Clockout: "17:11",
+    regularhours: "",
+    overtime: "",
+    date: "2025-07-15",
+    lat: 11.56786,
+    lng: 104.89005,
+  },
+  {
+    profile: "/avatars/ralph.png",
+    firstname: "John",
+    lastname: "Mark",
+    department: "Marketing",
+    job: "Marketing",
+    shifttype: "Scheduled",
+    status: "Late",
+    Clockin: "08.31",
+    Clockout: "17:11",
+    regularhours: "",
+    overtime: "",
+    date: "2025-07-15",
+    lat: 11.568,
+    lng: 104.891,
+  },
+  {
+    profile: "/avatars/ralph.png",
+    firstname: "Doe",
+    lastname: "Ibrahim",
+    department: "Officer",
+    job: "HR",
+    shifttype: "Scheduled",
+    status: "Early",
+    Clockin: "08:09",
+    Clockout: "17:10",
+    regularhours: "8.01",
+    overtime: "8.01",
+    date: "2025-07-15",
+    lat: 11.569,
+    lng: 104.892,
+  },
+      {
+    profile: "/avatars/ralph.png",
+    firstname: "Lucy",
+    lastname: "Trevo",
+    department: "Marketing",
+    job: "Accountant",
+    shifttype: "Scheduled",
+    status: "On time",
+    Clockin: "08:11",
+    Clockout: "17:11",
+    regularhours: "",
+    overtime: "",
+    date: "2025-07-16",
+    lat: 11.56786,
+    lng: 104.89005,
+  },
+  {
+    profile: "/avatars/ralph.png",
+    firstname: "John",
+    lastname: "Mark",
+    department: "Marketing",
+    job: "Marketing",
+    shifttype: "Scheduled",
+    status: "Late",
+    Clockin: "08.31",
+    Clockout: "17:11",
+    regularhours: "",
+    overtime: "",
+    date: "2025-07-16",
+    lat: 11.568,
+    lng: 104.891,
+  },
+  {
+    profile: "/avatars/ralph.png",
+    firstname: "Doe",
+    lastname: "Ibrahim",
+    department: "Officer",
+    job: "HR",
+    shifttype: "Scheduled",
+    status: "Early",
+    Clockin: "08:09",
+    Clockout: "17:10",
+    regularhours: "8.01",
+    overtime: "8.01",
+    date: "2025-07-16",
     lat: 11.569,
     lng: 104.892,
   },
@@ -160,10 +257,10 @@ const columns = [
         status === "On time"
           ? "text-green"
           : status === "Late"
-          ? "text-red"
-          : status === "Early"
-          ? "text-blue"
-          : "text-gray";
+            ? "text-red"
+            : status === "Early"
+              ? "text-blue"
+              : "text-gray";
 
       return (
         <div className={`text-md font-custom ${statusClass}`}>{status}</div>
@@ -238,6 +335,7 @@ const TodayScreen = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [openAddAttendenceDialog, setOpenAddAttendenceDialog] = useState(false);
   const [showAddAttendenceTableDialog, setShowAddAttendenceTableDialog] = useState(false);
+const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   const filteredData = useMemo(() => {
     const selected = selectedDate ? new Date(selectedDate).toDateString() : "";
@@ -263,8 +361,8 @@ const TodayScreen = () => {
   });
 
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 2, 16),
+    startDate: new Date(2025, 6, 11),
+    endDate: new Date(2025, 6, 11),
     key: "selection",
   });
 
@@ -355,8 +453,8 @@ const TodayScreen = () => {
                   status === "On Time"
                     ? "bg-green-500"
                     : status === "Late"
-                    ? "bg-red-500"
-                    : "bg-yellow-400";
+                      ? "bg-red-500"
+                      : "bg-yellow-400";
 
                 return (
                   <SelectItem
@@ -458,7 +556,11 @@ const TodayScreen = () => {
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  onClick={() => setSelectedEmployee(row.original)}
+                  className="cursor-pointer hover:bg-blue-50 transition-colors"
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
@@ -484,6 +586,16 @@ const TodayScreen = () => {
             )}
           </TableBody>
         </Table>
+        {selectedEmployee && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex justify-center items-center">
+            <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-y-auto max-h-[90vh]">
+              <UserProfileSection
+                employee={selectedEmployee}
+                onClose={() => setSelectedEmployee(null)}
+              />
+            </div>
+          </div>
+        )}
       </div>
       {/* Add More Attendence button */}
       <div className="flex justify-center mt-4">

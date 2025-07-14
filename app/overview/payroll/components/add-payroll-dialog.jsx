@@ -96,9 +96,11 @@ export default function AddPayrollDialog({ open, setOpen, onAdd }) {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="rounded-md min-w-[110px] justify-between"
+                        className="rounded-md w-fit truncate justify-between"
                       >
-                        {type}
+                        {filters[type].length > 0
+                          ? filters[type].join(", ")
+                          : type}
                         <ChevronDown className="ml-1 h-4 w-4 opacity-50" />
                       </Button>
                     </PopoverTrigger>
