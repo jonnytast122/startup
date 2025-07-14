@@ -1,4 +1,5 @@
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext"; // Make sure the path is correct
 
 export const metadata = {
   title: "Anan",
@@ -13,7 +14,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <main className="relative overflow-hidden">{children}</main>
+        <AuthProvider>
+          <main className="relative overflow-hidden">{children}</main>
+        </AuthProvider>
       </body>
     </html>
   );

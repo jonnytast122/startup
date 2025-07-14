@@ -12,15 +12,15 @@ import ComingSoon from "@/components/ComingSoon";
 export default function Home() {
   return (
     <div>
-      {/* <Navbar />
+      <Navbar />
       <Hero />
       <Feature />
       <Solution />
       <Pricing />
       <Features />
-      <Customer /> */}
-      {/* <Footer /> */}
-      <ComingSoon />
+      <Customer />
+      <Footer />
+      {/* <ComingSoon /> */}
     </div>
   );
 }
