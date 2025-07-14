@@ -25,17 +25,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import {
-  CalendarPlus2,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { LogIn, Search } from "lucide-react";
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
-import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import { format, isWithinInterval, parseISO } from "date-fns";
+import AddLeaveDialog from "./components/addleavedialog";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -48,7 +43,7 @@ const exportOptions = [
   { value: "as XLS", label: "as XLS" },
 ];
 
-const archeive = [
+const data = [
   {
     profile: "/avatars/ralph.png",
     firstname: "John",
@@ -56,9 +51,15 @@ const archeive = [
     department: "Marketing",
     job: "Account",
     shifttype: "Schedule",
-    timeoff: "10.00 hours",
-    sickleave: "00.00 hours",
+    annualleave: "2.5 / 15 days",
+    sickleave: "2.5 / 15 days",
+    assignleave: "",
     unpaidleave: "00.00 hours",
+    unpaidleave: "0 / Unlimited",
+    onleavestatus: {
+      annual: "Declined",
+      sick: "Approved",
+    },
     date: "2025-03-12", // Example date
   },
   {
@@ -68,9 +69,15 @@ const archeive = [
     department: "HR",
     job: "Manager",
     shifttype: "Schedule",
-    timeoff: "-5.00 hours",
-    sickleave: "02.00 hours",
+    annualleave: "2.5 / 15 days",
+    sickleave: "2.5 / 15 days",
+    assignleave: "",
     unpaidleave: "00.00 hours",
+    unpaidleave: "0 / Unlimited",
+    onleavestatus: {
+      annual: "Declined",
+      sick: "Approved",
+    },
     date: "2025-03-20",
   },
 ];
@@ -117,50 +124,35 @@ const columns = [
   },
   { accessorKey: "shifttype", header: "Shift Type" },
   {
-    accessorKey: "timeoff",
-    header: "Time Off",
+    accessorKey: "annualleave",
+    header: "Annual Leaves",
     cell: ({ row }) => {
-      const value = row.original.timeoff; // Example: "10.00 hours"
-
-      // Extract number and unit separately
-      const match = value.match(/(-?\d+\.\d+)\s*(\w+)/);
-      if (!match) return value; // Return as is if no match
-
-      const numberPart = match[1]; // "10.00" or "-10.00"
-      const unitPart = match[2]; // "hours"
-
-      // Apply conditional color to both number and text
-      const textColor =
-        parseFloat(numberPart) >= 0 ? "text-blue-500" : "text-red-500";
-
-      return (
-        <span className={textColor}>
-          {numberPart} {unitPart}
-        </span>
-      );
+      const value = row.original.annualleave; // Format: "2.5 / 15 days"
+      return value;
     },
   },
   {
     accessorKey: "sickleave",
     header: "Sick Leave",
     cell: ({ row }) => {
-      const value = row.original.sickleave; // Example: "10.00 hours"
+      const value = row.original.sickleave; // Expected format: "1.5 / 15 days"
+      const match = value.match(/([\d.]+)\s*\/\s*([\d.]+)\s*(\w+)/);
 
-      // Extract number and unit separately
-      const match = value.match(/(-?\d+\.\d+)\s*(\w+)/);
-      if (!match) return value; // Return as is if no match
+      if (!match) return value;
 
-      const numberPart = match[1]; // "10.00" or "-10.00"
-      const unitPart = match[2]; // "hours"
+      const [used, total, unit] = match.slice(1);
+      const percentUsed = (parseFloat(used) / parseFloat(total)) * 100;
 
-      // Default to green, change if positive/negative
-      let textColor = "text-green";
-      if (parseFloat(numberPart) > 0) textColor = "text-blue-500";
-      if (parseFloat(numberPart) < 0) textColor = "text-red-500";
+      const textColor =
+        percentUsed > 75
+          ? "text-red-500"
+          : percentUsed > 50
+          ? "text-orange-500"
+          : "text-blue-500";
 
       return (
         <span className={textColor}>
-          {numberPart} {unitPart}
+          {used} / {total} {unit}
         </span>
       );
     },
@@ -169,68 +161,70 @@ const columns = [
     accessorKey: "unpaidleave",
     header: "Unpaid Leave",
     cell: ({ row }) => {
-      const value = row.original.sickleave; // Example: "10.00 hours"
+      const value = row.original.unpaidleave; // Expected format: "0 / Unlimited"
+      const match = value.match(/([\d.]+)\s*\/\s*(\w+)/);
 
-      // Extract number and unit separately
-      const match = value.match(/(-?\d+\.\d+)\s*(\w+)/);
-      if (!match) return value; // Return as is if no match
+      if (!match) return value;
 
-      const numberPart = match[1]; // "10.00" or "-10.00"
-      const unitPart = match[2]; // "hours"
+      const [used, total] = match.slice(1);
 
-      // Default to green, change if positive/negative
-      let textColor = "text-red";
-      if (parseFloat(numberPart) > 0) textColor = "text-blue-500";
-      if (parseFloat(numberPart) < 0) textColor = "text-red-500";
+      const textColor =
+        parseFloat(used) > 0 ? "text-orange-500" : "text-red-500";
 
       return (
         <span className={textColor}>
-          {numberPart} {unitPart}
+          {used} / {total}
         </span>
+      );
+    },
+  },
+  {
+    accessorKey: "assignleave",
+    header: "Assigned Leaves",
+    cell: ({ row }) => {
+      const value = row.original.assignleave;
+      return value;
+    },
+  },
+  {
+    accessorKey: "onleavestatus",
+    header: "On Leave Status",
+    cell: ({ row }) => {
+      const status = row.original.onleavestatus?.annual || "Pending";
+
+      return (
+        <div className="flex items-center space-x-6 text-sm">
+          <span className="text-gray-800">Annual Leave</span>
+          <span
+            className={`font-medium ${
+              status === "Approved"
+                ? "text-blue-500"
+                : status === "Declined"
+                ? "text-red-500"
+                : "text-gray-500"
+            }`}
+          >
+            {status}
+          </span>
+        </div>
       );
     },
   },
 ];
 
 const Leaves = () => {
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 2, 30),
-    key: "selection",
-  });
-
-  const datePickerRef = useRef(null);
-
-  // Close date picker when clicked outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        datePickerRef.current &&
-        !datePickerRef.current.contains(event.target)
-      ) {
-        setShowDatePicker(false); // Close the date picker if click is outside
-      }
-    };
-
-    // Attach event listener
-    document.addEventListener("mousedown", handleClickOutside);
-
-    // Clean up event listener on component unmount
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [openAddLeaveDialog, setOpenAddLeaveDialog] = useState(false);
 
   const filteredData = useMemo(() => {
-    return archeive.filter((item) => {
-      const itemDate = parseISO(item.date);
-      return isWithinInterval(itemDate, {
-        start: selectedRange.startDate,
-        end: selectedRange.endDate,
-      });
+    return data.filter((item) => {
+      const matchesSearch = `${item.firstname} ${item.lastname}`
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+      return matchesSearch;
     });
-  }, [selectedRange]);
+  }, [searchQuery]);
 
   const table = useReactTable({
     data: filteredData,
@@ -246,7 +240,7 @@ const Leaves = () => {
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
           <div className="flex items-center space-x-3">
-            <CalendarPlus2 className="text-[#2998FF]" width={40} height={40} />
+            <LogIn className="text-[#2998FF]" width={40} height={40} />
             <span className="font-custom text-3xl text-black">Leaves</span>
           </div>
 
@@ -299,30 +293,38 @@ const Leaves = () => {
                 ))}
               </SelectContent>
             </Select>
-
-            <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom p-3"
-            >
-              <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
-              {format(selectedRange.startDate, "MMM dd")} -{" "}
-              {format(selectedRange.endDate, "MMM dd")}
-              <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
-            </button>
-
-            {showDatePicker && (
-              <div ref={datePickerRef} className="absolute mt-2 bg-white shadow-lg border p-2 rounded-md z-50 font-custom">
-                <DateRange
-                  ranges={[selectedRange]}
-                  onChange={(ranges) => setSelectedRange(ranges.selection)}
-                  rangeColors={["#3b82f6"]}
-                />
-              </div>
-            )}
           </div>
           {/* Right Side Dropdowns */}
           <div className="flex w-full sm:w-auto gap-4">
+            {/* Search Input */}
+            <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+              <Search className="absolute left-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name"
+                className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
             <PendingDialog />
+
+            <Button
+              onClick={() => setOpenAddLeaveDialog(true)}
+              variant="outline"
+              className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
+            >
+              Add Leave
+            </Button>
+            <AddLeaveDialog
+              open={openAddLeaveDialog}
+              onOpenChange={setOpenAddLeaveDialog}
+              onConfirm={(data) => {
+                console.log("Confirmed OT payload:", data);
+                // You can push it to state, call API, etc.
+              }}
+            />
 
             <Select>
               <SelectTrigger className="w-24 font-custom rounded-full">
@@ -339,7 +341,9 @@ const Leaves = () => {
           </div>
         </div>
         {filteredData.length === 0 ? (
-          <p className="text-center text-gray-300 mt-4 text-xl font-custom">No Data Available</p>
+          <p className="text-center text-gray-300 mt-4 text-xl font-custom">
+            No Data Available
+          </p>
         ) : (
           <div className="rounded-md border mt-6">
             <Table>
