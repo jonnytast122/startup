@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Smile, X } from "lucide-react";
+import { Smile, CircleX, Circle } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -457,7 +457,7 @@ const DeclineDialog = ({ employee, startdate }) => {
       </DialogTrigger>
       <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
         <DialogHeader className="flex items-center gap-2 justify-center">
-          <X className="h-12 w-12 text-[#FB5F59]" />
+          <CircleX className="h-12 w-12 text-[#FB5F59]" />
           <DialogTitle></DialogTitle>
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
