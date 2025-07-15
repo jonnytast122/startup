@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
+
 import apiRoutes from "@/constants/ApiRoutes";
 
 export default function LoginPage() {
@@ -23,7 +24,7 @@ export default function LoginPage() {
 }
 
 function LoginForm({ className, ...props }) {
-  const { login } = useAuth();
+  const { login } = useAuth(); // Get login function from context
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
@@ -32,12 +33,14 @@ function LoginForm({ className, ...props }) {
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 
+  // OTP Expiration Countdown
   useEffect(() => {
     if (!showOtpScreen || timeLeft === 0) return;
     const timer = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
     return () => clearInterval(timer);
   }, [timeLeft, showOtpScreen]);
 
+  // Handle Send OTP
   const handleSubmit = async (event) => {
     event.preventDefault();
     setErrorMsg("");
@@ -70,6 +73,7 @@ function LoginForm({ className, ...props }) {
     }
   };
 
+  // Handle OTP Input
   const handleOtpChange = (e, index) => {
     const value = e.target.value;
     if (/^\d?$/.test(value)) {
@@ -79,6 +83,7 @@ function LoginForm({ className, ...props }) {
     }
   };
 
+  // Handle OTP Verification
   const handleVerify = async (e) => {
     e.preventDefault();
     setErrorMsg("");
@@ -95,6 +100,7 @@ function LoginForm({ className, ...props }) {
       });
 
       if (res.data) {
+        // Pass user + tokens to AuthContext login method
         login(res.data);
         router.push("/overview");
       } else {

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { FaDownload } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
 import { MdPeopleOutline } from "react-icons/md";
@@ -12,13 +12,14 @@ import AddTitleDialog from "./components/addtitledialog";
 import AddDepartmentDialog from "./components/adddepartmentdialog";
 import AddBranchDialog from "./components/addbranchdialog";
 import DeleteDialog from "./components/deletedialog";
-import { useAuth } from "@/contexts/AuthContext";
 import axios from "axios";
+import { useAuth } from "@/contexts/AuthContext";
+import ApiRoutes from "@/constants/ApiRoutes";
 
 export default function SettingPage() {
-  const { user, token } = useAuth();
-  const [companyData, setCompanyData] = useState(null);
+  const { token } = useAuth();
   const [selectedFile, setSelectedFile] = useState(null);
+  const [companyData, setCompanyData] = useState(null);
   const [branches, setBranches] = useState([]);
   const [departments, setDepartments] = useState([]);
   const [titles, setTitles] = useState([]);
@@ -38,30 +39,32 @@ export default function SettingPage() {
   });
 
   useEffect(() => {
-    const fetchCompany = async () => {
+    if (!token) return;
+
+    const config = {
+      headers: { Authorization: `Bearer ${token}` },
+    };
+
+    const fetchData = async () => {
       try {
-        if (!user?.company || !token) return;
+        const [companyRes, branchRes, deptRes, titleRes] = await Promise.all([
+          axios.get(`${ApiRoutes.company.get}/${user.company}`, config), // if company ID still needed here
+          axios.get(ApiRoutes.branch.get, config), // no company id
+          axios.get(ApiRoutes.department.get, config), // no company id
+          axios.get(ApiRoutes.title.get, config), // no company id
+        ]);
 
-        const res = await axios.get(
-          `http://localhost:3001/v1/companies/${user.company}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        setCompanyData(res.data);
-        setBranches(res.data.branches || []);
-        setDepartments(res.data.departments || []);
-        setTitles(res.data.titles || []);
-      } catch (err) {
-        console.error("Failed to fetch company info", err);
+        setCompanyData(companyRes.data);
+        setBranches(branchRes.data);
+        setDepartments(deptRes.data);
+        setTitles(titleRes.data);
+      } catch (error) {
+        console.error("❌ Failed to fetch company data", error);
       }
     };
 
-    fetchCompany();
-  }, [user, token]);
+    fetchData();
+  }, [token]);
 
   const openDeleteDialog = (item) => {
     setDeleteItem(item);
@@ -70,6 +73,16 @@ export default function SettingPage() {
 
   const confirmDelete = () => {
     if (!deleteItem) return;
+    const { id, type } = deleteItem;
+
+    if (type === "branch") {
+      setBranches((prev) => prev.filter((b) => b._id !== id));
+    } else if (type === "department") {
+      setDepartments((prev) => prev.filter((d) => d._id !== id));
+    } else if (type === "title") {
+      setTitles((prev) => prev.filter((t) => t._id !== id));
+    }
+
     setDeleteDialogOpen(false);
     setDeleteItem(null);
   };
@@ -90,6 +103,7 @@ export default function SettingPage() {
           Company Details
         </h1>
 
+        {/* Company Name */}
         <div className="flex flex-wrap sm:flex-nowrap items-center mt-6 justify-center lg:justify-center">
           <label className="font-custom text-[#3F4648] w-full sm:w-1/3 lg:w-1/4 sm:text-left mb-2 sm:mb-0">
             Company Name
@@ -97,60 +111,48 @@ export default function SettingPage() {
           <input
             id="company-name"
             type="text"
-            value={companyData?.name || ""}
+            value={companyData.name || ""}
             readOnly
-            className="font-custom border border-gray-300 rounded-lg p-2 w-full sm:w-1/2 lg:w-1/3 xl:w-2/4 bg-gray-100"
+            className="font-custom border border-gray-300 rounded-lg p-2 w-full sm:w-1/2 lg:w-1/3 xl:w-2/4"
           />
         </div>
 
+        {/* Company Logo */}
         <div className="flex flex-wrap sm:flex-nowrap items-center mt-6 justify-center lg:justify-center">
           <label className="font-custom text-[#3F4648] w-full sm:w-1/3 lg:w-1/4 sm:text-left mb-2 sm:mb-0">
             Company Logo
           </label>
-          <div className="w-full sm:w-1/2 lg:w-1/3 xl:w-2/4 h-60 border border-gray-300 rounded-xl flex items-center justify-center bg-white">
-            <img
-              src={selectedFile || companyData?.logo}
-              alt="Company Logo"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center mt-6 w-full">
-          <div className="font-custom flex flex-wrap gap-4 items-center justify-between w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4">
-            <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
-              <label className="text-[#3F4648] w-24">Industry</label>
-              <select
-                id="industry"
-                value={companyData?.industries?.[0] || ""}
-                className="border border-gray-300 rounded-lg p-2 w-full sm:w-48 bg-gray-100"
-                disabled
+          <div className="flex items-center gap-4 w-full sm:w-1/2 lg:w-1/3 xl:w-2/4">
+            <div
+              {...getRootProps()}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center cursor-pointer w-full h-32"
+            >
+              <input {...getInputProps()} />
+              {selectedFile ? (
+                <img
+                  src={selectedFile}
+                  alt="Company Logo"
+                  className="max-w-full max-h-full"
+                />
+              ) : companyData.logoUrl ? (
+                <img
+                  src={companyData.logoUrl}
+                  alt="Company Logo"
+                  className="max-w-full max-h-full"
+                />
+              ) : (
+                <p className="text-gray-500">Drag and drop logo here</p>
+              )}
+            </div>
+            {(selectedFile || companyData.logoUrl) && (
+              <button
+                onClick={() => setSelectedFile(null)}
+                className="text-red-500 hover:text-red-700"
+                aria-label="Remove logo"
               >
-                <option value={companyData?.industries?.[0]}>
-                  {companyData?.industries?.[0] || "N/A"}
-                </option>
-              </select>
-            </div>
-
-            <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
-              <label className="text-[#3F4648] w-24">Employee</label>
-              <input
-                type="text"
-                value={companyData?.numberOfEmployees || ""}
-                readOnly
-                className="border border-gray-300 rounded-lg p-2 w-full sm:w-48 bg-gray-100"
-              />
-            </div>
-
-            <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
-              <label className="text-[#3F4648] w-24">Location</label>
-              <input
-                type="text"
-                value={companyData?.location || ""}
-                readOnly
-                className="border border-gray-300 rounded-lg p-2 w-full sm:w-48 bg-gray-100"
-              />
-            </div>
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </div>
 
@@ -164,9 +166,9 @@ export default function SettingPage() {
           </div>
 
           <div className="flex flex-col items-center w-full">
-            {branches.map((branch, index) => (
+            {branches.map((branch) => (
               <div
-                key={index}
+                key={branch.id || branch._id}
                 className="font-custom border border-gray-300 rounded-lg p-2 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
               >
                 <div className="flex items-center space-x-1 min-w-0">
@@ -174,10 +176,10 @@ export default function SettingPage() {
                   <span className="text-[#3F4648] truncate">{branch.name}</span>
                 </div>
                 <button
-                  className="text-grey-400 hover:text-red-700 ml-auto"
+                  className="text-grey-400 hover:text-red-700"
                   onClick={() =>
                     openDeleteDialog({
-                      id: index,
+                      id: branch.id || branch._id,
                       type: "branch",
                       name: branch.name,
                     })
@@ -201,26 +203,20 @@ export default function SettingPage() {
           </div>
 
           <div className="flex flex-col items-center w-full">
-            {departments.map((dept, index) => (
+            {departments.map((dept) => (
               <div
-                key={index}
-                className="font-custom border border-gray-300 rounded-lg p-3 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
+                key={dept.id || dept._id}
+                className="font-custom border border-gray-300 rounded-lg p-2 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
               >
-                <div className="flex items-center space-x-2">
-                  <MdPeopleOutline className="text-gray-500" />
-                  <span className="text-gray-700 font-medium">{dept.name}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <FiMapPin className="text-gray-500" />
-                  <span className="text-gray-700 font-medium">
-                    {dept.location}
-                  </span>
+                <div className="flex items-center space-x-1 min-w-0">
+                  <MdPeopleOutline className="text-gray-500 flex-shrink-0" />
+                  <span className="text-[#3F4648] truncate">{dept.name}</span>
                 </div>
                 <button
                   className="text-grey-400 hover:text-red-700"
                   onClick={() =>
                     openDeleteDialog({
-                      id: index,
+                      id: dept.id || dept._id,
                       type: "department",
                       name: dept.name,
                     })
@@ -235,7 +231,7 @@ export default function SettingPage() {
         </div>
 
         {/* Title Section */}
-        <div className="flex flex-col items-center mt-6 w-full">
+        <div className="flex flex-col items-center mt-6 w-full mb-10">
           <div className="w-full sm:w-5/6 lg:w-3/5 xl:w-3/4">
             <div className="flex items-center justify-between mb-2">
               <label className="font-custom text-[#3F4648]">Title</label>
@@ -244,22 +240,20 @@ export default function SettingPage() {
           </div>
 
           <div className="flex flex-col items-center w-full">
-            {titles.map((title, index) => (
+            {titles.map((title) => (
               <div
-                key={index}
-                className="font-custom border border-gray-300 rounded-lg p-3 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
+                key={title.id || title._id}
+                className="font-custom border border-gray-300 rounded-lg p-2 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4 text-sm sm:text-base mb-3"
               >
-                <div className="flex items-center space-x-2">
-                  <GoPerson className="text-gray-500" />
-                  <span className="text-gray-700 font-medium">
-                    {title.name}
-                  </span>
+                <div className="flex items-center space-x-1 min-w-0">
+                  <GoPerson className="text-gray-500 flex-shrink-0" />
+                  <span className="text-[#3F4648] truncate">{title.name}</span>
                 </div>
                 <button
                   className="text-grey-400 hover:text-red-700"
                   onClick={() =>
                     openDeleteDialog({
-                      id: index,
+                      id: title.id || title._id,
                       type: "title",
                       name: title.name,
                     })
@@ -272,13 +266,13 @@ export default function SettingPage() {
             ))}
           </div>
         </div>
-      </div>
 
-      <DeleteDialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
-      />
+        <DeleteDialog
+          open={deleteDialogOpen}
+          onClose={() => setDeleteDialogOpen(false)}
+          onConfirm={confirmDelete}
+        />
+      </div>
     </div>
   );
 }
