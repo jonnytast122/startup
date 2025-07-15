@@ -242,6 +242,12 @@ const TodayScreen = () => {
   const [openAddAttendenceDialog, setOpenAddAttendenceDialog] = useState(false);
   const [showAddAttendenceTableDialog, setShowAddAttendenceTableDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [attendanceTables, setAttendanceTables] = useState([
+    {
+      tableName: "Site A Attendance",
+      data: data,
+    },
+  ]);
 
   const filteredData = useMemo(() => {
     const selected = selectedDate ? new Date(selectedDate).toDateString() : "";
@@ -338,171 +344,156 @@ const TodayScreen = () => {
           </div>
         </div>
       </div>
-      <div className="p-4 bg-white rounded-xl shadow-sm border">
-        <div className="flex items-center p-4 bg-white border-b rounded-t-md gap-4 flex-wrap sm:flex-nowrap">
-          <Select
-            onValueChange={(value) =>
-              setStatusFilter(value === "clear" ? "" : value)
-            }
-          >
-            <SelectTrigger className="w-36 rounded-full flex items-center gap-2 border border-gray-300">
-              <ListFilter className="text-gray-500" size={20} />
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="clear">
-                <div className="text-gray-500 font-custom">All</div>
-              </SelectItem>
-
-              {["On Time", "Late", "On Leave"].map((status) => {
-                const dotColor =
-                  status === "On Time"
-                    ? "bg-green-500"
-                    : status === "Late"
-                      ? "bg-red-500"
-                      : "bg-yellow-400";
-
-                return (
-                  <SelectItem
-                    key={status}
-                    value={status}
-                    className="font-custom"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className={`w-3 h-3 rounded-full ${dotColor}`} />
-                      <span className="capitalize">{status}</span>
-                    </div>
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-
-          {/* Search Input */}
-          <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
-            <Search className="absolute left-3 text-gray-400" size={20} />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by name"
-              className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <Button
-            onClick={() => setOpenAddAttendenceDialog(true)}
-            variant="outline"
-            className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
-          >
-            Add Attendence
-          </Button>
-          <AddAttendanceDialog
-            open={openAddAttendenceDialog}
-            onOpenChange={setOpenAddAttendenceDialog}
-            onConfirm={(newTable) => {
-              // Add new table logic here
-            }}
-          />
-
-          {/* Export Select */}
-          <Select>
-            <SelectTrigger className="w-24 font-custom rounded-full border-gray-400">
-              <SelectValue placeholder="Export" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {exportOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
+      {attendanceTables.map((table, index) => (
+        <div key={index} className="p-4 bg-white rounded-xl shadow-sm border mt-6">
+          <div className="flex items-center p-4 bg-white border-b rounded-t-md gap-4 flex-wrap sm:flex-nowrap">
+            <Select
+              onValueChange={(value) =>
+                setStatusFilter(value === "clear" ? "" : value)
+              }
+            >
+              <SelectTrigger className="w-36 rounded-full flex items-center gap-2 border border-gray-300">
+                <ListFilter className="text-gray-500" size={20} />
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="clear">
+                  <div className="text-gray-500 font-custom">All</div>
                 </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="rounded-md">
-          {/* Line + summary row */}
-          <div className="w-full border-t border-[#A6A6A6]"></div>
 
-          <div className="flex justify-between items-center px-4 py-3">
-            {/* Left side: Shift Type label */}
-            <span className="font-custom text-xl text-blue-500">
-              Site A Attendence
-            </span>
+                {["On Time", "Late", "On Leave"].map((status) => {
+                  const dotColor =
+                    status === "On Time"
+                      ? "bg-green-500"
+                      : status === "Late"
+                        ? "bg-red-500"
+                        : "bg-yellow-400";
 
-            {/* Right side: Row count */}
-            <span className="font-custom text-xl text-gray-600">
-              <span className="text-blue-500">
-                {table.getRowModel().rows.length}
-              </span>
-              /5 employees clocked in today
-            </span>
+                  return (
+                    <SelectItem
+                      key={status}
+                      value={status}
+                      className="font-custom"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className={`w-3 h-3 rounded-full ${dotColor}`} />
+                        <span className="capitalize">{status}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
+
+            {/* Search Input */}
+            <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+              <Search className="absolute left-3 text-gray-400" size={20} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by name"
+                className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <Button
+              onClick={() => setOpenAddAttendenceDialog(true)}
+              variant="outline"
+              className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
+            >
+              Add Attendence
+            </Button>
+            <AddAttendanceDialog
+              open={openAddAttendenceDialog}
+              onOpenChange={setOpenAddAttendenceDialog}
+              onConfirm={(newTable) => {
+                // Add new table logic here
+              }}
+            />
+
+            {/* Export Select */}
+            <Select>
+              <SelectTrigger className="w-24 font-custom rounded-full border-gray-400">
+                <SelectValue placeholder="Export" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                {exportOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        </div>
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="bg-gray-200 text-dark-blue"
-              >
-                {headerGroup.headers.map((header) => (
+          <div className="rounded-md">
+            {/* Line + summary row */}
+            <div className="w-full border-t border-[#A6A6A6]"></div>
+
+            <div className="flex justify-between items-center px-4 py-3">
+              {/* Left side: Shift Type label */}
+              <span className="font-custom text-xl text-blue-500">
+                {table.tableName}
+              </span>
+
+              {/* Right side: Row count */}
+              <span className="font-custom text-xl text-gray-600">
+                <span className="text-blue-500">
+                  {table.data.length}
+                </span>
+                /5 employees clocked in today
+              </span>
+            </div>
+          </div>
+
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-200 text-dark-blue">
+                {columns.map((col, idx) => (
                   <TableHead
-                    key={header.id}
+                    key={idx}
                     className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md"
                   >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
+                    {typeof col.header === "function"
+                      ? col.header()
+                      : col.header}
                   </TableHead>
                 ))}
               </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
+            </TableHeader>
+            <TableBody>
+              {table.data.map((row, rowIdx) => (
                 <TableRow
-                  key={row.id}
-                  onClick={() => setSelectedEmployee(row.original)}
+                  key={rowIdx}
+                  onClick={() => setSelectedEmployee(row)}
                   className="cursor-pointer hover:bg-blue-50 transition-colors"
                 >
-                  {row.getVisibleCells().map((cell) => (
+                  {columns.map((col, colIdx) => (
                     <TableCell
-                      key={cell.id}
+                      key={colIdx}
                       className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
                     >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+                      {typeof col.cell === "function"
+                        ? col.cell({ row: { original: row } })
+                        : row[col.accessorKey]}
                     </TableCell>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-gray-300 mt-4 text-xl font-custom p-24"
-                >
-                  No data available
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        {selectedEmployee && (
-          <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex justify-center items-center">
-            <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-y-auto max-h-[90vh]">
-              <UserProfileSection
-                employee={selectedEmployee}
-                onClose={() => setSelectedEmployee(null)}
-              />
-            </div>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ))}
+      {selectedEmployee && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-30 flex justify-center items-center">
+          <div className="w-full max-w-6xl bg-white rounded-lg shadow-lg overflow-y-auto max-h-[90vh]">
+            <UserProfileSection
+              employee={selectedEmployee}
+              onClose={() => setSelectedEmployee(null)}
+            />
           </div>
-        )}
-      </div>
+        </div>
+      )}
       {/* Add More Attendence button */}
       <div className="flex justify-center mt-4">
         <Button
@@ -516,11 +507,63 @@ const TodayScreen = () => {
         open={showAddAttendenceTableDialog}
         onOpenChange={setShowAddAttendenceTableDialog}
         onConfirm={(data) => {
-          console.log("Submitted attendance:", data);
+          const newTable = {
+            tableName: data.tableName || `Attendance Table ${attendanceTables.length + 1}`,
+            data: [
+              {
+                profile: "/avatars/ralph.png",
+                firstname: "Lucy",
+                lastname: "Trevo",
+                department: "Marketing",
+                job: "Accountant",
+                shifttype: "Scheduled",
+                status: "On time",
+                Clockin: "08:11",
+                Clockout: "17:11",
+                regularhours: "",
+                overtime: "",
+                date: today,
+                lat: 11.56786,
+                lng: 104.89005,
+              },
+              {
+                profile: "/avatars/ralph.png",
+                firstname: "John",
+                lastname: "Mark",
+                department: "Marketing",
+                job: "Marketing",
+                shifttype: "Scheduled",
+                status: "Late",
+                Clockin: "08.31",
+                Clockout: "17:11",
+                regularhours: "",
+                overtime: "",
+                date: today,
+                lat: 11.568,
+                lng: 104.891,
+              },
+              {
+                profile: "/avatars/ralph.png",
+                firstname: "Doe",
+                lastname: "Ibrahim",
+                department: "Officer",
+                job: "HR",
+                shifttype: "Scheduled",
+                status: "Early",
+                Clockin: "08:09",
+                Clockout: "17:10",
+                regularhours: "8.01",
+                overtime: "8.01",
+                date: today,
+                lat: 11.569,
+                lng: 104.892,
+              },
+            ],// same static data used for all tables
+          };
+          setAttendanceTables((prev) => [...prev, newTable]);
           setShowAddAttendenceTableDialog(false);
         }}
       />
-
       <div className="p-4 bg-white rounded-lg mb-3 shadow-md py-6 px-6 border mt-6">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           {/* Left Side Dropdowns */}
