@@ -25,13 +25,14 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { LogIn, Search } from "lucide-react";
+import { LogIn, Search, ChevronDown } from "lucide-react";
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import AddLeaveDialog from "./components/addleavedialog";
 import UserProfileSection from "./components/user-profile-section";
+import { DateRangePicker } from "react-date-range";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -42,45 +43,6 @@ const ALL = [
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
-];
-
-const data = [
-  {
-    profile: "/avatars/ralph.png",
-    firstname: "John",
-    lastname: "Doe",
-    department: "Marketing",
-    job: "Account",
-    shifttype: "Schedule",
-    annualleave: "2.5 / 15 days",
-    sickleave: "2.5 / 15 days",
-    assignleave: "",
-    unpaidleave: "00.00 hours",
-    unpaidleave: "0 / Unlimited",
-    onleavestatus: {
-      annual: "Declined",
-      sick: "Approved",
-    },
-    date: "2025-03-12", // Example date
-  },
-  {
-    profile: "/avatars/ralph.png",
-    firstname: "Jane",
-    lastname: "Smith",
-    department: "HR",
-    job: "Manager",
-    shifttype: "Schedule",
-    annualleave: "2.5 / 15 days",
-    sickleave: "2.5 / 15 days",
-    assignleave: "",
-    unpaidleave: "00.00 hours",
-    unpaidleave: "0 / Unlimited",
-    onleavestatus: {
-      annual: "Declined",
-      sick: "Approved",
-    },
-    date: "2025-03-20",
-  },
 ];
 
 const columns = [
@@ -215,16 +177,51 @@ const columns = [
 const Leaves = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddLeaveDialog, setOpenAddLeaveDialog] = useState(false);
-
+  const [selectedRange, setSelectedRange] = useState({
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
+    key: "selection",
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [leaveData, setLeaveData] = useState([
+    {
+      profile: "/avatars/ralph.png",
+      firstname: "John",
+      lastname: "Doe",
+      department: "Marketing",
+      job: "Account",
+      shifttype: "Schedule",
+      annualleave: "2.5 / 15 days",
+      sickleave: "2.5 / 15 days",
+      assignleave: "",
+      unpaidleave: "0 / Unlimited",
+      onleavestatus: { annual: "Declined", sick: "Approved" },
+      date: "2025-03-12",
+    },
+    {
+      profile: "/avatars/ralph.png",
+      firstname: "Jane",
+      lastname: "Smith",
+      department: "HR",
+      job: "Manager",
+      shifttype: "Schedule",
+      annualleave: "2.5 / 15 days",
+      sickleave: "2.5 / 15 days",
+      assignleave: "",
+      unpaidleave: "0 / Unlimited",
+      onleavestatus: { annual: "Declined", sick: "Approved" },
+      date: "2025-03-20",
+    },
+  ]);
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
+    return leaveData.filter((item) => {
       const matchesSearch = `${item.firstname} ${item.lastname}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
       return matchesSearch;
     });
-  }, [searchQuery]);
+  }, [searchQuery, leaveData]);
 
   const table = useReactTable({
     data: filteredData,
@@ -300,6 +297,44 @@ const Leaves = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="flex items-center justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                >
+                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+                  <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+                </button>
+                {showDatePicker && (
+                  <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
+                    <DateRangePicker
+                      ranges={[selectedRange]}
+                      onChange={(ranges) => {
+                        const newRange = ranges.selection;
+                        setSelectedRange(newRange);
+
+                        // ✅ Only close if both dates are selected and not the same
+                        const start = newRange.startDate;
+                        const end = newRange.endDate;
+                        if (start && end && start.getTime() !== end.getTime()) {
+                          setShowDatePicker(false);
+                        }
+                      }}
+                      rangeColors={["#3b82f6"]}
+                    />
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    const today = new Date();
+                    setSelectedRange({
+                      startDate: today,
+                      endDate: today,
+                      key: "selection",
+                    });
+                  }}
+                >
+                  Today
+                </Button>
               </div>
               {/* Right Side Dropdowns */}
               <div className="flex w-full sm:w-auto gap-4">
@@ -327,12 +362,10 @@ const Leaves = () => {
                 <AddLeaveDialog
                   open={openAddLeaveDialog}
                   onOpenChange={setOpenAddLeaveDialog}
-                  onConfirm={(data) => {
-                    console.log("Confirmed OT payload:", data);
-                    // You can push it to state, call API, etc.
+                  onConfirm={(newLeave) => {
+                    setLeaveData((prev) => [...prev, newLeave]);
                   }}
                 />
-
                 <Select>
                   <SelectTrigger className="w-24 font-custom rounded-full">
                     <SelectValue placeholder="Export" />

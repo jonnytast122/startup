@@ -147,12 +147,12 @@ const columns = [
       const words = row.original.note.split(" "); // Split the sentence into words
       const chunkSize = 5; // Define the number of words per row
       const rows = [];
-  
+
       // Break words into rows of 4-5 words each
       for (let i = 0; i < words.length; i += chunkSize) {
         rows.push(words.slice(i, i + chunkSize).join(" "));
       }
-  
+
       return (
         <div key={row.id} className="py-2 max-w-[300px] break-words">
           {rows.map((rowText, index) => (
@@ -171,7 +171,7 @@ const columns = [
         </div>
       );
     },
-  },  
+  },
   {
     accessorKey: "actions",
     header: "",
@@ -294,7 +294,17 @@ const PendingDialog = ({ onClose }) => {
               >
                 <DateRange
                   ranges={[selectedRange]}
-                  onChange={(ranges) => setSelectedRange(ranges.selection)}
+                  onChange={(ranges) => {
+                    const newRange = ranges.selection;
+                    setSelectedRange(newRange);
+
+                    // ✅ Only close if both dates are selected and not the same
+                    const start = newRange.startDate;
+                    const end = newRange.endDate;
+                    if (start && end && start.getTime() !== end.getTime()) {
+                      setShowDatePicker(false);
+                    }
+                  }}
                   rangeColors={["#3b82f6"]}
                 />
               </div>

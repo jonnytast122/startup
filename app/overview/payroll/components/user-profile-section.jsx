@@ -76,7 +76,11 @@ export default function UserProfileSection({ employee, onClose }) {
       <hr className="border-gray-200 mb-3" />
       <div className="flex justify-between mb-4">
         <p className="text-sm">
-          <span className="ml-6 font-semibold">Total Working Day: </span>29.5 day <span className="ml-6 font-semibold">Total Pay: 1905$</span>
+          <span className="ml-6 font-semibold">Total Working Day: </span>29.5 day 
+          <span className="ml-6 font-semibold">Gross Salary: </span>29.5 day 
+          <span className="ml-6 font-semibold">Tax: </span><span className="text-red">178$</span>
+          <span className="ml-6 font-semibold">NSSF: </span><span className="text-red">50$</span>
+          <span className="ml-6 font-semibold">Total Pay: 1905$</span>
         </p>
       </div>
       <hr className="border-gray-200 mb-4" />
@@ -94,10 +98,6 @@ export default function UserProfileSection({ employee, onClose }) {
               <th className="text-left px-3 py-2">Hourly Rate</th>
               <th className="text-left px-3 py-2">Regular pay</th>
               <th className="text-left px-3 py-2">Overtime pay</th>
-              <th className="text-left px-3 py-2">Gross Salary</th>
-              <th className="text-left px-3 py-2">Tax</th>
-              <th className="text-left px-3 py-2">NSSF</th>
-              <th className="text-left px-3 py-2">Net salary</th>
               <th className="text-left px-3 py-2">Employee note</th>
               <th className="text-left px-3 py-2">Manager note</th>
             </tr>
@@ -125,16 +125,12 @@ export default function UserProfileSection({ employee, onClose }) {
                   <td className="px-3 py-2">${employee.dailyRate}</td>
                   <td className="px-3 py-2">${employee.regularPay}</td>
                   <td className="px-3 py-2">${employee.overtimePay}</td>
-                  <td className="px-3 py-2 font-semibold text-black">{idx === 2 ? "$2178" : ""}</td>
-                  <td className="px-3 py-2 text-red-500">{idx === 2 ? "$178" : ""}</td>
-                  <td className="px-3 py-2 text-red-500">{idx === 2 ? "$50" : ""}</td>
-                  <td className="px-3 py-2 font-medium">{idx === 2 ? "$1950" : ""}</td>
                   <td className="px-3 py-2 text-gray-400 italic"></td>
                   <td className="px-3 py-2 text-gray-400 italic"></td>
                 </tr>
                 {idx !== arr.length - 1 && (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={9}>
                       <div className="border-b border-gray-200 mx-3"></div>
                     </td>
                   </tr>

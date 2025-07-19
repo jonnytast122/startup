@@ -264,14 +264,6 @@ const TodayScreen = () => {
     });
   }, [selectedDate, searchQuery, statusFilter]);
 
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-  });
-
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 6, 11),
     endDate: new Date(2025, 6, 11),
@@ -295,26 +287,23 @@ const TodayScreen = () => {
     };
   }, []);
 
-  const getDatesInRange = (startDate, endDate) => {
-    const date = new Date(startDate.getTime());
-    const dates = [];
-    while (date <= endDate) {
-      dates.push(new Date(date));
-      date.setDate(date.getDate() + 1);
-    }
-    return dates;
-  };
-
-  const dateColumns = getDatesInRange(
-    selectedRange.startDate,
-    selectedRange.endDate
-  );
-
   return (
     <>
       <div className="mb-4">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div className="flex w-full sm:w-auto gap-4">
+            <Select>
+              <SelectTrigger className="w-auto font-custom rounded-full">
+                <SelectValue placeholder="All activity" />
+              </SelectTrigger>
+              <SelectContent className="w-48 font-custom">
+                {ALL.map((role) => (
+                  <SelectItem key={role.value} value={role.value}>
+                    {role.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
               className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
@@ -332,13 +321,34 @@ const TodayScreen = () => {
               >
                 <DateRange
                   ranges={[selectedRange]}
-                  onChange={(ranges) => setSelectedRange(ranges.selection)}
+                  onChange={(ranges) => {
+                    const newRange = ranges.selection;
+                    setSelectedRange(newRange);
+
+                    // ✅ Only close if both dates are selected and not the same
+                    const start = newRange.startDate;
+                    const end = newRange.endDate;
+                    if (start && end && start.getTime() !== end.getTime()) {
+                      setShowDatePicker(false);
+                    }
+                  }}
                   rangeColors={["#3b82f6"]}
                 />
               </div>
             )}
+            <Button
+              onClick={() => {
+                const today = new Date();
+                setSelectedRange({
+                  startDate: today,
+                  endDate: today,
+                  key: "selection",
+                });
+              }}
+            >
+              Today
+            </Button>
           </div>
-
           <div className="flex w-full sm:w-auto gap-4">
             <PendingDialog />
           </div>
@@ -564,65 +574,7 @@ const TodayScreen = () => {
           setShowAddAttendenceTableDialog(false);
         }}
       />
-      <div className="p-4 bg-white rounded-lg mb-3 shadow-md py-6 px-6 border mt-6">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
-          {/* Left Side Dropdowns */}
-          <div className="flex w-full sm:w-auto gap-4">
-            <Select>
-              <SelectTrigger className="w-auto font-custom rounded-full">
-                <SelectValue placeholder="All activity" />
-              </SelectTrigger>
-              <SelectContent className="w-48 font-custom">
-                {ALL.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-black"
-                >
-                  {selectedDate ? (
-                    format(new Date(selectedDate), "dd/MM/yyyy")
-                  ) : (
-                    <span className="text-gray-500">Pick a date</span>
-                  )}
-                  <ChevronDown className="w-6 h-6 text-light-gray" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="start"
-                className="p-0 bg-white border shadow-md rounded-md"
-              >
-                <Calendar
-                  mode="single"
-                  selected={selectedDate ? new Date(selectedDate) : undefined}
-                  onSelect={(date) =>
-                    setSelectedDate(date ? date.toISOString() : "")
-                  }
-                />
-              </PopoverContent>
-            </Popover>
-            <Select>
-              <SelectTrigger className="w-auto font-custom rounded-full">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent className="w-48 font-custom">
-                {ALL.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="w-full h-[1px] bg-[#A6A6A6] mt-6"></div>
+      <div className="bg-white rounded-lg mb-3 mt-6">
         {/* Map */}
         <Map userData={data} selectedDate={selectedDate} />
       </div>

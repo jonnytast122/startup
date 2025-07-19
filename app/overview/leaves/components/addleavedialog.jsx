@@ -59,19 +59,33 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     return diffMs > 0 ? (diffMs / (1000 * 60 * 60)).toFixed(2) : "0.00";
   };
 
-  const handleDone = () => {
-    const payload = {
-      users: selectedUsers,
-      allDay,
-      date,
-      startTime,
-      endTime,
-      hours: calculateHours(),
-      note,
-    };
-    onConfirm(payload);
-    onOpenChange(false);
-  };
+const handleDone = () => {
+  if (selectedUsers.length === 0) return;
+
+  const payloads = selectedUsers.map((user) => ({
+    profile: "/avatars/default.png",
+    firstname: user.name.split(" ")[0],
+    lastname: user.name.split(" ")[1] || "",
+    department: "Engineering",
+    job: "Developer",
+    shifttype: "Schedule",
+    annualleave: "2 / 15 days",
+    sickleave: "1 / 15 days",
+    assignleave: "1 / 2",
+    unpaidleave: "0 / Unlimited",
+    onleavestatus: {
+      annual: "Approved",
+      sick: "Pending",
+    },
+    date: allDay
+      ? format(startDate, "yyyy-MM-dd") + " to " + format(endDate, "yyyy-MM-dd")
+      : format(date, "yyyy-MM-dd"),
+  }));
+
+  payloads.forEach((p) => onConfirm(p));
+  onOpenChange(false);
+};
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

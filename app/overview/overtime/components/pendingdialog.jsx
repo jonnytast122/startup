@@ -269,7 +269,17 @@ const PendingDialog = ({ onClose }) => {
               >
                 <DateRange
                   ranges={[selectedRange]}
-                  onChange={(ranges) => setSelectedRange(ranges.selection)}
+                  onChange={(ranges) => {
+                    const newRange = ranges.selection;
+                    setSelectedRange(newRange);
+
+                    // ✅ Only close if both dates are selected and not the same
+                    const start = newRange.startDate;
+                    const end = newRange.endDate;
+                    if (start && end && start.getTime() !== end.getTime()) {
+                      setShowDatePicker(false);
+                    }
+                  }}
                   rangeColors={["#3b82f6"]}
                 />
               </div>
@@ -325,9 +335,8 @@ const PendingDialog = ({ onClose }) => {
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${
-                          cell.column.id === "actions" ? "text-right" : ""
-                        }`}
+                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${cell.column.id === "actions" ? "text-right" : ""
+                          }`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,

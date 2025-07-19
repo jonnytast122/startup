@@ -25,11 +25,12 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { AlarmClock, Search } from "lucide-react";
+import { AlarmClock, Search, ChevronDown } from "lucide-react";
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
 import AddOTDialog from "./components/addotdialog";
 import UserProfileSection from "./components/user-profile-section";
+import { DateRangePicker } from "react-date-range";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -198,10 +199,10 @@ const columns = [
           <span className="text-gray-800">Annual Leave</span>
           <span
             className={`font-medium ${status === "Approved"
-                ? "text-blue-500"
-                : status === "Declined"
-                  ? "text-red-500"
-                  : "text-gray-500"
+              ? "text-blue-500"
+              : status === "Declined"
+                ? "text-red-500"
+                : "text-gray-500"
               }`}
           >
             {status}
@@ -213,17 +214,24 @@ const columns = [
 ];
 
 const Overtime = () => {
+    const [otData, setOtData] = useState([...data]); // ✅ OK here
+
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddOTDialog, setOpenAddOTDialog] = useState(false);
-
+  const [selectedRange, setSelectedRange] = useState({
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
+    key: "selection",
+  });
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
+    return otData.filter((item) => {
       const matchesSearch = `${item.firstname} ${item.lastname}`
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
       return matchesSearch;
     });
-  }, [searchQuery]);
+  }, [searchQuery, otData]);
 
   const table = useReactTable({
     data: filteredData,
@@ -240,10 +248,10 @@ const Overtime = () => {
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
           <a href="/overview/leaves" className="block">
-          <div className="flex items-center space-x-3">
-            <AlarmClock className="text-[#2998FF]" width={40} height={40} />
-            <span className="font-custom text-3xl text-black">Overtime</span>
-          </div>
+            <div className="flex items-center space-x-3">
+              <AlarmClock className="text-[#2998FF]" width={40} height={40} />
+              <span className="font-custom text-3xl text-black">Overtime</span>
+            </div>
           </a>
           {/* Asset Admins (Moved before badges) */}
           <div className="flex items-center space-x-4">
@@ -297,6 +305,44 @@ const Overtime = () => {
                     ))}
                   </SelectContent>
                 </Select>
+                <button
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="flex items-center justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                >
+                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+                  <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+                </button>
+                {showDatePicker && (
+                  <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
+                    <DateRangePicker
+                      ranges={[selectedRange]}
+                      onChange={(ranges) => {
+                        const newRange = ranges.selection;
+                        setSelectedRange(newRange);
+
+                        // ✅ Only close if both dates are selected and not the same
+                        const start = newRange.startDate;
+                        const end = newRange.endDate;
+                        if (start && end && start.getTime() !== end.getTime()) {
+                          setShowDatePicker(false);
+                        }
+                      }}
+                      rangeColors={["#3b82f6"]}
+                    />
+                  </div>
+                )}
+                <Button
+                  onClick={() => {
+                    const today = new Date();
+                    setSelectedRange({
+                      startDate: today,
+                      endDate: today,
+                      key: "selection",
+                    });
+                  }}
+                >
+                  Today
+                </Button>
               </div>
 
               <div className="flex w-full sm:w-auto gap-4">
@@ -320,14 +366,43 @@ const Overtime = () => {
                 >
                   Add OT
                 </Button>
-                <AddOTDialog
-                  open={openAddOTDialog}
-                  onOpenChange={setOpenAddOTDialog}
-                  onConfirm={(data) => {
-                    console.log("Confirmed OT payload:", data);
-                    // You can push it to state, call API, etc.
-                  }}
-                />
+<AddOTDialog
+  open={openAddOTDialog}
+  onOpenChange={setOpenAddOTDialog}
+  onConfirm={(data) => {
+    const randomFrom = (arr) =>
+      arr[Math.floor(Math.random() * arr.length)];
+
+    const jobTypes = ["Accountant", "Engineer", "Supervisor", "Manager"];
+    const departments = ["HR", "IT", "Marketing", "Operations"];
+    const shiftTypes = ["Schedule", "Flexible", "Night"];
+
+    const today = new Date();
+    const todayStr = today.toISOString().split("T")[0];
+
+    const newRows = data.users.map((user) => ({
+      profile: "/avatars/ralph.png", // default avatar
+      firstname: user.name.split(" ")[0],
+      lastname: user.name.split(" ")[1] || "",
+      job: randomFrom(jobTypes),
+      department: randomFrom(departments),
+      shifttype: randomFrom(shiftTypes),
+      otrequest: `${data.hours} hours`,
+      otassigned: `${(parseFloat(data.hours) / 2).toFixed(1)} hours`,
+      ottotal: `${data.hours} hours`,
+      onleavestatus: {
+        annual: "Pending",
+        sick: "Approved",
+      },
+      date: data.date
+        ? new Date(data.date).toISOString().split("T")[0]
+        : todayStr,
+    }));
+
+    setOtData((prev) => [...prev, ...newRows]);
+  }}
+/>
+
 
                 <Select>
                   <SelectTrigger className="w-24 font-custom rounded-full">

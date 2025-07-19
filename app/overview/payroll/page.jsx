@@ -350,11 +350,22 @@ export default function PayrollPage() {
               <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
                 <DateRangePicker
                   ranges={[selectedRange]}
-                  onChange={(ranges) => setSelectedRange(ranges.selection)}
+                  onChange={(ranges) => {
+                    const newRange = ranges.selection;
+                    setSelectedRange(newRange);
+
+                    // ✅ Only close if both dates are selected and not the same
+                    const start = newRange.startDate;
+                    const end = newRange.endDate;
+                    if (start && end && start.getTime() !== end.getTime()) {
+                      setShowDatePicker(false);
+                    }
+                  }}
                   rangeColors={["#3b82f6"]}
                 />
               </div>
             )}
+
           </div>
 
           {sections.map((section) => (
