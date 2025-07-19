@@ -31,6 +31,7 @@ import PendingDialog from "./components/pendingdialog";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import AddLeaveDialog from "./components/addleavedialog";
+import UserProfileSection from "./components/user-profile-section";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -147,8 +148,8 @@ const columns = [
         percentUsed > 75
           ? "text-red-500"
           : percentUsed > 50
-          ? "text-orange-500"
-          : "text-blue-500";
+            ? "text-orange-500"
+            : "text-blue-500";
 
       return (
         <span className={textColor}>
@@ -196,13 +197,12 @@ const columns = [
         <div className="flex items-center space-x-6 text-sm">
           <span className="text-gray-800">Annual Leave</span>
           <span
-            className={`font-medium ${
-              status === "Approved"
-                ? "text-blue-500"
-                : status === "Declined"
+            className={`font-medium ${status === "Approved"
+              ? "text-blue-500"
+              : status === "Declined"
                 ? "text-red-500"
                 : "text-gray-500"
-            }`}
+              }`}
           >
             {status}
           </span>
@@ -233,16 +233,19 @@ const Leaves = () => {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
-          <div className="flex items-center space-x-3">
-            <LogIn className="text-[#2998FF]" width={40} height={40} />
-            <span className="font-custom text-3xl text-black">Leaves</span>
-          </div>
+          <a href="/overview/leaves" className="block">
+            <div className="flex items-center space-x-3">
+              <LogIn className="text-[#2998FF]" width={40} height={40} />
+              <span className="font-custom text-3xl text-black">Leaves</span>
+            </div>
+          </a>
 
           {/* Asset Admins (Moved before badges) */}
           <div className="flex items-center space-x-4">
@@ -261,12 +264,10 @@ const Leaves = () => {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${
-                    badge.bg
-                  } rounded-full flex items-center justify-center border-2 border-white 
-           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${
-             badge.textColor || "text-white"
-           }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${badge.bg
+                    } rounded-full flex items-center justify-center border-2 border-white 
+           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${badge.textColor || "text-white"
+                    }`}
                 >
                   {badge.text}
                 </div>
@@ -276,140 +277,149 @@ const Leaves = () => {
           </div>
         </div>
       </div>
+      {selectedEmployee ? (
+        <UserProfileSection
+          employee={selectedEmployee}
+          onClose={() => setSelectedEmployee(null)}
+        />
+      ) : (
+        <>
+          <div className="p-4 bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+            <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
+              {/* Left Side Dropdowns */}
+              <div className="flex w-full sm:w-auto gap-4">
+                <Select>
+                  <SelectTrigger className="w-fit px-3 font-custom rounded-full">
+                    <SelectValue placeholder="All" />
+                  </SelectTrigger>
+                  <SelectContent className="w-fit font-custom">
+                    {ALL.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {/* Right Side Dropdowns */}
+              <div className="flex w-full sm:w-auto gap-4">
+                {/* Search Input */}
+                <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+                  <Search className="absolute left-3 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search by name"
+                    className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
 
-      <div className="p-4 bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
-          {/* Left Side Dropdowns */}
-          <div className="flex w-full sm:w-auto gap-4">
-            <Select>
-              <SelectTrigger className="w-fit px-3 font-custom rounded-full">
-                <SelectValue placeholder="All" />
-              </SelectTrigger>
-              <SelectContent className="w-fit font-custom">
-                {ALL.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Right Side Dropdowns */}
-          <div className="flex w-full sm:w-auto gap-4">
-            {/* Search Input */}
-            <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
-              <Search className="absolute left-3 text-gray-400" size={20} />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name"
-                className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+                <PendingDialog />
+
+                <Button
+                  onClick={() => setOpenAddLeaveDialog(true)}
+                  variant="outline"
+                  className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
+                >
+                  Add Leave
+                </Button>
+                <AddLeaveDialog
+                  open={openAddLeaveDialog}
+                  onOpenChange={setOpenAddLeaveDialog}
+                  onConfirm={(data) => {
+                    console.log("Confirmed OT payload:", data);
+                    // You can push it to state, call API, etc.
+                  }}
+                />
+
+                <Select>
+                  <SelectTrigger className="w-24 font-custom rounded-full">
+                    <SelectValue placeholder="Export" />
+                  </SelectTrigger>
+                  <SelectContent className="font-custom">
+                    {exportOptions.map((role) => (
+                      <SelectItem key={role.value} value={role.value}>
+                        {role.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-
-            <PendingDialog />
-
-            <Button
-              onClick={() => setOpenAddLeaveDialog(true)}
-              variant="outline"
-              className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
-            >
-              Add Leave
-            </Button>
-            <AddLeaveDialog
-              open={openAddLeaveDialog}
-              onOpenChange={setOpenAddLeaveDialog}
-              onConfirm={(data) => {
-                console.log("Confirmed OT payload:", data);
-                // You can push it to state, call API, etc.
-              }}
-            />
-
-            <Select>
-              <SelectTrigger className="w-24 font-custom rounded-full">
-                <SelectValue placeholder="Export" />
-              </SelectTrigger>
-              <SelectContent className="font-custom">
-                {exportOptions.map((role) => (
-                  <SelectItem key={role.value} value={role.value}>
-                    {role.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        {filteredData.length === 0 ? (
-          <p className="text-center text-gray-300 mt-4 text-xl font-custom">
-            No Data Available
-          </p>
-        ) : (
-          <div className="rounded-md border mt-6">
-            <Table>
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="bg-gray-200 text-dark-blue"
-                  >
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-xs"
+            {filteredData.length === 0 ? (
+              <p className="text-center text-gray-300 mt-4 text-xl font-custom">
+                No Data Available
+              </p>
+            ) : (
+              <div className="rounded-md border mt-6">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="bg-gray-200 text-dark-blue"
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </TableHead>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead
+                            key={header.id}
+                            className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-xs"
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                          </TableHead>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell
-                        key={cell.id}
-                        className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows.map((row) => (
+                      <TableRow
+                        key={row.id}
+                        onClick={() => setSelectedEmployee(row.original)}
+                        className="cursor-pointer hover:bg-gray-100 transition-colors"
                       >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCell
+                            key={cell.id}
+                            className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                          >
+                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          </TableCell>
+                        ))}
+                      </TableRow>
                     ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+            <div className="flex items-center justify-end space-x-2 py-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+              >
+                Previous
+              </Button>
+              <span className="font-custom text-gray-400">
+                Page {table.getState().pagination.pageIndex + 1} of{" "}
+                {table.getPageCount()}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+              >
+                Next
+              </Button>
+            </div>
           </div>
-        )}
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <span className="font-custom text-gray-400">
-            Page {table.getState().pagination.pageIndex + 1} of{" "}
-            {table.getPageCount()}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+        </>
+      )}
     </div>
   );
 };

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, MapPin } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -31,6 +31,7 @@ export default function UserProfileSection({ employee, onClose }) {
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-6">
+      {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <img src={employee.profile} alt="Avatar" className="w-12 h-12 rounded-full" />
@@ -39,7 +40,7 @@ export default function UserProfileSection({ employee, onClose }) {
               {employee.firstname} {employee.lastname}
             </p>
             <div className="relative">
-              <span className="mr-2 text-sm text-gray-500">Pay period:</span>
+              <span className="mr-2 text-sm text-gray-500">Leave period:</span>
               <button
                 onClick={() => setShowPicker(!showPicker)}
                 className="text-sm text-gray-600 border px-3 py-1 rounded-md inline-flex items-center gap-2"
@@ -73,26 +74,20 @@ export default function UserProfileSection({ employee, onClose }) {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            className="rounded-full px-4 text-sm"
-            onClick={onClose}
-          >
-            Back
-          </Button>
         </div>
       </div>
 
+      {/* Summary */}
       <hr className="border-gray-200 mb-3" />
       <div className="flex justify-between mb-4">
         <p className="text-sm">
-          <span className="ml-6 font-semibold">Total Working Day: </span>
-          29.5 day
-          <span className="ml-6 font-semibold"> Total Regular Hour: 1905$</span>
+          <span className="ml-6 font-semibold">Total Paid Leave: </span>5 days
+          <span className="ml-6 font-semibold">Total Leave Days: </span>15 days
         </p>
       </div>
       <hr className="border-gray-200 mb-4" />
 
+      {/* Table */}
       <div className="overflow-x-auto border border-gray-300 rounded-lg">
         <table className="w-full border-separate border-spacing-0">
           <thead>
@@ -102,12 +97,11 @@ export default function UserProfileSection({ employee, onClose }) {
               </th>
               <th className="text-left px-3 py-2">Date</th>
               <th className="text-left px-3 py-2">Jobs</th>
+              <th className="text-left px-3 py-2">Leave Type</th>
               <th className="text-left px-3 py-2">Status</th>
-              <th className="text-left px-3 py-2">Start</th>
-              <th className="text-left px-3 py-2">Break</th>
-              <th className="text-left px-3 py-2">End</th>
-              <th className="text-left px-3 py-2">Total hours</th>
-              <th className="text-left px-3 py-2">Daily total</th>
+              <th className="text-left px-3 py-2">Shift Type</th>
+              <th className="text-left px-3 py-2">Start Date</th>
+              <th className="text-left px-3 py-2">End Date</th>
               <th className="text-left px-3 py-2">Employee note</th>
               <th className="text-left px-3 py-2">Manager note</th>
             </tr>
@@ -115,59 +109,84 @@ export default function UserProfileSection({ employee, onClose }) {
           <tbody>
             <tr>
               <td></td>
-              <td colSpan={6} className="py-2">
+              <td colSpan={9} className="py-2">
                 <button className="px-4 py-1 text-sm rounded-full border border-gray-300 text-gray-700 bg-white">
                   Aug 18 - Aug 23
                 </button>
               </td>
             </tr>
-            {["Mon 23/08", "Tue 20/08", "Wed 21/08", "Thu 22/08", "Fri 23/08", "Sat 24/08"].map(
-  (date, idx, arr) => {
-    const isLast = idx === arr.length - 1;
-    return (
-      <tr
-        key={idx}
-        className={`text-sm text-center ${!isLast ? "border-b border-gray-100" : ""}`}
-      >
-        <td className="px-3 py-2"></td>
-        <td className="px-3 py-2">{date}</td>
-        <td className="px-3 py-2">
-          <span className="border border-blue-400 text-blue-500 px-3 py-1 rounded-full text-xs">
-            {employee.job}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          <span
-            className={`font-custom ${
-              employee.status === "On time" ? "text-green-500" :
-              employee.status === "Late" ? "text-red-500" :
-              employee.status === "Early" ? "text-blue-500" : ""
-            }`}
-          >
-            {employee.status || "0"}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1 justify-start">
-            <span>{employee.Clockin || "5"}</span>
-            <MapPin className="w-4 h-4 text-gray-600" />
-          </div>
-        </td>
-        <td className="px-3 py-2 text-red-500">{employee.Break || "12:00 - 13:00"}</td>
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1 justify-start">
-            <span>{employee.Clockout || "0"}</span>
-            <MapPin className="w-4 h-4 text-gray-600" />
-          </div>
-        </td>
-        <td className="px-3 py-2">{employee.overtime || "0"}</td>
-        <td className="px-3 py-2">{employee.overtime || "0"}</td>
-        <td className="px-3 py-2 text-gray-400 italic">-</td>
-        <td className="px-3 py-2 text-gray-400 italic">-</td>
-      </tr>
-    );
-  }
-)}
+            {[
+              {
+                date: "Mon 19/08",
+                type: "Annual Leave",
+                status: "Approved",
+                shift: "Morning",
+                start: "2025-08-19",
+                end: "2025-08-19",
+              },
+              {
+                date: "Tue 20/08",
+                type: "Sick Leave",
+                status: "Declined",
+                shift: "Morning",
+                start: "2025-08-20",
+                end: "2025-08-20",
+              },
+              {
+                date: "Wed 21/08",
+                type: "Unpaid Leave",
+                status: "Approved",
+                shift: "Full Day",
+                start: "2025-08-21",
+                end: "2025-08-21",
+              },
+              {
+                date: "Thu 22/08",
+                type: "Annual Leave",
+                status: "Pending",
+                shift: "Afternoon",
+                start: "2025-08-22",
+                end: "2025-08-22",
+              },
+            ].map((entry, idx, arr) => (
+              <>
+                <tr key={idx} className="text-sm text-center">
+                  <td className="px-3 py-2"></td>
+                  <td className="px-3 py-2">{entry.date}</td>
+                  <td className="px-3 py-2">
+                    <span className="border border-blue-400 text-blue-500 px-3 py-1 rounded-full text-xs">
+                      {employee.job}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">{entry.type}</td>
+                  <td className="px-3 py-2 font-medium">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-xs ${
+                        entry.status === "Approved"
+                          ? "bg-green-100 text-green-600"
+                          : entry.status === "Declined"
+                          ? "bg-red-100 text-red-500"
+                          : "bg-gray-100 text-gray-500"
+                      }`}
+                    >
+                      {entry.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">{entry.shift}</td>
+                  <td className="px-3 py-2">{entry.start}</td>
+                  <td className="px-3 py-2">{entry.end}</td>
+                  <td className="px-3 py-2 text-gray-400 italic">—</td>
+                  <td className="px-3 py-2 text-gray-400 italic">—</td>
+                </tr>
+                {idx !== arr.length - 1 && (
+                  <tr>
+                    <td colSpan={10}>
+                      <div className="border-b border-gray-200 mx-3"></div>
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
           </tbody>
         </table>
       </div>
