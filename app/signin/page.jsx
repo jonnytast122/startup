@@ -97,6 +97,8 @@ function LoginForm({ className, ...props }) {
       const res = await axios.post(apiRoutes.auth.login, {
         phoneNumber: formattedPhone,
         otp: otpCode,
+      },{
+        withCredentials: true
       });
 
       if (res.data) {
