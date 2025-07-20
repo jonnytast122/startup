@@ -18,5 +18,5 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   //disable the matcher for frontend development only
-  // matcher: ['/overview/:path*'],
+  matcher: ['/overview/:path*'],
 };
