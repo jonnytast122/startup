@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import ReactQueryProvider from './react-query-provider';
 
 export default function Layout({ children }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -151,7 +152,9 @@ export default function Layout({ children }) {
         </header>
 
         {/* Scrollable content */}
+        <ReactQueryProvider>
         <div className="flex-1 overflow-y-auto p-4 bg-gray-100">{children}</div>
+        </ReactQueryProvider>
       </SidebarInset>
     </SidebarProvider>
   );
