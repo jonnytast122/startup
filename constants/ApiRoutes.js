@@ -29,6 +29,11 @@ const ApiRoutes = {
     update: `${BASE_URL}/title/{id}`,
     delete: `${BASE_URL}/title/delete`,
   },
+  policy: {
+    getOverTimeType: `${BASE_URL}/overtime-types`,
+    getOverTimeSetting: `${BASE_URL}/overtime-settings`,
+  }
+
 };
 
 export default ApiRoutes;
