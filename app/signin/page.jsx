@@ -94,12 +94,16 @@ function LoginForm({ className, ...props }) {
       setIsLoading(true);
       const formattedPhone = phoneNumber.replace(/^\+/, "");
 
-      const res = await axios.post(apiRoutes.auth.login, {
-        phoneNumber: formattedPhone,
-        otp: otpCode,
-      },{
-        withCredentials: true
-      });
+      const res = await axios.post(
+        apiRoutes.auth.login,
+        {
+          phoneNumber: formattedPhone,
+          otp: otpCode,
+        },
+        {
+          withCredentials: true,
+        }
+      );
 
       if (res.data) {
         // Pass user + tokens to AuthContext login method

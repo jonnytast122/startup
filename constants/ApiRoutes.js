@@ -19,9 +19,9 @@ const ApiRoutes = {
   },
   department: {
     create: `${BASE_URL}/departments`,
-    get: `${BASE_URL}/department/get`,
-    update: `${BASE_URL}/department/{id}`,
-    delete: `${BASE_URL}/department/delete`,
+    get: `${BASE_URL}/departments/{id}/departments`,
+    update: `${BASE_URL}/departments/{id}`,
+    delete: `${BASE_URL}/departments/{id}`,
   },
   title: {
     create: `${BASE_URL}/titles`,
