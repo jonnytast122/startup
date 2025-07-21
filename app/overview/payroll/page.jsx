@@ -123,16 +123,17 @@ export default function PayrollPage() {
     { key: "netSalary", label: "Net Salary" },
   ];
 
-  const [visibleCols, setVisibleCols] = useState(
-    Object.fromEntries(allColumns.map((col) => [col.key, true]))
-  );
-
-  const toggleCol = (key) => {
-    setVisibleCols((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
 
   const PayrollSection = ({ title, totalPay, onDelete }) => {
     const [showDialog, setShowDialog] = useState(false);
+    const [visibleCols, setVisibleCols] = useState(
+      Object.fromEntries(allColumns.map((col) => [col.key, true]))
+    );
+
+    const toggleCol = (key) => {
+      setVisibleCols((prev) => ({ ...prev, [key]: !prev[key] }));
+    };
+
     return (
       <div className="border rounded-xl mb-6 p-4">
         <div className="flex justify-between items-center mb-4">
@@ -242,7 +243,6 @@ export default function PayrollPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 bg-white">
                       {allColumns
-                        .filter((col) => col.label !== "First Name" && col.label !== "Last Name")
                         .map((col) => (
                           <DropdownMenuCheckboxItem
                             key={col.key}
