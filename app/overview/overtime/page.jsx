@@ -25,7 +25,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { AlarmClock, Search, ChevronDown } from "lucide-react";
+import { CalendarPlus2, Search, ChevronDown } from "lucide-react";
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
 import AddOTDialog from "./components/addotdialog";
@@ -214,7 +214,7 @@ const columns = [
 ];
 
 const Overtime = () => {
-    const [otData, setOtData] = useState([...data]); // ✅ OK here
+  const [otData, setOtData] = useState([...data]); // ✅ OK here
 
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddOTDialog, setOpenAddOTDialog] = useState(false);
@@ -249,7 +249,7 @@ const Overtime = () => {
           {/* Title Section */}
           <a href="/overview/leaves" className="block">
             <div className="flex items-center space-x-3">
-              <AlarmClock className="text-[#2998FF]" width={40} height={40} />
+              <CalendarPlus2 className="text-[#2998FF]" width={40} height={40} />
               <span className="font-custom text-3xl text-black">Overtime</span>
             </div>
           </a>
@@ -366,42 +366,42 @@ const Overtime = () => {
                 >
                   Add OT
                 </Button>
-<AddOTDialog
-  open={openAddOTDialog}
-  onOpenChange={setOpenAddOTDialog}
-  onConfirm={(data) => {
-    const randomFrom = (arr) =>
-      arr[Math.floor(Math.random() * arr.length)];
+                <AddOTDialog
+                  open={openAddOTDialog}
+                  onOpenChange={setOpenAddOTDialog}
+                  onConfirm={(data) => {
+                    const randomFrom = (arr) =>
+                      arr[Math.floor(Math.random() * arr.length)];
 
-    const jobTypes = ["Accountant", "Engineer", "Supervisor", "Manager"];
-    const departments = ["HR", "IT", "Marketing", "Operations"];
-    const shiftTypes = ["Schedule", "Flexible", "Night"];
+                    const jobTypes = ["Accountant", "Engineer", "Supervisor", "Manager"];
+                    const departments = ["HR", "IT", "Marketing", "Operations"];
+                    const shiftTypes = ["Schedule", "Flexible", "Night"];
 
-    const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+                    const today = new Date();
+                    const todayStr = today.toISOString().split("T")[0];
 
-    const newRows = data.users.map((user) => ({
-      profile: "/avatars/ralph.png", // default avatar
-      firstname: user.name.split(" ")[0],
-      lastname: user.name.split(" ")[1] || "",
-      job: randomFrom(jobTypes),
-      department: randomFrom(departments),
-      shifttype: randomFrom(shiftTypes),
-      otrequest: `${data.hours} hours`,
-      otassigned: `${(parseFloat(data.hours) / 2).toFixed(1)} hours`,
-      ottotal: `${data.hours} hours`,
-      onleavestatus: {
-        annual: "Pending",
-        sick: "Approved",
-      },
-      date: data.date
-        ? new Date(data.date).toISOString().split("T")[0]
-        : todayStr,
-    }));
+                    const newRows = data.users.map((user) => ({
+                      profile: "/avatars/ralph.png", // default avatar
+                      firstname: user.name.split(" ")[0],
+                      lastname: user.name.split(" ")[1] || "",
+                      job: randomFrom(jobTypes),
+                      department: randomFrom(departments),
+                      shifttype: randomFrom(shiftTypes),
+                      otrequest: `${data.hours} hours`,
+                      otassigned: `${(parseFloat(data.hours) / 2).toFixed(1)} hours`,
+                      ottotal: `${data.hours} hours`,
+                      onleavestatus: {
+                        annual: "Pending",
+                        sick: "Approved",
+                      },
+                      date: data.date
+                        ? new Date(data.date).toISOString().split("T")[0]
+                        : todayStr,
+                    }));
 
-    setOtData((prev) => [...prev, ...newRows]);
-  }}
-/>
+                    setOtData((prev) => [...prev, ...newRows]);
+                  }}
+                />
 
 
                 <Select>

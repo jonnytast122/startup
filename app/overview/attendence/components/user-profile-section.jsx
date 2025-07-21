@@ -30,7 +30,7 @@ export default function UserProfileSection({ employee, onClose }) {
   if (!employee) return null;
 
   return (
-    <div className="bg-white rounded-xl shadow-md py-6 px-6">
+    <div className="bg-white ">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
           <img src={employee.profile} alt="Avatar" className="w-12 h-12 rounded-full" />
@@ -73,13 +73,6 @@ export default function UserProfileSection({ employee, onClose }) {
               ))}
             </SelectContent>
           </Select>
-          <Button
-            variant="outline"
-            className="rounded-full px-4 text-sm"
-            onClick={onClose}
-          >
-            Back
-          </Button>
         </div>
       </div>
 
@@ -122,52 +115,51 @@ export default function UserProfileSection({ employee, onClose }) {
               </td>
             </tr>
             {["Mon 23/08", "Tue 20/08", "Wed 21/08", "Thu 22/08", "Fri 23/08", "Sat 24/08"].map(
-  (date, idx, arr) => {
-    const isLast = idx === arr.length - 1;
-    return (
-      <tr
-        key={idx}
-        className={`text-sm text-center ${!isLast ? "border-b border-gray-100" : ""}`}
-      >
-        <td className="px-3 py-2"></td>
-        <td className="px-3 py-2">{date}</td>
-        <td className="px-3 py-2">
-          <span className="border border-blue-400 text-blue-500 px-3 py-1 rounded-full text-xs">
-            {employee.job}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          <span
-            className={`font-custom ${
-              employee.status === "On time" ? "text-green-500" :
-              employee.status === "Late" ? "text-red-500" :
-              employee.status === "Early" ? "text-blue-500" : ""
-            }`}
-          >
-            {employee.status || "0"}
-          </span>
-        </td>
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1 justify-start">
-            <span>{employee.Clockin || "5"}</span>
-            <MapPin className="w-4 h-4 text-gray-600" />
-          </div>
-        </td>
-        <td className="px-3 py-2 text-red-500">{employee.Break || "12:00 - 13:00"}</td>
-        <td className="px-3 py-2">
-          <div className="flex items-center gap-1 justify-start">
-            <span>{employee.Clockout || "0"}</span>
-            <MapPin className="w-4 h-4 text-gray-600" />
-          </div>
-        </td>
-        <td className="px-3 py-2">{employee.overtime || "0"}</td>
-        <td className="px-3 py-2">{employee.overtime || "0"}</td>
-        <td className="px-3 py-2 text-gray-400 italic">-</td>
-        <td className="px-3 py-2 text-gray-400 italic">-</td>
-      </tr>
-    );
-  }
-)}
+              (date, idx, arr) => {
+                const isLast = idx === arr.length - 1;
+                return (
+                  <tr
+                    key={idx}
+                    className={`text-sm text-center ${!isLast ? "border-b border-gray-100" : ""}`}
+                  >
+                    <td className="px-3 py-2"></td>
+                    <td className="px-3 py-2">{date}</td>
+                    <td className="px-3 py-2">
+                      <span className="border border-blue-400 text-blue-500 px-3 py-1 rounded-full text-xs">
+                        {employee.job}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`font-custom ${employee.status === "On time" ? "text-green-500" :
+                          employee.status === "Late" ? "text-red-500" :
+                            employee.status === "Early" ? "text-blue-500" : ""
+                          }`}
+                      >
+                        {employee.status || "0"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1 justify-start">
+                        <span>{employee.Clockin || "5"}</span>
+                        <MapPin className="w-4 h-4 text-gray-600" />
+                      </div>
+                    </td>
+                    <td className="px-3 py-2 text-red-500">{employee.Break || "12:00 - 13:00"}</td>
+                    <td className="px-3 py-2">
+                      <div className="flex items-center gap-1 justify-start">
+                        <span>{employee.Clockout || "0"}</span>
+                        <MapPin className="w-4 h-4 text-gray-600" />
+                      </div>
+                    </td>
+                    <td className="px-3 py-2">{employee.overtime || "0"}</td>
+                    <td className="px-3 py-2">{employee.overtime || "0"}</td>
+                    <td className="px-3 py-2 text-gray-400 italic">-</td>
+                    <td className="px-3 py-2 text-gray-400 italic">-</td>
+                  </tr>
+                );
+              }
+            )}
           </tbody>
         </table>
       </div>

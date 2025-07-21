@@ -81,8 +81,8 @@ export default function UserProfileSection({ employee, onClose }) {
       <hr className="border-gray-200 mb-3" />
       <div className="flex justify-between mb-4">
         <p className="text-sm">
-          <span className="ml-6 font-semibold">Total OT Hours: </span>18.5 hours
-          <span className="ml-6 font-semibold">Total Approved: </span>16 hours
+          <span className="ml-6 font-semibold">Total Overtime: </span>18.5 hours
+          <span className="ml-6 font-semibold">Total Overtime Days: </span>2
         </p>
       </div>
       <hr className="border-gray-200 mb-4" />

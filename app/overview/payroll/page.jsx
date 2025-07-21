@@ -185,10 +185,6 @@ export default function PayrollPage() {
                 </SelectItem>
               </SelectContent>
             </Select>
-            <CustomizeReportDialog
-              open={showCustomizeDialog}
-              setOpen={setShowCustomizeDialog}
-            />
 
           </div>
         </div>
@@ -401,6 +397,10 @@ export default function PayrollPage() {
           onClose={() => setSelectedEmployee(null)}
         />
       )}
+                  <CustomizeReportDialog
+              open={showCustomizeDialog}
+              setOpen={setShowCustomizeDialog}
+            />
     </div>
   );
 }

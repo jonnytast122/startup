@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ListFilter, AlarmClock, ChevronDown } from "lucide-react";
+import { Search, ListFilter, CalendarClock, ChevronDown } from "lucide-react";
 import {
   Select,
   SelectTrigger,
@@ -80,8 +80,8 @@ export default function TimeClock() {
   const firstLevelLabel = isAllSelected
     ? "All"
     : selectedFirstLevels
-        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
-        .join(", ") || "Select...";
+      .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+      .join(", ") || "Select...";
 
   const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
     const count = selectedItems[key]?.length || 0;
@@ -93,11 +93,12 @@ export default function TimeClock() {
       {/* Header */}
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
         <div className="flex items-center justify-between p-5">
-          <div className="flex items-center space-x-3">
-            <AlarmClock className="text-[#2998FF]" width={40} height={40} />
-            <span className="font-custom text-3xl text-black">Attendence</span>
-          </div>
-
+          <a href="/overview/attendence" className="block">
+            <div className="flex items-center space-x-3">
+              <CalendarClock className="text-[#2998FF]" width={40} height={40} />
+              <span className="font-custom text-3xl text-black">Attendence</span>
+            </div>
+          </a>
           <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
@@ -113,12 +114,10 @@ export default function TimeClock() {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${
-                    badge.bg
-                  } rounded-full flex items-center justify-center border-2 border-white 
-           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${
-             badge.textColor || "text-white"
-           }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${badge.bg
+                    } rounded-full flex items-center justify-center border-2 border-white 
+           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${badge.textColor || "text-white"
+                    }`}
                 >
                   {badge.text}
                 </div>
@@ -139,11 +138,10 @@ export default function TimeClock() {
                 setActiveTab(tab);
                 setSearchQuery(""); // reset search
               }}
-              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
-                activeTab === tab
+              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${activeTab === tab
                   ? "bg-white text-blue-500 rounded-t-xl"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700"
-              }`}
+                }`}
             >
               {tab}
             </button>

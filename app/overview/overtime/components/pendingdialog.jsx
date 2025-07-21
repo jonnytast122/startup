@@ -354,14 +354,9 @@ const PendingDialog = ({ onClose }) => {
         <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
           <div className="flex gap-4">
             {/* Decline Button */}
-            <Button className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition">
-              Decline all
-            </Button>
-
+            <DeclineAllDialog />
             {/* Approve Button */}
-            <Button className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition">
-              Approve all
-            </Button>
+            <ApproveAllDialog />
           </div>
         </div>
       </DialogContent>
@@ -391,7 +386,7 @@ const DeclineDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s leave
+          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT
           on <span className="font-custom">{startdate}</span>?
         </p>
         <input
@@ -474,6 +469,113 @@ const ApproveDialog = ({ employee }) => {
             className="bg-[#5494DA] text-white rounded-full"
           >
             Approve
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+const ApproveAllDialog = () => {
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition"
+          onClick={() => setOpen(true)}
+        >
+          Approve all
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
+        <DialogHeader className="flex items-center gap-2 justify-center">
+          <Smile className="h-12 w-12 text-blue-500" />
+          <DialogTitle />
+        </DialogHeader>
+        <p className="text-gray text-2xl font-custom mb-6">
+          Do you want to approve{" "}
+          <span className="text-[#5494DA] font-custom">All</span> OT requests?
+        </p>
+        <input
+          type="text"
+          placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
+        />
+        <div className="flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="border-gray-400 rounded-full"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              alert(`Approved all requests!\nComment: ${comment}`);
+              setComment("");
+            }}
+            className="bg-[#5494DA] text-white rounded-full"
+          >
+            Approve
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const DeclineAllDialog = () => {
+  const [open, setOpen] = useState(false);
+  const [comment, setComment] = useState("");
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
+          onClick={() => setOpen(true)}
+        >
+          Decline all
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
+        <DialogHeader className="flex items-center gap-2 justify-center">
+          <X className="h-12 w-12 text-[#FB5F59]" />
+          <DialogTitle />
+        </DialogHeader>
+        <p className="text-gray text-2xl font-custom mb-6">
+          Do you want to decline{" "}
+          <span className="text-[#5494DA] font-custom">All</span> OT requests?
+        </p>
+        <input
+          type="text"
+          placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
+          className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
+        />
+        <div className="flex justify-center gap-4">
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
+            className="border-gray-400 rounded-full"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setOpen(false);
+              alert(`Declined all requests!\nComment: ${comment}`);
+              setComment("");
+            }}
+            className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full"
+          >
+            Decline
           </Button>
         </div>
       </DialogContent>
