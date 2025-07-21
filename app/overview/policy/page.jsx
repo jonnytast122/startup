@@ -21,6 +21,8 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PolicyLeave from "./components/add-policyleave-dialog";
 import PolicyOvertime from "./components/add-policyovertime-dialog";
+import { fetchPolicy } from "@/lib/api/policy";
+import { useQuery } from "@tanstack/react-query";
 
 const initialPolicies = {
   leave: [
@@ -63,6 +65,11 @@ export default function PolicyPage() {
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+
+  const { data: policies, isLoading } = useQuery({
+    queryKey: ["policies"],
+    queryFn: fetchPolicy,
+  });
 
   const openModal = (category, policy = null, viewOnly = false) => {
     setSelectedPolicy(policy);
@@ -112,7 +119,7 @@ export default function PolicyPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((policy) => (
+            {policies?.data?.map((policy) => (
               <TableRow
                 key={policy.id}
                 className="cursor-pointer hover:bg-gray-100"
@@ -127,7 +134,7 @@ export default function PolicyPage() {
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    {policy.status}
+                    {policy.status || 'Active'}
                   </span>
                 </TableCell>
                 <TableCell>

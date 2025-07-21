@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 
 const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [policyName, setPolicyName] = useState("");
-  const [overtimeLimit, setOvertimeLimit] = useState(1);
-  const [monthStart, setMonthStart] = useState(1);
-  const [multiplier, setMultiplier] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("January");
-  const [selectedDay, setSelectedDay] = useState(1);
+  const [overtimeLimit, setOvertimeLimit] = useState(policy?.overtimeLimit || 1);
+  const [monthStart, setMonthStart] = useState(policy?.monthStart || 1);
+  const [multiplier, setMultiplier] = useState(policy?.multiplier || 1);
+  const [selectedMonth, setSelectedMonth] = useState(policy?.selectedMonth || "January");
+  const [selectedDay, setSelectedDay] = useState(policy?.selectedDay || 1);
 
   const months = [
     "January", "February", "March", "April", "May", "June",
