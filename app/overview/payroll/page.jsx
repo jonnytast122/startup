@@ -241,15 +241,17 @@ export default function PayrollPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 bg-white">
-                      {allColumns.map((col) => (
-                        <DropdownMenuCheckboxItem
-                          key={col.key}
-                          checked={visibleCols[col.key]}
-                          onCheckedChange={() => toggleCol(col.key)}
-                        >
-                          {col.label}
-                        </DropdownMenuCheckboxItem>
-                      ))}
+                      {allColumns
+                        .filter((col) => col.label !== "First Name" && col.label !== "Last Name")
+                        .map((col) => (
+                          <DropdownMenuCheckboxItem
+                            key={col.key}
+                            checked={visibleCols[col.key]}
+                            onCheckedChange={() => toggleCol(col.key)}
+                          >
+                            {col.label}
+                          </DropdownMenuCheckboxItem>
+                        ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableHead>
@@ -397,10 +399,10 @@ export default function PayrollPage() {
           onClose={() => setSelectedEmployee(null)}
         />
       )}
-                  <CustomizeReportDialog
-              open={showCustomizeDialog}
-              setOpen={setShowCustomizeDialog}
-            />
+      <CustomizeReportDialog
+        open={showCustomizeDialog}
+        setOpen={setShowCustomizeDialog}
+      />
     </div>
   );
 }

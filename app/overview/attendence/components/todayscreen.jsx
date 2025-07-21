@@ -288,7 +288,8 @@ const TodayScreen = () => {
   }, []);
 
   return (
-    <>       {selectedEmployee ? (
+    <>       
+    {selectedEmployee ? (
       <UserProfileSection
         employee={selectedEmployee}
         onClose={() => setSelectedEmployee(null)}
@@ -648,9 +649,9 @@ const TodayScreen = () => {
               </div>
             )}
           </div>
-      </div>
-              </>
-      )}
+        </div>
+      </>
+    )}
     </>
   );
 };

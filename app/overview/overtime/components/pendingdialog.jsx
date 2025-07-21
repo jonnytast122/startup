@@ -162,7 +162,8 @@ const columns = [
           startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
         />
 
-        <ApproveDialog employee={row.original.employee} />
+        <ApproveDialog employee={row.original.employee}
+          startdate={format(parseISO(row.original.date), "yyyy-MM-dd")} />
       </div>
     ),
   },
@@ -420,7 +421,7 @@ const DeclineDialog = ({ employee, startdate }) => {
     </Dialog>
   );
 };
-const ApproveDialog = ({ employee }) => {
+const ApproveDialog = ({ employee, startdate }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
 
@@ -442,7 +443,7 @@ const ApproveDialog = ({ employee }) => {
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
           <span className="text-[#5494DA] font-custom">{employee}</span>'s OT
-          request <span className="font-custom"></span>?
+          request on <span className="font-custom">{startdate}</span>?
         </p>
         <input
           id="note_request"

@@ -247,7 +247,7 @@ const Overtime = () => {
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
-          <a href="/overview/leaves" className="block">
+          <a href="/overview/overtime" className="block">
             <div className="flex items-center space-x-3">
               <CalendarPlus2 className="text-[#2998FF]" width={40} height={40} />
               <span className="font-custom text-3xl text-black">Overtime</span>
