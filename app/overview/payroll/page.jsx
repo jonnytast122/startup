@@ -230,6 +230,7 @@ export default function PayrollPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-100">
+                <TableHead className="w-10" /> {/* <-- Empty header for profile */}
                 {allColumns.map(
                   (col) =>
                     visibleCols[col.key] && <TableHead key={col.key}>{col.label}</TableHead>
@@ -262,10 +263,16 @@ export default function PayrollPage() {
                 <TableRow key={idx}
                   onClick={() => handleRowClick(emp)}
                   className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  <TableCell>
+                    <img
+                      src={emp.profile}
+                      alt="Avatar"
+                      className="w-8 h-8 rounded-full"
+                    ></img>
+                  </TableCell>
                   {visibleCols.firstName && (
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <img src={emp.profile} alt="Avatar" className="w-8 h-8 rounded-full" />
                         <span>{emp.firstName}</span>
                       </div>
                     </TableCell>
