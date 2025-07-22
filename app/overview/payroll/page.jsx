@@ -232,7 +232,7 @@ export default function PayrollPage() {
         <div className="overflow-auto mt-2">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-100">
+              <TableRow className="bg-gray-200 text-dark-blue">
                 <TableHead className="w-10" /> {/* <-- Empty header for profile */}
                 {allColumns.map(
                   (col) =>
