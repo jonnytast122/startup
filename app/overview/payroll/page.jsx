@@ -122,7 +122,7 @@ export default function PayrollPage() {
     { key: "overtimePay", label: "Overtime Pay" },
     { key: "grossSalary", label: "Gross Salary" },
     { key: "tax", label: "Tax " },
-    { key: "nssf", label: " NSSf" },
+    { key: "nssf", label: " NSSF" },
     { key: "netSalary", label: "Net Salary" },
   ];
 
@@ -232,7 +232,7 @@ export default function PayrollPage() {
         <div className="overflow-auto mt-2">
           <Table>
             <TableHeader>
-              <TableRow className="bg-gray-200 text-dark-blue">
+              <TableRow className="bg-gray-100">
                 <TableHead className="w-10" /> {/* <-- Empty header for profile */}
                 {allColumns.map(
                   (col) =>
