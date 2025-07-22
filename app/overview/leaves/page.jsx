@@ -299,13 +299,13 @@ const Leaves = () => {
                 </Select>
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="flex items-center justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                  className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
                 >
                   {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
                   <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
                 </button>
                 {showDatePicker && (
-                  <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
+                  <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
                     <DateRangePicker
                       ranges={[selectedRange]}
                       onChange={(ranges) => {
@@ -332,6 +332,7 @@ const Leaves = () => {
                       key: "selection",
                     });
                   }}
+                  className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"
                 >
                   Today
                 </Button>

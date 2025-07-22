@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Search, GitCompareArrows } from "lucide-react";
 import { Loader } from "@googlemaps/js-api-loader";
-import 'animate.css';  // Import animate.css globally
+import "animate.css"; // Import animate.css globally
 
 function Map({ userData = [], selectedDate }) {
   const mapRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [map, setMap] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null); // NEW
 
   const filteredUsers = userData.filter((user) => {
     if (!user.status || user.status.trim() === "") return false;
@@ -14,6 +15,13 @@ function Map({ userData = [], selectedDate }) {
     const userDate = new Date(user.date).toDateString();
     const selected = new Date(selectedDate).toDateString();
     if (userDate !== selected) return false;
+
+    if (selectedUser) {
+      return (
+        user.firstname === selectedUser.firstname &&
+        user.lastname === selectedUser.lastname
+      );
+    }
 
     const fullName = `${user.firstname} ${user.lastname}`.toLowerCase();
     const search = searchTerm.toLowerCase();
@@ -25,7 +33,6 @@ function Map({ userData = [], selectedDate }) {
       user.job.toLowerCase().includes(search)
     );
   });
-  
 
   useEffect(() => {
     const initMap = async () => {
@@ -38,7 +45,7 @@ function Map({ userData = [], selectedDate }) {
       if (!google || !google.maps) return;
 
       const newMap = new google.maps.Map(mapRef.current, {
-        center: { lat: 11.56786, lng: 104.89005 }, // Default: RUPP, Cambodia
+        center: { lat: 11.56786, lng: 104.89005 },
         zoom: 16,
         mapId: "MY_NEXTJS_MAPID",
       });
@@ -51,12 +58,12 @@ function Map({ userData = [], selectedDate }) {
 
   useEffect(() => {
     if (!map) return;
-  
+
     const markers = [];
     const overlays = [];
-  
+
     let firstMatch = null; // Store the first matched user
-  
+
     filteredUsers.forEach((user, index) => {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
@@ -68,13 +75,13 @@ function Map({ userData = [], selectedDate }) {
         },
         title: `${user.firstname} ${user.lastname}`,
       });
-  
+
       markers.push(marker);
-  
+
       if (index === 0) {
         firstMatch = user; // Capture first matched user
       }
-  
+
       // Animated overlay
       const overlay = new google.maps.OverlayView();
       overlay.onAdd = function () {
@@ -86,12 +93,12 @@ function Map({ userData = [], selectedDate }) {
         div.style.borderRadius = "50%";
         div.style.backgroundColor = "rgba(84, 148, 218, 0.3)";
         div.style.animation = "pulse-animation 2s infinite";
-  
+
         this.div = div;
         const panes = this.getPanes();
         panes.overlayLayer.appendChild(div);
       };
-  
+
       overlay.draw = function () {
         const projection = this.getProjection();
         if (!projection) return;
@@ -103,16 +110,16 @@ function Map({ userData = [], selectedDate }) {
           this.div.style.top = `${position.y - 25}px`;
         }
       };
-  
+
       overlay.onRemove = function () {
         this.div.parentNode.removeChild(this.div);
         this.div = null;
       };
-  
+
       overlay.setMap(map);
       overlays.push(overlay);
     });
-  
+
     // If a user is found, pan and zoom into their location
     if (firstMatch) {
       map.panTo(new google.maps.LatLng(firstMatch.lat, firstMatch.lng));
@@ -120,13 +127,12 @@ function Map({ userData = [], selectedDate }) {
     } else {
       map.setZoom(16); // Reset zoom if no user is found
     }
-  
+
     return () => {
       markers.forEach((marker) => marker.setMap(null));
       overlays.forEach((overlay) => overlay.setMap(null));
     };
   }, [filteredUsers, map]);
-  
 
   return (
     <div className="relative w-full h-[500px]">
@@ -152,7 +158,10 @@ function Map({ userData = [], selectedDate }) {
           {/* "All" Button */}
           <button
             className="flex items-center px-4 py-1.5 text-white bg-blue-500 rounded-full hover:bg-blue-600"
-            onClick={() => setSearchTerm("")} // Clears search
+            onClick={() => {
+              setSearchTerm(""); // reset search
+              setSelectedUser(null); // reset individual filter
+            }}
           >
             <GitCompareArrows className="w-4 h-4 mr-1" /> All
           </button>
@@ -182,7 +191,13 @@ function Map({ userData = [], selectedDate }) {
                   </div>
                   {/* Blue Circle with Icon (Outside) */}
                   <div className="w-9 h-9 bg-blue-500 text-white flex items-center justify-center rounded-full">
-                    <GitCompareArrows className="w-4 h-4" />
+                    <GitCompareArrows
+                      className="w-4 h-4 cursor-pointer"
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setSearchTerm("");
+                      }}
+                    />
                   </div>
                 </div>
               </div>
