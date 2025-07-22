@@ -122,7 +122,7 @@ export default function PayrollPage() {
     { key: "overtimePay", label: "Overtime Pay" },
     { key: "grossSalary", label: "Gross Salary" },
     { key: "tax", label: "Tax " },
-    { key: "nssf", label: " NSSf" },
+    { key: "nssf", label: " NSSF" },
     { key: "netSalary", label: "Net Salary" },
   ];
 
