@@ -1,13 +1,17 @@
+"use client";
+
 import React, { useEffect, useRef, useState } from "react";
 import { Search, GitCompareArrows } from "lucide-react";
 import { Loader } from "@googlemaps/js-api-loader";
-import "animate.css"; // Import animate.css globally
+import "animate.css";
 
 function Map({ userData = [], selectedDate }) {
   const mapRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
   const [map, setMap] = useState(null);
-  const [selectedUser, setSelectedUser] = useState(null); // NEW
+  const [hideAll, setHideAll] = useState(false);
+  const [hiddenUsers, setHiddenUsers] = useState([]);
 
   const filteredUsers = userData.filter((user) => {
     if (!user.status || user.status.trim() === "") return false;
@@ -15,13 +19,6 @@ function Map({ userData = [], selectedDate }) {
     const userDate = new Date(user.date).toDateString();
     const selected = new Date(selectedDate).toDateString();
     if (userDate !== selected) return false;
-
-    if (selectedUser) {
-      return (
-        user.firstname === selectedUser.firstname &&
-        user.lastname === selectedUser.lastname
-      );
-    }
 
     const fullName = `${user.firstname} ${user.lastname}`.toLowerCase();
     const search = searchTerm.toLowerCase();
@@ -62,9 +59,17 @@ function Map({ userData = [], selectedDate }) {
     const markers = [];
     const overlays = [];
 
-    let firstMatch = null; // Store the first matched user
+    const usersToRender = hideAll
+      ? []
+      : filteredUsers.filter(
+          (user) =>
+            !hiddenUsers.some(
+              (h) =>
+                h.firstname === user.firstname && h.lastname === user.lastname
+            )
+        );
 
-    filteredUsers.forEach((user, index) => {
+    usersToRender.forEach((user) => {
       const marker = new google.maps.Marker({
         position: { lat: user.lat, lng: user.lng },
         map,
@@ -78,11 +83,6 @@ function Map({ userData = [], selectedDate }) {
 
       markers.push(marker);
 
-      if (index === 0) {
-        firstMatch = user; // Capture first matched user
-      }
-
-      // Animated overlay
       const overlay = new google.maps.OverlayView();
       overlay.onAdd = function () {
         const div = document.createElement("div");
@@ -120,29 +120,27 @@ function Map({ userData = [], selectedDate }) {
       overlays.push(overlay);
     });
 
-    // If a user is found, pan and zoom into their location
-    if (firstMatch) {
-      map.panTo(new google.maps.LatLng(firstMatch.lat, firstMatch.lng));
-      map.setZoom(18); // Zoom into the location
+    const centerUser = usersToRender[0];
+    if (centerUser) {
+      map.panTo(new google.maps.LatLng(centerUser.lat, centerUser.lng));
+      map.setZoom(18);
     } else {
-      map.setZoom(16); // Reset zoom if no user is found
+      map.setZoom(16);
     }
 
     return () => {
       markers.forEach((marker) => marker.setMap(null));
       overlays.forEach((overlay) => overlay.setMap(null));
     };
-  }, [filteredUsers, map]);
+  }, [filteredUsers, hiddenUsers, hideAll, map]);
 
   return (
     <div className="relative w-full h-[500px]">
-      {/* Floating User List */}
       <div className="absolute top-5 left-5 z-10 bg-white shadow-lg p-6 rounded-lg border border-[#5494DA] w-80 animate__animated animate__fadeIn">
         <h2 className="text-lg font-custom text-dark-blue mb-4">
           All users that clocked in today
         </h2>
 
-        {/* Search Input and "All" Button */}
         <div className="flex items-center space-x-2 mb-4">
           <div className="relative flex-1">
             <input
@@ -155,58 +153,97 @@ function Map({ userData = [], selectedDate }) {
             <Search className="absolute left-3 top-1.5 h-5 w-5 text-gray-500" />
           </div>
 
-          {/* "All" Button */}
           <button
-            className="flex items-center px-4 py-1.5 text-white bg-blue-500 rounded-full hover:bg-blue-600"
+            className={`flex items-center px-4 py-1.5 rounded-full transition-colors duration-200 ${
+              hideAll
+                ? "bg-gray-400 text-white hover:bg-gray-500"
+                : "bg-blue-500 text-white hover:bg-blue-600"
+            }`}
             onClick={() => {
-              setSearchTerm(""); // reset search
-              setSelectedUser(null); // reset individual filter
+              setSelectedUser(null);
+              setSearchTerm("");
+
+              if (hideAll || hiddenUsers.length > 0) {
+                // Reset all: unhide everyone, and turn map back on
+                setHideAll(false);
+                setHiddenUsers([]);
+              } else {
+                // Hide all
+                setHideAll(true);
+              }
             }}
           >
             <GitCompareArrows className="w-4 h-4 mr-1" /> All
           </button>
         </div>
 
-        <ul className="space-y-2">
-          {filteredUsers.map((user, index) => (
-            <li
-              key={index}
-              className="flex items-center space-x-2 border-b border-[#E0E0E0] pb-2"
-            >
-              <img
-                src={user.profile || "/default-avatar.png"}
-                alt={user.firstname}
-                className="w-8 h-8 rounded-full object-cover"
-              />
-              <div className="flex items-center space-x-3 flex-1">
-                {/* Name */}
-                <span className="text-xs sm:text-sm md:text-md lg:text-md font-custom text-dark-blue">
-                  {user.firstname} {user.lastname}
-                </span>
-                {/* Job with Icon Outside */}
-                <div className="flex items-center space-x-2">
-                  {/* Job Title */}
-                  <div className="px-5 py-1 text-xs sm:text-sm md:text-md lg:text-md font-custom rounded-full border border-[#5494DA] text-blue">
-                    {user.job}
-                  </div>
-                  {/* Blue Circle with Icon (Outside) */}
-                  <div className="w-9 h-9 bg-blue-500 text-white flex items-center justify-center rounded-full">
-                    <GitCompareArrows
-                      className="w-4 h-4 cursor-pointer"
-                      onClick={() => {
-                        setSelectedUser(user);
-                        setSearchTerm("");
-                      }}
-                    />
+        <ul className="space-y-2 max-h-[300px] overflow-y-auto">
+          {filteredUsers.map((user, index) => {
+            const isSelected =
+              selectedUser &&
+              selectedUser.firstname === user.firstname &&
+              selectedUser.lastname === user.lastname;
+
+            return (
+              <li
+                key={index}
+                className="flex items-center space-x-2 border-b border-[#E0E0E0] pb-2"
+              >
+                <img
+                  src={user.profile || "/default-avatar.png"}
+                  alt={user.firstname}
+                  className="w-8 h-8 rounded-full object-cover"
+                />
+                <div className="flex items-center space-x-3 flex-1">
+                  <span className="text-xs sm:text-sm md:text-md lg:text-md font-custom text-dark-blue">
+                    {user.firstname} {user.lastname}
+                  </span>
+                  <div className="flex items-center space-x-2">
+                    <div className="px-5 py-1 text-xs sm:text-sm md:text-md lg:text-md font-custom rounded-full border border-[#5494DA] text-blue">
+                      {user.job}
+                    </div>
+                    <div className="w-9 h-9 bg-blue-500 text-white flex items-center justify-center rounded-full">
+                      <GitCompareArrows
+                        className={`w-4 h-4 cursor-pointer transition-colors duration-200 ${
+                          hiddenUsers.some(
+                            (h) =>
+                              h.firstname === user.firstname &&
+                              h.lastname === user.lastname
+                          )
+                            ? "text-gray-400"
+                            : "text-white"
+                        }`}
+                        onClick={() => {
+                          const isHidden = hiddenUsers.some(
+                            (h) =>
+                              h.firstname === user.firstname &&
+                              h.lastname === user.lastname
+                          );
+
+                          if (isHidden) {
+                            // Unhide user
+                            setHiddenUsers((prev) =>
+                              prev.filter(
+                                (h) =>
+                                  h.firstname !== user.firstname ||
+                                  h.lastname !== user.lastname
+                              )
+                            );
+                          } else {
+                            // Hide user
+                            setHiddenUsers((prev) => [...prev, user]);
+                          }
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       </div>
 
-      {/* Google Map */}
       <div ref={mapRef} className="h-full w-full rounded-md border" />
     </div>
   );

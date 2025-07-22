@@ -483,7 +483,7 @@ const TodayScreen = () => {
                   <TableRow
                     key={rowIdx}
                     onClick={() => setSelectedEmployee(row)}
-                    className="cursor-pointer hover:bg-blue-50 transition-colors"
+                    className="cursor-pointer hover:bg-gray-100 transition-colors"
                   >
                     {columns.map((col, colIdx) => (
                       <TableCell
