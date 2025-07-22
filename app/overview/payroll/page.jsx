@@ -88,7 +88,8 @@ export default function PayrollPage() {
       regularPay: 200,
       overtimePay: 50,
       grossSalary: 250,
-      taxNassf: 20,
+      tax: 170,
+      nssf: 50,
       netSalary: 230,
     },
     {
@@ -103,7 +104,8 @@ export default function PayrollPage() {
       regularPay: 160,
       overtimePay: 40,
       grossSalary: 200,
-      taxNassf: 25,
+      tax: 170,
+      nssf: 50,
       netSalary: 175,
     },
   ];
@@ -119,7 +121,8 @@ export default function PayrollPage() {
     { key: "regularPay", label: "Regular Pay" },
     { key: "overtimePay", label: "Overtime Pay" },
     { key: "grossSalary", label: "Gross Salary" },
-    { key: "taxNassf", label: "Tax Nassf" },
+    { key: "tax", label: "Tax " },
+    { key: "nssf", label: " NSSf" },
     { key: "netSalary", label: "Net Salary" },
   ];
 
@@ -292,7 +295,8 @@ export default function PayrollPage() {
                   {visibleCols.regularPay && <TableCell>${emp.regularPay}</TableCell>}
                   {visibleCols.overtimePay && <TableCell>${emp.overtimePay}</TableCell>}
                   {visibleCols.grossSalary && <TableCell>${emp.grossSalary}</TableCell>}
-                  {visibleCols.taxNassf && <TableCell>${emp.taxNassf}</TableCell>}
+                  {visibleCols.tax && <TableCell>${emp.tax}</TableCell>}
+                  {visibleCols.nssf && <TableCell>${emp.nssf}</TableCell>}
                   {visibleCols.netSalary && <TableCell>${emp.netSalary}</TableCell>}
                 </TableRow>
               ))}
