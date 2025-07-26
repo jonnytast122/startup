@@ -29,10 +29,21 @@ const ApiRoutes = {
     update: `${BASE_URL}/title/{id}`,
     delete: `${BASE_URL}/title/delete`,
   },
-  policy: {
+  overTimeSetting: {
     getOverTimeType: `${BASE_URL}/overtime-types`,
-    getOverTimeSetting: `${BASE_URL}/overtime-settings`,
+    createOvertimeType: `${BASE_URL}/overtime-types`,
+    get: `${BASE_URL}/overtime-settings/company/{companyId}`,
+    create: `${BASE_URL}/overtime-settings`,
+    update: `${BASE_URL}/overtime-settings/{id}`,
+    delete: `${BASE_URL}/overtime-settings/{id}`,
+  },
+  leavePolicies: {
+    get: `${BASE_URL}/leave-policies/company/{companyId}`,
+    create: `${BASE_URL}/leave-policies`,
+    update: `${BASE_URL}/leave-policies/{id}`,
+    delete: `${BASE_URL}/leave-policies/{id}`,
   }
+
 
 };
 
