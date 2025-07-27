@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus, MoreHorizontal, CircleX } from "lucide-react";
+import { Users, Plus, MoreHorizontal, CircleX, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,7 +21,11 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogOverlay,
+} from "@/components/ui/dialog"; // ✅ make sure Overlay is imported
 
 const Members = [
   { first: "Lucy", last: "Trevo", dept: "Marketing", job: "Accountant", avatar: "https://via.placeholder.com/28" },
@@ -95,6 +99,7 @@ export default function GroupPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [confirmDeleteSection, setConfirmDeleteSection] = useState(null);
 
   const openAddModal = (category) => {
     setNewGroup({ name: "", admins: [], category });
@@ -134,11 +139,11 @@ export default function GroupPage() {
       const newGroups = prevData[updatedCategory].map((g) =>
         g.id === updatedGroup.id
           ? {
-              ...g,
-              groupName: updatedGroup.groupName,
-              admins: updatedGroup.admins,
-              members: updatedGroup.admins.length,
-            }
+            ...g,
+            groupName: updatedGroup.groupName,
+            admins: updatedGroup.admins,
+            members: updatedGroup.admins.length,
+          }
           : g
       );
       return { ...prevData, [updatedCategory]: newGroups };
@@ -163,12 +168,14 @@ export default function GroupPage() {
     return (
       <div key={category} className="mb-7 overflow-hidden">
         <div className={`${color.bg} py-3 px-4 flex justify-between items-center`}>
-          <div>
+          <div className="flex items-center gap-6">
             <h2 className={`font-semibold text-xl ${color.text}`}>{title}</h2>
-            <span className="text-gray-600">{groupData.length} groups</span>
+            <button onClick={() => setConfirmDeleteSection(category)}>
+              <Trash2 className="w-5 h-5 text-black hover:text-red-600" />
+            </button>
           </div>
+          <span className="text-gray-600">{groupData.length} groups</span>
         </div>
-
         <div className="bg-white mt-1">
           <Table>
             <TableHeader>
@@ -349,6 +356,40 @@ export default function GroupPage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {confirmDeleteSection && (
+        <Dialog open onOpenChange={() => setConfirmDeleteSection(null)}>
+          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center" style={{ minHeight: "280px" }}>
+            <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
+            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+              Do you want to delete this section?
+            </h2>
+            <div className="flex items-center gap-4 mt-8">
+              <Button
+                variant="outline"
+                className="rounded-full px-7 font-custom"
+                onClick={() => setConfirmDeleteSection(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                className="rounded-full px-7 font-custom bg-red-500 text-white"
+                onClick={() => {
+                  setGroupsData((prev) => {
+                    const updated = { ...prev };
+                    delete updated[confirmDeleteSection];
+                    return updated;
+                  });
+                  setConfirmDeleteSection(null);
+                }}
+              >
+                Delete
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
     </div>
   );
 }
