@@ -36,7 +36,7 @@ const data = {
     {
       title: "Operation",
       items: [
-        { title: "Attendance", url: "/overview/timeclock", icon: CalendarClock },
+        { title: "Attendance", url: "/overview/attendence", icon: CalendarClock },
         { title: "Leaves", url: "/overview/leaves", icon: LogOut },
         { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
         { title: "Payroll", url: "/overview/payroll", icon: CreditCard },
