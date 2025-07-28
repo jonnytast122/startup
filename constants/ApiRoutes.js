@@ -29,6 +29,20 @@ const ApiRoutes = {
     update: `${BASE_URL}/title/{id}`,
     delete: `${BASE_URL}/title/delete`,
   },
+
+  group: {
+    create: `${BASE_URL}/groups`,
+    get: `${BASE_URL}/groups`,
+    update: `${BASE_URL}/group/{id}`,
+    delete: `${BASE_URL}/group/delete`,
+  },
+  section: {
+    create: `${BASE_URL}/group-sections`,
+    get: `${BASE_URL}/group-sections`,
+    update: `${BASE_URL}/section/{id}`,
+    delete: `${BASE_URL}/section/delete`,
+  },
+
   overTimeSetting: {
     getOverTimeType: `${BASE_URL}/overtime-types`,
     createOvertimeType: `${BASE_URL}/overtime-types`,
