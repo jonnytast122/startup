@@ -21,6 +21,14 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import PolicyLeave from "./components/add-policyleave-dialog";
 import PolicyOvertime from "./components/add-policyovertime-dialog";
+import {
+  fetchCompanyOverTimeSetting,
+  fetchCompanyLeavePolicy,
+  deleteOvertimeSetting,
+  deleteLeavePolicy,
+} from "@/lib/api/policy";
+import { fetchCompany } from "@/lib/api/company";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 const initialPolicies = {
   leave: [
@@ -64,6 +72,45 @@ export default function PolicyPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
 
+  const queryClient = useQueryClient();
+  // Fetch company data
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const { data: overtimeSettings, isLoading: overtimeLoading } = useQuery({
+    queryKey: ["overtimeSettings", company?.id], // include company ID in the key
+    queryFn: () => fetchCompanyOverTimeSetting(company?.id),
+    enabled: !!company?.id, // only run when company.id is available
+  });
+
+  const { data: leaveSettings, isLoading: leaveLoading } = useQuery({
+    queryKey: ["leaveSettings", company?.id], // include company ID in the key
+    queryFn: () => fetchCompanyLeavePolicy(company?.id),
+    enabled: !!company?.id, // only run when company.id is available
+  });
+
+  const deleteOvertimeMutation = useMutation({
+    mutationFn: deleteOvertimeSetting,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["overtimeSettings"]);
+    },
+    onError: (error) => {
+      console.error("Failed to delete policy:", error);
+    },
+  });
+
+  const deleteLeaveMutation = useMutation({
+    mutationFn: deleteLeavePolicy,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["leaveSettings"]);
+    },
+    onError: (error) => {
+      console.error("Failed to delete policy:", error);
+    },
+  });
+
   const openModal = (category, policy = null, viewOnly = false) => {
     setSelectedPolicy(policy);
     setOpenDialogType(category);
@@ -82,21 +129,30 @@ export default function PolicyPage() {
 
   const handleDelete = () => {
     if (confirmDelete) {
-      const { category, policy } = confirmDelete;
-      setPolicyData((prev) => ({
-        ...prev,
-        [category]: prev[category].filter((p) => p.id !== policy.id),
-      }));
-      setConfirmDelete(null);
+      // const { category, policy } = confirmDelete;
+      // setPolicyData((prev) => ({
+      //   ...prev,
+      //   [category]: prev[category].filter((p) => p.id !== policy.id),
+      // }));
+      // setConfirmDelete(null);
+      if (confirmDelete.category === "overtime") {
+        deleteOvertimeMutation.mutate(confirmDelete.data.id);
+      } else {
+        deleteLeaveMutation.mutate(confirmDelete.data.id);
+      }
     }
   };
 
   const renderPolicySection = (title, data, category, colorClass) => (
     <div key={category} className="mb-7 overflow-hidden">
-      <div className={`${colorClass.bg} py-3 px-4 flex justify-between items-center`}>
+      <div
+        className={`${colorClass.bg} py-3 px-4 flex justify-between items-center`}
+      >
         <div>
-          <h2 className={`font-semibold text-xl ${colorClass.text}`}>{title}</h2>
-          <span className="text-gray-600">{data.length} policies</span>
+          <h2 className={`font-semibold text-xl ${colorClass.text}`}>
+            {title}
+          </h2>
+          <span className="text-gray-600">{data?.length} policies</span>
         </div>
       </div>
 
@@ -107,37 +163,39 @@ export default function PolicyPage() {
               <TableHead className="w-[250px]">Policy Name</TableHead>
               <TableHead className="w-[120px]">Status</TableHead>
               <TableHead className="w-[200px]">Created By</TableHead>
-              <TableHead className="w-[100px] text-center align-middle">Edit</TableHead>
+              <TableHead className="w-[100px] text-center align-middle">
+                Edit
+              </TableHead>
               <TableHead className="w-[100px] text-right"> </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((policy) => (
+            {data?.map((data) => (
               <TableRow
-                key={policy.id}
+                key={data.id}
                 className="cursor-pointer hover:bg-gray-100"
-                onClick={() => handleRowClick(category, policy)}
+                onClick={() => handleRowClick(category, data)}
               >
-                <TableCell>{policy.name}</TableCell>
+                <TableCell>{data?.name}</TableCell>
                 <TableCell>
                   <span
-                    className={`px-3 py-1 text-sm rounded-full font-medium ${
-                      policy.status === "Active"
+                    className={`px-3 py-1 text-sm rounded-full font-medium capitalize ${
+                      data.status === "active"
                         ? "bg-green-100 text-green-600"
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    {policy.status}
+                    {data.status}
                   </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center space-x-2">
                     <img
-                      src={policy.createdByProfilePic}
-                      alt={policy.createdBy}
+                      src={data?.createdBy?.profilePic}
+                      alt={data?.createdBy?.name}
                       className="w-8 h-8 rounded-full"
                     />
-                    <span>{policy.createdBy}</span>
+                    <span>{data?.createdBy?.name}</span>
                   </div>
                 </TableCell>
                 <TableCell
@@ -156,16 +214,17 @@ export default function PolicyPage() {
                       className="bg-white border px-4 border-gray-200 shadow-lg rounded-md"
                     >
                       <DropdownMenuItem
-                        onClick={() => openModal(category, policy, false)}
+                        onClick={() => openModal(category, data, false)}
                       >
-                        Edit {category === "leave" ? "Leave" : "Overtime"} Policy
+                        Edit {category === "leave" ? "Leave" : "Overtime"}
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() => setConfirmDelete({ category, policy })}
+                        onClick={() => setConfirmDelete({ category, data })}
                         className="text-red-500"
                       >
-                        Delete {category === "leave" ? "Leave" : "Overtime"} Policy
+                        Delete {category === "leave" ? "Leave" : "Overtime"}
                       </DropdownMenuItem>
+                      π
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -178,7 +237,7 @@ export default function PolicyPage() {
               <TableCell colSpan={4} className="text-left">
                 <Button
                   className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                  onClick={() => openModal(category)}
+                  onClick={() => openModal(category, {})}
                 >
                   <Plus size={12} className="mr-2" /> Add Policy
                 </Button>
@@ -202,11 +261,11 @@ export default function PolicyPage() {
       </div>
 
       <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4">
-        {renderPolicySection("Leave Policy", policyData.leave, "leave", {
+        {renderPolicySection("Leave Policy", leaveSettings, "leave", {
           bg: "bg-green-200",
           text: "text-green-600",
         })}
-        {renderPolicySection("Overtime Policy", policyData.overtime, "overtime", {
+        {renderPolicySection("Overtime Policy", overtimeSettings, "overtime", {
           bg: "bg-red-200",
           text: "text-red-600",
         })}
