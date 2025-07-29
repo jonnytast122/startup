@@ -1,13 +1,4 @@
-# Start-Up Next.js Project
-
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Project Structure
-
-- `/features`: Feature-based modules (e.g., leaves, users)
-- `/components`: Shared UI components
-- `/hooks`: Custom React hooks
-- `/lib`: API and utility functions
 
 ## Getting Started
 

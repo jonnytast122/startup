@@ -9,30 +9,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createLeavePolicy, updateLeavePolicy } from "@/lib/api/policy";
-
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-const days = Array.from({ length: 31 }, (_, i) => i + 1);
-
-const getMonthByNumber = (monthNumber) => months[monthNumber - 1] || "January";
-const getMonthNumberByName = (monthName) => months.indexOf(monthName) + 1;
-
-const getDayByNumber = (dayNumber) =>
-  days.includes(dayNumber) ? dayNumber : 1;
 
 const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [policyName, setPolicyName] = useState("");
@@ -40,11 +16,9 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [selectedMonth, setSelectedMonth] = useState("January");
   const [days, setDays] = useState([...Array(31).keys()].map((d) => d + 1));
   const [selectedDay, setSelectedDay] = useState(1);
-
   const [durationType, setDurationType] = useState("month");
-  const [durationValue, setDurationValue] = useState(1);
-  const [timeOffValue, setTimeOffValue] = useState(1);
-  const [timeOffUnit, setTimeOffUnit] = useState("day");
+  const [timeOffValue, setTimeOffValue] = useState("");
+  const [timeOffUnit, setTimeOffUnit] = useState("days");
 
   const firstLevelOptions = [
     { key: "user", label: "User" },
@@ -65,55 +39,17 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [selectedItems, setSelectedItems] = useState({});
   const [hoveredItem, setHoveredItem] = useState(null);
 
-  const queryClient = useQueryClient();
-  const company = queryClient.getQueryData(["company"]);
-
-  const createPolicyMutation = useMutation({
-    mutationFn: createLeavePolicy,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leavePolicies"]);
-    },
-    onError: (error) => {
-      console.error("Failed to create policy:", error);
-    },
-  });
-
-  const updatePolicyMutation = useMutation({
-    mutationFn: updateLeavePolicy,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["leavePolicies"]);
-    },
-    onError: (error) => {
-      console.error("Failed to update policy:", error);
-    },
-  });
-
   useEffect(() => {
     if (policy) {
-      setPolicyName(policy?.name || "");
-      setSelectedType(policy?.type || "paid");
-
-      // Convert numeric month to name
-      const monthNumber = policy?.startDate?.month;
-      const dayNumber = policy?.startDate?.day;
-
-      setSelectedMonth(monthNumber ? getMonthByNumber(monthNumber) : "January");
-      setSelectedDay(dayNumber || 1);
-
-      setDurationType(policy?.leaveQuota?.type || "month");
-      setDurationValue(policy?.leaveQuota?.value || 1);
-      setTimeOffValue(policy?.leaveNotice?.value || 1);
-      setTimeOffUnit(policy?.leaveNotice?.type || "day");
-      setSelectedFirstLevels(policy?.firstLevelSelection || []);
-      setSelectedItems(policy?.secondLevelSelection || {});
+      setPolicyName(policy.name || "");
     } else {
       setPolicyName("");
       setSelectedType("paid");
       setSelectedMonth("January");
       setSelectedDay(1);
       setDurationType("month");
-      setTimeOffValue(1);
-      setTimeOffUnit("day");
+      setTimeOffValue("");
+      setTimeOffUnit("days");
       setSelectedFirstLevels([]);
       setSelectedItems({});
     }
@@ -130,10 +66,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     let newSelection = [];
 
     if (key === "all") {
-      newSelection =
-        selectedFirstLevels.length === firstLevelOptions.length
-          ? []
-          : firstLevelOptions.map((item) => item.key);
+      newSelection = selectedFirstLevels.length === firstLevelOptions.length ? [] : firstLevelOptions.map((item) => item.key);
       setHoveredItem(null);
     } else {
       newSelection = selectedFirstLevels.includes(key)
@@ -179,29 +112,14 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const handleConfirm = () => {
     if (!policyName.trim()) return;
     const newPolicy = {
-      company: company?.id,
+      ...policy,
+      id: policy?.id ?? Date.now(),
       name: policyName,
-      status: "active",
-      type: selectedType,
-      startDate: {
-        month: getMonthNumberByName(selectedMonth),
-        day: selectedDay,
-      },
-      leaveQuota: {
-        type: durationType,
-        value: durationValue,
-      },
-      leaveNotice: {
-        type: timeOffUnit,
-        value: timeOffValue,
-      },
-      employee: []
+      status: "Active",
+      createdBy: "Admin",
+      createdByProfilePic: "/path/to/profile-default.jpg",
     };
-    if(policy.id){
-      updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
-    } else {
-      createPolicyMutation.mutate(newPolicy);
-    }
+    onSubmit(newPolicy);
     onClose();
   };
 
@@ -225,11 +143,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl text-center">
-            {isViewMode
-              ? "View Leave Policy"
-              : policy
-              ? "Edit Leave Policy"
-              : "Add Leave Policy"}
+            {isViewMode ? "View Leave Policy" : policy ? "Edit Leave Policy" : "Add Leave Policy"}
           </DialogTitle>
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
@@ -237,9 +151,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
         <div className="space-y-6">
           {/* Policy Name */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Policy Name
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Policy Name</label>
             <input
               type="text"
               value={policyName}
@@ -251,9 +163,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Leave Type */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Leave Type
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Leave Type</label>
             <div className="flex gap-3 w-full md:w-2/3">
               {["paid", "unpaid"].map((type) => (
                 <div
@@ -263,11 +173,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                     selectedType === type
                       ? "border-blue-500 bg-blue-300"
                       : "border-gray-300"
-                  } ${
-                    isViewMode
-                      ? "pointer-events-none opacity-60"
-                      : "cursor-pointer"
-                  }`}
+                  } ${isViewMode ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
                 >
                   <span className="text-gray-700 text-xl">
                     {type === "paid" ? "Paid Leave" : "Unpaid Leave"}
@@ -279,25 +185,17 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Total */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Total
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Total</label>
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
-              <p className="text-sm text-[#3F4648]">
-                The amount of hours that will be used
-              </p>
+              <p className="text-sm text-[#3F4648]">The amount of hours that will be used</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
-                  value={durationValue}
-                  onChange={(e) => setDurationValue(e.target.value)}
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   placeholder="0"
                   disabled={isViewMode}
                 />
-                <span className="border border-gray-300 rounded-lg p-2 w-24 text-sm block text-center">
-                  day
-                </span>
+                <span className="border border-gray-300 rounded-lg p-2 w-24 text-sm block text-center">days</span>
                 <select
                   value={durationType}
                   onChange={(e) => setDurationType(e.target.value)}
@@ -313,9 +211,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Month & Day */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Select Month & Day
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Select Month & Day</label>
             <div className="flex gap-3 w-full md:w-2/3">
               <select
                 value={selectedMonth}
@@ -359,13 +255,9 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Time Off Limitation */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Time Off Limitation
-            </label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Time Off Limitation</label>
             <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
-              <p className="text-sm text-[#3F4648]">
-                A leave can be requested no less than
-              </p>
+              <p className="text-sm text-[#3F4648]">A leave can be requested no less than</p>
               <div className="flex items-center gap-2">
                 <input
                   type="number"
@@ -381,9 +273,9 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                   className="border border-gray-300 rounded-lg p-2 w-28 text-sm"
                   disabled={isViewMode}
                 >
-                  <option value="day">days</option>
-                  <option value="minute">minutes</option>
-                  <option value="hour">hours</option>
+                  <option value="days">days</option>
+                  <option value="minutes">minutes</option>
+                  <option value="hours">hours</option>
                 </select>
                 <p className="text-sm text-[#3F4648]">before it starts</p>
               </div>
@@ -392,14 +284,8 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Assignment */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Assignment
-            </label>
-            <div
-              className={`w-full md:w-2/3 relative flex items-center ${
-                isViewMode ? "pointer-events-none opacity-60" : ""
-              }`}
-            >
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Assignment</label>
+            <div className={`w-full md:w-2/3 relative flex items-center ${isViewMode ? "pointer-events-none opacity-60" : ""}`}>
               <button
                 onClick={handleToggleMenu}
                 className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
@@ -446,11 +332,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                   {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
                     <div className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20">
                       <div className="px-3 py-2 font-semibold border-b border-gray-200">
-                        {
-                          firstLevelOptions.find((o) => o.key === hoveredItem)
-                            ?.label
-                        }{" "}
-                        Options
+                        {firstLevelOptions.find((o) => o.key === hoveredItem)?.label} Options
                       </div>
                       {secondLevelData[hoveredItem].map((value) => (
                         <label
@@ -459,13 +341,8 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                         >
                           <input
                             type="checkbox"
-                            checked={
-                              selectedItems[hoveredItem]?.includes(value) ||
-                              false
-                            }
-                            onChange={() =>
-                              handleSecondLevelChange(hoveredItem, value)
-                            }
+                            checked={selectedItems[hoveredItem]?.includes(value) || false}
+                            onChange={() => handleSecondLevelChange(hoveredItem, value)}
                             className="mr-2"
                           />
                           {value}
@@ -482,10 +359,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10" />
           {!isViewMode && (
             <div className="w-full flex justify-end mt-4">
-              <Button
-                className="py-4 px-6 text-lg font-semibold rounded-full"
-                onClick={handleConfirm}
-              >
+              <Button className="py-4 px-6 text-lg font-semibold rounded-full" onClick={handleConfirm}>
                 Save
               </Button>
             </div>

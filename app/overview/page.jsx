@@ -20,8 +20,6 @@ import "react-date-range/dist/theme/default.css";
 import EngagementChart from "./components/engagment-chart";
 import StatisticCard from "./components/statistic-button";
 import Dashboard from "./components/dashboard";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchCompany } from "@/lib/api/company";
 
 export default function OverviewPage() {
   const [selectedRange, setSelectedRange] = useState({
@@ -37,14 +35,6 @@ export default function OverviewPage() {
     setSelectedRange(ranges.selection);
     setShowDatePicker(false);
   };
-
-  const queryClient = useQueryClient();
-
-  // Fetch company data
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: fetchCompany,
-  });
 
   const activities = [
     {
