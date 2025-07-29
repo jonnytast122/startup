@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Plus, MoreHorizontal, CircleX, Trash2 } from "lucide-react";
+import { Users, Plus, MoreHorizontal, CircleX } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,161 +21,105 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogOverlay,
-} from "@/components/ui/dialog"; // ✅ make sure Overlay is imported
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSections } from "@/lib/api/group";
 
 const Members = [
-  { first: "Lucy", last: "Trevo", dept: "Marketing", job: "Accountant", avatar: "https://via.placeholder.com/28" },
-  { first: "John", last: "Mark", dept: "Marketing", job: "Marketing", avatar: "https://via.placeholder.com/28" },
-  { first: "Doe", last: "Ibrahim", dept: "Officer", job: "HR", avatar: "https://via.placeholder.com/28" },
-  { first: "Luke", last: "Kai", dept: "Officer", job: "General", avatar: "https://via.placeholder.com/28" },
-  { first: "Bob", last: "Mako", dept: "Marketing", job: "Accountant", avatar: "https://via.placeholder.com/28" },
-];
-
-const initialGroupsData = {
-  general: [
-    {
-      id: 1,
-      groupName: "Group A",
-      members: 2,
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["Lucy Trevo", "John Mark"],
-    },
-    {
-      id: 2,
-      groupName: "Group B",
-      members: 1,
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile3.jpg",
-      admins: ["Doe Ibrahim"],
-    },
-  ],
-  highPayment: [
-    {
-      id: 3,
-      groupName: "High Paying Group 1",
-      members: 3,
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile1.jpg",
-      admins: ["Luke Kai", "Bob Mako", "John Mark"],
-    },
-  ],
-  outdoor: [
-    {
-      id: 4,
-      groupName: "Outdoor Group 1",
-      members: 5,
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile6.jpg",
-      admins: ["Bob Mako", "John Mark", "Luke Kai", "Doe Ibrahim", "Lucy Trevo"],
-    },
-  ],
-};
-
-const sectionColors = [
-  { bg: "bg-green-200", text: "text-green-500" },
-  { bg: "bg-red-200", text: "text-red-500" },
-  { bg: "bg-blue-200", text: "text-blue-500" },
-  { bg: "bg-yellow-200", text: "text-yellow-500" },
-  { bg: "bg-purple-200", text: "text-purple-500" },
-  { bg: "bg-pink-200", text: "text-pink-500" },
-  { bg: "bg-indigo-200", text: "text-indigo-500" },
-  { bg: "bg-teal-200", text: "text-teal-500" },
-  { bg: "bg-orange-200", text: "text-orange-500" },
-  { bg: "bg-gray-200", text: "text-gray-500" },
+  {
+    first: "Lucy",
+    last: "Trevo",
+    dept: "Marketing",
+    job: "Accountant",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "John",
+    last: "Mark",
+    dept: "Marketing",
+    job: "Marketing",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Doe",
+    last: "Ibrahim",
+    dept: "Officer",
+    job: "HR",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Luke",
+    last: "Kai",
+    dept: "Officer",
+    job: "General",
+    avatar: "https://via.placeholder.com/28",
+  },
+  {
+    first: "Bob",
+    last: "Mako",
+    dept: "Marketing",
+    job: "Accountant",
+    avatar: "https://via.placeholder.com/28",
+  },
 ];
 
 export default function GroupPage() {
-  const [groupsData, setGroupsData] = useState(initialGroupsData);
+  const { data: sections = [], isLoading } = useQuery({
+    queryKey: ["sections"],
+    queryFn: fetchSections,
+  });
+
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSectionOpen, setIsSectionOpen] = useState(false);
-  const [newGroup, setNewGroup] = useState({ name: "", admins: [], category: "general" });
+  const [newGroup, setNewGroup] = useState({
+    name: "",
+    admins: [],
+    category: "", // This will hold section ID
+  });
   const [newSection, setNewSection] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState(null);
   const [isViewOnly, setIsViewOnly] = useState(false);
-  const [confirmDeleteSection, setConfirmDeleteSection] = useState(null);
 
-  const openAddModal = (category) => {
-    setNewGroup({ name: "", admins: [], category });
+  const openAddModal = (sectionId) => {
+    setNewGroup({ name: "", admins: [], category: sectionId });
     setIsAddOpen(true);
   };
 
-  const handleAddConfirm = () => {
-    if (!newGroup.name || newGroup.admins.length === 0) return;
-
-    setGroupsData((prevData) => ({
-      ...prevData,
-      [newGroup.category]: [
-        ...prevData[newGroup.category],
-        {
-          id: Date.now(),
-          groupName: newGroup.name,
-          members: newGroup.admins.length,
-          createdBy: "Admin",
-          createdByProfilePic: "/path/to/profileNewAdmin.jpg",
-          admins: newGroup.admins,
-        },
-      ],
-    }));
-
-    setIsAddOpen(false);
-  };
-
-  const openEditModal = (category, group, view = false) => {
-    setEditingGroup({ ...group, category });
+  const openEditModal = (sectionId, group, view = false) => {
+    setEditingGroup({ ...group, category: sectionId });
     setIsViewOnly(view);
     setEditDialogOpen(true);
   };
 
-  const handleSaveEditedGroup = (updatedGroup) => {
-    setGroupsData((prevData) => {
-      const updatedCategory = updatedGroup.category;
-      const newGroups = prevData[updatedCategory].map((g) =>
-        g.id === updatedGroup.id
-          ? {
-            ...g,
-            groupName: updatedGroup.groupName,
-            admins: updatedGroup.admins,
-            members: updatedGroup.admins.length,
-          }
-          : g
-      );
-      return { ...prevData, [updatedCategory]: newGroups };
-    });
-  };
-
   const handleConfirmSection = () => {
-    const key = newSection.toLowerCase().replace(/\s+/g, "");
-    if (!groupsData[key]) {
-      setGroupsData((prev) => ({
-        ...prev,
-        [key]: [],
-      }));
-    }
+    // Will be implemented when creating new sections via API
     setIsSectionOpen(false);
     setNewSection("");
   };
 
-  const renderGroupSection = (title, groupData, category, index) => {
-    const color = sectionColors[index % sectionColors.length];
+  const renderGroupSection = (section, index) => {
+    const colorStyle = {
+      backgroundColor: section.color || "#f3f4f6", // fallback
+    };
 
     return (
-      <div key={category} className="mb-7 overflow-hidden">
-        <div className={`${color.bg} py-3 px-4 flex justify-between items-center`}>
-          <div className="flex items-center gap-6">
-            <h2 className={`font-semibold text-xl ${color.text}`}>{title}</h2>
-            <button onClick={() => setConfirmDeleteSection(category)}>
-              <Trash2 className="w-5 h-5 text-black hover:text-red-600" />
-            </button>
+      <div key={section._id} className="mb-7 overflow-hidden">
+        <div
+          className="py-3 px-4 flex justify-between items-center"
+          style={colorStyle}
+        >
+          <div>
+            <h2 className={`font-semibold text-xl text-white`}>
+              {section.name}
+            </h2>
+            <span className="text-white">
+              {section.groups?.length || 0} groups
+            </span>
           </div>
-          <span className="text-gray-600">{groupData.length} groups</span>
         </div>
+
         <div className="bg-white mt-1">
           <Table>
             <TableHeader>
@@ -185,40 +129,43 @@ export default function GroupPage() {
                 <TableHead className="w-[200px]">Created By</TableHead>
                 <TableHead className="w-[200px]">Administered By</TableHead>
                 <TableHead className="w-[80px] text-right">Edit</TableHead>
-                <TableHead className="w-[130px] text-right"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {groupData.map((group) => (
+              {section.groups?.map((group) => (
                 <TableRow
-                  key={group.id}
+                  key={group._id}
                   className="cursor-pointer"
-                  onClick={() => openEditModal(category, group, true)}
+                  onClick={() => openEditModal(section._id, group, true)}
                 >
                   <TableCell>{group.groupName}</TableCell>
-                  <TableCell>{group.members}</TableCell>
+                  <TableCell>{group.admins?.length || 0}</TableCell>
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <img
-                        src={group.createdByProfilePic}
-                        alt={group.createdBy}
+                        src={group.createdByProfilePic || "/default.jpg"}
+                        alt={group.createdBy || "Unknown"}
                         className="w-8 h-8 rounded-full"
                       />
-                      <span>{group.createdBy}</span>
+                      <span>{group.createdBy || "Unknown"}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center">
-                      {group.admins.slice(0, 3).map((admin, i) => (
+                      {group.admins?.slice(0, 3).map((admin, i) => (
                         <img
                           key={admin}
-                          src={`/path/to/profiles/${admin.replace(/\s+/g, "").toLowerCase()}.jpg`}
+                          src={`/path/to/profiles/${admin
+                            .replace(/\s+/g, "")
+                            .toLowerCase()}.jpg`}
                           alt={admin}
-                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${i === 0 ? "ml-0" : ""}`}
+                          className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
+                            i === 0 ? "ml-0" : ""
+                          }`}
                           title={admin}
                         />
                       ))}
-                      {group.admins.length > 3 && (
+                      {group.admins?.length > 3 && (
                         <div className="-ml-2 w-8 h-8 rounded-full bg-gray-300 text-sm text-center leading-8 text-gray-700 border-2 border-white">
                           +{group.admins.length - 3}
                         </div>
@@ -239,12 +186,19 @@ export default function GroupPage() {
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DropdownMenuItem
-                          onClick={() => openEditModal(category, group, false)}
+                          onClick={() =>
+                            openEditModal(section._id, group, false)
+                          }
                         >
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => setConfirmDelete({ category, group })}
+                          onClick={() =>
+                            setConfirmDelete({
+                              sectionId: section._id,
+                              groupId: group._id,
+                            })
+                          }
                         >
                           Delete
                         </DropdownMenuItem>
@@ -259,7 +213,7 @@ export default function GroupPage() {
                 <TableCell colSpan={4} className="text-left">
                   <Button
                     className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                    onClick={() => openAddModal(category)}
+                    onClick={() => openAddModal(section._id)}
                   >
                     <Plus size={12} className="mr-2" /> Add Group
                   </Button>
@@ -284,13 +238,10 @@ export default function GroupPage() {
       </div>
 
       <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4">
-        {Object.entries(groupsData).map(([category, groupData], index) =>
-          renderGroupSection(
-            category.charAt(0).toUpperCase() + category.slice(1) + " Groups",
-            groupData,
-            category,
-            index
-          )
+        {isLoading ? (
+          <p className="text-center py-10">Loading...</p>
+        ) : (
+          sections.map((section, index) => renderGroupSection(section, index))
         )}
         <Button className="w-fit mt-4" onClick={() => setIsSectionOpen(true)}>
           <Plus size={16} className="mr-2" /> Add Section
@@ -303,14 +254,14 @@ export default function GroupPage() {
         newGroup={newGroup}
         setNewGroup={setNewGroup}
         members={Members}
-        onConfirm={handleAddConfirm}
+        onConfirm={() => setIsAddOpen(false)} // Hook this to your add group API
       />
 
       <EditGroupDialog
         open={editDialogOpen}
         setOpen={setEditDialogOpen}
         group={editingGroup}
-        onSave={handleSaveEditedGroup}
+        onSave={() => setEditDialogOpen(false)} // Hook this to your edit API
         members={Members}
         isViewMode={isViewOnly}
       />
@@ -325,8 +276,8 @@ export default function GroupPage() {
 
       {confirmDelete && (
         <Dialog open onOpenChange={() => setConfirmDelete(null)}>
-          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center" style={{ minHeight: "280px" }}>
-            <CircleX className="w-12 h-12" style={{ color: "#fb5f59" }} strokeWidth={1.5} />
+          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center">
+            <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
               Do you want to delete this group?
             </h2>
@@ -339,14 +290,9 @@ export default function GroupPage() {
                 Cancel
               </Button>
               <Button
-                className="rounded-full px-7 font-custom"
-                style={{ backgroundColor: "#fb5f59", color: "white" }}
+                className="rounded-full px-7 font-custom bg-red-500 text-white"
                 onClick={() => {
-                  const { category, group } = confirmDelete;
-                  setGroupsData((prev) => ({
-                    ...prev,
-                    [category]: prev[category].filter((g) => g.id !== group.id),
-                  }));
+                  // Hook this to your delete group API
                   setConfirmDelete(null);
                 }}
               >
@@ -356,40 +302,7 @@ export default function GroupPage() {
           </DialogContent>
         </Dialog>
       )}
-
-      {confirmDeleteSection && (
-        <Dialog open onOpenChange={() => setConfirmDeleteSection(null)}>
-          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center" style={{ minHeight: "280px" }}>
-            <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
-            <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete this section?
-            </h2>
-            <div className="flex items-center gap-4 mt-8">
-              <Button
-                variant="outline"
-                className="rounded-full px-7 font-custom"
-                onClick={() => setConfirmDeleteSection(null)}
-              >
-                Cancel
-              </Button>
-              <Button
-                className="rounded-full px-7 font-custom bg-red-500 text-white"
-                onClick={() => {
-                  setGroupsData((prev) => {
-                    const updated = { ...prev };
-                    delete updated[confirmDeleteSection];
-                    return updated;
-                  });
-                  setConfirmDeleteSection(null);
-                }}
-              >
-                Delete
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
     </div>
   );
 }
+
