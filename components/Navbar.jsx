@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { NAV_LINKS } from "@/constants";
+import { NAV_LINKS } from "@/constant";
 import { Button } from "@/components/ui/button";
 import { User, Menu, Globe } from "lucide-react";
 import {

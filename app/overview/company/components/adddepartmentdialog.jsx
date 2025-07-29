@@ -14,50 +14,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-
-import { fetchCompany } from "@/lib/api/company";
-import { fetchCompanyDepartments, addDepartment } from "@/lib/api/department";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function AddDepartmentDialog() {
   const [open, setOpen] = useState(false);
-  const [branchId, setBranchId] = useState("");
-  const [departmentName, setDepartmentName] = useState("");
-  const [managerId, setManagerId] = useState("");
-
-  const queryClient = useQueryClient();
-
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: fetchCompany,
-  });
-
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments", company?.id],
-    queryFn: () => fetchCompanyDepartments(company?.id),
-    enabled: !!company?.id,
-  });
-
-  const { mutate: createDepartment, isPending } = useMutation({
-    mutationFn: addDepartment,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["departments", company?.id] });
-      setOpen(false);
-      setBranchId("");
-      setDepartmentName("");
-      setManagerId("");
-    },
-  });
-
-  const handleSubmit = () => {
-    if (!branchId || !departmentName) return;
-    createDepartment({
-      name: departmentName,
-      branch: branchId,
-      manager: managerId || undefined,
-    });
-  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -78,72 +37,57 @@ export default function AddDepartmentDialog() {
           </h1>
           <div className="w-full h-[1px] bg-[#A6A6A6]"></div>
         </DialogHeader>
+        <div>
+          {/* Form Content */}
+          <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
+            <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
+              From Branch:
+            </label>
+            <Select>
+              <SelectTrigger className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4">
+                <SelectValue placeholder="Branch Name" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                <SelectItem value="leave-policy">Branch 1</SelectItem>
+                <SelectItem value="working-hours">Branch 2</SelectItem>
+                <SelectItem value="code-of-conduct">Branch 3</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Branch Selection */}
-        <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
-          <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
-            From Branch:
-          </label>
-          <Select onValueChange={setBranchId}>
-            <SelectTrigger className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4">
-              <SelectValue placeholder="Select Branch" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {company?.branches?.length > 0 ? (
-                company.branches.map((branch) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </SelectItem>
-                ))
-              ) : (
-                <div className="p-2 text-gray-500 text-sm">
-                  No branches found
-                </div>
-              )}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
+            <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
+              Department Name:
+            </label>
+            <input
+              id="description-name"
+              type="text"
+              placeholder="Department Name"
+              className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
+            />
+          </div>
 
-        {/* Department Name */}
-        <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
-          <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
-            Department Name:
-          </label>
-          <Input
-            value={departmentName}
-            onChange={(e) => setDepartmentName(e.target.value)}
-            placeholder="Department Name"
-            className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
-          />
-        </div>
+          <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
+            <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
+              Manager ( Optional ):
+            </label>
+            <Select>
+              <SelectTrigger className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4">
+                <SelectValue placeholder="Branch Name" />
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                <SelectItem value="leave-policy">Name 1</SelectItem>
+                <SelectItem value="working-hours">Name 2</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Manager (Optional) */}
-        <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
-          <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
-            Manager (Optional):
-          </label>
-          <Select onValueChange={setManagerId}>
-            <SelectTrigger className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4">
-              <SelectValue placeholder="Select Manager" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              <SelectItem value="manager-id-1">Name 1</SelectItem>
-              <SelectItem value="manager-id-2">Name 2</SelectItem>
-              {/* TODO: Replace with dynamic user list */}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Divider & Save Button */}
-        <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
-        <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
-          <Button
-            className="py-4 px-6 text-md font-custom rounded-full"
-            onClick={handleSubmit}
-            disabled={!branchId || !departmentName || isPending}
-          >
-            {isPending ? "Saving..." : "Save"}
-          </Button>
+          <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
+          <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
+            <Button className="py-4 px-6 text-md font-custom rounded-full">
+              Save
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
