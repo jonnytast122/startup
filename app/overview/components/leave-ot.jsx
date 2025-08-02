@@ -169,7 +169,7 @@ export default function LeaveOt() {
                                         <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
                                         <span className="text-base font-medium text-gray-800">{emp.name}</span>
                                     </div>
-                                    <span className="text-base text-red-600">{emp.leave} days</span>
+                                    <span className="text-base">{emp.leave} days</span>
                                 </div>
                                 <Separator className="my-2" />
                             </div>
@@ -190,7 +190,7 @@ export default function LeaveOt() {
                                         <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
                                         <span className="text-base font-medium text-gray-800">{emp.name}</span>
                                     </div>
-                                    <span className="text-base text-blue-600">{emp.ot} hours</span>
+                                    <span className="text-base">{emp.ot} days</span>
                                 </div>
                                 <Separator className="my-2" />
                             </div>
