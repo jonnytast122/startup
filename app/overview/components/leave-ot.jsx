@@ -133,7 +133,7 @@ export default function LeaveOt() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 m-5">
                 {/* Box 1 - Most Used */}
                 <div className="flex flex-col">
-                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-t-md mb-2">
+                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-md mb-2">
                         Most Used
                     </div>
                     <div className="border border-gray-300 rounded-md p-4 flex gap-4 h-full">
@@ -158,7 +158,7 @@ export default function LeaveOt() {
 
                 {/* Box 2 - Top Leave */}
                 <div className="flex flex-col">
-                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-t-md mb-2">
+                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-md mb-2">
                         Top Leave
                     </div>
                     <div className="border border-gray-300 rounded-md p-4 flex-grow">
@@ -179,7 +179,7 @@ export default function LeaveOt() {
 
                 {/* Box 3 - Top OT */}
                 <div className="flex flex-col">
-                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-t-md mb-2">
+                    <div className="bg-gray-200 px-4 py-2 text-center text-lg text-gray-700 rounded-md mb-2">
                         Top OT
                     </div>
                     <div className="border border-gray-300 rounded-md p-4 flex-grow">

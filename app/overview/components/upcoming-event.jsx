@@ -52,7 +52,7 @@ export default function UpcomingEvent() {
   return (
     <div className="bg-white rounded-lg p-5 h-full font-custom">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-4 mt-2">
         <h2 className="text-xl text-black flex items-center gap-2">
           Upcoming Event
         </h2>

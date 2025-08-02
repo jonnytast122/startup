@@ -1,6 +1,6 @@
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal,ListFilter } from "lucide-react";
+import { MoreHorizontal, ListFilter } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Select,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 const attendanceData = [
   { name: "On Time", value: 5 },
-  { name: "Running Late", value: 1},
+  { name: "Running Late", value: 1 },
 ];
 
 const absentData = [
@@ -30,7 +30,7 @@ const noActive = absentData.find(d => d.name === "No Active")?.value || 0;
 const onLeave = absentData.find(d => d.name === "On Leave")?.value || 0;
 
 export default function DailyAttendance() {
-    const Filter = [
+  const Filter = [
     { value: "Select all", label: "Select all" },
     { value: "All users group", label: "All users group" },
     { value: "Assigned features", label: "Assigned features" },
@@ -41,18 +41,18 @@ export default function DailyAttendance() {
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl text-black">Daily Attendance</h2>
         <Select>
-            <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative text-[#5494DA]">
-              <ListFilter size={20} />
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {Filter.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative text-[#5494DA]">
+            <ListFilter size={20} />
+            <SelectValue placeholder="Filter" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            {Filter.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Separator className="mb-4" />
@@ -74,24 +74,28 @@ export default function DailyAttendance() {
               <span className="text-3xl font-bold text-red-500">{runningLate}</span>
             </div>
           </div>
-          <div className="mt-4 w-full h-40">
-            <ResponsiveContainer>
+          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={attendanceData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={32}
-                  outerRadius={50}
+                  innerRadius={50}      // slightly larger inner radius
+                  outerRadius={80}      // increased outer radius
                   dataKey="value"
                 >
                   {attendanceData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS_ATTEND[index % COLORS_ATTEND.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS_ATTEND[index % COLORS_ATTEND.length]}
+                    />
                   ))}
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
           </div>
+
         </div>
 
         {/* Right Box: Absent */}
@@ -110,15 +114,15 @@ export default function DailyAttendance() {
               <span className="text-3xl font-bold text-yellow-400">{onLeave}</span>
             </div>
           </div>
-          <div className="mt-4 w-full h-40">
-            <ResponsiveContainer>
+          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={absentData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={32}
-                  outerRadius={50}
+                  innerRadius={50}
+                  outerRadius={80}
                   dataKey="value"
                 >
                   {absentData.map((entry, index) => (
