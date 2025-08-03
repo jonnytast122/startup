@@ -12,19 +12,27 @@ const month = new Date().getMonth() + 1;
 
 export default function UpcomingEvent() {
   const [events, setEvents] = useState([
-    // Fallback fake data
-    {
-      date: new Date(year, month - 1, 3),
-      name: "CEO's Birthday"
-    },
-    {
-      date: new Date(year, month - 1, 15),
-      name: "Annual Strategy Meeting"
-    },
-    {
-      date: new Date(year, month - 1, 22),
-      name: "Team Building Day"
-    }
+    { date: new Date(year, month - 1, 3), name: "CEO's Birthday" },
+    { date: new Date(year, month - 1, 4), name: "Staff Appreciation Day" },
+    { date: new Date(year, month - 1, 5), name: "Inventory Audit" },
+    { date: new Date(year, month - 1, 6), name: "Finance Meeting" },
+    { date: new Date(year, month - 1, 7), name: "Marketing Campaign Launch" },
+    { date: new Date(year, month - 1, 8), name: "Customer Feedback Session" },
+    { date: new Date(year, month - 1, 9), name: "Safety Drill" },
+    { date: new Date(year, month - 1, 10), name: "IT System Upgrade" },
+    { date: new Date(year, month - 1, 11), name: "Branch Inspection" },
+    { date: new Date(year, month - 1, 12), name: "New Menu Testing" },
+    { date: new Date(year, month - 1, 13), name: "Training Workshop" },
+    { date: new Date(year, month - 1, 14), name: "Operations Sync" },
+    { date: new Date(year, month - 1, 15), name: "Annual Strategy Meeting" },
+    { date: new Date(year, month - 1, 16), name: "Partnership Meeting" },
+    { date: new Date(year, month - 1, 17), name: "Hiring Panel" },
+    { date: new Date(year, month - 1, 18), name: "Team Photoshoot" },
+    { date: new Date(year, month - 1, 19), name: "Social Media Day" },
+    { date: new Date(year, month - 1, 20), name: "Equipment Maintenance" },
+    { date: new Date(year, month - 1, 21), name: "Product Brainstorm" },
+    { date: new Date(year, month - 1, 22), name: "Team Building Day" },
+    { date: new Date(year, month - 1, 23), name: "Budget Review" }
   ]);
 
   useEffect(() => {
@@ -60,7 +68,8 @@ export default function UpcomingEvent() {
 
       <Separator className="mb-4" />
 
-      <div className="space-y-4">
+      {/* Scrollable Event List */}
+      <div className="space-y-4 overflow-y-auto max-h-[300px] pr-2">
         {events.map((event, index) => (
           <div key={index} className="flex justify-between items-center ml-7 mr-8">
             <div className="flex flex-col items-center w-14 mr-12">
