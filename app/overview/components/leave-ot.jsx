@@ -34,6 +34,24 @@ const topEmployees = [
         ot: 6
     },
     {
+        name: "Lucy Trevo",
+        avatar: "/avatars/ralph.png",
+        leave: 6,
+        ot: 2
+    },
+    {
+        name: "John Mark",
+        avatar: "/avatars/john.png",
+        leave: 5,
+        ot: 4
+    },
+    {
+        name: "Sarah Chan",
+        avatar: "/avatars/sarah.png",
+        leave: 4,
+        ot: 6
+    },
+    {
         name: "David Long",
         avatar: "/avatars/david.png",
         leave: 3,
@@ -162,18 +180,20 @@ export default function LeaveOt() {
                         Top Leave
                     </div>
                     <div className="border border-gray-300 rounded-md p-4 flex-grow">
-                        {topEmployees.map((emp, idx) => (
-                            <div key={idx} className="mb-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
-                                        <span className="text-base font-medium text-gray-800">{emp.name}</span>
+                        <div className="max-h-64 overflow-y-auto pr-2">
+                            {topEmployees.map((emp, idx) => (
+                                <div key={idx} className="mb-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
+                                            <span className="text-base font-medium text-gray-800">{emp.name}</span>
+                                        </div>
+                                        <span className="text-base">{emp.leave} days</span>
                                     </div>
-                                    <span className="text-base">{emp.leave} days</span>
+                                    <Separator className="my-2" />
                                 </div>
-                                <Separator className="my-2" />
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
 
@@ -183,20 +203,23 @@ export default function LeaveOt() {
                         Top OT
                     </div>
                     <div className="border border-gray-300 rounded-md p-4 flex-grow">
-                        {topEmployees.map((emp, idx) => (
-                            <div key={idx} className="mb-2">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
-                                        <span className="text-base font-medium text-gray-800">{emp.name}</span>
+                        <div className="max-h-64 overflow-y-auto pr-2">
+                            {topEmployees.map((emp, idx) => (
+                                <div key={idx} className="mb-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <img src={emp.avatar} className="w-9 h-9 rounded-full" alt="avatar" />
+                                            <span className="text-base font-medium text-gray-800">{emp.name}</span>
+                                        </div>
+                                        <span className="text-base">{emp.ot} days</span>
                                     </div>
-                                    <span className="text-base">{emp.ot} days</span>
+                                    <Separator className="my-2" />
                                 </div>
-                                <Separator className="my-2" />
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
+
             </div>
 
         </div>

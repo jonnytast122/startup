@@ -29,6 +29,10 @@ const workShiftData = [
     { shift: "Part Time Shift", accuracy: 98 },
     { shift: "Morning Shift", accuracy: 98 },
     { shift: "Weekend Shift", accuracy: 98 },
+        { shift: "Full Time Shift", accuracy: 98 },
+    { shift: "Part Time Shift", accuracy: 98 },
+    { shift: "Morning Shift", accuracy: 98 },
+    { shift: "Weekend Shift", accuracy: 98 },
 ];
 
 export default function WorkShift() {
@@ -118,27 +122,29 @@ export default function WorkShift() {
             <Separator className="mb-4" />
 
             {/* Bordered table container */}
-            <div className="border border-gray-400 rounded-md overflow-hidden p-4 pb-10">
-                <Table>
-                    <TableHeader className="bg-gray-100">
-                        <TableRow>
-                            <TableHead className="text-gray-600 text-sm">Work Shift</TableHead>
-                            <TableHead className="text-right text-gray-600 text-sm">Accuracy Rate</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <Separator />
-                    <TableBody>
-                        {workShiftData.map((item, idx) => (
-                            <TableRow key={idx}>
-                                <TableCell className="text-sm">{item.shift}</TableCell>
-                                <TableCell className="text-right text-sm text-gray-800">
-                                    {item.accuracy}%
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+            <div className="border border-gray-400 rounded-md p-4 pb-10">
+  <div className="max-h-64 overflow-y-auto">
+    <Table>
+      <TableHeader className="bg-gray-100 sticky top-0 z-10">
+        <TableRow>
+          <TableHead className="text-gray-600 text-sm">Work Shift</TableHead>
+          <TableHead className="text-right text-gray-600 text-sm">Accuracy Rate</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {workShiftData.map((item, idx) => (
+          <TableRow key={idx}>
+            <TableCell className="text-sm">{item.shift}</TableCell>
+            <TableCell className="text-right text-sm text-gray-800">
+              {item.accuracy}%
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+</div>
+
         </div>
     );
 }

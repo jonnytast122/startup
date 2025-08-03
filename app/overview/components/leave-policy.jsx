@@ -26,6 +26,13 @@ const leaveData = [
     { policy: "Annual Leave", taken: 101 },
     { policy: "Sick Leave", taken: 101 },
     { policy: "Unpaid Leave", taken: 101 },
+        { policy: "Annual Leave", taken: 101 },
+    { policy: "Sick Leave", taken: 101 },
+    { policy: "Unpaid Leave", taken: 101 },
+            { policy: "Annual Leave", taken: 101 },
+    { policy: "Sick Leave", taken: 101 },
+    { policy: "Unpaid Leave", taken: 101 },
+    
 ];
 
 export default function LeavePolicy() {
@@ -115,27 +122,29 @@ export default function LeavePolicy() {
             <Separator className="mb-4" />
 
             {/* Bordered table container */}
-            <div className="border border-gray-400 rounded-md overflow-hidden p-4 pb-10">
-                <Table>
-                    <TableHeader className="bg-gray-100">
-                        <TableRow>
-                            <TableHead className="text-gray-600 text-sm">Leave Policy</TableHead>
-                            <TableHead className="text-right text-gray-600 text-sm">Taken Rate</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <Separator />
-                    <TableBody>
-                        {leaveData.map((item, idx) => (
-                            <TableRow key={idx}>
-                                <TableCell className="text-sm">{item.policy}</TableCell>
-                                <TableCell className="text-right text-sm text-gray-800">
-                                    {item.taken} days
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+            <div className="border border-gray-400 rounded-md p-4 pb-10">
+  <div className="max-h-64 overflow-y-auto">
+    <Table>
+      <TableHeader className="bg-gray-100 sticky top-0 z-10">
+        <TableRow>
+          <TableHead className="text-gray-600 text-sm">Leave Policy</TableHead>
+          <TableHead className="text-right text-gray-600 text-sm">Taken Rate</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {leaveData.map((item, idx) => (
+          <TableRow key={idx}>
+            <TableCell className="text-sm">{item.policy}</TableCell>
+            <TableCell className="text-right text-sm text-gray-800">
+              {item.taken} days
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+</div>
+
         </div>
     );
 }
