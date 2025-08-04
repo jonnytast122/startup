@@ -9,7 +9,6 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
-
 import { Separator } from "@/components/ui/separator";
 
 export function NavMain({ items, isOpen = true }) {
@@ -31,14 +30,24 @@ export function NavMain({ items, isOpen = true }) {
                 <SidebarMenuButton asChild>
                   <Link
                     href={item.url}
-                    className={`flex items-center ${isOpen ? "gap-3 px-3" : "justify-center "
-                      } rounded-md text-sm font-custom transition-colors ${pathname === item.url
+                    className={`flex items-center justify-between w-full ${
+                      isOpen ? "gap-3 px-3" : "justify-center"
+                    } rounded-md text-sm font-custom transition-colors ${
+                      pathname === item.url
                         ? "bg-[#5494DA33] text-dark-gray"
                         : "text-dark-gray hover:bg-[#5494DA33]"
-                      }`}
+                    }`}
                   >
-                    {item.icon && <item.icon className="h-5 w-5" />}
-                    {isOpen && <span>{item.title}</span>}
+                    <div className="flex items-center gap-3">
+                      {item.icon && <item.icon className="h-5 w-5" />}
+                      {isOpen && <span>{item.title}</span>}
+                    </div>
+
+                    {item.alert > 0 && isOpen && (
+                      <span className="ml-auto text-xs font-bold text-white bg-red-500 rounded-full w-5 h-5 flex items-center justify-center">
+                        {item.alert}
+                      </span>
+                    )}
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -51,4 +60,3 @@ export function NavMain({ items, isOpen = true }) {
     </>
   );
 }
-
