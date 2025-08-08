@@ -8,7 +8,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Bell, ChevronDown, Globe, LogOut, User } from "lucide-react";
+import { ArrowLeftRight, Bell, ChevronDown, Eye, Globe, LogOut, User } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +22,7 @@ export default function Layout({ children }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef(null);
   const router = useRouter();
+
   // Optional: Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -59,6 +60,23 @@ export default function Layout({ children }) {
                 className="text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 pr-12 py-2 px-3"
               />
             </form>
+          </div>
+
+          <div className="flex-1 flex justify-center">
+            {/* Only show in user's view */}
+            <div className="px-4 py-1 rounded-lg bg-blue-100 font-medium text-sm font-custom">
+              <Eye className="inline-block mr-1 h-4 w-4" />
+              You are in User's View
+            </div>
+            <button
+              className="ml-4 px-3 py-1 bg-gray-100 text-blue-400 font-custom rounded-lg hover:bg-gray-200 transition-colors"
+              onClick={() => {
+                router.push("/overview");
+              }}
+            >   
+            <ArrowLeftRight className="inline-block mr-1 h-4 w-4" />
+              Switch to Admin Dashboard
+            </button>
           </div>
 
           {/* Right section */}
@@ -112,17 +130,17 @@ export default function Layout({ children }) {
                     className="w-full px-4 py-2 font-custom text-sm text-left text-gray-700 hover:bg-gray-100"
                     onClick={() => {
                       setIsDropdownOpen(false);
-                      router.push("/user");
+                      router.push("/overview");
                     }}
                   >
                     <User className="inline-block mr-2 h-4 w-4" />
-                    Switch to user's view
+                    Switch to admin's view
                   </button>
                   <button
                     className="w-full px-4 py-2 font-custom text-sm text-left text-red-600 hover:bg-gray-100"
                     onClick={() => {
                       setIsDropdownOpen(false);
-                      alert("Signout");
+                      alert("Signed Out");
                     }}
                   >
                     <LogOut className="inline-block mr-2 h-4 w-4" />
