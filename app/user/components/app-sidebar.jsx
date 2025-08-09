@@ -43,7 +43,7 @@ const data = {
     {
       title: "Support",
       items: [
-        { title: "Help", url: "/overview/help", icon: Info, alert: 0 },
+        { title: "Help", url: "/user/help", icon: Info, alert: 0 },
       ],
     },
   ],
