@@ -214,7 +214,12 @@ export default function PendingRequest() {
             >
               Cancel
             </Button>
-            <Button className="rounded-full">Confirm</Button>
+            <Button
+              className="rounded-full"
+              onClick={() => setConfirmDialog(false)} // <-- Close on confirm
+            >
+              Confirm
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
@@ -247,7 +252,11 @@ export default function PendingRequest() {
             >
               Cancel
             </Button>
-            <Button variant="destructive" className="rounded-full">
+            <Button
+              variant="destructive"
+              className="rounded-full"
+              onClick={() => setRejectDialog(false)} // <-- Close on reject
+            >
               Reject
             </Button>
           </div>

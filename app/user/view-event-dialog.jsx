@@ -7,11 +7,11 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Clock, Users } from "lucide-react";
 
-export default function ViewEventDialog({ event, onClose }) {
+export default function ViewEventDialog({ open, onOpenChange, onClose, onSave, event, date }) {
   if (!event) return null;
 
   return (
-    <Dialog open onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange?.(o); if (!o) onClose?.(); }}>
       <DialogContent className="w-[400px] space-y-4">
         <h2 className="text-lg font-semibold text-gray-700">Event Details</h2>
 
