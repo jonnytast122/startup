@@ -90,7 +90,7 @@ export default function Layout({ children }) {
             </form>
           </div>
 
-          <div className="flex-1 justify-center hidden xl:flex">
+          <div className="flex-1 justify-end hidden xl:flex mr-4">
             {/* Only show in user's view */}
             <div className="px-4 py-1 rounded-lg bg-blue-100 font-medium text-sm font-custom">
               <Eye className="inline-block mr-1 h-4 w-4" />
@@ -102,7 +102,7 @@ export default function Layout({ children }) {
                 router.push("/overview");
               }}
             >
-              <ArrowLeftRight className="inline-block mr-1 h-4 w-4" />
+              <ArrowLeftRight className="inline-block mr-2 h-4 w-4" />
               Switch to Admin Dashboard
             </button>
           </div>
