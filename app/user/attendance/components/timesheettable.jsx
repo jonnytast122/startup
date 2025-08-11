@@ -8,12 +8,23 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from "@tanstack/react-table";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
 // Utility: get all days between two dates
 function getDatesInRange(startDate, endDate) {
@@ -30,7 +41,10 @@ function getDatesInRange(startDate, endDate) {
 // Utility: group days into weeks, return section headers + rows
 function getTimesheetRows(selectedRange) {
   if (!selectedRange.startDate || !selectedRange.endDate) return [];
-  const allDates = getDatesInRange(selectedRange.startDate, selectedRange.endDate);
+  const allDates = getDatesInRange(
+    selectedRange.startDate,
+    selectedRange.endDate
+  );
 
   const weeks = [];
   let weekStartIdx = 0;
@@ -131,8 +145,8 @@ export default function TimesheetTable() {
   // --- Date range state ---
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1),  // July 1, 2025
-    endDate: new Date(2025, 6, 31),   // July 31, 2025
+    startDate: new Date(2025, 6, 1), // July 1, 2025
+    endDate: new Date(2025, 6, 31), // July 31, 2025
     key: "selection",
   });
   const datePickerRef = useRef(null);
@@ -160,6 +174,11 @@ export default function TimesheetTable() {
     data,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const exportOptions = [
+  { value: "as CSV", label: "as CSV" },
+  { value: "as XLS", label: "as XLS" },
+];
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
@@ -202,9 +221,18 @@ export default function TimesheetTable() {
             )}
           </div>
         </div>
-        <button className="rounded-full px-5 py-1 text-blue-500 border border-blue-100 font-custom bg-white hover:bg-blue-50 w-full sm:w-auto">
-          Export
-        </button>
+        <Select>
+          <SelectTrigger className="w-24 font-custom rounded-full">
+            <SelectValue placeholder="Export" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            {exportOptions.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary */}
@@ -214,8 +242,8 @@ export default function TimesheetTable() {
           {data.filter((row) => !row._section).length} day
         </span>
         <span>
-          <span className="font-semibold text-black">Total Regular:</span>{" "}
-          46:48 hours
+          <span className="font-semibold text-black">Total Regular:</span> 46:48
+          hours
         </span>
       </div>
 
@@ -224,13 +252,19 @@ export default function TimesheetTable() {
         <Table className="min-w-[800px] w-full">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-gray-100 text-gray-500 text-lg font-custom">
+              <TableRow
+                key={headerGroup.id}
+                className="bg-gray-100 text-gray-500 text-lg font-custom"
+              >
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
                     className="whitespace-nowrap px-2 min-w-[70px] text-md font-custom"
                   >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -239,7 +273,10 @@ export default function TimesheetTable() {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-gray-400 font-custom">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-gray-400 font-custom"
+                >
                   No records for this date range.
                 </TableCell>
               </TableRow>
@@ -247,7 +284,10 @@ export default function TimesheetTable() {
               data.map((row, i) =>
                 row._section ? (
                   <tr key={"section-" + row.week}>
-                    <td colSpan={columns.length} className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold">
+                    <td
+                      colSpan={columns.length}
+                      className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
+                    >
                       {row.week}
                     </td>
                   </tr>
@@ -258,7 +298,9 @@ export default function TimesheetTable() {
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
-                        {flexRender(col.columnDef.cell, { row: { original: row } })}
+                        {flexRender(col.columnDef.cell, {
+                          row: { original: row },
+                        })}
                       </TableCell>
                     ))}
                   </TableRow>

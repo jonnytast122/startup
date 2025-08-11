@@ -14,10 +14,14 @@ import { ChevronDown } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-/* =======================
-   Static Fake Data (12 rows)
-   ======================= */
 const fakeData = [
   { date: "2025-07-02", policy: "Sick Leave",     requestedOn: "2025-07-02", totalOvertime: "2 hour", status: "Pending",  totalHour: "08:00", note: "Reviewed by manager" },
   { date: "2025-07-04", policy: "Annual Leave",   requestedOn: "2025-07-04", totalOvertime: "3 hour", status: "Approved", totalHour: "07:30", note: "Auto-submitted" },
@@ -201,6 +205,11 @@ export default function TimesheetTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+    const exportOptions = [
+  { value: "as CSV", label: "as CSV" },
+  { value: "as XLS", label: "as XLS" },
+];
+
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
       {/* Header */}
@@ -240,9 +249,18 @@ export default function TimesheetTable() {
             )}
           </div>
         </div>
-        <button className="rounded-full px-5 py-1 text-blue-500 border border-blue-100 font-custom bg-white hover:bg-blue-50 w-full sm:w-auto">
-          Export
-        </button>
+        <Select>
+          <SelectTrigger className="w-24 font-custom rounded-full">
+            <SelectValue placeholder="Export" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            {exportOptions.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary (demo values) */}

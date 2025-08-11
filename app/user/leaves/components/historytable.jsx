@@ -8,29 +8,133 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import { useReactTable, getCoreRowModel, flexRender } from "@tanstack/react-table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+} from "@tanstack/react-table";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ChevronDown } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 
-/* =======================
-   Static Fake Data (12 rows)
-   ======================= */
 const fakeData = [
-  { date: "2025-07-02", policy: "Sick Leave",     requestedOn: "2025-07-02", totalOvertime: "2 hour", status: "Pending",  totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-04", policy: "Annual Leave",   requestedOn: "2025-07-04", totalOvertime: "3 hour", status: "Approved", totalHour: "07:30", note: "Auto-submitted" },
-  { date: "2025-07-06", policy: "Weekend OT",     requestedOn: "2025-07-06", totalOvertime: "4 hour", status: "Rejected", totalHour: "06:45", note: "—" },
-  { date: "2025-07-08", policy: "Sick Leave",     requestedOn: "2025-07-08", totalOvertime: "5 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-10", policy: "Annual Leave",   requestedOn: "2025-07-10", totalOvertime: "2 hour", status: "Pending",  totalHour: "07:00", note: "Auto-submitted" },
-  { date: "2025-07-12", policy: "Weekend OT",     requestedOn: "2025-07-12", totalOvertime: "3 hour", status: "Rejected", totalHour: "06:30", note: "—" },
-  { date: "2025-07-14", policy: "Personal Leave", requestedOn: "2025-07-14", totalOvertime: "4 hour", status: "Approved", totalHour: "08:15", note: "Reviewed by manager" },
-  { date: "2025-07-16", policy: "Sick Leave",     requestedOn: "2025-07-16", totalOvertime: "5 hour", status: "Pending",  totalHour: "07:45", note: "Auto-submitted" },
-  { date: "2025-07-18", policy: "Annual Leave",   requestedOn: "2025-07-18", totalOvertime: "2 hour", status: "Rejected", totalHour: "06:20", note: "—" },
-  { date: "2025-07-20", policy: "Weekend OT",     requestedOn: "2025-07-20", totalOvertime: "3 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-22", policy: "Personal Leave", requestedOn: "2025-07-22", totalOvertime: "4 hour", status: "Pending",  totalHour: "07:15", note: "Auto-submitted" },
-  { date: "2025-07-24", policy: "Sick Leave",     requestedOn: "2025-07-24", totalOvertime: "5 hour", status: "Rejected", totalHour: "06:10", note: "—" },
+  {
+    date: "2025-07-02",
+    policy: "Sick Leave",
+    requestedOn: "2025-07-02",
+    totalOvertime: "2 hour",
+    status: "Pending",
+    totalHour: "08:00",
+    note: "Reviewed by manager",
+  },
+  {
+    date: "2025-07-04",
+    policy: "Annual Leave",
+    requestedOn: "2025-07-04",
+    totalOvertime: "3 hour",
+    status: "Approved",
+    totalHour: "07:30",
+    note: "Auto-submitted",
+  },
+  {
+    date: "2025-07-06",
+    policy: "Weekend OT",
+    requestedOn: "2025-07-06",
+    totalOvertime: "4 hour",
+    status: "Rejected",
+    totalHour: "06:45",
+    note: "—",
+  },
+  {
+    date: "2025-07-08",
+    policy: "Sick Leave",
+    requestedOn: "2025-07-08",
+    totalOvertime: "5 hour",
+    status: "Approved",
+    totalHour: "08:00",
+    note: "Reviewed by manager",
+  },
+  {
+    date: "2025-07-10",
+    policy: "Annual Leave",
+    requestedOn: "2025-07-10",
+    totalOvertime: "2 hour",
+    status: "Pending",
+    totalHour: "07:00",
+    note: "Auto-submitted",
+  },
+  {
+    date: "2025-07-12",
+    policy: "Weekend OT",
+    requestedOn: "2025-07-12",
+    totalOvertime: "3 hour",
+    status: "Rejected",
+    totalHour: "06:30",
+    note: "—",
+  },
+  {
+    date: "2025-07-14",
+    policy: "Personal Leave",
+    requestedOn: "2025-07-14",
+    totalOvertime: "4 hour",
+    status: "Approved",
+    totalHour: "08:15",
+    note: "Reviewed by manager",
+  },
+  {
+    date: "2025-07-16",
+    policy: "Sick Leave",
+    requestedOn: "2025-07-16",
+    totalOvertime: "5 hour",
+    status: "Pending",
+    totalHour: "07:45",
+    note: "Auto-submitted",
+  },
+  {
+    date: "2025-07-18",
+    policy: "Annual Leave",
+    requestedOn: "2025-07-18",
+    totalOvertime: "2 hour",
+    status: "Rejected",
+    totalHour: "06:20",
+    note: "—",
+  },
+  {
+    date: "2025-07-20",
+    policy: "Weekend OT",
+    requestedOn: "2025-07-20",
+    totalOvertime: "3 hour",
+    status: "Approved",
+    totalHour: "08:00",
+    note: "Reviewed by manager",
+  },
+  {
+    date: "2025-07-22",
+    policy: "Personal Leave",
+    requestedOn: "2025-07-22",
+    totalOvertime: "4 hour",
+    status: "Pending",
+    totalHour: "07:15",
+    note: "Auto-submitted",
+  },
+  {
+    date: "2025-07-24",
+    policy: "Sick Leave",
+    requestedOn: "2025-07-24",
+    totalOvertime: "5 hour",
+    status: "Rejected",
+    totalHour: "06:10",
+    note: "—",
+  },
 ];
 
 /* =======================
@@ -60,7 +164,10 @@ function getDatesInRange(startDate, endDate) {
  *  while preserving `date` as a Date object. */
 function getTimesheetRows(selectedRange) {
   if (!selectedRange.startDate || !selectedRange.endDate) return [];
-  const allDates = getDatesInRange(selectedRange.startDate, selectedRange.endDate);
+  const allDates = getDatesInRange(
+    selectedRange.startDate,
+    selectedRange.endDate
+  );
 
   // Map static fake rows by ISO date key
   const fakeMap = {};
@@ -107,7 +214,11 @@ const columns = [
     id: "checkbox",
     header: () => <input type="checkbox" className="accent-blue-500" />,
     cell: ({ row }) =>
-      !row.original._section ? <input type="checkbox" className="accent-blue-500" /> : "",
+      !row.original._section ? (
+        <input type="checkbox" className="accent-blue-500" />
+      ) : (
+        ""
+      ),
     size: 36,
   },
   {
@@ -137,13 +248,18 @@ const columns = [
       const v = row.original.requestedOn;
       if (!v) return "--";
       const d = typeof v === "string" ? new Date(v) : v;
-      return d.toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric" });
+      return d.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
     },
   },
   {
     accessorKey: "totalOvertime",
     header: "Total Overtime",
-    cell: ({ row }) => (row.original.totalOvertime ? row.original.totalOvertime : "--"),
+    cell: ({ row }) =>
+      row.original.totalOvertime ? row.original.totalOvertime : "--",
   },
   {
     accessorKey: "status",
@@ -152,7 +268,11 @@ const columns = [
       const s = row.original.status;
       if (!s) return "--";
       const color =
-        s === "Approved" ? "text-blue-600" : s === "Pending" ? "text-yellow-600" : "text-red-600";
+        s === "Approved"
+          ? "text-blue-600"
+          : s === "Pending"
+          ? "text-yellow-600"
+          : "text-red-600";
       return <span className={`font-medium ${color}`}>{s}</span>;
     },
   },
@@ -175,7 +295,7 @@ export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31),  // July 31, 2025
+    endDate: new Date(2025, 6, 31), // July 31, 2025
     key: "selection",
   });
   const datePickerRef = useRef(null);
@@ -189,7 +309,8 @@ export default function TimesheetTable() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside, true);
-    return () => document.removeEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
   }, [showDatePicker]);
 
   // Build table rows
@@ -201,12 +322,19 @@ export default function TimesheetTable() {
     getCoreRowModel: getCoreRowModel(),
   });
 
+  const exportOptions = [
+    { value: "as CSV", label: "as CSV" },
+    { value: "as XLS", label: "as XLS" },
+  ];
+
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="font-custom text-xl font-semibold">Request History</div>
+          <div className="font-custom text-xl font-semibold">
+            Request History
+          </div>
           {/* Date Range Picker */}
           <div className="relative">
             <button
@@ -227,7 +355,11 @@ export default function TimesheetTable() {
                     const newRange = ranges.selection;
                     setSelectedRange(newRange);
                     const { startDate, endDate } = newRange;
-                    if (startDate && endDate && startDate.getTime() !== endDate.getTime()) {
+                    if (
+                      startDate &&
+                      endDate &&
+                      startDate.getTime() !== endDate.getTime()
+                    ) {
                       setShowDatePicker(false);
                     }
                   }}
@@ -240,9 +372,18 @@ export default function TimesheetTable() {
             )}
           </div>
         </div>
-        <button className="rounded-full px-5 py-1 text-blue-500 border border-blue-100 font-custom bg-white hover:bg-blue-50 w-full sm:w-auto">
-          Export
-        </button>
+        <Select>
+          <SelectTrigger className="w-24 font-custom rounded-full">
+            <SelectValue placeholder="Export" />
+          </SelectTrigger>
+          <SelectContent className="font-custom">
+            {exportOptions.map((role) => (
+              <SelectItem key={role.value} value={role.value}>
+                {role.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Summary (demo values) */}
@@ -258,7 +399,10 @@ export default function TimesheetTable() {
         <Table className="min-w-[980px] w-full">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-gray-100 text-gray-500 text-lg font-custom">
+              <TableRow
+                key={hg.id}
+                className="bg-gray-100 text-gray-500 text-lg font-custom"
+              >
                 {hg.headers.map((h) => (
                   <TableHead
                     key={h.id}
@@ -274,7 +418,10 @@ export default function TimesheetTable() {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length} className="text-center text-gray-400 font-custom">
+                <TableCell
+                  colSpan={columns.length}
+                  className="text-center text-gray-400 font-custom"
+                >
                   No records for this date range.
                 </TableCell>
               </TableRow>
@@ -296,7 +443,9 @@ export default function TimesheetTable() {
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
-                        {flexRender(col.columnDef.cell, { row: { original: row } })}
+                        {flexRender(col.columnDef.cell, {
+                          row: { original: row },
+                        })}
                       </TableCell>
                     ))}
                   </TableRow>
