@@ -21,7 +21,7 @@ function SlideToStop({ onStop }) {
   const maxX = 260;
   const sliderRef = useRef();
 
-  function onStart(e) {
+  function onStart() {
     setDragging(true);
     document.body.style.userSelect = "none";
   }
@@ -140,7 +140,6 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
     }
   }, [isRunning]);
 
-  // Save clock in time when start
   const startTimer = (shift) => {
     const now = new Date();
     const formattedStart = now.toLocaleTimeString("en-GB", {
@@ -159,12 +158,10 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
     }, 1000);
   };
 
-  // Show dialog and stop timer when swiped
   const stopTimer = () => {
     clearInterval(intervalRef.current);
     setIsRunning(false);
 
-    // Collect details for dialog
     const end = new Date();
     const formattedEnd = end.toLocaleTimeString("en-GB", {
       hour12: false,
@@ -206,11 +203,9 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
             Clock In
           </Button>
 
-          {/* Shift Selection Dialog */}
           {showDialog && (
             <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
               <div className="relative bg-white rounded-xl p-6 w-[90%] max-w-sm text-center space-y-4 shadow-lg">
-                {/* X Close Button */}
                 <button
                   onClick={() => setShowDialog(false)}
                   className="absolute top-2 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
@@ -272,6 +267,13 @@ export default function Attendance() {
   const [shiftDetail, setShiftDetail] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // NEW: show tabs only after first Clock In
+  const [hasClockedIn, setHasClockedIn] = useState(false);
+
+  // Tabs + attachment state (unchanged behavior)
+  const [activeTab, setActiveTab] = useState("daylog"); // "attachments" | "daylog"
+  const [attachments, setAttachments] = useState([]);
+
   return (
     <div>
       {/* Header */}
@@ -316,7 +318,10 @@ export default function Attendance() {
                 },
               ]);
             }}
-            onStarted={(shift, time) => setStartTime({ shift, time })}
+            onStarted={(shift, time) => {
+              setStartTime({ shift, time });
+              setHasClockedIn(true); // <-- show tabs after first Clock In
+            }}
             onShowShiftDetail={(detail) => {
               setShiftDetail(detail);
               setShowShiftDetail(true);
@@ -347,37 +352,71 @@ export default function Attendance() {
               </p>
             )}
 
-            <div className="w-full border-t border-gray-800 opacity-100 my-4" />
+            {/* Show tabs + content ONLY after first Clock In */}
+            {hasClockedIn && (
+              <>
+                <div className="w-full border-t border-gray-800 opacity-100 my-4" />
 
-            {/* Log Section */}
-            <div className="max-h-[160px] overflow-y-auto px-2 sm:px-4 w-full">
-              {/* Header row above logs */}
-              <div className="flex justify-between items-center w-full mb-2">
-                <span className="text-base text-blue-400 font-medium font-custom">
-                  Attachments
-                </span>
-                <span className="text-base text-black font-medium font-custom">
-                  Day Log
-                </span>
-              </div>
+                {/* Tabs */}
+                <div className="flex justify-between items-center w-full mb-2 select-none">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("attachments")}
+                    className={`text-base font-medium font-custom transition-colors ${
+                      activeTab === "attachments"
+                        ? "text-blue-500"
+                        : "text-black"
+                    }`}
+                  >
+                    Attachments
+                  </button>
 
-              <ul className="space-y-3">
-                {logs.map((log, index) => (
-                  <li key={index} className="font-custom text-sm text-gray-600">
-                    <div className="flex flex-wrap justify-between items-center gap-2 w-full">
-                      <span className="border border-blue-400 text-blue-400 px-2 py-1 rounded-xl text-sm">
-                        {log.shift}
-                      </span>
-                      <span className="text-gray-500 text-xs text-right">
-                        {log.start} - {log.end}
-                        <span className="mx-1">•</span>
-                        {log.duration}
-                      </span>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("daylog")}
+                    className={`text-base font-medium font-custom transition-colors ${
+                      activeTab === "daylog" ? "text-blue-500" : "text-black"
+                    }`}
+                  >
+                    Day Log
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="max-h-[160px] overflow-y-auto px-2 sm:px-4 w-full text-left">
+                  {activeTab === "attachments" ? (
+                    <div className="space-y-3">
+                      <input
+                        type="text"
+                        className="w-full text-sm font-custom text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
+                        placeholder="Add attachment(s) here"
+                        onChange={() => {}}
+                      />
                     </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      {logs.map((log, index) => (
+                        <li
+                          key={index}
+                          className="font-custom text-sm text-gray-600"
+                        >
+                          <div className="flex flex-wrap justify-between items-center gap-2 w-full">
+                            <span className="border border-blue-400 text-blue-400 px-2 py-1 rounded-xl text-sm">
+                              {log.shift}
+                            </span>
+                            <span className="text-gray-500 text-xs text-right">
+                              {log.start} - {log.end}
+                              <span className="mx-1">•</span>
+                              {log.duration}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -387,18 +426,26 @@ export default function Attendance() {
         open={showShiftDetail}
         detail={shiftDetail}
         onClose={() => setShowShiftDetail(false)}
-        onRequestLeave={() => setShowLeaveDialog(true)}
+        onRequestLeave={() => {
+          setShowShiftDetail(false); // hide shift detail
+          setShowLeaveDialog(true); // show request leave
+        }}
       />
+
       <RequestLeaveDialog
         open={showLeaveDialog}
         detail={shiftDetail}
-        onClose={() => setShowLeaveDialog(false)}
+        onClose={() => {
+          setShowLeaveDialog(false); // hide request leave
+          setShowShiftDetail(true); // show shift detail again
+        }}
         onCloseAll={() => {
           setShowLeaveDialog(false);
           setShowShiftDetail(false);
           setShowSuccess(true);
         }}
       />
+
       <SuccessDialog open={showSuccess} onClose={() => setShowSuccess(false)} />
       <TimesheetTable />
     </div>

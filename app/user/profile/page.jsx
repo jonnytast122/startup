@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UpdateCashDialog from "./components/updatecashdialog";
 import UpdateBankTransferDialog from "./components/updatebanktransferdialog";
-import { Button } from "react-scroll";
+import { Button } from "@/components/ui/button"; // <-- fixed import
 import DeleteDialog from "./components/deletedialog";
 
 // 1. All user data is here:
@@ -75,12 +75,10 @@ export default function UserProfile() {
   const [files, setFiles] = useState([]);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
     if (
       file &&
-      ["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(
-        file.type
-      )
+      ["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(file.type)
     ) {
       const newFile = {
         name: file.name,
@@ -94,7 +92,7 @@ export default function UserProfile() {
   };
 
   const handleDelete = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const [selectedPolicies, setSelectedPolicies] = useState([
@@ -104,17 +102,11 @@ export default function UserProfile() {
 
   const togglePolicy = (policy) => {
     setSelectedPolicies((prev) =>
-      prev.includes(policy)
-        ? prev.filter((p) => p !== policy)
-        : [...prev, policy]
+      prev.includes(policy) ? prev.filter((p) => p !== policy) : [...prev, policy]
     );
   };
 
-  const [selectedWorkShift, setSelectedWorkShift] = useState([
-    "Morning",
-    "Afternoon",
-  ]);
-
+  const [selectedWorkShift, setSelectedWorkShift] = useState(["Morning", "Afternoon"]);
   const toggleWorkShift = (shift) => {
     setSelectedWorkShift((prev) =>
       prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
@@ -122,19 +114,13 @@ export default function UserProfile() {
   };
 
   const [selectedGroup, setSelectedGroup] = useState(["Admin", "HR Manager"]);
-
   const toggleGroup = (value) => {
     setSelectedGroup((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
 
-  const [selectedLocation, setSelectedLocation] = useState([
-    "Geo Fence",
-    "Flexible",
-    "GPS",
-  ]);
-
+  const [selectedLocation, setSelectedLocation] = useState(["Geo Fence", "Flexible", "GPS"]);
   const toggleLocation = (value) => {
     setSelectedLocation((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
@@ -166,7 +152,15 @@ export default function UserProfile() {
         </div>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+          <DropdownMenuTrigger
+            asChild
+            onClick={(e) => {
+              // proactively close any custom pop menus so they don't block clicks
+              setShowFirstMenu(false);
+              setOpenSecondLayerFor("");
+              e.stopPropagation();
+            }}
+          >
             <button
               type="button"
               className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
@@ -179,7 +173,7 @@ export default function UserProfile() {
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="end"
-            className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
+            className={`z-[60] font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
           >
             <div className="space-y-1">
               {items.map((item) => (
@@ -205,9 +199,7 @@ export default function UserProfile() {
   const InfoRow = ({ label, value }) => (
     <div className="flex items-center justify-between">
       <p className="text-md font-custom text-light-pearl">{label}</p>
-      <p className="font-custom text-md text-dark-blue font-semibold">
-        {value}
-      </p>
+      <p className="font-custom text-md text-dark-blue font-semibold">{value}</p>
     </div>
   );
 
@@ -224,9 +216,7 @@ export default function UserProfile() {
   };
 
   const toggleOvertimeSubPolicy = (opt) => {
-    setOvertimeSubPolicies((prev) =>
-      prev.includes(opt) ? prev : [...prev, opt]
-    );
+    setOvertimeSubPolicies((prev) => (prev.includes(opt) ? prev : [...prev, opt]));
     setShowFirstMenu(false);
     setOpenSecondLayerFor("");
   };
@@ -242,10 +232,7 @@ export default function UserProfile() {
       title,
       employmentstartdate,
     };
-
     console.log("✅ Saving profile:", updatedProfile);
-
-    // TODO: Send to backend or update database here.
     alert("Changes saved successfully!");
   };
 
@@ -258,13 +245,20 @@ export default function UserProfile() {
         </div>
       </div>
 
-      <div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
+      <div
+        className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16"
+        onClickCapture={() => {
+          // Close custom policy menus if they’re open to avoid blocking clicks
+          if (showFirstMenu || openSecondLayerFor) {
+            setShowFirstMenu(false);
+            setOpenSecondLayerFor("");
+          }
+        }}
+      >
         <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
           Hello, {firstname}
         </div>
-        <p className="font-custom text-sm text-gray-400 px-6 mt-2">
-          Good morning!
-        </p>
+        <p className="font-custom text-sm text-gray-400 px-6 mt-2">Good morning!</p>
 
         {/* Profile Holder Container with fallback initials */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
@@ -274,7 +268,7 @@ export default function UserProfile() {
                 src={profile}
                 alt="Profile"
                 className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
+                onError={() => setImageError(false)}
               />
             ) : (
               <span className="text-gray-700">
@@ -287,9 +281,7 @@ export default function UserProfile() {
             <div className="text-2xl font-bold font-custom">
               {firstname} {lastname}
             </div>
-            <div className="text-sm font-custom text-gray-500">
-              {AccessLevel}
-            </div>
+            <div className="text-sm font-custom text-gray-500">{AccessLevel}</div>
           </div>
         </div>
 
@@ -297,82 +289,92 @@ export default function UserProfile() {
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left container */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold font-custom mb-2">
-              Personal details
-            </h2>
+            <h2 className="text-2xl font-semibold font-custom mb-2">Personal details</h2>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              First Name
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">First Name</label>
             <input
               type="text"
               value={firstname}
               onChange={(e) => setFirstname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Last Name
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Last Name</label>
             <input
               type="text"
               value={lastname}
               onChange={(e) => setLastname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Mobile Phone
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Mobile Phone</label>
             <input
               type="text"
               value={mobile}
               onChange={(e) => setMobile(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Birthday
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Birthday</label>
             <input
               type="date"
               value={birthday}
               onChange={(e) => setBirthday(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <h2 className="text-2xl font-semibold font-custom mb-2">
-              Company details
-            </h2>
+            <h2 className="text-2xl font-semibold font-custom mb-2">Company details</h2>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Branch
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Branch</label>
             <input
               type="text"
               value={branch}
               onChange={(e) => setBranch(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Department
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Department</label>
             <input
               type="text"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Title
-            </label>
+            <label className="text-sm font-custom text-[#3F4648] w-full">Title</label>
             <input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -382,12 +384,14 @@ export default function UserProfile() {
               type="date"
               value={employmentstartdate}
               onChange={(e) => setEmploymentStartDate(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              readOnly
+              aria-readonly="true"
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black cursor-not-allowed"
+              title="View mode"
             />
 
-            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
-              Policies
-            </h2>
+            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">Policies</h2>
             <div className="relative flex justify-between items-start flex-wrap gap-4">
               {/* Display Selected Tags */}
               <div className="flex flex-wrap gap-4">
@@ -396,9 +400,7 @@ export default function UserProfile() {
                     key={item}
                     className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
                   >
-                    <h2 className="text-sm font-custom text-blue">
-                      Leave - {item}
-                    </h2>
+                    <h2 className="text-sm font-custom text-blue">Leave - {item}</h2>
                   </div>
                 ))}
                 {overtimeSubPolicies.map((item) => (
@@ -406,9 +408,7 @@ export default function UserProfile() {
                     key={item}
                     className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
                   >
-                    <h2 className="text-sm font-custom text-blue">
-                      Overtime - {item}
-                    </h2>
+                    <h2 className="text-sm font-custom text-blue">Overtime - {item}</h2>
                   </div>
                 ))}
               </div>
@@ -417,7 +417,8 @@ export default function UserProfile() {
               <div className="relative">
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setShowFirstMenu((prev) => !prev);
                     setOpenSecondLayerFor(""); // Reset second layer when reopening first
                   }}
@@ -435,7 +436,10 @@ export default function UserProfile() {
                     {["Leave Policy", "Overtime Policy"].map((item) => (
                       <div
                         key={item}
-                        onClick={() => setOpenSecondLayerFor(item)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setOpenSecondLayerFor(item);
+                        }}
                         className="px-4 py-2 cursor-pointer hover:bg-blue-50"
                       >
                         {item}
@@ -450,7 +454,10 @@ export default function UserProfile() {
                     {["Sick Leave", "Annual Leave"].map((opt) => (
                       <div
                         key={opt}
-                        onClick={() => toggleLeaveSubPolicy(opt)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleLeaveSubPolicy(opt);
+                        }}
                         className={`px-4 py-2 cursor-pointer rounded ${
                           leaveSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
@@ -468,7 +475,10 @@ export default function UserProfile() {
                     {["Morning", "Weekend"].map((opt) => (
                       <div
                         key={opt}
-                        onClick={() => toggleOvertimeSubPolicy(opt)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleOvertimeSubPolicy(opt);
+                        }}
                         className={`px-4 py-2 cursor-pointer rounded ${
                           overtimeSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
@@ -513,10 +523,7 @@ export default function UserProfile() {
                 Payroll Info
               </h2>
 
-              <InfoRow
-                label="Employee Name"
-                value={`${firstname} ${lastname}`}
-              />
+              <InfoRow label="Employee Name" value={`${firstname} ${lastname}`} />
               <InfoRow label="Employee ID" value="#1234565" />
               <InfoRow label="Bank Name" value="--------------" />
               <InfoRow label="Account Number" value={accountnumber} />
@@ -526,24 +533,36 @@ export default function UserProfile() {
               {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger
+                    asChild
+                    onClick={(e) => {
+                      setShowFirstMenu(false);
+                      setOpenSecondLayerFor("");
+                      e.stopPropagation();
+                    }}
+                  >
                     <button className="m-2 focus:outline-none">
                       <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+                    className="z-[60] font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setCashDialogOpen(true)}>
+                    <DropdownMenuItem onClick={() => setCashDialogOpen(false)}>
                       Edit
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        console.log("📦 Archived cash card");
+                        // TODO: replace with real archive action
+                      }}
+                    >
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
+                      onClick={() => setDeleteOpen(false)}
                       className="text-red-500"
                     >
                       Delete
@@ -566,9 +585,7 @@ export default function UserProfile() {
                   <p className="font-custom text-md font-semibold">Cash</p>
                 </div>
 
-                <p className="text-dark-blue font-custom text-md font-semibold">
-                  ${cash}
-                </p>
+                <p className="text-dark-blue font-custom text-md font-semibold">${cash}</p>
               </div>
             </div>
 
@@ -576,23 +593,35 @@ export default function UserProfile() {
               {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                  <DropdownMenuTrigger
+                    asChild
+                    onClick={(e) => {
+                      setShowFirstMenu(false);
+                      setOpenSecondLayerFor("");
+                      e.stopPropagation();
+                    }}
+                  >
                     <button className="m-2 focus:outline-none">
                       <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+                    className="z-[60] font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setBankTransferOpen(true)}>
+                    <DropdownMenuItem onClick={() => setBankTransferOpen(false)}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        console.log("📦 Archived bank transfer card");
+                        // TODO: replace with real archive action
+                      }}
+                    >
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
+                      onClick={() => setDeleteOpen(false)}
                       className="text-red-500"
                     >
                       Delete
@@ -615,9 +644,7 @@ export default function UserProfile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <Landmark className="text-blue w-10 h-10 mr-6" />
-                    <p className="font-custom text-md font-semibold">
-                      Bank Transfer
-                    </p>
+                    <p className="font-custom text-md font-semibold">Bank Transfer</p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
                     ${banktransfer}
@@ -628,24 +655,18 @@ export default function UserProfile() {
                   <div className="flex items-center ml-10">
                     <Percent className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        Single
-                      </p>
+                      <p className="font-custom text-md font-semibold">Single</p>
                       <p className="text-xs text-gray-500 font-custom">Tax</p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${single}
-                  </p>
+                  <p className="text-dark-blue font-custom text-md font-semibold">${single}</p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
                     <CreditCard className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        No Children
-                      </p>
+                      <p className="font-custom text-md font-semibold">No Children</p>
                       <p className="text-xs text-gray-500 font-custom">NSSF</p>
                     </div>
                   </div>
@@ -658,22 +679,19 @@ export default function UserProfile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
                     <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <p className="font-custom text-md font-semibold">
-                      Sub total Salary
-                    </p>
+                    <p className="font-custom text-md font-semibold">Sub total Salary</p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
                     ${subtotal}
                   </p>
                 </div>
               </div>
+
               {/* Card container */}
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Estimated
-                    </p>
+                    <p className="font-custom text-lg font-semibold">Estimated</p>
                   </div>
                 </div>
                 <hr className="border-t border-blue-500" />
@@ -684,18 +702,14 @@ export default function UserProfile() {
                       <p className="font-custom text-md font-semibold">Cash</p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${cash}
-                  </p>
+                  <p className="text-dark-blue font-custom text-md font-semibold">${cash}</p>
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
                     <Banknote className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        Bank Transfer
-                      </p>
+                      <p className="font-custom text-md font-semibold">Bank Transfer</p>
                     </div>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
@@ -706,15 +720,14 @@ export default function UserProfile() {
                 <div className="border-t border-blue-500"></div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Net Salary
-                    </p>
+                    <p className="font-custom text-lg font-semibold">Net Salary</p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
                     ${netsalary}
                   </p>
                 </div>
               </div>
+
               <div>
                 <h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
                   Attachment
@@ -723,7 +736,6 @@ export default function UserProfile() {
                     className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
                   >
                     <span className="relative w-3 h-3">
-                      {/* Plus Icon */}
                       <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
                       <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
                     </span>
@@ -782,7 +794,8 @@ export default function UserProfile() {
             </div>
           </div>
         </div>
-      </div>
+      </div> {/* end big wrapper */}
+
       <div className="flex justify-center">
         <Button
           onClick={handleSave}

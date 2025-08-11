@@ -13,7 +13,7 @@ export default function SuccessDialog({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
-      <div className="bg-white rounded-2xl shadow-2xl px-10 py-12 max-w-xs w-full text-center pointer-events-auto">
+      <div className="bg-white rounded-2xl shadow-2xl px-14 py-14 max-w-lg max-h-lg w-full text-center pointer-events-auto">
         <div className="text-3xl sm:text-4xl font-custom font-semibold mb-8">
           Successfully Sent
         </div>

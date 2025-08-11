@@ -228,7 +228,7 @@ export default function TimesheetTable() {
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    className="whitespace-nowrap px-2 min-w-[70px] text-xs font-custom"
+                    className="whitespace-nowrap px-2 min-w-[70px] text-md font-custom"
                   >
                     {flexRender(header.column.columnDef.header, header.getContext())}
                   </TableHead>

@@ -34,7 +34,7 @@ export default function RequestLeaveDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-[#f5f5f5]/90 flex items-center justify-center px-2">
+    <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-center justify-center px-2">
       <div className="w-full max-w-lg rounded-2xl shadow-2xl bg-[#fafafa] p-0 relative">
         {/* Close + Heading */}
         <div className="flex items-center px-8 pt-8 pb-1">
