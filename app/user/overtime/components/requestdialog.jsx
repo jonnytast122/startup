@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -9,7 +9,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Smile } from "lucide-react";
+import { ChevronLeft, Smile, Clock } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -27,6 +27,60 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
+/* --------- inline TimeInput with scoped CSS to hide native icon --------- */
+function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
+  const ref = useRef(null);
+  return (
+    <div>
+      {label && <div className="text-xs text-gray-600 mb-1">{label}</div>}
+      <div className="relative">
+        <input
+          ref={ref}
+          type="time"
+          value={value}
+          disabled={disabled}
+          onChange={(e) => onChange(e.target.value)}
+          className="time-input-hide-native border rounded px-2 pr-10 py-1 w-full h-9 text-sm appearance-none cursor-pointer"
+          step={step}
+          inputMode="numeric"
+          style={{ WebkitAppearance: "none", MozAppearance: "textfield" }}
+        />
+        <button
+          type="button"
+          onClick={() => {
+            try {
+              ref.current?.showPicker?.();
+            } catch {}
+            ref.current?.focus();
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 pointer-events-auto z-10"
+          aria-label="Open time picker"
+          disabled={disabled}
+        >
+          <Clock className="w-4 h-4 text-gray-600" />
+        </button>
+      </div>
+
+      {/* SCOPED styles: hide ONLY this input's native icon */}
+      <style jsx>{`
+        .time-input-hide-native::-webkit-calendar-picker-indicator {
+          display: none;
+          -webkit-appearance: none;
+        }
+        .time-input-hide-native::-webkit-clear-button,
+        .time-input-hide-native::-webkit-inner-spin-button,
+        .time-input-hide-native::-webkit-outer-spin-button {
+          display: none;
+          -webkit-appearance: none;
+        }
+        .time-input-hide-native {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+    </div>
+  );
+}
+
 const overtimeTypes = ["Weekend", "Night", "Holiday", "Special"];
 
 export default function RequestDialog() {
@@ -36,7 +90,7 @@ export default function RequestDialog() {
   const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
   const [allDay, setAllDay] = useState(true);
 
-  // All-day ON range
+  // All-day ON range (default today)
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
 
@@ -58,14 +112,34 @@ export default function RequestDialog() {
     setOpenOneDayPop(false);
   };
 
+  const toMin = (t) => {
+    if (!t || !t.includes(":")) return 0;
+    const [h, m] = t.split(":").map(Number);
+    return h * 60 + (m || 0);
+  };
+
+  const timeDiff = (start, end) => {
+    const s = toMin(start);
+    const e = toMin(end);
+    return Math.max(0, e - s);
+  };
+
+  const totalWorkMins = timeDiff(startTime, endTime);
+  const totalH = Math.floor(totalWorkMins / 60);
+  const totalM = String(totalWorkMins % 60).padStart(2, "0");
+
   const handleSubmit = () => {
+    if (!allDay && toMin(endTime) <= toMin(startTime)) {
+      alert("End time must be after start time.");
+      return;
+    }
     setDrawerOpen(false);
     setTimeout(() => {
       setSuccessOpen(true);
       setTimeout(() => {
         setSuccessOpen(false);
-      }, 500); // your last duration
-    }, 220); // allow drawer close animation
+      }, 600);
+    }, 220);
   };
 
   return (
@@ -88,7 +162,7 @@ export default function RequestDialog() {
           </Button>
         </DrawerTrigger>
 
-        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[400px] md:w-[460px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
+        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
           <div className="h-full min-h-screen max-h-screen w-full bg-gray-100 font-custom flex flex-col border-l border-gray-200">
             {/* Header */}
             <div className="flex items-center gap-1 px-5 py-4 flex-shrink-0">
@@ -173,15 +247,17 @@ export default function RequestDialog() {
                             side="bottom"
                             align="center"
                             sideOffset={8}
-                            className="bg-white rounded-md shadow border p-2 w-auto"
+                            className="z-[80] bg-white rounded-md shadow border p-2 w-auto pointer-events-auto"
                           >
                             <Calendar
                               mode="single"
                               selected={startDate}
+                              defaultMonth={startDate}
                               onSelect={(d) => {
                                 if (d) setStartDate(d);
                                 setOpenStartPop(false);
                               }}
+                              initialFocus
                             />
                           </PopoverContent>
                         </Popover>
@@ -211,38 +287,36 @@ export default function RequestDialog() {
                           </PopoverTrigger>
                           <PopoverContent
                             side="bottom"
-                            align="end"        // keep it attached to the right
-                            alignOffset={-16}  // nudge left so it doesn’t get cut off
+                            align="end"
+                            alignOffset={-16}
                             sideOffset={8}
-                            className="bg-white rounded-md shadow border p-2 w-auto"
+                            className="z-[80] bg-white rounded-md shadow border p-2 w-auto pointer-events-auto"
                           >
                             <Calendar
                               mode="single"
                               selected={endDate}
+                              defaultMonth={endDate}
                               onSelect={(d) => {
                                 if (d) setEndDate(d);
                                 setOpenEndPop(false);
                               }}
+                              initialFocus
                             />
                           </PopoverContent>
                         </Popover>
                       </div>
                     </div>
 
-                    {/* Total time row (placeholder) */}
-                    <div className="mt-4 flex items-center justify-between">
-                      <span className="text-sm text-gray-700">Total time leaves</span>
-                      <span className="text-sm">
-                        <span className="font-semibold">24:00</span>{" "}
-                        <span className="text-gray-600">work hours</span>
-                      </span>
+                    {/* Info row */}
+                    <div className="mt-4 text-xs text-gray-600">
+                      Total time leaves: 24 hours
                     </div>
                   </>
                 ) : (
                   /* All day OFF -> single date + time range */
                   <>
                     <div className="mb-3">
-                      <div className="text-sm font-medium mb-1">Date and time leaves</div>
+                      <div className="text-sm font-medium mb-1">Date and time</div>
                       <Popover
                         open={openOneDayPop}
                         onOpenChange={(o) => {
@@ -266,40 +340,41 @@ export default function RequestDialog() {
                           side="bottom"
                           align="center"
                           sideOffset={8}
-                          className="bg-white rounded-md shadow border p-2 w-auto"
+                          className="z-[80] bg-white rounded-md shadow border p-2 w-auto pointer-events-auto"
                         >
                           <Calendar
                             mode="single"
                             selected={oneDayDate}
+                            defaultMonth={oneDayDate}
                             onSelect={(d) => {
                               if (d) setOneDayDate(d);
                               setOpenOneDayPop(false);
                             }}
+                            initialFocus
                           />
                         </PopoverContent>
                       </Popover>
                     </div>
 
-                    {/* Native time inputs (clock icon clickable) */}
+                    {/* Reliable time pickers (native icon hidden, custom icon shown) */}
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">Starts</div>
-                        <input
-                          type="time"
-                          value={startTime}
-                          onChange={(e) => setStartTime(e.target.value)}
-                          className="border rounded px-2 py-1 w-full h-9 text-sm"
-                        />
-                      </div>
-                      <div>
-                        <div className="text-xs text-gray-600 mb-1">Ends</div>
-                        <input
-                          type="time"
-                          value={endTime}
-                          onChange={(e) => setEndTime(e.target.value)}
-                          className="border rounded px-2 py-1 w-full h-9 text-sm"
-                        />
-                      </div>
+                      <TimeInput
+                        label="Starts"
+                        value={startTime}
+                        onChange={setStartTime}
+                        disabled={false}
+                      />
+                      <TimeInput
+                        label="Ends"
+                        value={endTime}
+                        onChange={setEndTime}
+                        disabled={false}
+                      />
+                    </div>
+
+                    {/* Duration preview */}
+                    <div className="mt-3 text-xs text-gray-700">
+                      Total time leaves: <span className="font-semibold">{totalH}:{totalM}</span> hours
                     </div>
                   </>
                 )}
@@ -313,7 +388,7 @@ export default function RequestDialog() {
                     rows={4}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Hi boss, today is my graduation day. I would like to ask for a permission."
+                    placeholder="Hi boss, today is my graduation day. I would like to ask for permission."
                     className="w-full resize-none rounded-[10px] bg-white p-3 text-sm outline-none"
                   />
                 </div>
@@ -340,11 +415,11 @@ export default function RequestDialog() {
 
       {/* Success dialog */}
       <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-        <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4 [&>[data-radix-dialog-close]]:hidden">
-          <DialogTitle className="text-4xl font-custom text-black mb-4 text-center w-full">
-            Successfully Sent
+        <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4 bg-gray-100 [&_[data-radix-dialog-close]]:hidden">
+          <DialogTitle className="text-4xl font-custom text-black mb-2">
+            Successfully Sent?
           </DialogTitle>
-          <Smile className="w-16 h-16 mx-auto text-green-500 mb-4" />
+          <Smile className="w-16 h-16 mx-auto text-green-500 mb-2" />
           <div className="text-lg text-gray-700">Please wait for the approvals.</div>
         </DialogContent>
       </Dialog>

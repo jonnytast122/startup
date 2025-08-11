@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   format,
   startOfMonth,
@@ -16,6 +16,7 @@ import {
   ChevronRight,
   MoreHorizontal,
   CircleX,
+  Calendar1,
 } from "lucide-react";
 import EditEventDialog from "./edit-event-dialog";
 import ViewEventDialog from "./view-event-dialog";
@@ -27,7 +28,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Calendar1 } from "lucide-react";
 
 const API_KEY = "OIsoHpHETdSNj2W0pZ5cDYbOz7lrXEP6";
 
@@ -35,6 +35,7 @@ export default function CambodiaHolidayCalendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [holidays, setHolidays] = useState([]);
   const [events, setEvents] = useState([]);
+
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedDateEvents, setSelectedDateEvents] = useState([]);
   const [viewEvent, setViewEvent] = useState(null);
@@ -42,13 +43,18 @@ export default function CambodiaHolidayCalendar() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [creatingEvent, setCreatingEvent] = useState(false);
 
+  // Track which dropdown is open (by event id) so we can force-close it before opening dialogs
+  const [openMenuId, setOpenMenuId] = useState(null);
+
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const firstDayOffset = getDay(monthStart);
-  const daysInGrid = [...Array(firstDayOffset).fill(null), ...days];
+  const daysInGrid = useMemo(
+    () => [...Array(firstDayOffset).fill(null), ...days],
+    [firstDayOffset, days]
+  );
 
-  // Helper function to reset all dialog states
   const resetAllDialogStates = () => {
     setSelectedDate(null);
     setSelectedDateEvents([]);
@@ -56,6 +62,7 @@ export default function CambodiaHolidayCalendar() {
     setEditEvent(null);
     setConfirmDelete(null);
     setCreatingEvent(false);
+    setOpenMenuId(null);
   };
 
   const fetchHolidays = async () => {
@@ -67,10 +74,10 @@ export default function CambodiaHolidayCalendar() {
         )}`
       );
       const json = await res.json();
-      const allHolidays = json.response.holidays || [];
+      const allHolidays = json?.response?.holidays || [];
       setHolidays(
         allHolidays.map((h) => ({
-          id: h.date.iso.slice(0, 10) + '-' + h.name.replace(/\s+/g, '-'),
+          id: `holiday-${h.date.iso.slice(0, 10)}-${h.name.replace(/\s+/g, "-")}`,
           date: h.date.iso.slice(0, 10),
           name: h.name,
           isCustom: false,
@@ -84,39 +91,45 @@ export default function CambodiaHolidayCalendar() {
 
   useEffect(() => {
     fetchHolidays();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDate]);
 
   const addEvent = (event) => {
     setEvents((prev) => {
-      // Add unique ID to events for better tracking
-      const eventWithId = { ...event, id: event.id || Date.now().toString() };
-      
+      const hasId = !!event.id;
+      const eventWithId = { ...event, id: hasId ? event.id : `ev-${Date.now()}-${Math.random().toString(36).slice(2, 7)}` };
       if (editEvent) {
-        // If editing, replace the specific event
-        return prev.map((e) => 
-          e.id === editEvent.id ? eventWithId : e
-        );
-      } else {
-        // If adding new event
-        return [...prev, eventWithId];
+        // update
+        return prev.map((e) => (e.id === editEvent.id ? eventWithId : e));
       }
+      // create
+      return [...prev, eventWithId];
     });
-    
-    // Reset all states after adding/updating
     resetAllDialogStates();
   };
 
   const deleteEvent = (event) => {
     setEvents((prev) => prev.filter((e) => e.id !== event.id));
-    // Reset all states after deleting
     resetAllDialogStates();
   };
 
-  const mergedEvents = [...holidays, ...events].reduce((acc, ev) => {
-    if (!acc[ev.date]) acc[ev.date] = [];
-    acc[ev.date].push(ev);
+  // Derived map for calendar cells
+  const mergedByDate = useMemo(() => {
+    const acc = {};
+    [...holidays, ...events].forEach((ev) => {
+      if (!acc[ev.date]) acc[ev.date] = [];
+      acc[ev.date].push(ev);
+    });
     return acc;
-  }, {});
+  }, [holidays, events]);
+
+  // Monthly list for right panel (stable sort & stable keys)
+  const monthlyList = useMemo(() => {
+    const yymm = format(currentDate, "yyyy-MM");
+    return [...holidays, ...events]
+      .filter((item) => item.date.startsWith(yymm))
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+  }, [holidays, events, currentDate]);
 
   return (
     <div>
@@ -131,7 +144,7 @@ export default function CambodiaHolidayCalendar() {
           </a>
         </div>
       </div>
-      
+
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Calendar Panel */}
         <div className="bg-white rounded-lg shadow w-full lg:w-2/3 p-4">
@@ -157,11 +170,11 @@ export default function CambodiaHolidayCalendar() {
             {daysInGrid.map((day, idx) => {
               const dateStr = day && format(day, "yyyy-MM-dd");
               const today = day && isToday(day);
-              const dayEvents = mergedEvents[dateStr] || [];
+              const dayEvents = (dateStr && mergedByDate[dateStr]) || [];
 
               return (
                 <div
-                  key={idx}
+                  key={dateStr || `empty-${idx}`}
                   onClick={() => {
                     if (day) {
                       resetAllDialogStates();
@@ -169,9 +182,8 @@ export default function CambodiaHolidayCalendar() {
                       setCreatingEvent(true);
                     }
                   }}
-                  className={`relative border h-28 p-1 cursor-pointer hover:bg-blue-50 overflow-hidden ${
-                    today ? "bg-blue-200" : ""
-                  }`}
+                  className={`relative border h-28 p-1 cursor-pointer hover:bg-blue-50 overflow-hidden ${today ? "bg-blue-200" : ""
+                    }`}
                 >
                   {day && (
                     <div className="absolute top-1 right-1 text-xs text-black font-semibold">
@@ -180,16 +192,16 @@ export default function CambodiaHolidayCalendar() {
                   )}
 
                   <div className="mt-6 flex flex-col gap-[2px] text-left">
-                    {dayEvents.slice(0, 2).map((ev, i) => (
+                    {dayEvents.slice(0, 2).map((ev) => (
                       <div
-                        key={i}
+                        key={ev.id}
                         onClick={(e) => {
                           e.stopPropagation();
+                          resetAllDialogStates();
                           setViewEvent(ev);
                         }}
-                        className={`text-[11px] px-1 py-[2px] rounded-sm text-white truncate w-fit cursor-pointer ${
-                          ev.color === "red" ? "bg-red-500" : "bg-blue-500"
-                        }`}
+                        className={`text-[11px] px-1 py-[2px] rounded-sm text-white truncate w-fit cursor-pointer ${ev.color === "red" ? "bg-red-500" : "bg-blue-500"
+                          }`}
                       >
                         {ev.name}
                       </div>
@@ -220,81 +232,85 @@ export default function CambodiaHolidayCalendar() {
             Events in {format(currentDate, "MMMM")}
           </h3>
           <div className="border-t pt-3 space-y-2 max-h-[520px] overflow-auto">
-            {[...holidays, ...events]
-              .filter((item) =>
-                item.date.startsWith(format(currentDate, "yyyy-MM"))
-              )
-              .sort((a, b) => new Date(a.date) - new Date(b.date))
-              .map((item, idx) => {
-                const dateObj = new Date(item.date);
-                return (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between gap-2 px-2"
-                  >
-                    <div className="text-center text-sm w-10">
-                      <div className="text-gray-500">
-                        {format(dateObj, "EEE")}
-                      </div>
-                      <div>{format(dateObj, "d")}</div>
+            {monthlyList.map((item) => {
+              const dateObj = new Date(item.date);
+              return (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between gap-2 px-2"
+                >
+                  <div className="text-center text-sm w-10">
+                    <div className="text-gray-500">
+                      {format(dateObj, "EEE")}
                     </div>
-                    <div
-                      className={`flex-1 text-xs rounded-md px-3 py-1 font-medium text-center border ${
-                        item.color === "red"
-                          ? "border-red-400 text-red-500"
-                          : "border-blue-400 text-blue-500"
-                      }`}
-                    >
-                      {item.name}
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="p-1 rounded hover:bg-gray-100">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-white">
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            resetAllDialogStates();
-                            setEditEvent(item);
-                            setSelectedDate(item.date);
-                          }}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setConfirmDelete(item);
-                          }}
-                        >
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div>{format(dateObj, "d")}</div>
                   </div>
-                );
-              })}
+                  <div
+                    className={`flex-1 text-xs rounded-md px-3 py-1 font-medium text-center border ${item.color === "red"
+                        ? "border-red-400 text-red-500"
+                        : "border-blue-400 text-blue-500"
+                      }`}
+                  >
+                    {item.name}
+                  </div>
+
+                  <DropdownMenu
+                    open={openMenuId === item.id}
+                    onOpenChange={(o) => setOpenMenuId(o ? item.id : null)}
+                  >
+                    <DropdownMenuTrigger asChild>
+                      <button className="p-1 rounded hover:bg-gray-100">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-white">
+                      <DropdownMenuItem
+                        // Use onSelect to ensure Radix closes the menu BEFORE we open a dialog
+                        onSelect={(e) => {
+                          e.preventDefault();
+                          setOpenMenuId(null);
+                          resetAllDialogStates();
+                          setEditEvent(item);
+                          setSelectedDate(item.date);
+                        }}
+                      >
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={(e) => {
+                          e.preventDefault();           // stop Radix from auto-closing then re-opening
+                          setOpenMenuId(null);          // close the menu first
+                          // defer opening the dialog to the next tick so focus is stable
+                          setTimeout(() => setConfirmDelete(item), 0);
+                        }}
+                      >
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              );
+            })}
           </div>
         </div>
 
         {/* +N More Dialog */}
         {selectedDateEvents.length > 0 && (
-          <Dialog open={true} onOpenChange={resetAllDialogStates}>
+          <Dialog open modal={false} onOpenChange={resetAllDialogStates}>
             <DialogContent className="bg-white w-fit">
               <DialogHeader>
                 <DialogTitle>Events on {selectedDate}</DialogTitle>
               </DialogHeader>
               <div className="space-y-2 mt-4">
-                {selectedDateEvents.map((ev, i) => (
+                {selectedDateEvents.map((ev) => (
                   <div
-                    key={i}
-                    className={`cursor-pointer text-white px-3 py-1 rounded text-sm ${
-                      ev.color === "red" ? "bg-red-500" : "bg-blue-500"
-                    }`}
-                    onClick={() => setViewEvent(ev)}
+                    key={ev.id}
+                    className={`cursor-pointer text-white px-3 py-1 rounded text-sm ${ev.color === "red" ? "bg-red-500" : "bg-blue-500"
+                      }`}
+                    onClick={() => {
+                      resetAllDialogStates();
+                      setViewEvent(ev);
+                    }}
                   >
                     {ev.name}
                   </div>
@@ -304,14 +320,19 @@ export default function CambodiaHolidayCalendar() {
           </Dialog>
         )}
 
-        {/* View-only dialog */}
+        {/* View-only dialog (make non-modal to avoid focus trap conflicts) */}
         {viewEvent && (
-          <ViewEventDialog event={viewEvent} onClose={() => setViewEvent(null)} />
+          <ViewEventDialog
+            modal={false}
+            event={viewEvent}
+            onClose={() => setViewEvent(null)}
+          />
         )}
 
         {/* Add Event Dialog */}
         {selectedDate && creatingEvent && (
           <EditEventDialog
+            modal={false}
             date={selectedDate}
             onClose={resetAllDialogStates}
             onSave={addEvent}
@@ -322,6 +343,7 @@ export default function CambodiaHolidayCalendar() {
         {/* Edit Event Dialog */}
         {editEvent && selectedDate && (
           <EditEventDialog
+            modal={false}
             date={selectedDate}
             onClose={resetAllDialogStates}
             onSave={addEvent}
@@ -331,20 +353,29 @@ export default function CambodiaHolidayCalendar() {
 
         {/* Confirm Delete Dialog */}
         {confirmDelete && (
-          <Dialog open={true} onOpenChange={resetAllDialogStates}>
-            <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center text-center">
+          <Dialog
+            open={true}
+            onOpenChange={(open) => {
+              if (!open) setConfirmDelete(null);   // only close when we explicitly say so
+            }}
+          >
+            <DialogContent
+              className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center text-center"
+              onPointerDownOutside={(e) => e.preventDefault()}  // don't auto-close on outside click
+              onInteractOutside={(e) => e.preventDefault()}     // don't auto-close while dropdown finishes
+            >
               <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
               <h2 className="text-lg font-semibold text-gray-900 mt-5">
                 Do you want to delete this event?
               </h2>
               <div className="flex items-center gap-4 mt-8">
-                <Button variant="outline" onClick={resetAllDialogStates}>
+                <Button variant="outline" onClick={() => setConfirmDelete(null)}>
                   Cancel
                 </Button>
                 <Button
                   style={{ backgroundColor: "#fb5f59", color: "white" }}
                   onClick={() => {
-                    deleteEvent(confirmDelete);
+                    deleteEvent(confirmDelete);   // this will update state and then clear dialog
                   }}
                 >
                   Delete
