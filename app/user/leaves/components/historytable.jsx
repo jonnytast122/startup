@@ -257,7 +257,7 @@ const columns = [
   },
   {
     accessorKey: "totalOvertime",
-    header: "Total Overtime",
+    header: "Total requested",
     cell: ({ row }) =>
       row.original.totalOvertime ? row.original.totalOvertime : "--",
   },
@@ -271,8 +271,8 @@ const columns = [
         s === "Approved"
           ? "text-blue-600"
           : s === "Pending"
-          ? "text-yellow-600"
-          : "text-red-600";
+            ? "text-yellow-600"
+            : "text-red-600";
       return <span className={`font-medium ${color}`}>{s}</span>;
     },
   },
@@ -295,10 +295,14 @@ export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31), // July 31, 2025
+    endDate: new Date(2025, 6, 31),  // July 31, 2025
     key: "selection",
   });
   const datePickerRef = useRef(null);
+
+  // ===== New state for selection =====
+  const [checkedRows, setCheckedRows] = useState({});
+  const [allChecked, setAllChecked] = useState(false);
 
   // Close picker on outside click
   useEffect(() => {
@@ -309,15 +313,70 @@ export default function TimesheetTable() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside, true);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside, true);
+    return () => document.removeEventListener("mousedown", handleClickOutside, true);
   }, [showDatePicker]);
 
   // Build table rows
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
+  // ===== Select-all helpers (keep styles untouched) =====
+  const toggleAll = (checked) => {
+    setAllChecked(checked);
+    const next = {};
+    data.forEach((r, idx) => {
+      if (!r._section) next[idx] = checked;
+    });
+    setCheckedRows(next);
+  };
+
+  const toggleRow = (idx, checked) => {
+    setCheckedRows((prev) => {
+      const next = { ...prev, [idx]: checked };
+      return next;
+    });
+  };
+
+  // Keep header checkbox in sync when user individually checks/unchecks
+  useEffect(() => {
+    const selectable = data.reduce((acc, r, idx) => (!r._section ? [...acc, idx] : acc), []);
+    if (selectable.length === 0) {
+      setAllChecked(false);
+      return;
+    }
+    const everyChecked = selectable.every((i) => !!checkedRows[i]);
+    setAllChecked(everyChecked);
+  }, [checkedRows, data]);
+
+  // Same columns but swap the first one for wired logic; keep your styles/classes
+  const columnsWithCheckbox = [
+    {
+      id: "checkbox",
+      header: () => (
+        <input
+          type="checkbox"
+          className="accent-blue-500"
+          checked={allChecked}
+          onChange={(e) => toggleAll(e.target.checked)}
+        />
+      ),
+      cell: ({ row }) =>
+        !row.original._section ? (
+          <input
+            type="checkbox"
+            className="accent-blue-500"
+            checked={!!checkedRows[row.index]}
+            onChange={(e) => toggleRow(row.index, e.target.checked)}
+          />
+        ) : (
+          ""
+        ),
+      size: 36,
+    },
+    ...columns.slice(1),
+  ];
+
   const table = useReactTable({
-    columns,
+    columns: columnsWithCheckbox,
     data,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -332,9 +391,7 @@ export default function TimesheetTable() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="font-custom text-xl font-semibold">
-            Request History
-          </div>
+          <div className="font-custom text-xl font-semibold">Request History</div>
           {/* Date Range Picker */}
           <div className="relative">
             <button
@@ -355,11 +412,7 @@ export default function TimesheetTable() {
                     const newRange = ranges.selection;
                     setSelectedRange(newRange);
                     const { startDate, endDate } = newRange;
-                    if (
-                      startDate &&
-                      endDate &&
-                      startDate.getTime() !== endDate.getTime()
-                    ) {
+                    if (startDate && endDate && startDate.getTime() !== endDate.getTime()) {
                       setShowDatePicker(false);
                     }
                   }}
@@ -399,10 +452,7 @@ export default function TimesheetTable() {
         <Table className="min-w-[980px] w-full">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow
-                key={hg.id}
-                className="bg-gray-100 text-gray-500 text-lg font-custom"
-              >
+              <TableRow key={hg.id} className="bg-gray-100 text-gray-500 text-lg font-custom">
                 {hg.headers.map((h) => (
                   <TableHead
                     key={h.id}
@@ -418,10 +468,7 @@ export default function TimesheetTable() {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-gray-400 font-custom"
-                >
+                <TableCell colSpan={columnsWithCheckbox.length} className="text-center text-gray-400 font-custom">
                   No records for this date range.
                 </TableCell>
               </TableRow>
@@ -430,7 +477,7 @@ export default function TimesheetTable() {
                 row._section ? (
                   <tr key={`section-${row.week}`}>
                     <td
-                      colSpan={columns.length}
+                      colSpan={columnsWithCheckbox.length}
                       className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
                     >
                       {row.week}
@@ -443,9 +490,7 @@ export default function TimesheetTable() {
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
-                        {flexRender(col.columnDef.cell, {
-                          row: { original: row },
-                        })}
+                        {flexRender(col.columnDef.cell, { row: { original: row, index: i } })}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -458,3 +503,4 @@ export default function TimesheetTable() {
     </div>
   );
 }
+

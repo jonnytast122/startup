@@ -23,18 +23,18 @@ import {
 } from "@/components/ui/select";
 
 const fakeData = [
-  { date: "2025-07-02", policy: "Sick Leave",     requestedOn: "2025-07-02", totalOvertime: "2 hour", status: "Pending",  totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-04", policy: "Annual Leave",   requestedOn: "2025-07-04", totalOvertime: "3 hour", status: "Approved", totalHour: "07:30", note: "Auto-submitted" },
-  { date: "2025-07-06", policy: "Weekend OT",     requestedOn: "2025-07-06", totalOvertime: "4 hour", status: "Rejected", totalHour: "06:45", note: "—" },
-  { date: "2025-07-08", policy: "Sick Leave",     requestedOn: "2025-07-08", totalOvertime: "5 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-10", policy: "Annual Leave",   requestedOn: "2025-07-10", totalOvertime: "2 hour", status: "Pending",  totalHour: "07:00", note: "Auto-submitted" },
-  { date: "2025-07-12", policy: "Weekend OT",     requestedOn: "2025-07-12", totalOvertime: "3 hour", status: "Rejected", totalHour: "06:30", note: "—" },
+  { date: "2025-07-02", policy: "Sick Leave", requestedOn: "2025-07-02", totalOvertime: "2 hour", status: "Pending", totalHour: "08:00", note: "Reviewed by manager" },
+  { date: "2025-07-04", policy: "Annual Leave", requestedOn: "2025-07-04", totalOvertime: "3 hour", status: "Approved", totalHour: "07:30", note: "Auto-submitted" },
+  { date: "2025-07-06", policy: "Weekend OT", requestedOn: "2025-07-06", totalOvertime: "4 hour", status: "Rejected", totalHour: "06:45", note: "—" },
+  { date: "2025-07-08", policy: "Sick Leave", requestedOn: "2025-07-08", totalOvertime: "5 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
+  { date: "2025-07-10", policy: "Annual Leave", requestedOn: "2025-07-10", totalOvertime: "2 hour", status: "Pending", totalHour: "07:00", note: "Auto-submitted" },
+  { date: "2025-07-12", policy: "Weekend OT", requestedOn: "2025-07-12", totalOvertime: "3 hour", status: "Rejected", totalHour: "06:30", note: "—" },
   { date: "2025-07-14", policy: "Personal Leave", requestedOn: "2025-07-14", totalOvertime: "4 hour", status: "Approved", totalHour: "08:15", note: "Reviewed by manager" },
-  { date: "2025-07-16", policy: "Sick Leave",     requestedOn: "2025-07-16", totalOvertime: "5 hour", status: "Pending",  totalHour: "07:45", note: "Auto-submitted" },
-  { date: "2025-07-18", policy: "Annual Leave",   requestedOn: "2025-07-18", totalOvertime: "2 hour", status: "Rejected", totalHour: "06:20", note: "—" },
-  { date: "2025-07-20", policy: "Weekend OT",     requestedOn: "2025-07-20", totalOvertime: "3 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
-  { date: "2025-07-22", policy: "Personal Leave", requestedOn: "2025-07-22", totalOvertime: "4 hour", status: "Pending",  totalHour: "07:15", note: "Auto-submitted" },
-  { date: "2025-07-24", policy: "Sick Leave",     requestedOn: "2025-07-24", totalOvertime: "5 hour", status: "Rejected", totalHour: "06:10", note: "—" },
+  { date: "2025-07-16", policy: "Sick Leave", requestedOn: "2025-07-16", totalOvertime: "5 hour", status: "Pending", totalHour: "07:45", note: "Auto-submitted" },
+  { date: "2025-07-18", policy: "Annual Leave", requestedOn: "2025-07-18", totalOvertime: "2 hour", status: "Rejected", totalHour: "06:20", note: "—" },
+  { date: "2025-07-20", policy: "Weekend OT", requestedOn: "2025-07-20", totalOvertime: "3 hour", status: "Approved", totalHour: "08:00", note: "Reviewed by manager" },
+  { date: "2025-07-22", policy: "Personal Leave", requestedOn: "2025-07-22", totalOvertime: "4 hour", status: "Pending", totalHour: "07:15", note: "Auto-submitted" },
+  { date: "2025-07-24", policy: "Sick Leave", requestedOn: "2025-07-24", totalOvertime: "5 hour", status: "Rejected", totalHour: "06:10", note: "—" },
 ];
 
 /* =======================
@@ -178,13 +178,14 @@ const columns = [
 export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31),  // July 31, 2025
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
     key: "selection",
   });
+  const [checkedRows, setCheckedRows] = useState({});
+  const [allChecked, setAllChecked] = useState(false);
   const datePickerRef = useRef(null);
 
-  // Close picker on outside click
   useEffect(() => {
     if (!showDatePicker) return;
     function handleClickOutside(e) {
@@ -196,19 +197,62 @@ export default function TimesheetTable() {
     return () => document.removeEventListener("mousedown", handleClickOutside, true);
   }, [showDatePicker]);
 
-  // Build table rows
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
+  // Toggle all checkboxes
+  const toggleAll = (checked) => {
+    setAllChecked(checked);
+    const newChecked = {};
+    data.forEach((row, idx) => {
+      if (!row._section) {
+        newChecked[idx] = checked;
+      }
+    });
+    setCheckedRows(newChecked);
+  };
+
+  // Toggle a single checkbox
+  const toggleRow = (idx, checked) => {
+    setCheckedRows((prev) => ({ ...prev, [idx]: checked }));
+  };
+
+  const columnsWithCheckbox = [
+    {
+      id: "checkbox",
+      header: () => (
+        <input
+          type="checkbox"
+          className="accent-blue-500"
+          checked={allChecked}
+          onChange={(e) => toggleAll(e.target.checked)}
+        />
+      ),
+      cell: ({ row }) =>
+        !row.original._section ? (
+          <input
+            type="checkbox"
+            className="accent-blue-500"
+            checked={!!checkedRows[row.index]}
+            onChange={(e) => toggleRow(row.index, e.target.checked)}
+          />
+        ) : (
+          ""
+        ),
+      size: 36,
+    },
+    ...columns.slice(1), // keep all your other columns
+  ];
+
   const table = useReactTable({
-    columns,
+    columns: columnsWithCheckbox,
     data,
     getCoreRowModel: getCoreRowModel(),
   });
 
-    const exportOptions = [
-  { value: "as CSV", label: "as CSV" },
-  { value: "as XLS", label: "as XLS" },
-];
+  const exportOptions = [
+    { value: "as CSV", label: "as CSV" },
+    { value: "as XLS", label: "as XLS" },
+  ];
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
@@ -314,7 +358,7 @@ export default function TimesheetTable() {
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
-                        {flexRender(col.columnDef.cell, { row: { original: row } })}
+                        {flexRender(col.columnDef.cell, { row: { original: row, index: i } })}
                       </TableCell>
                     ))}
                   </TableRow>
