@@ -30,32 +30,32 @@ const data = {
     {
       title: "Main",
       items: [
-        { title: "Overview", url: "/overview", icon: LayoutDashboard },
+        { title: "Overview", url: "/overview", icon: LayoutDashboard, alert: 0 },
       ],
     },
     {
       title: "Operation",
       items: [
-        { title: "Attendance", url: "/overview/attendence", icon: CalendarClock },
-        { title: "Leaves", url: "/overview/leaves", icon: LogOut },
-        { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2 },
-        { title: "Payroll", url: "/overview/payroll", icon: CreditCard },
+        { title: "Attendance", url: "/overview/attendence", icon: CalendarClock, alert: 2 },
+        { title: "Overtime", url: "/overview/overtime", icon: CalendarPlus2, alert: 0 },
+        { title: "Leaves", url: "/overview/leaves", icon: LogOut, alert: 2 },
+        { title: "Payroll", url: "/overview/payroll", icon: CreditCard, alert: 0 },
       ],
     },
     {
       title: "Setting",
       items: [
-        { title: "Company", url: "/overview/company", icon: Settings },
-        { title: "Policy", url: "/overview/policy", icon: Lightbulb },
-        { title: "Workshift", url: "/overview/workshift", icon: BookCheck },
-        { title: "Users & Admin", url: "/overview/users-admin", icon: User },
-        { title: "Groups", url: "/overview/groups", icon: Users },
+        { title: "Company", url: "/overview/company", icon: Settings, alert: 0 },
+        { title: "Policy", url: "/overview/policy", icon: Lightbulb, alert: 0 },
+        { title: "Workshift", url: "/overview/workshift", icon: BookCheck, alert: 2 },
+        { title: "Users & Admin", url: "/overview/users-admin", icon: User, alert: 0 },
+        { title: "Groups", url: "/overview/groups", icon: Users, alert: 0 },
       ],
     },
     {
       title: "Support",
       items: [
-        { title: "Help", url: "/overview/help", icon: Info },
+        { title: "Help", url: "/overview/help", icon: Info, alert: 0 },
       ],
     },
   ],
