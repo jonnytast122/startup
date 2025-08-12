@@ -82,76 +82,16 @@ function getTimesheetRows(selectedRange) {
   return result;
 }
 
-// --- Table columns ---
-const columns = [
-  {
-    id: "checkbox",
-    header: () => <input type="checkbox" className="accent-blue-500" />,
-    cell: () => <input type="checkbox" className="accent-blue-500" />,
-    size: 36,
-  },
-  {
-    accessorKey: "date",
-    header: "Date",
-    cell: ({ row }) => {
-      const date = row.original.date;
-      if (!date) return "";
-      return date.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    },
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "subjob",
-    header: "Sub job",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "start",
-    header: "Start",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "end",
-    header: "End",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "totalhours",
-    header: "Total hours",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "dailytotal",
-    header: "Daily total",
-    cell: () => "--",
-  },
-  {
-    accessorKey: "weeklyTotal",
-    header: "Weekly total",
-    cell: ({ row }) => row.original.weeklyTotal || "",
-  },
-];
-
 export default function TimesheetTable() {
   // --- Date range state ---
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31), // July 31, 2025
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
     key: "selection",
   });
   const datePickerRef = useRef(null);
 
-  // --- Close picker on outside click ---
   useEffect(() => {
     if (!showDatePicker) return;
     function handleClickOutside(event) {
@@ -169,6 +109,123 @@ export default function TimesheetTable() {
 
   // --- Table data based on current date range ---
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
+
+  // --- Selection state (store indices of non-section rows in the rendered data array) ---
+  const [selectedRows, setSelectedRows] = useState([]);
+  useEffect(() => {
+    // Clear selections when the data set changes (e.g., date range changed)
+    setSelectedRows([]);
+  }, [data]);
+
+  // Helpers for selection
+  const nonSectionIndices = useMemo(
+    () => data.map((r, i) => (!r._section ? i : null)).filter(i => i !== null),
+    [data]
+  );
+  const allSelected =
+    selectedRows.length > 0 && selectedRows.length === nonSectionIndices.length;
+  const someSelected =
+    selectedRows.length > 0 && selectedRows.length < nonSectionIndices.length;
+
+  const toggleAll = (checked) => {
+    if (checked) {
+      setSelectedRows(nonSectionIndices);
+    } else {
+      setSelectedRows([]);
+    }
+  };
+
+  const toggleRow = (rowIndex) => {
+    setSelectedRows((prev) =>
+      prev.includes(rowIndex)
+        ? prev.filter((i) => i !== rowIndex)
+        : [...prev, rowIndex]
+    );
+  };
+
+  // --- Columns (moved inside to access selection state) ---
+  const columns = [
+    {
+      id: "checkbox",
+      header: () => {
+        // Indeterminate UI (optional)
+        const ref = useRef(null);
+        useEffect(() => {
+          if (ref.current) ref.current.indeterminate = someSelected && !allSelected;
+        }, [someSelected, allSelected]);
+        return (
+          <input
+            ref={ref}
+            type="checkbox"
+            className="accent-blue-500"
+            checked={allSelected}
+            onChange={(e) => toggleAll(e.target.checked)}
+          />
+        );
+      },
+      // We'll receive a custom context with { row: { original }, rowIndex }
+      cell: (ctx) =>
+        ctx.row?.original?._section ? null : (
+          <input
+            type="checkbox"
+            className="accent-blue-500"
+            checked={selectedRows.includes(ctx.rowIndex)}
+            onChange={() => toggleRow(ctx.rowIndex)}
+          />
+        ),
+      size: 36,
+    },
+    {
+      accessorKey: "date",
+      header: "Date",
+      cell: ({ row }) => {
+        const date = row.original.date;
+        if (!date) return "";
+        return date.toLocaleDateString("en-GB", {
+          weekday: "short",
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        });
+      },
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "subjob",
+      header: "Sub job",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "start",
+      header: "Start",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "end",
+      header: "End",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "totalhours",
+      header: "Total hours",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "dailytotal",
+      header: "Daily total",
+      cell: () => "--",
+    },
+    {
+      accessorKey: "weeklyTotal",
+      header: "Weekly total",
+      cell: ({ row }) => row.original.weeklyTotal || "",
+    },
+  ];
+
   const table = useReactTable({
     columns,
     data,
@@ -176,9 +233,9 @@ export default function TimesheetTable() {
   });
 
   const exportOptions = [
-  { value: "as CSV", label: "as CSV" },
-  { value: "as XLS", label: "as XLS" },
-];
+    { value: "as CSV", label: "as CSV" },
+    { value: "as XLS", label: "as XLS" },
+  ];
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
@@ -293,13 +350,14 @@ export default function TimesheetTable() {
                   </tr>
                 ) : (
                   <TableRow key={i} className="hover:bg-white transition">
-                    {table.getAllColumns().map((col, ci) => (
+                    {table.getAllColumns().map((col) => (
                       <TableCell
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
                         {flexRender(col.columnDef.cell, {
                           row: { original: row },
+                          rowIndex: i, // provide row index for selection logic
                         })}
                       </TableCell>
                     ))}
