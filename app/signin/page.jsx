@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
-
 import apiRoutes from "@/constants/ApiRoutes";
 
 export default function LoginPage() {
@@ -24,7 +23,7 @@ export default function LoginPage() {
 }
 
 function LoginForm({ className, ...props }) {
-  const { login } = useAuth(); // Get login function from context
+  const { login } = useAuth();
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [showOtpScreen, setShowOtpScreen] = useState(false);
@@ -32,6 +31,13 @@ function LoginForm({ className, ...props }) {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
+
+  // Refs for OTP inputs
+  const otpRefs = useRef([]);
+  otpRefs.current = Array.from(
+    { length: 6 },
+    (_, i) => otpRefs.current[i] || React.createRef()
+  );
 
   // OTP Expiration Countdown
   useEffect(() => {
@@ -53,7 +59,6 @@ function LoginForm({ className, ...props }) {
     try {
       setIsLoading(true);
       const formattedPhone = phoneNumber.replace(/^\+/, "");
-
       const res = await axios.post(apiRoutes.auth.sendOTP, {
         phoneNumber: formattedPhone,
       });
@@ -61,6 +66,7 @@ function LoginForm({ className, ...props }) {
       if (res.data) {
         setShowOtpScreen(true);
         setTimeLeft(120);
+        setTimeout(() => otpRefs.current[0]?.current?.focus(), 100); // focus first digit
       } else {
         setErrorMsg("Failed to send OTP. Please try again.");
       }
@@ -73,40 +79,66 @@ function LoginForm({ className, ...props }) {
     }
   };
 
-  // Handle OTP Input
+  // Handle OTP typing
   const handleOtpChange = (e, index) => {
     const value = e.target.value;
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);
+
+      if (value && index < otp.length - 1) {
+        otpRefs.current[index + 1].current.focus();
+      }
     }
+  };
+
+  // Handle Backspace navigation
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs.current[index - 1].current.focus();
+    }
+  };
+
+  // Handle paste full OTP
+  const handleOtpPaste = (e) => {
+    const pasteData = e.clipboardData
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, 6);
+    if (pasteData) {
+      const newOtp = pasteData.split("");
+      setOtp((prev) => {
+        const updated = [...prev];
+        newOtp.forEach((digit, idx) => {
+          updated[idx] = digit;
+        });
+        return updated;
+      });
+      otpRefs.current[Math.min(pasteData.length, 5)].current.focus();
+    }
+    e.preventDefault();
   };
 
   // Handle OTP Verification
   const handleVerify = async (e) => {
     e.preventDefault();
     setErrorMsg("");
-
     const otpCode = otp.join("");
 
     try {
       setIsLoading(true);
       const formattedPhone = phoneNumber.replace(/^\+/, "");
-
       const res = await axios.post(
         apiRoutes.auth.login,
         {
           phoneNumber: formattedPhone,
           otp: otpCode,
         },
-        {
-          withCredentials: true,
-        }
+        { withCredentials: true }
       );
 
       if (res.data) {
-        // Pass user + tokens to AuthContext login method
         login(res.data);
         router.push("/overview");
       } else {
@@ -150,13 +182,18 @@ function LoginForm({ className, ...props }) {
                   <span className="text-blue-500">{phoneNumber}</span>
                 </p>
 
-                <div className="flex gap-2 justify-center mt-4">
+                <div
+                  className="flex gap-2 justify-center mt-4"
+                  onPaste={handleOtpPaste}
+                >
                   {otp.map((digit, index) => (
                     <input
                       key={index}
+                      ref={otpRefs.current[index]}
                       type="text"
                       value={digit}
                       onChange={(e) => handleOtpChange(e, index)}
+                      onKeyDown={(e) => handleOtpKeyDown(e, index)}
                       maxLength="1"
                       className="w-10 h-10 text-center text-xl border-b-2 border-gray-300 focus:outline-none"
                     />
