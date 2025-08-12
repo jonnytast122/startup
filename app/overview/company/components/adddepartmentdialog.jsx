@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
+// API functions
 import { fetchCompany } from "@/lib/api/company";
 import { fetchCompanyDepartments, addDepartment } from "@/lib/api/department";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
