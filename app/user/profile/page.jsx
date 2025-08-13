@@ -10,7 +10,7 @@ import {
   Download,
   User,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -71,9 +71,17 @@ export default function UserProfile() {
   const lastInitial = lastname.charAt(0).toUpperCase();
 
   const [imageError, setImageError] = useState(false);
-  const [isCashDialogOpen, setCashDialogOpen] = useState(false);
-  const [isBankTransferOpen, setBankTransferOpen] = useState(false);
-  const [isDeleteOpen, setDeleteOpen] = useState(false);
+
+  // Dialog states - using refs to prevent re-render loops
+  const [dialogStates, setDialogStates] = useState({
+    cash: false,
+    bank: false,
+    delete: false,
+    deleteContext: null
+  });
+
+  // Use refs to track if we're already processing
+  const processingRef = useRef(false);
 
   const [files, setFiles] = useState([]);
 
@@ -105,14 +113,6 @@ export default function UserProfile() {
     "Overtime Policy",
   ]);
 
-  const togglePolicy = (policy) => {
-    setSelectedPolicies((prev) =>
-      prev.includes(policy)
-        ? prev.filter((p) => p !== policy)
-        : [...prev, policy]
-    );
-  };
-
   const [selectedWorkShift, setSelectedWorkShift] = useState([
     "Morning",
     "Afternoon",
@@ -143,6 +143,46 @@ export default function UserProfile() {
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
+
+  // Simplified dialog handlers - prevent multiple calls
+  const openDialog = useCallback((type, context = null) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+
+    setTimeout(() => {
+      setDialogStates(prev => ({
+        ...prev,
+        [type]: true,
+        deleteContext: context
+      }));
+      processingRef.current = false;
+    }, 0);
+  }, []);
+
+  const closeDialog = useCallback((type) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+
+    setTimeout(() => {
+      setDialogStates(prev => ({
+        ...prev,
+        [type]: false,
+        deleteContext: type === 'delete' ? null : prev.deleteContext
+      }));
+      processingRef.current = false;
+    }, 0);
+  }, []);
+
+  // Simplified menu handlers
+  const handleCashEdit = useCallback(() => openDialog('cash'), [openDialog]);
+  const handleCashDelete = useCallback(() => openDialog('delete', 'cash'), [openDialog]);
+  const handleBankEdit = useCallback(() => openDialog('bank'), [openDialog]);
+  const handleBankDelete = useCallback(() => openDialog('delete', 'bank'), [openDialog]);
+
+  const handleArchive = useCallback(() => {
+    console.log('Archive clicked');
+    // Add your archive logic here
+  }, []);
 
   const DropdownSection = ({
     title,
@@ -188,7 +228,7 @@ export default function UserProfile() {
               {items.map((item) => (
                 <DropdownMenuItem
                   key={item}
-                  onClick={() => toggleItem(item)}
+                  onSelect={() => toggleItem(item)}
                   className={
                     selectedItems.includes(item)
                       ? "bg-blue-100 text-blue-700"
@@ -247,8 +287,6 @@ export default function UserProfile() {
     };
 
     console.log("✅ Saving profile:", updatedProfile);
-
-    // TODO: Send to backend or update database here.
     alert("Changes saved successfully!");
   };
 
@@ -454,11 +492,10 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          leaveSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${leaveSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                        }`}
+                          }`}
                       >
                         {opt}
                       </div>
@@ -472,11 +509,10 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          overtimeSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${overtimeSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                        }`}
+                          }`}
                       >
                         {opt}
                       </div>
@@ -525,12 +561,12 @@ export default function UserProfile() {
               <InfoRow label="Account Number" value={accountnumber} />
             </div>
 
+            {/* Cash Section - SIMPLIFIED */}
             <div className="relative">
-              {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none">
+                    <button className="m-2 focus:outline-none" type="button">
                       <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
@@ -538,49 +574,39 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setCashDialogOpen(true)}>
+                    <DropdownMenuItem onSelect={handleCashEdit}>
                       Edit
                     </DropdownMenuItem>
-
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onSelect={handleArchive}>
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
+                      onSelect={handleCashDelete}
                       className="text-red-500"
                     >
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <UpdateCashDialog
-                  open={isCashDialogOpen}
-                  onOpenChange={setCashDialogOpen}
-                  oldCash={cash}
-                  onSubmit={(newAmount) => setCash(newAmount)}
-                />
-                <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
 
-              {/* Card container */}
               <div className="flex items-center justify-between mt-8 bg-white shadow-md rounded-lg p-4">
                 <div className="flex items-center">
                   <Banknote className="text-blue w-12 h-12 mr-6" />
                   <p className="font-custom text-md font-semibold">Cash</p>
                 </div>
-
                 <p className="text-dark-blue font-custom text-md font-semibold">
                   ${cash}
                 </p>
               </div>
             </div>
 
+            {/* Bank Transfer Section - SIMPLIFIED */}
             <div className="relative">
-              {/* 3-dot dropdown outside the container */}
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none">
+                    <button className="m-2 focus:outline-none" type="button">
                       <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
                     </button>
                   </DropdownMenuTrigger>
@@ -588,32 +614,22 @@ export default function UserProfile() {
                     align="end"
                     className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
                   >
-                    <DropdownMenuItem onClick={() => setBankTransferOpen(true)}>
+                    <DropdownMenuItem onSelect={handleBankEdit}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {}}>
+                    <DropdownMenuItem onSelect={handleArchive}>
                       Archive
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => setDeleteOpen(true)}
+                      onSelect={handleBankDelete}
                       className="text-red-500"
                     >
                       Delete
                     </DropdownMenuItem>
-                    <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <UpdateBankTransferDialog
-                  open={isBankTransferOpen}
-                  onOpenChange={setBankTransferOpen}
-                  oldCash={cash}
-                  onSubmit={(data) => {
-                    console.log("🧾 Updated bank transfer data:", data);
-                  }}
-                />
               </div>
 
-              {/* Card container */}
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -670,7 +686,8 @@ export default function UserProfile() {
                   </p>
                 </div>
               </div>
-              {/* Card container */}
+
+              {/* Estimated Section */}
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -718,6 +735,8 @@ export default function UserProfile() {
                   </p>
                 </div>
               </div>
+
+              {/* Attachment Section */}
               <div>
                 <h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
                   Attachment
@@ -726,7 +745,6 @@ export default function UserProfile() {
                     className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
                   >
                     <span className="relative w-3 h-3">
-                      {/* Plus Icon */}
                       <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
                       <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
                     </span>
@@ -740,7 +758,6 @@ export default function UserProfile() {
                   </label>
                 </h2>
 
-                {/* File List */}
                 <div className="mt-4 flex flex-col items-start gap-3">
                   {files.map((f, idx) => (
                     <div
@@ -786,6 +803,7 @@ export default function UserProfile() {
           </div>
         </div>
       </div>
+
       <div className="flex justify-center">
         <Button
           onClick={handleSave}
@@ -794,6 +812,52 @@ export default function UserProfile() {
           Save Changes
         </Button>
       </div>
+
+      {/* Dialogs - Only render when needed */}
+      {dialogStates.cash && (
+        <UpdateCashDialog
+          open={true}
+          onOpenChange={() => closeDialog('cash')}
+          oldCash={cash}
+          onSubmit={(newAmount) => {
+            setCash(newAmount);
+            closeDialog('cash');
+          }}
+        />
+      )}
+
+      {dialogStates.bank && (
+        <UpdateBankTransferDialog
+          open={true}
+          onOpenChange={() => closeDialog('bank')}
+          oldCash={cash}
+          onSubmit={(data) => {
+            console.log("🧾 Updated bank transfer data:", data);
+            closeDialog('bank');
+          }}
+        />
+      )}
+
+// OPTION 1: If DeleteDialog expects 'setOpen' prop
+      {dialogStates.delete && (
+        <DeleteDialog
+          open={dialogStates.delete}
+          setOpen={(isOpen) => {
+            if (!isOpen) {
+              closeDialog('delete');
+            }
+          }}
+          context={dialogStates.deleteContext}
+          onConfirm={() => {
+            if (dialogStates.deleteContext === 'cash') {
+              console.log('Deleting cash record');
+            } else if (dialogStates.deleteContext === 'bank') {
+              console.log('Deleting bank record');
+            }
+            closeDialog('delete');
+          }}
+        />
+      )}
     </>
   );
 }
