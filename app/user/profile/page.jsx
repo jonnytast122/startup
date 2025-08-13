@@ -838,7 +838,6 @@ export default function UserProfile() {
         />
       )}
 
-// OPTION 1: If DeleteDialog expects 'setOpen' prop
       {dialogStates.delete && (
         <DeleteDialog
           open={dialogStates.delete}
