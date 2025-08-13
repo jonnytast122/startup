@@ -53,7 +53,9 @@ export default function UserProfile() {
   const [branch, setBranch] = useState(user.branch);
   const [department, setDepartment] = useState(user.department);
   const [title, setTitle] = useState(user.title);
-  const [employmentstartdate, setEmploymentStartDate] = useState(user.dateadded);
+  const [employmentstartdate, setEmploymentStartDate] = useState(
+    user.dateadded
+  );
   const [cash, setCash] = useState(user.cash);
   const profile = user.profile;
   const accountnumber = user.banknumber;
@@ -598,6 +600,7 @@ export default function UserProfile() {
                     >
                       Delete
                     </DropdownMenuItem>
+                    <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <UpdateBankTransferDialog
@@ -608,7 +611,6 @@ export default function UserProfile() {
                     console.log("🧾 Updated bank transfer data:", data);
                   }}
                 />
-                <DeleteDialog open={isDeleteOpen} setOpen={setDeleteOpen} />
               </div>
 
               {/* Card container */}

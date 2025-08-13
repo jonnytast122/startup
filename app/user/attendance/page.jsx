@@ -362,7 +362,7 @@ export default function Attendance() {
                 <div className="flex justify-between items-center w-full mb-2 select-none">
                   <button
                     type="button"
-                    onClick={() => setActiveTab("daylog")}
+                    onClick={() => setActiveTab("attachments")}
                     className={`text-base font-medium font-custom transition-colors ${
                       activeTab === "attachments"
                         ? "text-blue-500"
@@ -374,7 +374,7 @@ export default function Attendance() {
 
                   <button
                     type="button"
-                    onClick={() => setActiveTab("attachments")}
+                    onClick={() => setActiveTab("daylog")}
                     className={`text-base font-medium font-custom transition-colors ${
                       activeTab === "daylog" ? "text-blue-500" : "text-black"
                     }`}
