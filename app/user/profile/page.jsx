@@ -77,7 +77,7 @@ export default function UserProfile() {
     cash: false,
     bank: false,
     delete: false,
-    deleteContext: null
+    deleteContext: null,
   });
 
   // Use refs to track if we're already processing
@@ -150,10 +150,10 @@ export default function UserProfile() {
     processingRef.current = true;
 
     setTimeout(() => {
-      setDialogStates(prev => ({
+      setDialogStates((prev) => ({
         ...prev,
         [type]: true,
-        deleteContext: context
+        deleteContext: context,
       }));
       processingRef.current = false;
     }, 0);
@@ -164,23 +164,29 @@ export default function UserProfile() {
     processingRef.current = true;
 
     setTimeout(() => {
-      setDialogStates(prev => ({
+      setDialogStates((prev) => ({
         ...prev,
         [type]: false,
-        deleteContext: type === 'delete' ? null : prev.deleteContext
+        deleteContext: type === "delete" ? null : prev.deleteContext,
       }));
       processingRef.current = false;
     }, 0);
   }, []);
 
   // Simplified menu handlers
-  const handleCashEdit = useCallback(() => openDialog('cash'), [openDialog]);
-  const handleCashDelete = useCallback(() => openDialog('delete', 'cash'), [openDialog]);
-  const handleBankEdit = useCallback(() => openDialog('bank'), [openDialog]);
-  const handleBankDelete = useCallback(() => openDialog('delete', 'bank'), [openDialog]);
+  const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
+  const handleCashDelete = useCallback(
+    () => openDialog("delete", "cash"),
+    [openDialog]
+  );
+  const handleBankEdit = useCallback(() => openDialog("bank"), [openDialog]);
+  const handleBankDelete = useCallback(
+    () => openDialog("delete", "bank"),
+    [openDialog]
+  );
 
   const handleArchive = useCallback(() => {
-    console.log('Archive clicked');
+    console.log("Archive clicked");
     // Add your archive logic here
   }, []);
 
@@ -261,15 +267,25 @@ export default function UserProfile() {
   const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
 
   const toggleLeaveSubPolicy = (opt) => {
-    setLeaveSubPolicies((prev) => (prev.includes(opt) ? prev : [...prev, opt]));
+    setLeaveSubPolicies(
+      (prev) =>
+        prev.includes(opt)
+          ? prev.filter((item) => item !== opt) // Remove if already exists
+          : [...prev, opt] // Add if doesn't exist
+    );
+    // Close both menus after selection
     setShowFirstMenu(false);
     setOpenSecondLayerFor("");
   };
 
   const toggleOvertimeSubPolicy = (opt) => {
-    setOvertimeSubPolicies((prev) =>
-      prev.includes(opt) ? prev : [...prev, opt]
+    setOvertimeSubPolicies(
+      (prev) =>
+        prev.includes(opt)
+          ? prev.filter((item) => item !== opt) // Remove if already exists
+          : [...prev, opt] // Add if doesn't exist
     );
+    // Close both menus after selection
     setShowFirstMenu(false);
     setOpenSecondLayerFor("");
   };
@@ -492,10 +508,11 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${leaveSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${
+                          leaveSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                          }`}
+                        }`}
                       >
                         {opt}
                       </div>
@@ -509,10 +526,11 @@ export default function UserProfile() {
                       <div
                         key={opt}
                         onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${overtimeSubPolicies.includes(opt)
+                        className={`px-4 py-2 cursor-pointer rounded ${
+                          overtimeSubPolicies.includes(opt)
                             ? "bg-blue-100 text-blue-700"
                             : "hover:bg-blue-50"
-                          }`}
+                        }`}
                       >
                         {opt}
                       </div>
@@ -817,11 +835,11 @@ export default function UserProfile() {
       {dialogStates.cash && (
         <UpdateCashDialog
           open={true}
-          onOpenChange={() => closeDialog('cash')}
+          onOpenChange={() => closeDialog("cash")}
           oldCash={cash}
           onSubmit={(newAmount) => {
             setCash(newAmount);
-            closeDialog('cash');
+            closeDialog("cash");
           }}
         />
       )}
@@ -829,11 +847,11 @@ export default function UserProfile() {
       {dialogStates.bank && (
         <UpdateBankTransferDialog
           open={true}
-          onOpenChange={() => closeDialog('bank')}
+          onOpenChange={() => closeDialog("bank")}
           oldCash={cash}
           onSubmit={(data) => {
             console.log("🧾 Updated bank transfer data:", data);
-            closeDialog('bank');
+            closeDialog("bank");
           }}
         />
       )}
@@ -843,17 +861,17 @@ export default function UserProfile() {
           open={dialogStates.delete}
           setOpen={(isOpen) => {
             if (!isOpen) {
-              closeDialog('delete');
+              closeDialog("delete");
             }
           }}
           context={dialogStates.deleteContext}
           onConfirm={() => {
-            if (dialogStates.deleteContext === 'cash') {
-              console.log('Deleting cash record');
-            } else if (dialogStates.deleteContext === 'bank') {
-              console.log('Deleting bank record');
+            if (dialogStates.deleteContext === "cash") {
+              console.log("Deleting cash record");
+            } else if (dialogStates.deleteContext === "bank") {
+              console.log("Deleting bank record");
             }
-            closeDialog('delete');
+            closeDialog("delete");
           }}
         />
       )}
