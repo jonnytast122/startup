@@ -50,7 +50,6 @@ function getTimesheetRows(selectedRange) {
   let weekStartIdx = 0;
 
   while (weekStartIdx < allDates.length) {
-    // Each "week" is at most 7 days
     const weekDates = allDates.slice(weekStartIdx, weekStartIdx + 7);
     const weekLabel = `${weekDates[0].toLocaleDateString("en-GB", {
       month: "short",
@@ -71,7 +70,6 @@ function getTimesheetRows(selectedRange) {
     weekStartIdx += 7;
   }
 
-  // Flatten for the table (section row + date rows)
   const result = [];
   for (const week of weeks) {
     result.push({ _section: true, week: week.week });
@@ -110,16 +108,15 @@ export default function TimesheetTable() {
   // --- Table data based on current date range ---
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
-  // --- Selection state (store indices of non-section rows in the rendered data array) ---
+  // --- Selection state ---
   const [selectedRows, setSelectedRows] = useState([]);
   useEffect(() => {
-    // Clear selections when the data set changes (e.g., date range changed)
     setSelectedRows([]);
   }, [data]);
 
-  // Helpers for selection
   const nonSectionIndices = useMemo(
-    () => data.map((r, i) => (!r._section ? i : null)).filter(i => i !== null),
+    () =>
+      data.map((r, i) => (!r._section ? i : null)).filter((i) => i !== null),
     [data]
   );
   const allSelected =
@@ -143,15 +140,15 @@ export default function TimesheetTable() {
     );
   };
 
-  // --- Columns (moved inside to access selection state) ---
+  // --- Columns ---
   const columns = [
     {
       id: "checkbox",
       header: () => {
-        // Indeterminate UI (optional)
         const ref = useRef(null);
         useEffect(() => {
-          if (ref.current) ref.current.indeterminate = someSelected && !allSelected;
+          if (ref.current)
+            ref.current.indeterminate = someSelected && !allSelected;
         }, [someSelected, allSelected]);
         return (
           <input
@@ -163,7 +160,6 @@ export default function TimesheetTable() {
           />
         );
       },
-      // We'll receive a custom context with { row: { original }, rowIndex }
       cell: (ctx) =>
         ctx.row?.original?._section ? null : (
           <input
@@ -240,18 +236,25 @@ export default function TimesheetTable() {
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="font-custom text-xl font-semibold">Timesheet</div>
-          {/* Date Range Picker */}
-          <div className="relative">
+      {/* Header */}
+      <div className="mb-3">
+        <div className="font-custom text-xl font-semibold mb-2">Timesheet</div>
+
+        {/* One row: left (date) — right (export), on all sizes */}
+        <div className="flex items-center justify-between gap-2 w-full flex-nowrap">
+          {/* Date Range Picker (left) */}
+          <div className="relative min-w-0">
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm w-full sm:w-auto"
+              className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[70vw] truncate text-left"
+              title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
             >
-              {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+              <span className="truncate">
+                {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
             </button>
+
             {showDatePicker && (
               <div
                 ref={datePickerRef}
@@ -277,19 +280,21 @@ export default function TimesheetTable() {
               </div>
             )}
           </div>
+
+          {/* Export (right) */}
+          <Select>
+            <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
+              <SelectValue placeholder="Export" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              {exportOptions.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select>
-          <SelectTrigger className="w-24 font-custom rounded-full">
-            <SelectValue placeholder="Export" />
-          </SelectTrigger>
-          <SelectContent className="font-custom">
-            {exportOptions.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Summary */}
@@ -357,7 +362,7 @@ export default function TimesheetTable() {
                       >
                         {flexRender(col.columnDef.cell, {
                           row: { original: row },
-                          rowIndex: i, // provide row index for selection logic
+                          rowIndex: i,
                         })}
                       </TableCell>
                     ))}

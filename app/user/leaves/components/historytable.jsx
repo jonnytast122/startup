@@ -271,8 +271,8 @@ const columns = [
         s === "Approved"
           ? "text-blue-600"
           : s === "Pending"
-            ? "text-yellow-600"
-            : "text-red-600";
+          ? "text-yellow-600"
+          : "text-red-600";
       return <span className={`font-medium ${color}`}>{s}</span>;
     },
   },
@@ -295,7 +295,7 @@ export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31),  // July 31, 2025
+    endDate: new Date(2025, 6, 31), // July 31, 2025
     key: "selection",
   });
   const datePickerRef = useRef(null);
@@ -313,7 +313,8 @@ export default function TimesheetTable() {
       }
     }
     document.addEventListener("mousedown", handleClickOutside, true);
-    return () => document.removeEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
   }, [showDatePicker]);
 
   // Build table rows
@@ -338,7 +339,10 @@ export default function TimesheetTable() {
 
   // Keep header checkbox in sync when user individually checks/unchecks
   useEffect(() => {
-    const selectable = data.reduce((acc, r, idx) => (!r._section ? [...acc, idx] : acc), []);
+    const selectable = data.reduce(
+      (acc, r, idx) => (!r._section ? [...acc, idx] : acc),
+      []
+    );
     if (selectable.length === 0) {
       setAllChecked(false);
       return;
@@ -389,18 +393,24 @@ export default function TimesheetTable() {
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="font-custom text-xl font-semibold">Request History</div>
-          {/* Date Range Picker */}
-          <div className="relative">
+      <div className="mb-3">
+        <div className="font-custom text-xl font-semibold mb-2">Request History</div>
+
+        {/* One row: left (date) — right (export), on all sizes */}
+        <div className="flex items-center justify-between gap-2 w-full flex-nowrap">
+          {/* Date Range Picker (left) */}
+          <div className="relative min-w-0">
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm w-full sm:w-auto"
+              className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[70vw] truncate text-left"
+              title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
             >
-              {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+              <span className="truncate">
+                {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+              </span>
+              <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
             </button>
+
             {showDatePicker && (
               <div
                 ref={datePickerRef}
@@ -411,32 +421,36 @@ export default function TimesheetTable() {
                   onChange={(ranges) => {
                     const newRange = ranges.selection;
                     setSelectedRange(newRange);
-                    const { startDate, endDate } = newRange;
-                    if (startDate && endDate && startDate.getTime() !== endDate.getTime()) {
+
+                    const start = newRange.startDate;
+                    const end = newRange.endDate;
+                    if (start && end && start.getTime() !== end.getTime()) {
                       setShowDatePicker(false);
                     }
                   }}
                   rangeColors={["#3b82f6"]}
                   moveRangeOnFirstSelection={false}
-                  showMonthAndYearPickers
-                  showSelectionPreview
+                  showMonthAndYearPickers={true}
+                  showSelectionPreview={true}
                 />
               </div>
             )}
           </div>
+
+          {/* Export (right) */}
+          <Select>
+            <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
+              <SelectValue placeholder="Export" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              {exportOptions.map((role) => (
+                <SelectItem key={role.value} value={role.value}>
+                  {role.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        <Select>
-          <SelectTrigger className="w-24 font-custom rounded-full">
-            <SelectValue placeholder="Export" />
-          </SelectTrigger>
-          <SelectContent className="font-custom">
-            {exportOptions.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Summary (demo values) */}
@@ -452,7 +466,10 @@ export default function TimesheetTable() {
         <Table className="min-w-[980px] w-full">
           <TableHeader>
             {table.getHeaderGroups().map((hg) => (
-              <TableRow key={hg.id} className="bg-gray-100 text-gray-500 text-lg font-custom">
+              <TableRow
+                key={hg.id}
+                className="bg-gray-100 text-gray-500 text-lg font-custom"
+              >
                 {hg.headers.map((h) => (
                   <TableHead
                     key={h.id}
@@ -468,7 +485,10 @@ export default function TimesheetTable() {
           <TableBody>
             {data.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columnsWithCheckbox.length} className="text-center text-gray-400 font-custom">
+                <TableCell
+                  colSpan={columnsWithCheckbox.length}
+                  className="text-center text-gray-400 font-custom"
+                >
                   No records for this date range.
                 </TableCell>
               </TableRow>
@@ -490,7 +510,9 @@ export default function TimesheetTable() {
                         key={col.id}
                         className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
                       >
-                        {flexRender(col.columnDef.cell, { row: { original: row, index: i } })}
+                        {flexRender(col.columnDef.cell, {
+                          row: { original: row, index: i },
+                        })}
                       </TableCell>
                     ))}
                   </TableRow>
@@ -503,4 +525,3 @@ export default function TimesheetTable() {
     </div>
   );
 }
-
