@@ -50,13 +50,13 @@ const data = {
 };
 
 export function AppSidebar(props) {
-  const { collapsed } = useSidebar()
+  const { collapsed } = useSidebar();
 
   // Don't render footer if sidebar is collapsed
-  if (collapsed) return null
+  if (collapsed) return null;
 
   return (
-    <Sidebar collapsible="icon" className="z-50 bg-white" {...props}>
+    <Sidebar collapsible="icon" className="z-40 bg-white hidden lg:flex" {...props}>
       <SidebarHeader className="items-center bg-white">
         <img
           src="/images/Logo_2.png"
@@ -67,9 +67,7 @@ export function AppSidebar(props) {
       <SidebarContent className="bg-white">
         <NavMain items={data.navMain} />
       </SidebarContent>
-      <SidebarFooter
-        className="bg-white"
-      >
+      <SidebarFooter className="bg-white">
         <Separator className="mb-2" />
         <span className="text-xs text-blue-600 text-center">ANAN</span>
       </SidebarFooter>

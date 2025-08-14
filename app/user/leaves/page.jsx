@@ -24,34 +24,34 @@ export default function Leaves() {
         </div>
       </div>
       {/* Body */}
-<div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-  {/* Title */}
-  <h2 className="text-2xl font-custom font-semibold mb-6">Leave Policies</h2>
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+        {/* Title */}
+        <h2 className="text-2xl font-custom font-semibold mb-6">Leave Policies</h2>
 
-  {/* Boxes container */}
-  <div className="flex justify-center gap-6">
-    {/* Box 1 */}
-    <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
-      <span className="text-base font-custom font-medium">Sick Leave</span>
-      <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-      <span className="text-xl font-custom">12 days</span>
-    </div>
+        {/* Boxes container */}
+        <div className="flex justify-center gap-6">
+          {/* Box 1 */}
+          <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
+            <span className="text-sm font-custom">Sick Leave</span>
+            <div className="w-2/3 h-px bg-gray-500 my-2"></div>
+            <span className="text-lg font-custom">12 days</span>
+          </div>
 
-    {/* Box 2 */}
-    <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
-      <span className="text-base font-custom font-medium">Annual Leave</span>
-      <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-      <span className="text-xl font-custom">13.5 days</span>
-    </div>
+          {/* Box 2 */}
+          <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
+            <span className="text-sm font-custom">Annual Leave</span>
+            <div className="w-2/3 h-px bg-gray-500 my-2"></div>
+            <span className="text-lg font-custom">13.5 days</span>
+          </div>
 
-    {/* Box 3 */}
-    <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
-      <span className="text-base font-custom font-medium">Unpiad Leave</span>
-      <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-      <span className="text-xl font-custom">--</span>
-    </div>
-  </div>
-</div>
+          {/* Box 3 */}
+          <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
+            <span className="text-sm font-custom">Unpiad Leave</span>
+            <div className="w-2/3 h-px bg-gray-500 my-2"></div>
+            <span className="text-lg font-custom">--</span>
+          </div>
+        </div>
+      </div>
 
       <div>
         <HistoryTable />

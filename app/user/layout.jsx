@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { AppSidebar } from "./components/app-sidebar";
+import { BottomNavigation } from "./components/bottom-navigation";
 import { Separator } from "@/components/ui/separator";
 import {
   SidebarInset,
@@ -73,19 +74,26 @@ export default function Layout({ children }) {
 
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset className="flex flex-col h-screen overflow-hidden">
+      {/* Desktop Sidebar - Hidden on mobile */}
+      <div className="hidden lg:block">
+        <AppSidebar />
+      </div>
+
+      <SidebarInset className="flex flex-col h-screen overflow-hidden lg:ml-0">
         {/* Sticky Header */}
         <header className="sticky top-0 z-50 flex h-16 items-center justify-between px-4 border-b bg-white">
           {/* Left section */}
           <div className="flex items-center gap-3">
-            <SidebarTrigger />
-            <Separator orientation="vertical" className="h-6" />
+            {/* Hide sidebar trigger on mobile since we'll use bottom nav */}
+            <div className="hidden lg:block">
+              <SidebarTrigger />
+            </div>
+            <Separator orientation="vertical" className="h-6 hidden lg:block" />
             <form className="relative">
               <input
                 type="text"
                 placeholder="Search anything..."
-                className="text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 pr-12 py-2 px-3"
+                className="text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 pr-12 py-2 px-3 w-32 sm:w-auto"
               />
             </form>
           </div>
@@ -191,9 +199,16 @@ export default function Layout({ children }) {
           </div>
         </header>
 
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto p-4 bg-gray-100">{children}</div>
+        {/* Scrollable content - Add bottom padding on mobile for bottom nav */}
+        <div className="flex-1 overflow-y-auto p-4 bg-gray-100 pb-20 lg:pb-4">
+          {children}
+        </div>
       </SidebarInset>
+
+      {/* Mobile Bottom Navigation - Only visible on mobile */}
+      <div className="lg:hidden">
+        <BottomNavigation />
+      </div>
     </SidebarProvider>
   );
 }
