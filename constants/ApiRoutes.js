@@ -42,7 +42,6 @@ const ApiRoutes = {
     update: `${BASE_URL}/section/{id}`,
     delete: `${BASE_URL}/section/delete`,
   },
-
   overTimeSetting: {
     getOverTimeType: `${BASE_URL}/overtime-types`,
     createOvertimeType: `${BASE_URL}/overtime-types`,
@@ -56,9 +55,15 @@ const ApiRoutes = {
     create: `${BASE_URL}/leave-policies`,
     update: `${BASE_URL}/leave-policies/{id}`,
     delete: `${BASE_URL}/leave-policies/{id}`,
-  }
-
-
+  },
+  user: {
+    get: `${BASE_URL}/filter`,
+    create: `${BASE_URL}/users`,
+    update: `${BASE_URL}/user/{id}`,
+    delete: `${BASE_URL}/user/{id}`,
+    getById: `${BASE_URL}/user/{id}`,
+    search: `${BASE_URL}/users/search`,
+  },
 };
 
 export default ApiRoutes;
