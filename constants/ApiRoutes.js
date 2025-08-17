@@ -33,14 +33,18 @@ const ApiRoutes = {
   group: {
     create: `${BASE_URL}/groups`,
     get: `${BASE_URL}/groups`,
-    update: `${BASE_URL}/group/{id}`,
-    delete: `${BASE_URL}/group/delete`,
+    getId: `${BASE_URL}/groups/{id}`,
+    update: `${BASE_URL}/groups/{id}`,
+    delete: `${BASE_URL}/groups/{id}`,
+  },
+  user: {
+    get: `${BASE_URL}/users/filter`,
   },
   section: {
     create: `${BASE_URL}/group-sections`,
     get: `${BASE_URL}/group-sections`,
-    update: `${BASE_URL}/section/{id}`,
-    delete: `${BASE_URL}/section/delete`,
+    update: `${BASE_URL}/group-sections/{id}`,
+    delete: `${BASE_URL}/group-sections/{id}`,
   },
 
   overTimeSetting: {
@@ -56,9 +60,7 @@ const ApiRoutes = {
     create: `${BASE_URL}/leave-policies`,
     update: `${BASE_URL}/leave-policies/{id}`,
     delete: `${BASE_URL}/leave-policies/{id}`,
-  }
-
-
+  },
 };
 
 export default ApiRoutes;
