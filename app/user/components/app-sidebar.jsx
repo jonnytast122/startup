@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  LayoutDashboard,
+  SquareKanban,
   CalendarClock,
   CalendarPlus2,
   LogOut,
@@ -27,7 +27,7 @@ const data = {
     {
       title: "",
       items: [
-        { title: "Calendar", url: "/user", icon: Calendar1, alert: 0 },
+        { title: "Report", url: "/user", icon: SquareKanban, alert: 0 },
         { title: "Profile", url: "/user/profile", icon: User, alert: 2 },
       ],
     },

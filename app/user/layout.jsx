@@ -80,8 +80,8 @@ export default function Layout({ children }) {
       </div>
 
       <SidebarInset className="flex flex-col h-screen overflow-hidden lg:ml-0">
-        {/* Sticky Header */}
-        <header className="sticky top-0 z-50 flex h-16 items-center justify-between px-4 border-b bg-white">
+        {/* Sticky Header - Hidden on mobile */}
+        <header className="sticky top-0 z-50 flex h-16 items-center justify-between px-4 border-b bg-white hidden lg:flex">
           {/* Left section */}
           <div className="flex items-center gap-3">
             {/* Hide sidebar trigger on mobile since we'll use bottom nav */}
@@ -99,7 +99,7 @@ export default function Layout({ children }) {
           </div>
 
           <div className="flex-1 justify-end hidden xl:flex mr-4">
-            {/* Only show in user's view */}
+            {/* Only show in user's view - Hidden on mobile */}
             <div className="px-4 py-1 rounded-lg bg-blue-100 font-medium text-sm font-custom">
               <Eye className="inline-block mr-1 h-4 w-4" />
               You are in User's View
@@ -117,14 +117,17 @@ export default function Layout({ children }) {
 
           {/* Right section */}
           <div className="flex items-center gap-2">
-            <button className="relative p-2 rounded-full hover:bg-gray-100">
+            {/* Notification Bell - Hidden on mobile */}
+            <button className="relative p-2 rounded-full hover:bg-gray-100 hidden lg:block">
               <Bell className="h-5 w-5 text-gray-600" />
               <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
             </button>
 
-            <Separator orientation="vertical" className="h-6" />
+            {/* Separator - Hidden on mobile */}
+            <Separator orientation="vertical" className="h-6 hidden lg:block" />
 
-            <div className="relative" ref={containerRef}>
+            {/* Profile Dropdown - Hidden on mobile */}
+            <div className="relative hidden lg:block" ref={containerRef}>
               <div
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                 className="flex items-center gap-2 cursor-pointer select-none px-2 py-1 rounded-md hover:bg-gray-100"
@@ -186,8 +189,9 @@ export default function Layout({ children }) {
               )}
             </div>
 
+            {/* Language Selector - Hidden on mobile */}
             <Select>
-              <SelectTrigger className="w-[85px] font-custom border-none shadow-none focus:ring-0 focus:outline-none flex items-center gap-1">
+              <SelectTrigger className="w-[85px] font-custom border-none shadow-none focus:ring-0 focus:outline-none flex items-center gap-1 hidden lg:flex">
                 <Globe className="w-4 h-4 text-dark-blue" />
                 <SelectValue placeholder="EN" />
               </SelectTrigger>

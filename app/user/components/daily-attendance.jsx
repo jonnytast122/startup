@@ -9,6 +9,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+
 const attendanceData = [
   { name: "On Time", value: 5 },
   { name: "Running Late", value: 1 },
@@ -57,9 +58,9 @@ export default function DailyAttendance() {
 
       <Separator className="mb-4" />
 
-      <div className="flex justify-center gap-2 mb-5">
+      <div className="flex flex-col md:flex-row justify-center gap-2 mb-5">
         {/* Left Box: Attendance */}
-        <div className="border rounded-lg p-4 w-[280px] ml-5">
+        <div className="border rounded-lg p-4 w-full md:w-[280px] md:ml-5">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-2xl text-black">Attend</h3>
             <span className="px-2 py-0.5 rounded-md text-2xl text-blue-500 bg-blue-200">{totalAttend}</span>
@@ -74,15 +75,15 @@ export default function DailyAttendance() {
               <span className="text-3xl font-bold text-red-500">{runningLate}</span>
             </div>
           </div>
-          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+          <div className="mt-4 w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={attendanceData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}      // slightly larger inner radius
-                  outerRadius={80}      // increased outer radius
+                  innerRadius={50}
+                  outerRadius={80}
                   dataKey="value"
                 >
                   {attendanceData.map((entry, index) => (
@@ -95,11 +96,10 @@ export default function DailyAttendance() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-
         </div>
 
         {/* Right Box: Absent */}
-        <div className="border rounded-lg p-4 w-[280px] mr-5">
+        <div className="border rounded-lg p-4 w-full md:w-[280px] md:mr-5">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-2xl text-black">Absent</h3>
             <span className="px-2 py-0.5 rounded-md text-2xl text-red-500 bg-red-200">{totalAbsent}</span>
@@ -114,7 +114,7 @@ export default function DailyAttendance() {
               <span className="text-3xl font-bold text-yellow-400">{onLeave}</span>
             </div>
           </div>
-          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+          <div className="mt-4 w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie

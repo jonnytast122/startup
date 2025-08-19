@@ -74,9 +74,9 @@ export default function SupportPage() {
     return (
         <div className="font-custom">
             {/* Header */}
-            <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-                <div className="flex items-center space-x-3 p-6">
-                    <Info className="text-[#2998FF]" width={40} height={40} />
+            <div className="bg-white rounded-xl mb-3 shadow-md py-1 px-1 border">
+                <div className="flex items-center space-x-3 p-5">
+                    <Info className="text-[#2998FF]" width={30} height={30} />
                     <span className="font-custom text-3xl text-black">Help</span>
                 </div>
             </div>

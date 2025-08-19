@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { CalendarClock, MapPin, Timer } from "lucide-react";
+import { CalendarClock, MapPin, Timer, CalendarPlus2, LogOut, CreditCard, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import ShiftDetailDialog from "./components/shiftdetaildialog.jsx";
 import RequestLeaveDialog from "./components/requestleavedialog.jsx";
 import SuccessDialog from "./components/successdialog.jsx";
@@ -258,6 +259,80 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
   );
 }
 
+function MobileHeader() {
+  const router = useRouter();
+
+  const user_data = {
+    firstname: "Veiy",
+    lastname: "Sokheng",
+    avatar: "/avatars/cameron.png",
+  };
+
+  const quickActions = [
+    {
+      title: "Overtime",
+      icon: CalendarPlus2,
+      route: "/user/overtime",
+    },
+    {
+      title: "Leave",
+      icon: LogOut,
+      route: "/user/leaves",
+    },
+    {
+      title: "Payroll",
+      icon: CreditCard,
+      route: "/user/payroll",
+    },
+  ];
+
+  return (
+    <div className="lg:hidden mb-4 space-y-3">
+      {/* User Profile Section */}
+      <div className="bg-white rounded-xl shadow-sm">
+        <button
+          onClick={() => { }}
+          className="w-full p-4 flex items-center gap-4 hover:bg-[#5494DA33] transition-colors"
+        >
+          <img
+            src={user_data.avatar}
+            alt="Profile"
+            className="w-12 h-12 rounded-full border-2 border-gray-200"
+          />
+          <div className="text-left">
+            <div className="font-custom font-semibold text-lg text-gray-900">
+              {user_data.firstname} {user_data.lastname}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="">
+        <div className="grid grid-cols-3 gap-3">
+          {quickActions.map((action) => {
+            const IconComponent = action.icon;
+            return (
+              <button
+                key={action.title}
+                onClick={() => router.push(action.route)}
+                className="flex flex-col items-center space-y-2 p-4 rounded-xl bg-white hover:bg-[#5494DA33] transition-colors"
+              >
+                <div className="p-3 bg-blue-100 rounded-lg">
+                  <IconComponent className="w-6 h-6 text-gray-700" />
+                </div>
+                <span className="font-custom text-sm font-medium text-black">
+                  {action.title}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Attendance() {
   const [stoppedTime, setStoppedTime] = useState("00:00:00");
   const [startTime, setStartTime] = useState("");
@@ -270,15 +345,17 @@ export default function Attendance() {
   // NEW: show tabs only after first Clock In
   const [hasClockedIn, setHasClockedIn] = useState(false);
 
-  // Tabs + attachment state (unchanged behavior)
   // Tabs + attachment state
-  const [activeTab, setActiveTab] = useState("attachments"); // default to Attachments
+  const [activeTab, setActiveTab] = useState("attachments");
   const [attachments, setAttachments] = useState([]);
 
   return (
     <div>
-      {/* Header */}
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+      {/* Mobile Header - Only visible on mobile */}
+      <MobileHeader />
+
+      {/* Desktop Header - Hidden on mobile */}
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border hidden lg:block">
         <div className="flex flex-wrap justify-between items-center gap-3">
           <a href="/overview/attendence" className="block">
             <div className="flex items-center space-x-3">
@@ -321,7 +398,7 @@ export default function Attendance() {
             }}
             onStarted={(shift, time) => {
               setStartTime({ shift, time });
-              setHasClockedIn(true); // <-- show tabs after first Clock In
+              setHasClockedIn(true);
             }}
             onShowShiftDetail={(detail) => {
               setShiftDetail(detail);
@@ -363,11 +440,10 @@ export default function Attendance() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("attachments")}
-                    className={`text-base font-medium font-custom transition-colors ${
-                      activeTab === "attachments"
+                    className={`text-base font-medium font-custom transition-colors ${activeTab === "attachments"
                         ? "text-blue-500"
                         : "text-black"
-                    }`}
+                      }`}
                   >
                     Attachments
                   </button>
@@ -375,9 +451,8 @@ export default function Attendance() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("daylog")}
-                    className={`text-base font-medium font-custom transition-colors ${
-                      activeTab === "daylog" ? "text-blue-500" : "text-black"
-                    }`}
+                    className={`text-base font-medium font-custom transition-colors ${activeTab === "daylog" ? "text-blue-500" : "text-black"
+                      }`}
                   >
                     Day Log
                   </button>
@@ -391,7 +466,7 @@ export default function Attendance() {
                         type="text"
                         className="w-full text-sm font-custom text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
                         placeholder="Add attachment(s) here"
-                        onChange={() => {}}
+                        onChange={() => { }}
                       />
                     </div>
                   ) : (
@@ -428,8 +503,8 @@ export default function Attendance() {
         detail={shiftDetail}
         onClose={() => setShowShiftDetail(false)}
         onRequestLeave={() => {
-          setShowShiftDetail(false); // hide shift detail
-          setShowLeaveDialog(true); // show request leave
+          setShowShiftDetail(false);
+          setShowLeaveDialog(true);
         }}
       />
 
@@ -437,8 +512,8 @@ export default function Attendance() {
         open={showLeaveDialog}
         detail={shiftDetail}
         onClose={() => {
-          setShowLeaveDialog(false); // hide request leave
-          setShowShiftDetail(true); // show shift detail again
+          setShowLeaveDialog(false);
+          setShowShiftDetail(true);
         }}
         onCloseAll={() => {
           setShowLeaveDialog(false);
