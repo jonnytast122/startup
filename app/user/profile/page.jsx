@@ -22,6 +22,11 @@ import UpdateCashDialog from "./components/updatecashdialog";
 import UpdateBankTransferDialog from "./components/updatebanktransferdialog";
 import { Button } from "react-scroll";
 import DeleteDialog from "./components/deletedialog";
+import PolicyLeave from "./components/leavedetaildialog";
+import AddOTDialog from "./components/otdetaildialog";
+import WorkShiftDialog from "./components/shiftdialog";
+import BranchDetail from "./components/branchdetail";
+import AddUserDialog from "./components/groupsettingdialog";
 
 // 1. All user data is here:
 const user = {
@@ -71,6 +76,11 @@ export default function UserProfile() {
   const lastInitial = lastname.charAt(0).toUpperCase();
 
   const [imageError, setImageError] = useState(false);
+  const [isLeaveDetailOpen, setIsLeaveDetailOpen] = useState(false);
+  const [isOTDetailOpen, setIsOTDetailOpen] = useState(false);
+  const [isShiftDialogOpen, setIsShiftDialogOpen] = useState(false);
+  const [isBranchDetailOpen, setIsBranchDetailOpen] = useState(false);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   // Dialog states - using refs to prevent re-render loops
   const [dialogStates, setDialogStates] = useState({
@@ -108,10 +118,15 @@ export default function UserProfile() {
     setFiles(files.filter((_, i) => i !== index));
   };
 
-  const [selectedPolicies, setSelectedPolicies] = useState([
-    "Leave Policy",
-    "Overtime Policy",
-  ]);
+  const [selectedPolicies, setSelectedPolicies] = useState(["Leaves", "OT"]);
+
+  const togglePolicies = (policy) => {
+    setSelectedPolicies((prev) =>
+      prev.includes(policy)
+        ? prev.filter((p) => p !== policy)
+        : [...prev, policy]
+    );
+  };
 
   const [selectedWorkShift, setSelectedWorkShift] = useState([
     "Morning",
@@ -195,58 +210,25 @@ export default function UserProfile() {
     items,
     selectedItems,
     toggleItem,
-    dropdownWidth = "w-40",
+    onItemClick,
   }) => (
     <>
       <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
-      <div className="flex justify-between items-start flex-wrap gap-4">
-        <div className="flex flex-wrap gap-4">
-          {items.map(
-            (item) =>
-              selectedItems.includes(item) && (
-                <div
-                  key={item}
-                  className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm w-auto max-w-full"
-                >
-                  <h2 className="text-sm font-custom text-blue">{item}</h2>
-                </div>
-              )
-          )}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-            >
-              <span className="relative w-3 h-3">
-                <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
-                <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() =>
+              onItemClick ? onItemClick(item) : toggleItem?.(item)
+            }
+            className="bg-blue-100 rounded-xl border border-blue-200 p-3 shadow-sm w-auto max-w-full
+                 text-sm font-custom text-blue-700 hover:bg-blue-50 hover:text-blue-800
+                 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            <div className="space-y-1">
-              {items.map((item) => (
-                <DropdownMenuItem
-                  key={item}
-                  onSelect={() => toggleItem(item)}
-                  className={
-                    selectedItems.includes(item)
-                      ? "bg-blue-100 text-blue-700"
-                      : "hover:bg-blue-50"
-                  }
-                >
-                  {item}
-                </DropdownMenuItem>
-              ))}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {item}
+          </button>
+        ))}
       </div>
     </>
   );
@@ -259,36 +241,6 @@ export default function UserProfile() {
       </p>
     </div>
   );
-
-  const [showFirstMenu, setShowFirstMenu] = useState(false);
-  const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
-
-  const [leaveSubPolicies, setLeaveSubPolicies] = useState(["Annual Leave"]);
-  const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
-
-  const toggleLeaveSubPolicy = (opt) => {
-    setLeaveSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
-
-  const toggleOvertimeSubPolicy = (opt) => {
-    setOvertimeSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
 
   const handleSave = () => {
     const updatedProfile = {
@@ -308,7 +260,7 @@ export default function UserProfile() {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
+      <div className="hidden lg:block bg-white rounded-xl shadow-md py-6 px-6 mb-1">
         <div className="flex items-center space-x-3 p-5">
           <User className="text-[#2998FF]" width={40} height={40} />
           <span className="font-custom text-3xl text-black">Profile</span>
@@ -442,117 +394,47 @@ export default function UserProfile() {
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
-            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
-              Policies
-            </h2>
-            <div className="relative flex justify-between items-start flex-wrap gap-4">
-              {/* Display Selected Tags */}
-              <div className="flex flex-wrap gap-4">
-                {leaveSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Leave - {item}
-                    </h2>
-                  </div>
-                ))}
-                {overtimeSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Overtime - {item}
-                    </h2>
-                  </div>
-                ))}
-              </div>
-
-              {/* + Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowFirstMenu((prev) => !prev);
-                    setOpenSecondLayerFor(""); // Reset second layer when reopening first
-                  }}
-                  className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-                >
-                  <span className="relative w-3 h-3">
-                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
-                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
-                  </span>
-                </button>
-
-                {/* First Menu */}
-                {showFirstMenu && (
-                  <div className="absolute top-10 left-0 z-50 font-custom text-sm w-40 bg-white shadow-md rounded-md">
-                    {["Leave Policy", "Overtime Policy"].map((item) => (
-                      <div
-                        key={item}
-                        onClick={() => setOpenSecondLayerFor(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50"
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Second Menu */}
-                {openSecondLayerFor === "Leave Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Sick Leave", "Annual Leave"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          leaveSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {openSecondLayerFor === "Overtime Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Morning", "Weekend"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          overtimeSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+            <DropdownSection
+              title="Policies"
+              items={["Leaves", "OT"]}
+              selectedItems={selectedPolicies}
+              toggleItem={togglePolicies}
+              onItemClick={(item) => {
+                if (item === "Leaves") {
+                  setIsLeaveDetailOpen(true); // open dialog, don't toggle
+                  return;
+                }
+                if (item === "OT") {
+                  setIsOTDetailOpen(true);
+                  return;
+                }
+              }}
+            />
 
             <DropdownSection
               title="Work Shift"
-              items={["Morning", "Afternoon", "Full Day"]}
+              items={["Morning", "Afternoon"]}
               selectedItems={selectedWorkShift}
               toggleItem={toggleWorkShift}
+              onItemClick={(item) => {
+                if (item === "Morning" || item === "Afternoon") {
+                  setIsShiftDialogOpen(true); // open dialog, do NOT toggle
+                  return;
+                }
+                toggleWorkShift(item);
+              }}
             />
 
             <DropdownSection
               title="Group"
-              items={["Admin", "HR Manager", "Employee"]}
+              items={["Admin", "HR Manager"]}
               selectedItems={selectedGroup}
               toggleItem={toggleGroup}
-              dropdownWidth="w-44"
+              onItemClick={(item) => {
+                if (item === "Admin" || item === "HR Manager") {
+                  setIsAddUserOpen(true); // open dialog when clicked
+                }
+              }}
             />
 
             <DropdownSection
@@ -560,6 +442,13 @@ export default function UserProfile() {
               items={["Geo Fence", "Flexible", "GPS"]}
               selectedItems={selectedLocation}
               toggleItem={toggleLocation}
+              onItemClick={(item) => {
+                if (["Geo Fence", "Flexible", "GPS"].includes(item)) {
+                  setIsBranchDetailOpen(true); // show branch detail
+                  return;
+                }
+                toggleLocation(item);
+              }}
             />
           </div>
 
@@ -875,6 +764,34 @@ export default function UserProfile() {
           }}
         />
       )}
+
+      {isLeaveDetailOpen && (
+        <PolicyLeave
+          open={isLeaveDetailOpen}
+          onOpenChange={setIsLeaveDetailOpen}
+        />
+      )}
+
+      {isOTDetailOpen && (
+        <AddOTDialog open={isOTDetailOpen} onOpenChange={setIsOTDetailOpen} />
+      )}
+
+      {isShiftDialogOpen && (
+        <WorkShiftDialog
+          open={isShiftDialogOpen}
+          onOpenChange={setIsShiftDialogOpen} // <-- critical
+          onSubmit={(data) => console.log("Saved", data)}
+        />
+      )}
+
+      {isBranchDetailOpen && (
+        <BranchDetail
+          open={isBranchDetailOpen}
+          onOpenChange={setIsBranchDetailOpen}
+        />
+      )}
+
+      <AddUserDialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen} />
     </>
   );
 }
