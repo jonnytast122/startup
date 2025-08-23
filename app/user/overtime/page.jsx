@@ -6,45 +6,29 @@ import PendingDialog from "./components/pendingdialog";
 import HistoryTable from "./components/historytable";
 
 export default function Overtime() {
-
   return (
     <div>
       {/* Top Bar */}
-      <div className="bg-white rounded-xl mb-3 shadow-md border">
-        <div
-          className="
-          p-4 sm:p-5
-          flex flex-col sm:flex-row
-          gap-4 sm:gap-6
-          sm:items-center sm:justify-between
-        "
-        >
+      <div className="bg-white rounded-xl shadow-md py1 px-1 border">
+        <div className="p-4 sm:p-5 flex items-center justify-between gap-4">
           {/* Title */}
           <a href="/user/overtime" className="block">
             <div className="flex items-center space-x-3">
-              <CalendarPlus2 className="text-[#2998FF]" width={40} height={40} />
-              <span className="font-custom text-3xl text-black">Overtime</span>
+              <CalendarPlus2 className="text-[#2998FF]" width={30} height={36} />
+              <span className="font-custom text-1xl sm:text-2xl text-black">
+                Overtime
+              </span>
             </div>
           </a>
 
           {/* Actions */}
-          <div
-            className="
-            flex flex-col sm:flex-row
-            gap-2 sm:gap-4
-            w-full sm:w-auto
-          "
-          >
-            {/* Make each trigger full-width on mobile, auto on desktop */}
-            <div className="w-full sm:w-auto">
-              <PendingDialog className="w-full" />
-            </div>
-            <div className="w-full sm:w-auto">
-              <RequestDialog className="w-full" />
-            </div>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <PendingDialog className="px-3 py-1.5 text-sm sm:text-base" />
+            <RequestDialog className="px-3 py-1.5 text-sm sm:text-base" />
           </div>
         </div>
       </div>
+
       {/* Body */}
       <div>
         <HistoryTable />

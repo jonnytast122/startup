@@ -54,87 +54,6 @@ const fakeData = [
     totalHour: "06:45",
     note: "—",
   },
-  {
-    date: "2025-07-08",
-    policy: "Sick Leave",
-    requestedOn: "2025-07-08",
-    totalOvertime: "5 hour",
-    status: "Approved",
-    totalHour: "08:00",
-    note: "Reviewed by manager",
-  },
-  {
-    date: "2025-07-10",
-    policy: "Annual Leave",
-    requestedOn: "2025-07-10",
-    totalOvertime: "2 hour",
-    status: "Pending",
-    totalHour: "07:00",
-    note: "Auto-submitted",
-  },
-  {
-    date: "2025-07-12",
-    policy: "Weekend OT",
-    requestedOn: "2025-07-12",
-    totalOvertime: "3 hour",
-    status: "Rejected",
-    totalHour: "06:30",
-    note: "—",
-  },
-  {
-    date: "2025-07-14",
-    policy: "Personal Leave",
-    requestedOn: "2025-07-14",
-    totalOvertime: "4 hour",
-    status: "Approved",
-    totalHour: "08:15",
-    note: "Reviewed by manager",
-  },
-  {
-    date: "2025-07-16",
-    policy: "Sick Leave",
-    requestedOn: "2025-07-16",
-    totalOvertime: "5 hour",
-    status: "Pending",
-    totalHour: "07:45",
-    note: "Auto-submitted",
-  },
-  {
-    date: "2025-07-18",
-    policy: "Annual Leave",
-    requestedOn: "2025-07-18",
-    totalOvertime: "2 hour",
-    status: "Rejected",
-    totalHour: "06:20",
-    note: "—",
-  },
-  {
-    date: "2025-07-20",
-    policy: "Weekend OT",
-    requestedOn: "2025-07-20",
-    totalOvertime: "3 hour",
-    status: "Approved",
-    totalHour: "08:00",
-    note: "Reviewed by manager",
-  },
-  {
-    date: "2025-07-22",
-    policy: "Personal Leave",
-    requestedOn: "2025-07-22",
-    totalOvertime: "4 hour",
-    status: "Pending",
-    totalHour: "07:15",
-    note: "Auto-submitted",
-  },
-  {
-    date: "2025-07-24",
-    policy: "Sick Leave",
-    requestedOn: "2025-07-24",
-    totalOvertime: "5 hour",
-    status: "Rejected",
-    totalHour: "06:10",
-    note: "—",
-  },
 ];
 
 /* =======================
@@ -160,8 +79,7 @@ function getDatesInRange(startDate, endDate) {
   return dates;
 }
 
-/** Build rows (with week section rows), merging static data
- *  while preserving `date` as a Date object. */
+/** Build rows (with week section rows) */
 function getTimesheetRows(selectedRange) {
   if (!selectedRange.startDate || !selectedRange.endDate) return [];
   const allDates = getDatesInRange(
@@ -169,7 +87,6 @@ function getTimesheetRows(selectedRange) {
     selectedRange.endDate
   );
 
-  // Map static fake rows by ISO date key
   const fakeMap = {};
   for (const item of fakeData) {
     fakeMap[item.date] = item;
@@ -191,13 +108,11 @@ function getTimesheetRows(selectedRange) {
       days: slice.map((date) => {
         const key = fmtKey(date);
         const info = fakeMap[key];
-        // Keep `date` as a Date object; merge other fields if present
         return info ? { ...info, date } : { date };
       }),
     });
   }
 
-  // Flatten with section rows
   const out = [];
   for (const wk of weeks) {
     out.push({ _section: true, week: wk.week });
@@ -211,14 +126,9 @@ function getTimesheetRows(selectedRange) {
    ======================= */
 const columns = [
   {
-    id: "checkbox",
-    header: () => <input type="checkbox" className="accent-blue-500" />,
-    cell: ({ row }) =>
-      !row.original._section ? (
-        <input type="checkbox" className="accent-blue-500" />
-      ) : (
-        ""
-      ),
+    id: "empty",
+    header: () => null,
+    cell: () => null,
     size: 36,
   },
   {
@@ -227,7 +137,7 @@ const columns = [
     cell: ({ row }) => {
       let d = row.original.date;
       if (!d || row.original._section) return "";
-      if (typeof d === "string") d = new Date(d); // safety
+      if (typeof d === "string") d = new Date(d);
       return d.toLocaleDateString("en-GB", {
         weekday: "short",
         day: "2-digit",
@@ -294,17 +204,12 @@ const columns = [
 export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1), // July 1, 2025
-    endDate: new Date(2025, 6, 31), // July 31, 2025
+    startDate: new Date(2025, 6, 1),
+    endDate: new Date(2025, 6, 31),
     key: "selection",
   });
   const datePickerRef = useRef(null);
 
-  // ===== New state for selection =====
-  const [checkedRows, setCheckedRows] = useState({});
-  const [allChecked, setAllChecked] = useState(false);
-
-  // Close picker on outside click
   useEffect(() => {
     if (!showDatePicker) return;
     function handleClickOutside(e) {
@@ -317,70 +222,10 @@ export default function TimesheetTable() {
       document.removeEventListener("mousedown", handleClickOutside, true);
   }, [showDatePicker]);
 
-  // Build table rows
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
-  // ===== Select-all helpers (keep styles untouched) =====
-  const toggleAll = (checked) => {
-    setAllChecked(checked);
-    const next = {};
-    data.forEach((r, idx) => {
-      if (!r._section) next[idx] = checked;
-    });
-    setCheckedRows(next);
-  };
-
-  const toggleRow = (idx, checked) => {
-    setCheckedRows((prev) => {
-      const next = { ...prev, [idx]: checked };
-      return next;
-    });
-  };
-
-  // Keep header checkbox in sync when user individually checks/unchecks
-  useEffect(() => {
-    const selectable = data.reduce(
-      (acc, r, idx) => (!r._section ? [...acc, idx] : acc),
-      []
-    );
-    if (selectable.length === 0) {
-      setAllChecked(false);
-      return;
-    }
-    const everyChecked = selectable.every((i) => !!checkedRows[i]);
-    setAllChecked(everyChecked);
-  }, [checkedRows, data]);
-
-  // Same columns but swap the first one for wired logic; keep your styles/classes
-  const columnsWithCheckbox = [
-    {
-      id: "checkbox",
-      header: () => (
-        <input
-          type="checkbox"
-          className="accent-blue-500"
-          checked={allChecked}
-          onChange={(e) => toggleAll(e.target.checked)}
-        />
-      ),
-      cell: ({ row }) =>
-        !row.original._section ? (
-          <input
-            type="checkbox"
-            className="accent-blue-500"
-            checked={!!checkedRows[row.index]}
-            onChange={(e) => toggleRow(row.index, e.target.checked)}
-          />
-        ) : (
-          ""
-        ),
-      size: 36,
-    },
-    ...columns.slice(1),
-  ];
-
   const table = useReactTable({
-    columns: columnsWithCheckbox,
+    columns,
     data,
     getCoreRowModel: getCoreRowModel(),
   });
@@ -391,136 +236,143 @@ export default function TimesheetTable() {
   ];
 
   return (
-    <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
-      {/* Header */}
-      <div className="mb-3">
-        <div className="font-custom text-xl font-semibold mb-2">Request History</div>
+    // Make the ENTIRE screen horizontally scrollable when needed
+    <div className="w-full overflow-x-auto">
+      {/* Inner content gets a minimum width that matches table width,
+          so the header bar and table scroll together */}
+      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[980px]">
+        {/* Single-row Top Bar: Title + Date Picker + Export (export sticks to far right) */}
+        <div className="mb-3">
+          <div className="flex items-center gap-3 w-full flex-nowrap">
+            {/* Title (left) */}
+            <div className="ml-2 font-custom text-xl font-semibold whitespace-nowrap">
+              Request History
+            </div>
 
-        {/* One row: left (date) — right (export), on all sizes */}
-        <div className="flex items-center justify-between gap-2 w-full flex-nowrap">
-          {/* Date Range Picker (left) */}
-          <div className="relative min-w-0">
-            <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[70vw] truncate text-left"
-              title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-            >
-              <span className="truncate">
-                {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              </span>
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
-            </button>
-
-            {showDatePicker && (
-              <div
-                ref={datePickerRef}
-                className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md"
+            {/* Date Picker Button (middle) */}
+            <div className="relative min-w-0">
+              <button
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[60vw] truncate text-left"
               >
-                <DateRangePicker
-                  ranges={[selectedRange]}
-                  onChange={(ranges) => {
-                    const newRange = ranges.selection;
-                    setSelectedRange(newRange);
+                <span className="truncate">
+                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+                </span>
+                <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
+              </button>
 
-                    const start = newRange.startDate;
-                    const end = newRange.endDate;
-                    if (start && end && start.getTime() !== end.getTime()) {
-                      setShowDatePicker(false);
-                    }
-                  }}
-                  rangeColors={["#3b82f6"]}
-                  moveRangeOnFirstSelection={false}
-                  showMonthAndYearPickers={true}
-                  showSelectionPreview={true}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Export (right) */}
-          <Select>
-            <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
-              <SelectValue placeholder="Export" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {exportOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      {/* Summary (demo values) */}
-      <div className="mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
-        <span>
-          <span className="font-semibold text-black">Total Leaves:</span>{" "}
-          {data.filter((r) => !r._section).length} day
-        </span>
-      </div>
-
-      {/* Table */}
-      <div className="w-full overflow-x-auto">
-        <Table className="min-w-[980px] w-full">
-          <TableHeader>
-            {table.getHeaderGroups().map((hg) => (
-              <TableRow
-                key={hg.id}
-                className="bg-gray-100 text-gray-500 text-lg font-custom"
-              >
-                {hg.headers.map((h) => (
-                  <TableHead
-                    key={h.id}
-                    className="whitespace-nowrap px-2 min-w-[70px] text-xs font-custom"
-                  >
-                    {flexRender(h.column.columnDef.header, h.getContext())}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-
-          <TableBody>
-            {data.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columnsWithCheckbox.length}
-                  className="text-center text-gray-400 font-custom"
+              {showDatePicker && (
+                <div
+                  ref={datePickerRef}
+                  className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md"
                 >
-                  No records for this date range.
-                </TableCell>
-              </TableRow>
-            ) : (
-              data.map((row, i) =>
-                row._section ? (
-                  <tr key={`section-${row.week}`}>
-                    <td
-                      colSpan={columnsWithCheckbox.length}
-                      className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
+                  <DateRangePicker
+                    ranges={[selectedRange]}
+                    onChange={(ranges) => {
+                      const newRange = ranges.selection;
+                      setSelectedRange(newRange);
+                      const start = newRange.startDate;
+                      const end = newRange.endDate;
+                      if (start && end && start.getTime() !== end.getTime()) {
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    rangeColors={["#3b82f6"]}
+                    moveRangeOnFirstSelection={false}
+                    showMonthAndYearPickers={true}
+                    showSelectionPreview={true}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Export (far right) */}
+            <div className="ml-auto">
+              <Select>
+                <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
+                  <SelectValue placeholder="Export" />
+                </SelectTrigger>
+                <SelectContent className="font-custom">
+                  {exportOptions.map((role) => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        {/* Summary row */}
+        <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
+          <span>
+            <span className="font-semibold text-black">Total Leaves:</span>{" "}
+            {data.filter((r) => !r._section).length} day
+          </span>
+        </div>
+
+        {/* Table */}
+        <div className="w-full overflow-x-auto ml-2">
+          <Table className="min-w-[980px] w-full">
+            <TableHeader>
+              {table.getHeaderGroups().map((hg) => (
+                <TableRow
+                  key={hg.id}
+                  className="bg-gray-100 text-gray-500 text-lg font-custom"
+                >
+                  {hg.headers.map((h) => (
+                    <TableHead
+                      key={h.id}
+                      className="whitespace-nowrap px-2 min-w-[70px] text-xs font-custom"
                     >
-                      {row.week}
-                    </td>
-                  </tr>
-                ) : (
-                  <TableRow key={i} className="hover:bg-white transition">
-                    {table.getAllColumns().map((col) => (
-                      <TableCell
-                        key={col.id}
-                        className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+
+            <TableBody>
+              {data.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="text-center text-gray-400 font-custom"
+                  >
+                    No records for this date range.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                data.map((row, i) =>
+                  row._section ? (
+                    <tr key={`section-${row.week}`}>
+                      <td
+                        colSpan={columns.length}
+                        className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
                       >
-                        {flexRender(col.columnDef.cell, {
-                          row: { original: row, index: i },
-                        })}
-                      </TableCell>
-                    ))}
-                  </TableRow>
+                        {row.week}
+                      </td>
+                    </tr>
+                  ) : (
+                    <TableRow key={i} className="hover:bg-white transition">
+                      {table.getAllColumns().map((col) => (
+                        <TableCell
+                          key={col.id}
+                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
+                        >
+                          {flexRender(col.columnDef.cell, {
+                            row: { original: row, index: i },
+                          })}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  )
                 )
-              )
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );

@@ -9,12 +9,12 @@ export default function Leaves() {
   return (
     <div>
       {/* Top Bar */}
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-1 px-1 border">
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
           <a href="/user/Leaves" className="block">
             <div className="flex items-center space-x-3">
-              <LogOut className="text-[#2998FF]" width={40} height={40} />
+              <LogOut className="text-[#2998FF]" width={36} height={36} />
               <span className="font-custom text-3xl text-black">Leaves</span>
             </div>
           </a>
