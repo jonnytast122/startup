@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
@@ -32,7 +32,7 @@ const users = [
   { id: 3, name: "John Mark" },
 ];
 
-const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
+const AddOTDialog = ({ open, onOpenChange, profileData }) => {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [allDay, setAllDay] = useState(false);
   const [date, setDate] = useState(new Date());
@@ -41,14 +41,28 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
   const [note, setNote] = useState("");
+  const [otTitle, setOtTitle] = useState("");
+  const [otType, setOtType] = useState("");
 
-  const handleToggleUser = (user) => {
-    setSelectedUsers((prev) =>
-      prev.some((u) => u.id === user.id)
-        ? prev.filter((u) => u.id !== user.id)
-        : [...prev, user]
-    );
-  };
+  // initialize from profile data
+  useEffect(() => {
+    if (profileData) {
+      setOtTitle(profileData.otTitle || "Overtime");
+      setOtType(profileData.otType || "compensatory");
+      setSelectedUsers(profileData.users || []);
+      setAllDay(profileData.allDay || false);
+      setDate(profileData.date ? new Date(profileData.date) : new Date());
+      setStartDate(
+        profileData.startDate ? new Date(profileData.startDate) : new Date()
+      );
+      setEndDate(
+        profileData.endDate ? new Date(profileData.endDate) : new Date()
+      );
+      setStartTime(profileData.startTime || "08:00");
+      setEndTime(profileData.endTime || "18:00");
+      setNote(profileData.note || "");
+    }
+  }, [profileData]);
 
   const calculateHours = () => {
     const [startH, startM] = startTime.split(":").map(Number);
@@ -57,24 +71,6 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
     const end = new Date(0, 0, 0, endH, endM);
     const diffMs = end - start;
     return diffMs > 0 ? (diffMs / (1000 * 60 * 60)).toFixed(2) : "0.00";
-  };
-
-  const handleDone = () => {
-    const payload = {
-      users: selectedUsers,
-      allDay,
-      date,
-      startTime,
-      endTime,
-      hours: calculateHours(),
-      note,
-    };
-    onConfirm(payload);
-    onOpenChange(false);
-  };
-
-  const handleSaveDraft = () => {
-    // your save draft logic here
   };
 
   return (
@@ -90,21 +86,26 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
 
         <div className="w-full flex flex-col items-center px-4 py-6">
           <div className="w-full md:w-4/5 lg:w-2/3 xl:w-1/2 space-y-6">
+            {/* OT Title */}
             <div className="flex items-start gap-4">
               <label className="text-sm text-[#3F4648] w-1/3 pt-1">
                 OT title:
               </label>
-              <Input placeholder="Type here" className="resize-none w-2/3" />
+              <Input
+                value={otTitle}
+                disabled
+                className="resize-none w-2/3 bg-gray-100"
+              />
             </div>
 
+            {/* OT Type */}
             <div className="flex items-start justify-between gap-4">
               <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                 OT type:
               </label>
-
               <div className="resize-none w-2/3">
-                <Select>
-                  <SelectTrigger className="w-48 text-gray-500">
+                <Select value={otType} disabled>
+                  <SelectTrigger className="w-48 text-gray-500 bg-gray-100">
                     <SelectValue placeholder="Select OT type" />
                   </SelectTrigger>
                   <SelectContent className="font-custom">
@@ -117,46 +118,20 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
               </div>
             </div>
 
-            {/* Select Users */}
+            {/* Selected Users */}
             <div className="flex items-start justify-between gap-4">
               <label className="text-sm text-[#3F4648] w-1/3 pt-2">
-                Select users:
+                Users:
               </label>
-              <div className="flex flex-wrap gap-2 border p-3 rounded-2xl w-2/3">
+              <div className="flex flex-wrap gap-2 border p-3 rounded-2xl w-2/3 bg-gray-100">
                 {selectedUsers.map((user) => (
                   <div
                     key={user.id}
                     className="px-3 py-1 rounded-full bg-blue-100 text-blue-600 flex items-center gap-2 text-sm"
                   >
                     {user.name}
-                    <X
-                      size={14}
-                      className="cursor-pointer"
-                      onClick={() =>
-                        setSelectedUsers((prev) =>
-                          prev.filter((u) => u.id !== user.id)
-                        )
-                      }
-                    />
                   </div>
                 ))}
-                <Select
-                  onValueChange={(val) => {
-                    const found = users.find((u) => u.name === val);
-                    if (found) handleToggleUser(found);
-                  }}
-                >
-                  <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select user" />
-                  </SelectTrigger>
-                  <SelectContent className="font-custom">
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.name}>
-                        {user.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
             </div>
 
@@ -166,133 +141,67 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                 All day time off:
               </label>
               <div className="w-2/3">
-                <Switch checked={allDay} onCheckedChange={setAllDay} />
+                <Switch checked={allDay} disabled />
               </div>
             </div>
 
-            {/* Conditional Date and Time Display */}
+            {/* Dates and Times */}
             {allDay ? (
-              // ALL DAY = ON → Start/End Date only
               <div className="flex items-start gap-4">
                 <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                   Date:
                 </label>
                 <div className="flex items-center gap-6 flex-wrap">
-                  {/* Start Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">Start:</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
-                          {format(startDate, "dd/MM/yyyy")}
-                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <Input
+                      value={format(startDate, "dd/MM/yyyy")}
+                      disabled
+                      className="bg-gray-100"
+                    />
                   </div>
-
-                  {/* End Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">End:</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
-                          {format(endDate, "dd/MM/yyyy")}
-                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                    <Input
+                      value={format(endDate, "dd/MM/yyyy")}
+                      disabled
+                      className="bg-gray-100"
+                    />
                   </div>
                 </div>
               </div>
             ) : (
               <>
-                {/* ALL DAY = OFF → Date + Time */}
-                {/* Date Row */}
                 <div className="flex items-start gap-4">
                   <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                     Date:
                   </label>
-                  <div className="w-2/3">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
-                          {format(date, "dd/MM/yyyy")}
-                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                  <Input
+                    value={format(date, "dd/MM/yyyy")}
+                    disabled
+                    className="bg-gray-100 w-2/3"
+                  />
                 </div>
 
-                {/* Time Row */}
                 <div className="flex items-start gap-4">
                   <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                     Time:
                   </label>
                   <div className="flex flex-wrap items-center gap-4 w-2/3">
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-[#3F4648]">Start:</label>
-                      <Input
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        className="rounded-full px-4 py-2 text-sm w-[120px] border border-gray-300"
-                      />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <label className="text-sm text-[#3F4648]">End:</label>
-                      <Input
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        className="rounded-full px-4 py-2 text-sm w-[120px] border border-gray-300"
-                      />
-                    </div>
-
+                    <Input
+                      type="time"
+                      value={startTime}
+                      disabled
+                      className="bg-gray-100 w-[120px]"
+                    />
+                    <Input
+                      type="time"
+                      value={endTime}
+                      disabled
+                      className="bg-gray-100 w-[120px]"
+                    />
                     <div className="text-sm font-semibold whitespace-nowrap ml-auto">
-                      {calculateHours()}{" "}
-                      <span className="font-normal">hours</span>
+                      {calculateHours()} <span className="font-normal">hours</span>
                     </div>
                   </div>
                 </div>
@@ -303,23 +212,12 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
             <div className="flex items-start gap-4">
               <label className="text-sm text-[#3F4648] w-1/3 pt-1">Note:</label>
               <Textarea
-                placeholder="Type here"
-                className="resize-none w-2/3"
                 value={note}
-                onChange={(e) => setNote(e.target.value)}
+                disabled
+                className="resize-none w-2/3 bg-gray-100"
               />
             </div>
           </div>
-        </div>
-
-        <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
-        <div className="w-full flex justify-end mt-4 px-4 md:px-6 lg:px-32">
-          <Button
-            className="w-full sm:w-auto py-3 px-6 text-sm sm:text-md font-custom rounded-full"
-            onClick={handleDone}
-          >
-            Save
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

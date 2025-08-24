@@ -20,15 +20,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import UpdateCashDialog from "./components/updatecashdialog";
 import UpdateBankTransferDialog from "./components/updatebanktransferdialog";
-import { Button } from "react-scroll";
 import DeleteDialog from "./components/deletedialog";
-import PolicyLeave from "./components/leavedetaildialog";
+import LeaveDetailDialog from "./components/leavedetaildialog";
 import AddOTDialog from "./components/otdetaildialog";
 import WorkShiftDialog from "./components/shiftdialog";
 import BranchDetail from "./components/branchdetail";
 import AddUserDialog from "./components/groupsettingdialog";
 
-// 1. All user data is here:
 const user = {
   firstname: "John",
   lastname: "Doe",
@@ -50,18 +48,16 @@ const user = {
 };
 
 export default function UserProfile() {
-  // 2. State is initialized from user
-  const [firstname, setFirstname] = useState(user.firstname);
-  const [lastname, setLastname] = useState(user.lastname);
-  const [mobile, setMobile] = useState(user.phone);
-  const [birthday, setBirthday] = useState(user.birthday);
-  const [branch, setBranch] = useState(user.branch);
-  const [department, setDepartment] = useState(user.department);
-  const [title, setTitle] = useState(user.title);
-  const [employmentstartdate, setEmploymentStartDate] = useState(
-    user.dateadded
-  );
+  const [firstname] = useState(user.firstname);
+  const [lastname] = useState(user.lastname);
+  const [mobile] = useState(user.phone);
+  const [birthday] = useState(user.birthday);
+  const [branch] = useState(user.branch);
+  const [department] = useState(user.department);
+  const [title] = useState(user.title);
+  const [employmentstartdate] = useState(user.dateadded);
   const [cash, setCash] = useState(user.cash);
+
   const profile = user.profile;
   const accountnumber = user.banknumber;
   const AccessLevel = user.accessLevel;
@@ -82,7 +78,6 @@ export default function UserProfile() {
   const [isBranchDetailOpen, setIsBranchDetailOpen] = useState(false);
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
-  // Dialog states - using refs to prevent re-render loops
   const [dialogStates, setDialogStates] = useState({
     cash: false,
     bank: false,
@@ -90,9 +85,7 @@ export default function UserProfile() {
     deleteContext: null,
   });
 
-  // Use refs to track if we're already processing
   const processingRef = useRef(false);
-
   const [files, setFiles] = useState([]);
 
   const handleFileChange = (e) => {
@@ -119,51 +112,20 @@ export default function UserProfile() {
   };
 
   const [selectedPolicies, setSelectedPolicies] = useState(["Leaves", "OT"]);
-
-  const togglePolicies = (policy) => {
-    setSelectedPolicies((prev) =>
-      prev.includes(policy)
-        ? prev.filter((p) => p !== policy)
-        : [...prev, policy]
-    );
-  };
-
   const [selectedWorkShift, setSelectedWorkShift] = useState([
     "Morning",
     "Afternoon",
   ]);
-
-  const toggleWorkShift = (shift) => {
-    setSelectedWorkShift((prev) =>
-      prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
-    );
-  };
-
   const [selectedGroup, setSelectedGroup] = useState(["Admin", "HR Manager"]);
-
-  const toggleGroup = (value) => {
-    setSelectedGroup((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
-
   const [selectedLocation, setSelectedLocation] = useState([
     "Geo Fence",
     "Flexible",
     "GPS",
   ]);
 
-  const toggleLocation = (value) => {
-    setSelectedLocation((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
-
-  // Simplified dialog handlers - prevent multiple calls
   const openDialog = useCallback((type, context = null) => {
     if (processingRef.current) return;
     processingRef.current = true;
-
     setTimeout(() => {
       setDialogStates((prev) => ({
         ...prev,
@@ -177,7 +139,6 @@ export default function UserProfile() {
   const closeDialog = useCallback((type) => {
     if (processingRef.current) return;
     processingRef.current = true;
-
     setTimeout(() => {
       setDialogStates((prev) => ({
         ...prev,
@@ -188,7 +149,6 @@ export default function UserProfile() {
     }, 0);
   }, []);
 
-  // Simplified menu handlers
   const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
   const handleCashDelete = useCallback(
     () => openDialog("delete", "cash"),
@@ -202,16 +162,9 @@ export default function UserProfile() {
 
   const handleArchive = useCallback(() => {
     console.log("Archive clicked");
-    // Add your archive logic here
   }, []);
 
-  const DropdownSection = ({
-    title,
-    items,
-    selectedItems,
-    toggleItem,
-    onItemClick,
-  }) => (
+  const DropdownSection = ({ title, items, onItemClick }) => (
     <>
       <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
       <div className="flex flex-wrap gap-2">
@@ -219,12 +172,9 @@ export default function UserProfile() {
           <button
             key={item}
             type="button"
-            onClick={() =>
-              onItemClick ? onItemClick(item) : toggleItem?.(item)
-            }
+            onClick={() => onItemClick?.(item)}
             className="bg-blue-100 rounded-xl border border-blue-200 p-3 shadow-sm w-auto max-w-full
-                 text-sm font-custom text-blue-700 hover:bg-blue-50 hover:text-blue-800
-                 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                 text-sm font-custom text-blue-700"
           >
             {item}
           </button>
@@ -241,22 +191,6 @@ export default function UserProfile() {
       </p>
     </div>
   );
-
-  const handleSave = () => {
-    const updatedProfile = {
-      firstname,
-      lastname,
-      mobile,
-      birthday,
-      branch,
-      department,
-      title,
-      employmentstartdate,
-    };
-
-    console.log("✅ Saving profile:", updatedProfile);
-    alert("Changes saved successfully!");
-  };
 
   return (
     <>
@@ -275,7 +209,7 @@ export default function UserProfile() {
           Good morning!
         </p>
 
-        {/* Profile Holder Container with fallback initials */}
+        {/* Profile Holder */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
           <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
             {profile && !imageError ? (
@@ -302,9 +236,9 @@ export default function UserProfile() {
           </div>
         </div>
 
-        {/* Two-column layout: left has container, right has text */}
+        {/* Two-column layout */}
         <div className="mt-4 flex flex-col md:flex-row gap-4">
-          {/* Left container */}
+          {/* Left */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Personal details
@@ -316,8 +250,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={firstname}
-              onChange={(e) => setFirstname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -326,8 +260,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={lastname}
-              onChange={(e) => setLastname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -336,8 +270,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -346,8 +280,8 @@ export default function UserProfile() {
             <input
               type="date"
               value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <h2 className="text-2xl font-semibold font-custom mb-2">
@@ -360,8 +294,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -370,8 +304,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -380,8 +314,8 @@ export default function UserProfile() {
             <input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
@@ -390,75 +324,44 @@ export default function UserProfile() {
             <input
               type="date"
               value={employmentstartdate}
-              onChange={(e) => setEmploymentStartDate(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <DropdownSection
               title="Policies"
               items={["Leaves", "OT"]}
-              selectedItems={selectedPolicies}
-              toggleItem={togglePolicies}
               onItemClick={(item) => {
-                if (item === "Leaves") {
-                  setIsLeaveDetailOpen(true); // open dialog, don't toggle
-                  return;
-                }
-                if (item === "OT") {
-                  setIsOTDetailOpen(true);
-                  return;
-                }
+                if (item === "Leaves") setIsLeaveDetailOpen(true);
+                if (item === "OT") setIsOTDetailOpen(true);
               }}
             />
 
             <DropdownSection
               title="Work Shift"
               items={["Morning", "Afternoon"]}
-              selectedItems={selectedWorkShift}
-              toggleItem={toggleWorkShift}
-              onItemClick={(item) => {
-                if (item === "Morning" || item === "Afternoon") {
-                  setIsShiftDialogOpen(true); // open dialog, do NOT toggle
-                  return;
-                }
-                toggleWorkShift(item);
-              }}
+              onItemClick={() => setIsShiftDialogOpen(true)}
             />
 
             <DropdownSection
               title="Group"
               items={["Admin", "HR Manager"]}
-              selectedItems={selectedGroup}
-              toggleItem={toggleGroup}
-              onItemClick={(item) => {
-                if (item === "Admin" || item === "HR Manager") {
-                  setIsAddUserOpen(true); // open dialog when clicked
-                }
-              }}
+              onItemClick={() => setIsAddUserOpen(true)}
             />
 
             <DropdownSection
               title="Location"
               items={["Geo Fence", "Flexible", "GPS"]}
-              selectedItems={selectedLocation}
-              toggleItem={toggleLocation}
-              onItemClick={(item) => {
-                if (["Geo Fence", "Flexible", "GPS"].includes(item)) {
-                  setIsBranchDetailOpen(true); // show branch detail
-                  return;
-                }
-                toggleLocation(item);
-              }}
+              onItemClick={() => setIsBranchDetailOpen(true)}
             />
           </div>
 
-          {/* Right container with text aligned left */}
+          {/* Right */}
           <div className="w-full md:w-[60%] p-6">
             <div className="text-md font-custom text-light-pearl w-full space-y-2">
               <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
                 Payroll Info
               </h2>
-
               <InfoRow
                 label="Employee Name"
                 value={`${firstname} ${lastname}`}
@@ -468,7 +371,7 @@ export default function UserProfile() {
               <InfoRow label="Account Number" value={accountnumber} />
             </div>
 
-            {/* Cash Section - SIMPLIFIED */}
+            {/* Cash Section */}
             <div className="relative">
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
@@ -508,7 +411,7 @@ export default function UserProfile() {
               </div>
             </div>
 
-            {/* Bank Transfer Section - SIMPLIFIED */}
+            {/* Bank Transfer Section */}
             <div className="relative">
               <div className="absolute -top-8 right-0 z-10">
                 <DropdownMenu>
@@ -649,7 +552,7 @@ export default function UserProfile() {
                   Attachment
                   <label
                     htmlFor="pdf-upload"
-                    className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+                    className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full cursor-pointer transition"
                   >
                     <span className="relative w-3 h-3">
                       <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
@@ -711,16 +614,9 @@ export default function UserProfile() {
         </div>
       </div>
 
-      <div className="flex justify-center">
-        <Button
-          onClick={handleSave}
-          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          Save Changes
-        </Button>
-      </div>
+      {/* ✅ Save button REMOVED */}
 
-      {/* Dialogs - Only render when needed */}
+      {/* Dialogs */}
       {dialogStates.cash && (
         <UpdateCashDialog
           open={true}
@@ -732,27 +628,21 @@ export default function UserProfile() {
           }}
         />
       )}
-
       {dialogStates.bank && (
         <UpdateBankTransferDialog
           open={true}
           onOpenChange={() => closeDialog("bank")}
           oldCash={cash}
           onSubmit={(data) => {
-            console.log("🧾 Updated bank transfer data:", data);
+            console.log("Updated bank transfer data:", data);
             closeDialog("bank");
           }}
         />
       )}
-
       {dialogStates.delete && (
         <DeleteDialog
           open={dialogStates.delete}
-          setOpen={(isOpen) => {
-            if (!isOpen) {
-              closeDialog("delete");
-            }
-          }}
+          setOpen={(isOpen) => !isOpen && closeDialog("delete")}
           context={dialogStates.deleteContext}
           onConfirm={() => {
             if (dialogStates.deleteContext === "cash") {
@@ -764,23 +654,56 @@ export default function UserProfile() {
           }}
         />
       )}
-
       {isLeaveDetailOpen && (
-        <PolicyLeave
+        <LeaveDetailDialog
           open={isLeaveDetailOpen}
           onOpenChange={setIsLeaveDetailOpen}
+          profileData={{
+            policyName: "Annual Leave",
+            leaveType: "paid",
+            leaveMonth: "July",
+            leaveDay: 10,
+            durationType: "year",
+            timeOffValue: "3",
+            timeOffUnit: "days",
+          }}
         />
       )}
-
       {isOTDetailOpen && (
-        <AddOTDialog open={isOTDetailOpen} onOpenChange={setIsOTDetailOpen} />
+        <AddOTDialog
+          open={isOTDetailOpen}
+          onOpenChange={setIsOTDetailOpen}
+          profileData={{
+            otTitle: "Weekend OT",
+            otType: "holiday",
+            users: [
+              { id: 1, name: "Doe Ibrahim" },
+              { id: 2, name: "Lucy Trevo" },
+            ],
+            allDay: false,
+            date: "2025-08-24",
+            startTime: "09:00",
+            endTime: "14:00",
+            note: "Handled weekend workload",
+          }}
+        />
       )}
-
       {isShiftDialogOpen && (
         <WorkShiftDialog
           open={isShiftDialogOpen}
-          onOpenChange={setIsShiftDialogOpen} // <-- critical
-          onSubmit={(data) => console.log("Saved", data)}
+          onOpenChange={setIsShiftDialogOpen}
+          profileData={{
+            name: "Morning Shift",
+            shiftDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+            reminderDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
+            startTime: "08:00",
+            endTime: "16:00",
+            breakStart: "12:00",
+            breakEnd: "13:00",
+            clockInReminder: "07:45",
+            clockOutReminder: "15:45",
+            activeReminder: true,
+          }}
         />
       )}
 
@@ -788,9 +711,14 @@ export default function UserProfile() {
         <BranchDetail
           open={isBranchDetailOpen}
           onOpenChange={setIsBranchDetailOpen}
+          branchData={{
+            branch,
+            siteAddress: "Phnom Penh, Cambodia",
+            fenceSize: 300,
+            coords: { lat: 11.56786, lng: 104.89005 },
+          }}
         />
       )}
-
       <AddUserDialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen} />
     </>
   );

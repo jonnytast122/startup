@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {
   Dialog,
@@ -13,6 +15,8 @@ export default function DeleteDialog({ open, setOpen }) {
       <DialogContent
         className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
         style={{ minHeight: "280px", display: "flex" }}
+        onPointerDownOutside={() => setOpen(false)} 
+        onEscapeKeyDown={() => setOpen(false)}      
       >
         <CircleX
           className="w-12 h-12"

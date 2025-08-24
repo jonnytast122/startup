@@ -9,34 +9,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
 
-function BranchDetail({ open, onOpenChange }) {
+function BranchDetail({ open, onOpenChange, branchData }) {
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [circle, setCircle] = useState(null);
   const [googleMaps, setGoogleMaps] = useState(null);
-  const [centerCoords, setCenterCoords] = useState({
-    lat: 11.56786,
-    lng: 104.89005,
-  });
-  const [siteAddress, setSiteAddress] = useState("");
-  const [fenceSize, setFenceSize] = useState(300);
 
-  // Get user location
-  useEffect(() => {
-    if (open && "geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          setCenterCoords({
-            lat: pos.coords.latitude,
-            lng: pos.coords.longitude,
-          });
-        },
-        (err) => console.error("Geolocation error:", err)
-      );
-    }
-  }, [open]);
+  const { branch, siteAddress, fenceSize, coords } = branchData || {
+    branch: "Main Branch",
+    siteAddress: "Phnom Penh",
+    fenceSize: 300,
+    coords: { lat: 11.56786, lng: 104.89005 },
+  };
 
   // Init Google Map
   useEffect(() => {
@@ -52,7 +37,7 @@ function BranchDetail({ open, onOpenChange }) {
       if (!mapRef.current) return;
 
       const newMap = new google.maps.Map(mapRef.current, {
-        center: centerCoords,
+        center: coords,
         zoom: 16,
         mapId: "MY_NEXTJS_MAPID",
       });
@@ -61,7 +46,7 @@ function BranchDetail({ open, onOpenChange }) {
 
       const newCircle = new google.maps.Circle({
         map: newMap,
-        center: centerCoords,
+        center: coords,
         radius: fenceSize,
         fillColor: "#4285F4",
         fillOpacity: 0.2,
@@ -76,29 +61,13 @@ function BranchDetail({ open, onOpenChange }) {
     if (open && !map) {
       setTimeout(() => initMap(), 300);
     } else if (map) {
-      map.setCenter(centerCoords);
-      if (circle) circle.setCenter(centerCoords);
+      map.setCenter(coords);
+      if (circle) circle.setCenter(coords);
     }
-  }, [open, centerCoords]);
+  }, [open]);
 
-  useEffect(() => {
-    if (circle) circle.setRadius(fenceSize);
-  }, [fenceSize]);
-
-  const handleAddressSearch = async () => {
-    if (!googleMaps || !siteAddress) return;
-    const geocoder = new googleMaps.maps.Geocoder();
-    geocoder.geocode({ address: siteAddress }, (results, status) => {
-      if (status === "OK" && results[0]) {
-        const location = results[0].geometry.location;
-        const newCoords = { lat: location.lat(), lng: location.lng() };
-        setCenterCoords(newCoords);
-        if (map) map.setCenter(newCoords);
-        if (circle) circle.setCenter(newCoords);
-      } else {
-        alert("Geocoding failed: " + status);
-      }
-    });
+  const handleSave = () => {
+    alert("✅ Branch details saved (view-only mode).");
   };
 
   return (
@@ -114,64 +83,44 @@ function BranchDetail({ open, onOpenChange }) {
 
         {/* Main layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[35%_65%] gap-4 p-4 sm:p-6">
-          {/* Left form */}
+          {/* Left - read-only info */}
           <div className="flex flex-col space-y-4 bg-[#D9D9D933] p-4 sm:p-6 rounded-xl border border-gray-200">
             <div>
               <label className="block text-sm sm:text-base lg:text-lg text-dark-gray font-custom mb-2">
                 Branch name
               </label>
-              <input
-                type="text"
-                className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
-                placeholder="Enter site name"
-              />
+              <p className="font-custom text-dark-gray border border-gray-300 rounded-lg p-2 w-full bg-gray-100">
+                {branch}
+              </p>
             </div>
 
             <div>
               <label className="block text-sm sm:text-base lg:text-lg text-dark-gray font-custom mb-2">
-                Geofencing
+                Geofencing Address
               </label>
-              <input
-                type="text"
-                value={siteAddress}
-                onChange={(e) => setSiteAddress(e.target.value)}
-                className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
-                placeholder="Enter site address"
-              />
+              <p className="font-custom text-dark-gray border border-gray-300 rounded-lg p-2 w-full bg-gray-100">
+                {siteAddress}
+              </p>
             </div>
 
             <div>
               <label className="block text-sm sm:text-base lg:text-lg text-dark-gray font-custom mb-2">
-                Fence size (meters): {fenceSize}m
+                Fence size
               </label>
-              <Slider
-                min={100}
-                max={1000}
-                step={50}
-                value={[fenceSize]}
-                onValueChange={(val) => setFenceSize(val[0])}
-              />
-            </div>
-
-            {/* Default button (large screens only) */}
-            <div className="hidden lg:flex justify-end">
-              <Button
-                onClick={handleAddressSearch}
-                className="py-2 sm:py-3 px-6 text-sm sm:text-md font-custom rounded-full"
-              >
-                Save
-              </Button>
+              <p className="font-custom text-dark-gray border border-gray-300 rounded-lg p-2 w-full bg-gray-100">
+                {fenceSize} meters
+              </p>
             </div>
           </div>
 
-          {/* Right map */}
+          {/* Right - map */}
           <div className="h-64 sm:h-[500px] w-full flex flex-col">
             <div ref={mapRef} className="flex-1 w-full rounded-lg" />
 
-            {/* Mobile button under map (only small/medium screens) */}
+            {/* Mobile save button */}
             <div className="flex lg:hidden justify-center mt-4 w-full">
               <Button
-                onClick={handleAddressSearch}
+                onClick={handleSave}
                 className="w-full sm:w-auto py-2 sm:py-3 px-6 text-sm sm:text-md font-custom rounded-full"
               >
                 Save

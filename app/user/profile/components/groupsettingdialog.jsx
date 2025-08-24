@@ -7,7 +7,6 @@ import {
   useReactTable,
   getFilteredRowModel,
 } from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -60,7 +59,7 @@ const users = [
     lastname: "Ibrahim",
     department: "Officer",
     title: "HR",
-    status: "active",
+    status: "inactive",
   },
   {
     id: 4,
@@ -78,7 +77,7 @@ const users = [
     lastname: "Mako",
     department: "Marketing",
     title: "Accountant",
-    status: "active",
+    status: "inactive",
   },
 ];
 
@@ -91,6 +90,7 @@ const FilterOptions = [
 const UsersDialog = ({ open, onOpenChange }) => {
   const [selectedRows, setSelectedRows] = useState({});
   const [globalFilter, setGlobalFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
 
   const toggleRow = (rowId) => {
     setSelectedRows((prev) => ({ ...prev, [rowId]: !prev[rowId] }));
@@ -161,18 +161,9 @@ const UsersDialog = ({ open, onOpenChange }) => {
         );
       },
     },
-    {
-      accessorKey: "firstname",
-      header: "First Name",
-    },
-    {
-      accessorKey: "lastname",
-      header: "Last Name",
-    },
-    {
-      accessorKey: "department",
-      header: "Department",
-    },
+    { accessorKey: "firstname", header: "First Name" },
+    { accessorKey: "lastname", header: "Last Name" },
+    { accessorKey: "department", header: "Department" },
     {
       accessorKey: "title",
       header: "Job",
@@ -193,11 +184,15 @@ const UsersDialog = ({ open, onOpenChange }) => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  const filteredUsers = users.filter((u) =>
-    `${u.firstname} ${u.lastname}`
+  // Filtering logic
+  const filteredUsers = users.filter((u) => {
+    const matchesName = `${u.firstname} ${u.lastname}`
       .toLowerCase()
-      .includes(globalFilter.toLowerCase())
-  );
+      .includes(globalFilter.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ? true : u.status === statusFilter;
+    return matchesName && matchesStatus;
+  });
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -214,18 +209,21 @@ const UsersDialog = ({ open, onOpenChange }) => {
         <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
           <div className="flex items-center gap-2">
             <label className="font-custom text-sm text-[#3F4648] whitespace-nowrap">
-              Group's name:
+              Search name:
             </label>
             <Input
               value={globalFilter}
               onChange={(e) => setGlobalFilter(e.target.value)}
-              placeholder="Search users..."
+              placeholder="Type name..."
               className="w-40 sm:w-56 md:w-64 font-custom"
             />
           </div>
 
           <div className="flex items-center gap-4">
-            <Select>
+            <Select
+              value={statusFilter}
+              onValueChange={(val) => setStatusFilter(val)}
+            >
               <SelectTrigger className="w-28 font-custom rounded-full flex items-center gap-2 text-[#5494DA]">
                 <ListFilter size={16} />
                 <SelectValue placeholder="Filter" />
@@ -270,7 +268,6 @@ const UsersDialog = ({ open, onOpenChange }) => {
                 className="mt-3"
               />
               <div className="flex items-center gap-3 w-full">
-                {/* Avatar */}
                 <div className="w-12 h-12 rounded-full bg-gray-300 overflow-hidden flex items-center justify-center">
                   <img
                     src={user.profile}
@@ -278,8 +275,6 @@ const UsersDialog = ({ open, onOpenChange }) => {
                     className="w-full h-full object-cover"
                   />
                 </div>
-
-                {/* Info */}
                 <div className="flex flex-col">
                   <span className="font-custom text-sm font-medium">
                     {user.firstname} {user.lastname}
@@ -306,7 +301,7 @@ const UsersDialog = ({ open, onOpenChange }) => {
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="px-2 text-xs sm:text-sm md:text-base lg:text-base"
+                      className="px-2 text-xs sm:text-sm md:text-base lg:text-base font-custom"
                     >
                       {flexRender(
                         header.column.columnDef.header,
@@ -318,33 +313,38 @@ const UsersDialog = ({ open, onOpenChange }) => {
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows.map((row) => (
+              {filteredUsers.map((user) => (
                 <TableRow
-                  key={row.id}
-                  className={selectedRows[row.original.id] ? "bg-blue-50" : ""}
+                  key={user.id}
+                  className={selectedRows[user.id] ? "bg-blue-50" : ""}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="text-xs sm:text-sm md:text-base lg:text-base"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
+                  <TableCell>
+                    <Checkbox
+                      checked={!!selectedRows[user.id]}
+                      onCheckedChange={() => toggleRow(user.id)}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center overflow-hidden font-custom">
+                      <img
+                        src={user.profile}
+                        alt={user.firstname}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-xs sm:text-sm md:text-base lg:text-base font-custom">{user.firstname}</TableCell>
+                  <TableCell className="text-xs sm:text-sm md:text-base lg:text-base font-custom">{user.lastname}</TableCell>
+                  <TableCell className="text-xs sm:text-sm md:text-base lg:text-base font-custom">{user.department}</TableCell>
+                  <TableCell>
+                    <span className="px-2 py-0.5 border border-blue-400 text-blue-600 rounded-full text-xs sm:text-sm md:text-base lg:text-base font-custom">
+                      {user.title}
+                    </span>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
-        </div>
-
-        {/* Save button */}
-        <div className="flex justify-center mt-6 w-full">
-          <Button className="w-full sm:w-auto py-3 px-6 text-sm sm:text-md font-custom rounded-full">
-            Save
-          </Button>
         </div>
       </DialogContent>
     </Dialog>

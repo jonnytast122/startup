@@ -8,292 +8,275 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
-} from "@tanstack/react-table";
 import { useMemo, useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { DateRangePicker } from "react-date-range";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-date-range";
+import { format } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 
-// Utility: get all days between two dates
-function getDatesInRange(startDate, endDate) {
-  const dates = [];
-  let current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-  while (current <= endDate) {
-    dates.push(new Date(current));
-    current.setDate(current.getDate() + 1);
-  }
-  return dates;
-}
+/* =======================
+   Fake Timesheet Data
+   ======================= */
+const fakeData = [
+  {
+    date: "2025-08-24",
+    job: "Accountant",
+    status: "Late",
+    start: "09:42",
+    break: "12:00 - 13:00",
+    end: "17:45",
+    total: "07:03",
+    daily: "06:48",
+    note: "",
+  },
+  {
+    date: "2025-08-23",
+    job: "Accountant",
+    status: "Early",
+    start: "08:25",
+    break: "12:00 - 13:00",
+    end: "17:00",
+    total: "07:35",
+    daily: "07:30",
+    note: "Wife's Birthday",
+    subrows: [
+      { label: "Sick leave", daily: "08:00" },
+      { label: "Time off", daily: "08:00" },
+      { label: "Unpaid leave", daily: "07:30" },
+    ],
+  },
+  {
+    date: "2025-08-22",
+    job: "Accountant",
+    status: "Time off",
+    start: "--",
+    break: "12:00 - 13:00",
+    end: "--",
+    total: "--",
+    daily: "08:00",
+  },
+  {
+    date: "2025-08-21",
+    job: "Accountant",
+    status: "Absent",
+    start: "--",
+    break: "--",
+    end: "--",
+    total: "--",
+    daily: "--",
+  },
+  {
+    date: "2025-08-20",
+    job: "Accountant",
+    status: "On time",
+    start: "08:25",
+    break: "12:00 - 13:00",
+    end: "17:32",
+    total: "08:07",
+    daily: "08:00",
+  },
+  {
+    date: "2025-08-19",
+    job: "Accountant",
+    status: "On time",
+    start: "08:23",
+    break: "12:00 - 13:00",
+    end: "17:31",
+    total: "08:08",
+    daily: "08:00",
+  },
+  {
+    date: "2025-08-18",
+    job: "Accountant",
+    status: "Time off",
+    start: "--",
+    break: "--",
+    end: "--",
+    total: "--",
+    daily: "08:00",
+  },
+  {
+    date: "2025-08-17",
+    job: "Accountant",
+    status: "Late",
+    start: "09:15",
+    break: "12:30 - 13:15",
+    end: "18:00",
+    total: "07:45",
+    daily: "07:20",
+    note: "Traffic delay",
+  },
+  {
+    date: "2025-08-23",
+    job: "Accountant",
+    status: "Early",
+    start: "08:25",
+    break: "12:00 - 13:00",
+    end: "17:00",
+    total: "07:35",
+    daily: "07:30",
+    note: "Wife's Birthday",
+    subrows: [
+      { label: "Sick leave", daily: "08:00" },
+      { label: "Time off", daily: "08:00" },
+      { label: "Unpaid leave", daily: "07:30" },
+    ],
+  },
+  {
+    date: "2025-08-16",
+    job: "Accountant",
+    status: "On time",
+    start: "08:10",
+    break: "12:00 - 13:00",
+    end: "17:05",
+    total: "08:55",
+    daily: "08:45",
+  },
+  {
+    date: "2025-08-15",
+    job: "Accountant",
+    status: "Absent",
+    start: "--",
+    break: "--",
+    end: "--",
+    total: "--",
+    daily: "--",
+    note: "Medical leave",
+  },
+  {
+    date: "2025-08-14",
+    job: "Accountant",
+    status: "Early",
+    start: "08:05",
+    break: "12:00 - 12:45",
+    end: "16:50",
+    total: "07:55",
+    daily: "07:40",
+  },
+  {
+    date: "2025-08-13",
+    job: "Accountant",
+    status: "On time",
+    start: "08:20",
+    break: "12:00 - 13:00",
+    end: "17:20",
+    total: "08:10",
+    daily: "08:00",
+    note: "Client meeting",
+  },
+  {
+    date: "2025-08-12",
+    job: "Accountant",
+    status: "Time off",
+    start: "--",
+    break: "--",
+    end: "--",
+    total: "--",
+    daily: "08:00",
+  },
+  {
+    date: "2025-08-11",
+    job: "Accountant",
+    status: "Late",
+    start: "09:05",
+    break: "12:15 - 13:00",
+    end: "17:45",
+    total: "07:40",
+    daily: "07:15",
+  },
+  {
+    date: "2025-08-10",
+    job: "Accountant",
+    status: "On time",
+    start: "08:18",
+    break: "12:00 - 13:00",
+    end: "17:28",
+    total: "08:10",
+    daily: "08:00",
+  },
+];
 
-// Utility: group days into weeks, return section headers + rows
-function getTimesheetRows(selectedRange) {
-  if (!selectedRange.startDate || !selectedRange.endDate) return [];
-  const allDates = getDatesInRange(
-    selectedRange.startDate,
-    selectedRange.endDate
-  );
-
-  const weeks = [];
-  let weekStartIdx = 0;
-
-  while (weekStartIdx < allDates.length) {
-    const weekDates = allDates.slice(weekStartIdx, weekStartIdx + 7);
-    const weekLabel = `${weekDates[0].toLocaleDateString("en-GB", {
-      month: "short",
-      day: "2-digit",
-    })} - ${weekDates[weekDates.length - 1].toLocaleDateString("en-GB", {
-      month: "short",
-      day: "2-digit",
-    })}`;
-
-    weeks.push({
-      week: weekLabel,
-      days: weekDates.map((date, idx) => ({
-        date,
-        weeklyTotal: idx === weekDates.length - 1 ? "––" : "",
-      })),
-    });
-
-    weekStartIdx += 7;
-  }
-
-  const result = [];
-  for (const week of weeks) {
-    result.push({ _section: true, week: week.week });
-    for (let i = 0; i < week.days.length; ++i) {
-      result.push(week.days[i]);
-    }
-  }
-  return result;
-}
-
-export default function TimesheetTable() {
-  // --- Date range state ---
+/* =======================
+   Calendar Control
+   ======================= */
+function Controls({ selectedRange, setSelectedRange }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1),
-    endDate: new Date(2025, 6, 31),
-    key: "selection",
-  });
   const datePickerRef = useRef(null);
 
   useEffect(() => {
-    if (!showDatePicker) return;
-    function handleClickOutside(event) {
-      if (
-        datePickerRef.current &&
-        !datePickerRef.current.contains(event.target)
-      ) {
+    const handleClickOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
         setShowDatePicker(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside, true);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside, true);
-  }, [showDatePicker]);
-
-  // --- Table data based on current date range ---
-  const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
-
-  // --- Selection state ---
-  const [selectedRows, setSelectedRows] = useState([]);
-  useEffect(() => {
-    setSelectedRows([]);
-  }, [data]);
-
-  const nonSectionIndices = useMemo(
-    () =>
-      data.map((r, i) => (!r._section ? i : null)).filter((i) => i !== null),
-    [data]
-  );
-  const allSelected =
-    selectedRows.length > 0 && selectedRows.length === nonSectionIndices.length;
-  const someSelected =
-    selectedRows.length > 0 && selectedRows.length < nonSectionIndices.length;
-
-  const toggleAll = (checked) => {
-    if (checked) {
-      setSelectedRows(nonSectionIndices);
-    } else {
-      setSelectedRows([]);
-    }
-  };
-
-  const toggleRow = (rowIndex) => {
-    setSelectedRows((prev) =>
-      prev.includes(rowIndex)
-        ? prev.filter((i) => i !== rowIndex)
-        : [...prev, rowIndex]
-    );
-  };
-
-  // --- Columns ---
-  const columns = [
-    {
-      id: "checkbox",
-      header: () => {
-        const ref = useRef(null);
-        useEffect(() => {
-          if (ref.current)
-            ref.current.indeterminate = someSelected && !allSelected;
-        }, [someSelected, allSelected]);
-        return (
-          <input
-            ref={ref}
-            type="checkbox"
-            className="accent-blue-500"
-            checked={allSelected}
-            onChange={(e) => toggleAll(e.target.checked)}
-          />
-        );
-      },
-      cell: (ctx) =>
-        ctx.row?.original?._section ? null : (
-          <input
-            type="checkbox"
-            className="accent-blue-500"
-            checked={selectedRows.includes(ctx.rowIndex)}
-            onChange={() => toggleRow(ctx.rowIndex)}
-          />
-        ),
-      size: 36,
-    },
-    {
-      accessorKey: "date",
-      header: "Date",
-      cell: ({ row }) => {
-        const date = row.original.date;
-        if (!date) return "";
-        return date.toLocaleDateString("en-GB", {
-          weekday: "short",
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-        });
-      },
-    },
-    {
-      accessorKey: "type",
-      header: "Type",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "subjob",
-      header: "Sub job",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "start",
-      header: "Start",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "end",
-      header: "End",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "totalhours",
-      header: "Total hours",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "dailytotal",
-      header: "Daily total",
-      cell: () => "--",
-    },
-    {
-      accessorKey: "weeklyTotal",
-      header: "Weekly total",
-      cell: ({ row }) => row.original.weeklyTotal || "",
-    },
-  ];
-
-  const table = useReactTable({
-    columns,
-    data,
-    getCoreRowModel: getCoreRowModel(),
-  });
-
-  const exportOptions = [
-    { value: "as CSV", label: "as CSV" },
-    { value: "as XLS", label: "as XLS" },
-  ];
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
-    <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 max-w-full">
-      {/* Header */}
+    <div className="relative flex items-center gap-2">
+      <button
+        onClick={() => setShowDatePicker((v) => !v)}
+        className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
+      >
+        <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
+        {format(selectedRange.startDate, "dd/MM")} to{" "}
+        {format(selectedRange.endDate, "dd/MM")}
+        <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
+      </button>
+
+      {showDatePicker && (
+        <div
+          ref={datePickerRef}
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-lg border p-2 rounded-md z-50"
+        >
+          <DateRange
+            ranges={[selectedRange]}
+            onChange={(ranges) => {
+              const newRange = ranges.selection;
+              setSelectedRange(newRange);
+              if (
+                newRange.startDate &&
+                newRange.endDate &&
+                newRange.startDate.getTime() !== newRange.endDate.getTime()
+              ) {
+                setShowDatePicker(false);
+              }
+            }}
+            moveRangeOnFirstSelection={false}
+            rangeColors={["#3b82f6"]}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* =======================
+   Main Component
+   ======================= */
+export default function TimesheetTable() {
+  const [selectedRange, setSelectedRange] = useState({
+    startDate: new Date(2025, 7, 1),
+    endDate: new Date(2025, 7, 31),
+    key: "selection",
+  });
+
+  const data = useMemo(() => fakeData, [selectedRange]);
+
+  return (
+    <div className="bg-white rounded-xl shadow-md py-6 px-4 sm:px-6 border mt-5 mb-10 w-full overflow-x-auto">
       {/* Header */}
       <div className="mb-3">
-        <div className="font-custom text-xl font-semibold mb-2">Timesheet</div>
-
-        {/* One row: left (date) — right (export), on all sizes */}
-        <div className="flex items-center justify-between gap-2 w-full flex-nowrap">
-          {/* Date Range Picker (left) */}
-          <div className="relative min-w-0">
-            <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[70vw] truncate text-left"
-              title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-            >
-              <span className="truncate">
-                {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              </span>
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
-            </button>
-
-            {showDatePicker && (
-              <div
-                ref={datePickerRef}
-                className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md"
-              >
-                <DateRangePicker
-                  ranges={[selectedRange]}
-                  onChange={(ranges) => {
-                    const newRange = ranges.selection;
-                    setSelectedRange(newRange);
-
-                    const start = newRange.startDate;
-                    const end = newRange.endDate;
-                    if (start && end && start.getTime() !== end.getTime()) {
-                      setShowDatePicker(false);
-                    }
-                  }}
-                  rangeColors={["#3b82f6"]}
-                  moveRangeOnFirstSelection={false}
-                  showMonthAndYearPickers={true}
-                  showSelectionPreview={true}
-                />
-              </div>
-            )}
+        <div className="flex items-center gap-3 w-full flex-nowrap">
+          <div className="font-custom text-xl font-semibold whitespace-nowrap">
+            Timesheet
           </div>
-
-          {/* Export (right) */}
-          <Select>
-            <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
-              <SelectValue placeholder="Export" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {exportOptions.map((role) => (
-                <SelectItem key={role.value} value={role.value}>
-                  {role.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Controls
+            selectedRange={selectedRange}
+            setSelectedRange={setSelectedRange}
+          />
         </div>
       </div>
 
@@ -301,7 +284,7 @@ export default function TimesheetTable() {
       <div className="mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
         <span>
           <span className="font-semibold text-black">Total Working Day:</span>{" "}
-          {data.filter((row) => !row._section).length} day
+          {data.length} day
         </span>
         <span>
           <span className="font-semibold text-black">Total Regular:</span> 46:48
@@ -309,70 +292,91 @@ export default function TimesheetTable() {
         </span>
       </div>
 
-      {/* Table: horizontally scrollable on mobile */}
-      <div className="w-full overflow-x-auto">
-        <Table className="min-w-[800px] w-full">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="bg-gray-100 text-gray-500 text-lg font-custom"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="whitespace-nowrap px-2 min-w-[70px] text-md font-custom"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {data.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="text-center text-gray-400 font-custom"
-                >
-                  No records for this date range.
+      {/* Table */}
+      <Table className="min-w-[1100px]">
+        <TableHeader>
+          <TableRow className="bg-gray-100 text-gray-600 text-sm font-custom">
+            <TableHead className="w-8">
+              <input type="checkbox" className="accent-blue-500" />
+            </TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Jobs</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Start</TableHead>
+            <TableHead>Break</TableHead>
+            <TableHead>End</TableHead>
+            <TableHead>Total hours</TableHead>
+            <TableHead>Daily total</TableHead>
+            <TableHead>Employee note</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {data.map((row, i) => (
+            <>
+              {/* Main row */}
+              <TableRow key={i} className="text-sm font-custom">
+                <TableCell></TableCell>
+                <TableCell>
+                  {new Date(row.date).toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "2-digit",
+                    month: "2-digit",
+                  })}
                 </TableCell>
+                <TableCell>
+                  <span className="px-3 py-1 border border-blue-400 text-blue-600 rounded-full text-xs">
+                    {row.job}
+                  </span>
+                </TableCell>
+                <TableCell>
+                  <span
+                    className={`${
+                      row.status === "Late"
+                        ? "text-red-500"
+                        : row.status === "On time"
+                        ? "text-green-500"
+                        : row.status === "Early"
+                        ? "text-blue-500"
+                        : "text-gray-500"
+                    }`}
+                  >
+                    {row.status}
+                  </span>
+                </TableCell>
+                <TableCell>{row.start}</TableCell>
+                <TableCell>{row.break}</TableCell>
+                <TableCell>{row.end}</TableCell>
+                <TableCell>{row.total}</TableCell>
+                <TableCell className="font-semibold">{row.daily}</TableCell>
+                <TableCell>{row.note}</TableCell>
               </TableRow>
-            ) : (
-              data.map((row, i) =>
-                row._section ? (
-                  <tr key={"section-" + row.week}>
-                    <td
-                      colSpan={columns.length}
-                      className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
-                    >
-                      {row.week}
-                    </td>
-                  </tr>
-                ) : (
-                  <TableRow key={i} className="hover:bg-white transition">
-                    {table.getAllColumns().map((col) => (
-                      <TableCell
-                        key={col.id}
-                        className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
-                      >
-                        {flexRender(col.columnDef.cell, {
-                          row: { original: row },
-                          rowIndex: i,
-                        })}
-                      </TableCell>
-                    ))}
+
+              {/* Subrows */}
+              {/* Subrows */}
+              {row.subrows &&
+                row.subrows.map((sub, j) => (
+                  <TableRow
+                    key={`${i}-${j}`}
+                    className={`text-xs font-custom text-blue-600 ${
+                      j === row.subrows.length - 1 ? "" : "border-0"
+                    }`}
+                  >
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell>{sub.label}</TableCell>
+                    <TableCell>--</TableCell>
+                    <TableCell>--</TableCell>
+                    <TableCell>--</TableCell>
+                    <TableCell>--</TableCell>
+                    <TableCell>{sub.daily}</TableCell>
+                    <TableCell></TableCell>
                   </TableRow>
-                )
-              )
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                ))}
+            </>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   );
 }
