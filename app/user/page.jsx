@@ -3,12 +3,9 @@
 import { SquareKanban } from "lucide-react";
 import DailyAttendance from "./components/daily-attendance";
 import Calendar from "./components/calendar";
-import LeaveOT from "./components/leave-ot";
 import EstimatePayroll from "./components/estimate-payroll";
-import UpcomingEvent from "./components/upcoming-event"
 import LeavePolicy from "./components/leave-policy"
 import WorkShift from "./components/work-shift"
-import CompanyOverview from "./components/company-overview"
 
 export default function OverviewPage() {
   return (
