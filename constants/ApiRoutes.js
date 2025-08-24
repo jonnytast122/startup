@@ -45,16 +45,12 @@ const ApiRoutes = {
     update: `${BASE_URL}/groups/{id}`,
     delete: `${BASE_URL}/groups/{id}`,
   },
-  user: {
-    get: `${BASE_URL}/users/filter`,
-  },
   section: {
     create: `${BASE_URL}/group-sections`,
     get: `${BASE_URL}/group-sections`,
     update: `${BASE_URL}/group-sections/{id}`,
     delete: `${BASE_URL}/group-sections/{id}`,
   },
-
   overTimeSetting: {
     getOverTimeType: `${BASE_URL}/overtime-types`,
     createOvertimeType: `${BASE_URL}/overtime-types`,
@@ -68,6 +64,14 @@ const ApiRoutes = {
     create: `${BASE_URL}/leave-policies`,
     update: `${BASE_URL}/leave-policies/{id}`,
     delete: `${BASE_URL}/leave-policies/{id}`,
+  },
+  user: {
+    get: `${BASE_URL}/users/filter`,
+    create: `${BASE_URL}/users`,
+    update: `${BASE_URL}/user/{id}`,
+    delete: `${BASE_URL}/user/{id}`,
+    getById: `${BASE_URL}/user/{id}`,
+    search: `${BASE_URL}/users/search`,
   },
 };
 
