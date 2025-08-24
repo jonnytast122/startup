@@ -1,45 +1,32 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Users, Check, ChevronDown } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Users, ChevronDown } from "lucide-react";
 
 const firstLevelOptions = [
   { key: "User", label: "User" },
   { key: "Department", label: "Department" },
   { key: "Group", label: "Group" },
-  { key: "Branch", label: "Branch" }
+  { key: "Branch", label: "Branch" },
 ];
 
 const secondLevelData = {
   User: ["User 1", "User 2", "User 3"],
   Department: ["Dept 1", "Dept 2"],
   Group: ["Group 1", "Group 2"],
-  Branch: ["Branch 1", "Branch 2"]
+  Branch: ["Branch 1", "Branch 2"],
 };
 
 const colorOptions = [
   { value: "blue", colorClass: "bg-blue-500" },
-  { value: "red", colorClass: "bg-red-500" },
+  { value: "red",  colorClass: "bg-red-500"  },
 ];
 
-export default function EventDialog({
-  date,
-  onClose,
-  onSave,
-  event,          // ✅ Accept the event prop
-}) {
+export default function EditEventDialog({ date, onClose, onSave, event }) {
   const [title, setTitle] = useState("");
   const [start, setStart] = useState("13:00");
   const [end, setEnd] = useState("13:00");
@@ -48,25 +35,27 @@ export default function EventDialog({
   const [overtimePolicy, setOvertimePolicy] = useState("");
   const [selectedColor, setSelectedColor] = useState("blue");
 
+  // Assign menu
   const [menuOpen, setMenuOpen] = useState(false);
   const [hoveredItem, setHoveredItem] = useState(null);
   const [selectedFirstLevels, setSelectedFirstLevels] = useState([]);
   const [selectedItems, setSelectedItems] = useState({});
 
-  // ✅ Load the event data when opening for edit
+  // Color popover (controlled so we can close menus)
+  const [colorOpen, setColorOpen] = useState(false);
+
   useEffect(() => {
     if (event) {
       setTitle(event.name || "");
       setStart(event.start || "13:00");
       setEnd(event.end || "13:00");
-      setRequireClockIn(event.requireClockIn || false);
+      setRequireClockIn(!!event.requireClockIn);
       setLeavePolicy(event.leavePolicy || "");
       setOvertimePolicy(event.overtimePolicy || "");
       setSelectedColor(event.color || "blue");
       setSelectedFirstLevels(event.assign?.selectedFirstLevels || []);
       setSelectedItems(event.assign?.selectedItems || {});
     } else {
-      // If creating a new event, reset fields
       setTitle("");
       setStart("13:00");
       setEnd("13:00");
@@ -80,93 +69,92 @@ export default function EventDialog({
   }, [event]);
 
   const toggleMenu = () => {
+    setColorOpen(false);            // close color when opening menu
     setMenuOpen((prev) => !prev);
     setHoveredItem(null);
   };
 
   const handleFirstLevelChange = (key) => {
     let newSelection = [];
-
     if (key === "all") {
-      if (selectedFirstLevels.length === firstLevelOptions.length) {
-        newSelection = [];
-      } else {
-        newSelection = firstLevelOptions.map((item) => item.key);
-      }
+      newSelection =
+        selectedFirstLevels.length === firstLevelOptions.length
+          ? []
+          : firstLevelOptions.map((item) => item.key);
       setHoveredItem(null);
     } else {
       const exists = selectedFirstLevels.includes(key);
-      if (exists) {
-        newSelection = selectedFirstLevels.filter((k) => k !== key);
-      } else {
-        newSelection = [...selectedFirstLevels, key];
-      }
+      newSelection = exists
+        ? selectedFirstLevels.filter((k) => k !== key)
+        : [...selectedFirstLevels, key];
     }
-
     const newSelectedItems = {};
-    for (const k of newSelection) {
-      newSelectedItems[k] = selectedItems[k] || [];
-    }
-
+    for (const k of newSelection) newSelectedItems[k] = selectedItems[k] || [];
     setSelectedFirstLevels(newSelection);
     setSelectedItems(newSelectedItems);
   };
 
   const handleSecondLevelChange = (firstKey, value) => {
     const existing = selectedItems[firstKey] || [];
-    const alreadyChecked = existing.includes(value);
-    const updated = alreadyChecked
+    const updated = existing.includes(value)
       ? existing.filter((v) => v !== value)
       : [...existing, value];
-
-    setSelectedItems({
-      ...selectedItems,
-      [firstKey]: updated
-    });
+    setSelectedItems({ ...selectedItems, [firstKey]: updated });
   };
 
-  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
-    return acc + (selectedItems[key]?.length || 0);
-  }, 0);
+  const totalSecondLevelSelected = selectedFirstLevels.reduce(
+    (acc, key) => acc + (selectedItems[key]?.length || 0),
+    0
+  );
 
   const isAllSelected =
     selectedFirstLevels.length === firstLevelOptions.length &&
     firstLevelOptions.length > 0;
 
-  const firstLevelLabel = isAllSelected
-    ? "All"
-    : selectedFirstLevels
-      .map(
-        (key) => firstLevelOptions.find((item) => item.key === key)?.label
-      )
-      .join(", ") || "Select...";
+  const firstLevelLabel =
+    (isAllSelected
+      ? "All"
+      : selectedFirstLevels
+          .map((key) => firstLevelOptions.find((i) => i.key === key)?.label)
+          .join(", ")) || "Select...";
 
   const handleSubmit = () => {
-    onSave({
+    const effectiveDate = event?.date ?? date;
+    onSave?.({
       name: title,
-      date,
+      date: effectiveDate,
       start,
       end,
-      assign: {
-        selectedFirstLevels,
-        selectedItems
-      },
+      assign: { selectedFirstLevels, selectedItems },
       requireClockIn,
       color: selectedColor,
       leavePolicy,
-      overtimePolicy
+      overtimePolicy,
     });
-    onClose();
+    onClose?.();
+  };
+
+  // IMPORTANT: allow clicks on portaled popovers by telling Dialog
+  // not to treat them as "outside" interactions
+  const ignoreIfPopover = (e) => {
+    const el = e.target;
+    if (el instanceof HTMLElement && el.closest("[data-radix-popover-content]")) {
+      e.preventDefault();
+    }
   };
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="w-[400px] space-y-4">
-        {/* ✅ Change title depending on whether we're editing */}
+      <DialogContent
+        className="w-[400px] space-y-4"
+        onPointerDownOutside={ignoreIfPopover}
+        onInteractOutside={ignoreIfPopover}
+      >
         <h2 className="text-lg font-semibold text-gray-700">
           {event ? "Edit Event" : "Create Event"}
         </h2>
 
+        {/* Title + Color */}
         <div className="flex items-center justify-between gap-2">
           <input
             placeholder="Event Title"
@@ -175,36 +163,56 @@ export default function EventDialog({
             onChange={(e) => setTitle(e.target.value)}
           />
 
-          <Popover>
+          <Popover
+            open={colorOpen}
+            onOpenChange={(o) => {
+              if (o) setMenuOpen(false);  // close Assign when opening color
+              setColorOpen(o);
+            }}
+          >
             <PopoverTrigger asChild>
-              <div className="flex items-center justify-between px-3 py-2 bg-white shadow-sm rounded-md cursor-pointer w-fit">
-                <div
-                  className={`w-4 h-4 rounded-full ${selectedColor === "blue"
-                      ? "bg-blue-500"
-                      : "bg-red-500"
-                    }`}
+              <button
+                type="button"
+                className="relative z-[60] flex items-center justify-between px-3 py-2 bg-white shadow-sm rounded-md cursor-pointer w-fit"
+              >
+                <span
+                  className={`w-4 h-4 rounded-full ${
+                    selectedColor === "blue" ? "bg-blue-500" : "bg-red-500"
+                  }`}
                 />
                 <ChevronDown size={14} className="text-gray-400 ml-2" />
-              </div>
+              </button>
             </PopoverTrigger>
 
-            <PopoverContent className="w-fit p-2 bg-white">
-              <div className="flex flex-col gap-2">
+            <PopoverContent
+              side="bottom"
+              align="end"
+              sideOffset={6}
+              className="z-[1000] pointer-events-auto w-fit p-2 bg-white rounded-md shadow border"
+            >
+              <div className="flex gap-2">
                 {colorOptions.map((opt) => (
-                  <div
+                  <button
                     key={opt.value}
-                    onClick={() => setSelectedColor(opt.value)}
-                    className={`w-5 h-5 rounded-full cursor-pointer border-2 hover:scale-105 transition ${selectedColor === opt.value
-                        ? `${opt.colorClass} border-gray-300`
-                        : `${opt.colorClass} border-transparent`
-                      }`}
-                  ></div>
+                    type="button"
+                    onClick={() => {
+                      setSelectedColor(opt.value);
+                      setColorOpen(false);
+                    }}
+                    className={`w-5 h-5 rounded-full border-2 transition hover:scale-105 ${opt.colorClass} ${
+                      selectedColor === opt.value
+                        ? "border-gray-300"
+                        : "border-transparent"
+                    }`}
+                    aria-label={opt.value}
+                  />
                 ))}
               </div>
             </PopoverContent>
           </Popover>
         </div>
 
+        {/* Time range */}
         <div className="flex border rounded-md overflow-hidden">
           <div className="flex items-center w-1/2 px-3 py-2 gap-2 border-r">
             <span className="text-sm text-gray-500">Start</span>
@@ -226,7 +234,8 @@ export default function EventDialog({
           </div>
         </div>
 
-        <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-pointer">
+        {/* Assign */}
+        <div className="flex items-center justify-between px-3 py-2 border rounded-md">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-gray-500" />
             <span className="text-sm">Assign</span>
@@ -234,12 +243,13 @@ export default function EventDialog({
 
           <div className="relative w-[220px]">
             <button
-              onClick={toggleMenu}
+              onClick={() => {
+                setColorOpen(false);      // close color when opening Assign
+                toggleMenu();
+              }}
               className="flex items-center justify-between w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-100"
             >
-              <span className="truncate text-gray-600">
-                {firstLevelLabel}
-              </span>
+              <span className="truncate text-gray-700">{firstLevelLabel}</span>
               <div className="flex items-center gap-2">
                 {totalSecondLevelSelected > 0 && (
                   <span className="text-xs text-gray-500 whitespace-nowrap">
@@ -252,7 +262,7 @@ export default function EventDialog({
 
             {menuOpen && (
               <>
-                <div className="absolute z-10 top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                <div className="absolute z-20 top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
                   <label
                     className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
                     onMouseEnter={() => setHoveredItem(null)}
@@ -283,43 +293,33 @@ export default function EventDialog({
                   ))}
                 </div>
 
-                {hoveredItem &&
-                  selectedFirstLevels.includes(hoveredItem) && (
-                    <div className="absolute z-20 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
-                      <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
-                        {
-                          firstLevelOptions.find(
-                            (o) => o.key === hoveredItem
-                          )?.label
-                        }{" "}
-                        Options
-                      </div>
-                      {secondLevelData[hoveredItem].map((value) => (
-                        <label
-                          key={value}
-                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedItems[hoveredItem]?.includes(value) ||
-                              false
-                            }
-                            onChange={() =>
-                              handleSecondLevelChange(hoveredItem, value)
-                            }
-                            className="mr-2"
-                          />
-                          {value}
-                        </label>
-                      ))}
+                {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
+                  <div className="absolute z-30 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                    <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
+                      {firstLevelOptions.find((o) => o.key === hoveredItem)?.label} Options
                     </div>
-                  )}
+                    {secondLevelData[hoveredItem].map((value) => (
+                      <label
+                        key={value}
+                        className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedItems[hoveredItem]?.includes(value) || false}
+                          onChange={() => handleSecondLevelChange(hoveredItem, value)}
+                          className="mr-2"
+                        />
+                        {value}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
 
+        {/* Clock In */}
         <div className="flex items-center justify-between">
           <span className="text-sm text-blue-500 font-medium">Require Clock In</span>
           <Switch
@@ -359,10 +359,7 @@ export default function EventDialog({
         )}
 
         <div className="text-right">
-          <Button
-            onClick={handleSubmit}
-            className="h-8 px-5 text-sm rounded-md"
-          >
+          <Button onClick={handleSubmit} className="h-8 px-5 text-sm rounded-md">
             Save
           </Button>
         </div>

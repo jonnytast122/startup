@@ -14,8 +14,9 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { useMemo, useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { DateRangePicker } from "react-date-range";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-date-range";
+import { format } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import {
@@ -56,9 +57,6 @@ const fakeData = [
   },
 ];
 
-/* =======================
-   Utils
-   ======================= */
 const fmtKey = (d) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -79,7 +77,6 @@ function getDatesInRange(startDate, endDate) {
   return dates;
 }
 
-/** Build rows (with week section rows) */
 function getTimesheetRows(selectedRange) {
   if (!selectedRange.startDate || !selectedRange.endDate) return [];
   const allDates = getDatesInRange(
@@ -121,9 +118,6 @@ function getTimesheetRows(selectedRange) {
   return out;
 }
 
-/* =======================
-   Table Columns
-   ======================= */
 const columns = [
   {
     id: "empty",
@@ -198,9 +192,6 @@ const columns = [
   },
 ];
 
-/* =======================
-   Component
-   ======================= */
 export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
@@ -211,16 +202,15 @@ export default function TimesheetTable() {
   const datePickerRef = useRef(null);
 
   useEffect(() => {
-    if (!showDatePicker) return;
-    function handleClickOutside(e) {
+    const handleClickOutside = (e) => {
       if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
         setShowDatePicker(false);
       }
-    }
+    };
     document.addEventListener("mousedown", handleClickOutside, true);
     return () =>
       document.removeEventListener("mousedown", handleClickOutside, true);
-  }, [showDatePicker]);
+  }, []);
 
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
@@ -236,57 +226,47 @@ export default function TimesheetTable() {
   ];
 
   return (
-    // Make the ENTIRE screen horizontally scrollable when needed
     <div className="w-full overflow-x-auto">
-      {/* Inner content gets a minimum width that matches table width,
-          so the header bar and table scroll together */}
       <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[980px]">
-        {/* Single-row Top Bar: Title + Date Picker + Export (export sticks to far right) */}
         <div className="mb-3">
           <div className="flex items-center gap-3 w-full flex-nowrap">
-            {/* Title (left) */}
             <div className="ml-2 font-custom text-xl font-semibold whitespace-nowrap">
               Request History
             </div>
 
-            {/* Date Picker Button (middle) */}
-            <div className="relative min-w-0">
+            <div className="relative min-w-0" ref={datePickerRef}>
               <button
-                onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white shadow-sm w-auto max-w-[60vw] truncate text-left"
+                onClick={() => setShowDatePicker((v) => !v)}
+                className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm w-auto max-w-[60vw] truncate text-left"
+                title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
               >
+                <ChevronLeft className="inline-block w-4 h-4 mb-0.5 mr-3" />
                 <span className="truncate">
-                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+                  {format(selectedRange.startDate, "MMM dd")} -{" "}
+                  {format(selectedRange.endDate, "MMM dd")}
                 </span>
-                <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
+                <ChevronRight className="inline-block w-4 h-4 mb-0.5 ml-3" />
               </button>
 
               {showDatePicker && (
-                <div
-                  ref={datePickerRef}
-                  className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md"
-                >
-                  <DateRangePicker
+                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-lg border p-2 rounded-md z-50">
+                  <DateRange
                     ranges={[selectedRange]}
                     onChange={(ranges) => {
                       const newRange = ranges.selection;
                       setSelectedRange(newRange);
-                      const start = newRange.startDate;
-                      const end = newRange.endDate;
-                      if (start && end && start.getTime() !== end.getTime()) {
-                        setShowDatePicker(false);
-                      }
                     }}
-                    rangeColors={["#3b82f6"]}
                     moveRangeOnFirstSelection={false}
-                    showMonthAndYearPickers={true}
-                    showSelectionPreview={true}
+                    rangeColors={["#3b82f6"]}
+                    showDateDisplay={false}
+                    showPreview={false}
+                    months={1}
+                    direction="horizontal"
                   />
                 </div>
               )}
             </div>
 
-            {/* Export (far right) */}
             <div className="ml-auto">
               <Select>
                 <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
@@ -304,7 +284,6 @@ export default function TimesheetTable() {
           </div>
         </div>
 
-        {/* Summary row */}
         <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
           <span>
             <span className="font-semibold text-black">Total Leaves:</span>{" "}
@@ -312,7 +291,6 @@ export default function TimesheetTable() {
           </span>
         </div>
 
-        {/* Table */}
         <div className="w-full overflow-x-auto ml-2">
           <Table className="min-w-[980px] w-full">
             <TableHeader>
@@ -346,14 +324,7 @@ export default function TimesheetTable() {
               ) : (
                 data.map((row, i) =>
                   row._section ? (
-                    <tr key={`section-${row.week}`}>
-                      <td
-                        colSpan={columns.length}
-                        className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
-                      >
-                        {row.week}
-                      </td>
-                    </tr>
+                    <tr key={`section-${row.week}`}></tr>
                   ) : (
                     <TableRow key={i} className="hover:bg-white transition">
                       {table.getAllColumns().map((col) => (

@@ -14,8 +14,9 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { useMemo, useState, useEffect, useRef } from "react";
-import { ChevronDown } from "lucide-react";
-import { DateRangePicker } from "react-date-range";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { DateRange } from "react-date-range";
+import { format } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import {
@@ -26,6 +27,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+/* =======================
+   Fake Data (unchanged)
+   ======================= */
 const fakeData = [
   {
     date: "2025-07-02",
@@ -49,7 +53,7 @@ const fakeData = [
 ];
 
 /* =======================
-   Utils
+   Utils (unchanged)
    ======================= */
 const fmtKey = (d) => {
   const y = d.getFullYear();
@@ -113,13 +117,13 @@ function getTimesheetRows(selectedRange) {
 }
 
 /* =======================
-   Columns
+   Columns (unchanged)
    ======================= */
 const columns = [
   {
     id: "blank",
-    header: () => null, // no header
-    cell: () => null,   // no content in rows
+    header: () => null,
+    cell: () => null,
     size: 36,
   },
   {
@@ -172,8 +176,8 @@ const columns = [
         s === "Approved"
           ? "text-blue-600"
           : s === "Pending"
-          ? "text-yellow-600"
-          : "text-red-600";
+            ? "text-yellow-600"
+            : "text-red-600";
       return <span className={`font-medium ${color}`}>{s}</span>;
     },
   },
@@ -190,28 +194,74 @@ const columns = [
 ];
 
 /* =======================
+   Beautiful dialog calendar (from your sample)
+   ======================= */
+function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const datePickerRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+        setShowDatePicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative flex items-center gap-2">
+      {/* Date Button */}
+      <button
+        onClick={() => setShowDatePicker((v) => !v)}
+        className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
+      >
+        <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
+        {format(selectedRange.startDate, "MMM dd")} -{" "}
+        {format(selectedRange.endDate, "MMM dd")}
+        <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
+      </button>
+
+      {/* Date Picker Popover */}
+      {/* Date Picker Popover */}
+      {showDatePicker && (
+        <div
+          ref={datePickerRef}
+          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-lg border p-2 rounded-md z-50"
+        >
+          <DateRange
+            ranges={[selectedRange]}
+            onChange={(ranges) => {
+              const newRange = ranges.selection;
+              setSelectedRange(newRange);
+              if (
+                newRange.startDate &&
+                newRange.endDate &&
+                newRange.startDate.getTime() !== newRange.endDate.getTime()
+              ) {
+                setShowDatePicker(false);
+              }
+            }}
+            moveRangeOnFirstSelection={false}
+            rangeColors={["#3b82f6"]}
+          />
+        </div>
+      )}
+
+    </div>
+  );
+}
+
+/* =======================
    Component
    ======================= */
 export default function TimesheetTable() {
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 6, 1),
     endDate: new Date(2025, 6, 31),
     key: "selection",
   });
-  const datePickerRef = useRef(null);
-
-  useEffect(() => {
-    if (!showDatePicker) return;
-    function handleClickOutside(e) {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
-        setShowDatePicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside, true);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside, true);
-  }, [showDatePicker]);
 
   const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
 
@@ -229,48 +279,21 @@ export default function TimesheetTable() {
   return (
     <div className="w-full overflow-x-auto">
       <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[980px]">
-        {/* Top Bar */}
+        {/* Top Bar (unchanged layout; just swapped calendar UI) */}
         <div className="mb-3">
           <div className="flex items-center gap-3 w-full flex-nowrap">
             <div className="font-custom text-xl font-semibold whitespace-nowrap ml-2">
               Request History
             </div>
-            <div className="relative min-w-0">
-              <button
-                onClick={() => setShowDatePicker(!showDatePicker)}
-                className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm w-auto max-w-[60vw] truncate text-left"
-                title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              >
-                <span className="truncate">
-                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-                </span>
-                <ChevronDown className="ml-2 h-4 w-4 text-gray-500 flex-shrink-0" />
-              </button>
 
-              {showDatePicker && (
-                <div
-                  ref={datePickerRef}
-                  className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md"
-                >
-                  <DateRangePicker
-                    ranges={[selectedRange]}
-                    onChange={(ranges) => {
-                      const newRange = ranges.selection;
-                      setSelectedRange(newRange);
-                      const start = newRange.startDate;
-                      const end = newRange.endDate;
-                      if (start && end && start.getTime() !== end.getTime()) {
-                        setShowDatePicker(false);
-                      }
-                    }}
-                    rangeColors={["#3b82f6"]}
-                    moveRangeOnFirstSelection={false}
-                    showMonthAndYearPickers={true}
-                    showSelectionPreview={true}
-                  />
-                </div>
-              )}
-            </div>
+            {/* Beautiful calendar dialog */}
+            <Controls
+              popoverAlign="left"
+              selectedRange={selectedRange}
+              setSelectedRange={setSelectedRange}
+            />
+
+            {/* Export on the far right (unchanged) */}
             <div className="ml-auto">
               <Select>
                 <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
@@ -287,8 +310,8 @@ export default function TimesheetTable() {
             </div>
           </div>
         </div>
-        
-                {/* Summary row */}
+
+        {/* Summary row (unchanged) */}
         <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
           <span>
             <span className="font-semibold text-black">Total Leaves:</span>{" "}
@@ -296,7 +319,7 @@ export default function TimesheetTable() {
           </span>
         </div>
 
-        {/* Table */}
+        {/* Table (unchanged) */}
         <div className="w-full overflow-x-auto ml-2">
           <Table className="min-w-[980px] w-full">
             <TableHeader>
@@ -330,14 +353,7 @@ export default function TimesheetTable() {
               ) : (
                 data.map((row, i) =>
                   row._section ? (
-                    <tr key={`section-${row.week}`}>
-                      <td
-                        colSpan={columns.length}
-                        className="bg-gray-100 text-gray-500 font-custom px-3 py-1 text-center font-semibold"
-                      >
-                        {row.week}
-                      </td>
-                    </tr>
+                    <tr key={`section-${row.week}`}></tr>
                   ) : (
                     <TableRow key={i} className="hover:bg-white transition">
                       {table.getAllColumns().map((col) => (

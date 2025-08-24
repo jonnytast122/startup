@@ -34,21 +34,21 @@ export default function Leaves() {
           <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
             <span className="text-sm font-custom">Sick Leave</span>
             <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-            <span className="text-lg font-custom">12 days</span>
+            <span className="text-base font-custom">12 days</span>
           </div>
 
           {/* Box 2 */}
           <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
             <span className="text-sm font-custom">Annual Leave</span>
             <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-            <span className="text-lg font-custom">13.5 days</span>
+            <span className="text-base font-custom">13.5 days</span>
           </div>
 
           {/* Box 3 */}
           <div className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4">
             <span className="text-sm font-custom">Unpiad Leave</span>
             <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-            <span className="text-lg font-custom">--</span>
+            <span className="text-base font-custom">--</span>
           </div>
         </div>
       </div>

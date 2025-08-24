@@ -32,9 +32,10 @@ export default function OverviewPage() {
         <div className="md:col-span-2">
           <DailyAttendance />
         </div>
-        <Calendar />
-        <UpcomingEvent />
-
+        {/* Full width Leave & OT box */}
+        <div className="md:col-span-2">
+          <Calendar />
+        </div>
         {/* Full width Leave & OT box */}
         <div className="md:col-span-2">
           <EstimatePayroll />
