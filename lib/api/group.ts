@@ -11,6 +11,16 @@ export const fetchSections = async () => {
   return response.data;
 };
 
+export const fetchMembers = async () => {
+  const response = await api.get(ApiRoutes.user.get);
+  return response.data;
+};
+
+export const fetchGroup = async (groupId: string) => {
+  const response = await api.get(ApiRoutes.group.getId.replace("{id}", groupId));
+  return response.data;
+}
+
 /**
  * Add a new section.
  * @param {Object} data - The group data
@@ -18,7 +28,7 @@ export const fetchSections = async () => {
  * @param {string} data.companyId - The company ID
  * @returns {Promise} Axios response with the created group data
  */
-export const addSection = async (data: { name: string; companyId: string }) => {
+export const addSection = async (data: { name: string }) => {
   const response = await api.post(ApiRoutes.section.create, data);
   return response.data;
 };
@@ -30,13 +40,31 @@ export const addSection = async (data: { name: string; companyId: string }) => {
  * @param {string} data.name - The name of the group
  * @returns {Promise} Axios response with the created group data
  */
-export const addGroup = async (sectionId: string, data: { name: string }) => {
+// export const addGroup = async (sectionId: string, data: { name: string }) => {
+export const addGroup = async (data:any) => {
   const response = await api.post(
-    ApiRoutes.group.create.replace("{sectionId}", sectionId),
+    ApiRoutes.group.create,
+    data
+  );
+  if (response.status !== 201) throw new Error('Failed to create overtime type');
+  return response.data;
+};
+
+export const updateGroup = async ({id, data}: {id: string, data:any}) => {
+  const response = await api.put(
+    ApiRoutes.group.update.replace("{id}", id),
     data
   );
   return response.data;
-};
+}
+
+export const deleteGroup = async (id: string) => {
+  const response = await api.delete(
+    ApiRoutes.group.delete.replace("{id}", id)
+  );
+  return response.data;
+}
+
 /**
  * Update an existing group.
  * @param {string} id - The ID of the group to update

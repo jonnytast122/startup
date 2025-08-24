@@ -38,6 +38,15 @@ export const addDepartment = async (data: {
  * @param {Object} data - The updated department data
  * @returns {Promise} Axios response with the updated department data
  */
+export const updateDepartment = async ({id, data}: {id: string, data: any}) => {
+  const response = await api.put(
+    ApiRoutes.department.update.replace("{id}", id),
+    data
+  );
+  return response.data;
+}
+
+
 export const deleteDepartment = async (id: string) => {
   const response = await api.delete(
     ApiRoutes.department.delete.replace("{id}", id)

@@ -22,7 +22,12 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { fetchSections, addGroup } from "@/lib/api/group";
+import {
+  fetchSections,
+  deleteGroup,
+  addSection,
+  deleteSection,
+} from "@/lib/api/group";
 
 export default function GroupPage() {
   const queryClient = useQueryClient();
@@ -39,14 +44,17 @@ export default function GroupPage() {
   const [isSectionOpen, setIsSectionOpen] = useState(false);
   const [newGroup, setNewGroup] = useState({
     name: "",
-
     section: "",
     members: [],
   });
   const [newSection, setNewSection] = useState("");
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState(null);
+  const [editingGroup, setEditingGroup] = useState({
+    name: "",
+    section: "",
+    members: [],
+  });
   const [isViewOnly, setIsViewOnly] = useState(false);
 
   // Open Add Group dialog - FIXED
@@ -63,35 +71,12 @@ export default function GroupPage() {
     console.log("New Group Data:", initialGroup);
   };
 
-  // Create group mutation
-  const addGroupMutation = useMutation({
-    mutationFn: (groupData) => addGroup(groupData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["sections"]);
-      setIsAddOpen(false);
-      setNewGroup({ name: "", members: [], section: "" });
-    },
-  });
-
-  // Confirm add group
-  const handleAddConfirm = () => {
-    if (!newGroup.name.trim()) return;
-
-    const payload = {
-      name: newGroup.name,
-      section: newGroup.section, // Section ID
-
-      members: [],
-    };
-
-    addGroupMutation.mutate(payload);
-  };
-
   // Open Edit Group dialog
   const openEditModal = (sectionId, group, view = false) => {
-    setEditingGroup({ ...group, category: sectionId });
-    setIsViewOnly(view);
     setEditDialogOpen(true);
+    // setEditingGroup({ ...group, section: sectionId });
+    setNewGroup({ ...group, section: sectionId });
+    setIsViewOnly(view);
   };
 
   const handleSaveEditedGroup = () => {
@@ -101,6 +86,47 @@ export default function GroupPage() {
   const handleConfirmSection = () => {
     setIsSectionOpen(false);
     setNewSection("");
+    addSectionMutation.mutate({ name: newSection });
+  };
+
+  const addSectionMutation = useMutation({
+    mutationFn: addSection,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["sections"]);
+      setError("");
+    },
+    onError: (error) => {
+      console.log("Error deleting group:", error);
+      setError("Something went wrong. Please try again.");
+    },
+  });
+
+  const deleteGroupMutation = useMutation({
+    mutationFn: deleteGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["sections"]);
+      setError("");
+    },
+    onError: (error) => {
+      console.log("Error deleting group:", error);
+      setError("Something went wrong. Please try again.");
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: deleteSection,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["sections"]);
+      setError("");
+    },
+    onError: (error) => {
+      console.log("Error deleting group:", error);
+      setError("Something went wrong. Please try again.");
+    },
+  });
+
+  const onDeleteGroup = (id) => {
+    deleteGroupMutation.mutate(id);
   };
 
   // Render Section with nested groups
@@ -115,7 +141,7 @@ export default function GroupPage() {
         >
           <div className="flex items-center gap-6">
             <h2 className="font-semibold text-xl">{section.name}</h2>
-            <button onClick={() => setConfirmDeleteSection(section._id)}>
+            <button onClick={() => deleteSectionMutation.mutate(section._id)}>
               <Trash2 className="w-5 h-5 text-black hover:text-red-600" />
             </button>
           </div>
@@ -147,7 +173,8 @@ export default function GroupPage() {
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <img
-                        src={group.createdBy?.profilePic || "/default.jpg"}
+                        // src={group.createdBy?.profilePic || "/default.jpg"}
+                        src={`https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png`}
                         alt={group.createdBy?.name || "User"}
                         className="w-8 h-8 rounded-full"
                       />
@@ -161,9 +188,10 @@ export default function GroupPage() {
                         .map((admin, i) => (
                           <img
                             key={admin}
-                            src={`/path/to/profiles/${admin
-                              .replace(/\s+/g, "")
-                              .toLowerCase()}.jpg`}
+                            // src={`/path/to/profiles/${admin
+                            //   .replace(/\s+/g, "")
+                            //   .toLowerCase()}.jpg`}
+                            src={`https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png`}
                             alt={admin}
                             className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
                               i === 0 ? "ml-0" : ""
@@ -199,9 +227,7 @@ export default function GroupPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() =>
-                            setConfirmDelete({ category: section._id, group })
-                          }
+                          onClick={() => onDeleteGroup(group._id)}
                         >
                           Delete
                         </DropdownMenuItem>
@@ -250,7 +276,10 @@ export default function GroupPage() {
       {/* Add Group Dialog */}
       <AddGroupDialog
         isOpen={isAddOpen} // matches dialog's `isOpen`
-        onClose={() => setIsAddOpen(false)} // matches dialog's `onClose`
+        onClose={() => {
+          setNewGroup({ members: [] });
+          setIsAddOpen(false);
+        }} // matches dialog's `onClose`
         newGroup={newGroup}
         setNewGroup={setNewGroup}
         members={[]} // your members data here
@@ -258,12 +287,15 @@ export default function GroupPage() {
 
       {/* Edit Group Dialog */}
       <EditGroupDialog
-        open={editDialogOpen}
-        setOpen={setEditDialogOpen}
-        group={editingGroup}
+        isOpen={editDialogOpen}
+        onClose={() => {
+          setNewGroup({ members: [] });
+          setEditDialogOpen(false);
+        }}
+        group={newGroup}
+        setNewGroup={setNewGroup}
         onSave={handleSaveEditedGroup}
         members={[]}
-        isViewMode={isViewOnly}
       />
 
       {/* Add Section Dialog */}
@@ -273,6 +305,7 @@ export default function GroupPage() {
         newSection={newSection}
         setNewSection={setNewSection}
         onConfirm={handleConfirmSection}
+        isLoading={addSectionMutation.isPending}
       />
     </div>
   );

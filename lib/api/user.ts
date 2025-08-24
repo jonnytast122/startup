@@ -28,3 +28,8 @@ export const deleteUser = async (id: string) => {
   const response = await api.delete(ApiRoutes.user.delete.replace("{id}", id));
   return response.data;
 };
+
+export const fetchMembers = async () => {
+  const response = await api.get(ApiRoutes.user.get);
+  return response.data;
+};

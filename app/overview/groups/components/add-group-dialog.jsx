@@ -16,39 +16,38 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-
-const mockUsers = [
-  { _id: "u1", name: "Alice Johnson" },
-  { _id: "u2", name: "Bob Smith" },
-  { _id: "u3", name: "Charlie Brown" },
-  { _id: "u4", name: "Diana Prince" },
-];
+import { addGroup, fetchMembers } from "@/lib/api/group";
 
 export default function AddGroupDialog({
   isOpen,
   onClose,
   newGroup,
   setNewGroup,
+  isViewMode = false,
+  isEdit = false,
+  onUpdate,
 }) {
   const queryClient = useQueryClient();
   const [error, setError] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("Filter");
+
+  const { data } = useQuery({
+    queryKey: ["members"],
+    queryFn: fetchMembers,
+  });
 
   const addGroupMutation = useMutation({
-    mutationFn: () =>
-      addGroup({
-        name: newGroup.name,
-        section: newGroup.section,
-        members: newGroup.admins.length > 0 ? [newGroup.admins[0].id] : [],
-      }),
+    mutationFn: addGroup,
     onSuccess: () => {
       queryClient.invalidateQueries(["sections"]);
       setNewGroup({ name: "", section: "", members: [] });
       setError("");
       onClose();
     },
-    onError: () => {
+    onError: (error) => {
+      console.log("Error adding group:", error);
       setError("Something went wrong. Please try again.");
     },
   });
@@ -59,61 +58,163 @@ export default function AddGroupDialog({
       return;
     }
 
-    console.log("Adding group with data:", {
+    setError("");
+    addGroupMutation.mutate({
       name: newGroup.name,
       section: newGroup.section,
-      members: newGroup.admins.map((a) => a._id),
+      members: newGroup.members,
     });
-
-    setError("");
-    addGroupMutation.mutate();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Create Group</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-semibold mb-4">
+            {isViewMode ? "View Group" : "Group Settings"}
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-2">
-          <Input
-            placeholder="Group name"
-            value={newGroup.name}
-            onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
-          />
+        <div className="w-full flex flex-wrap sm:flex-nowrap sm:items-center gap-4 mb-4">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <label className="text-sm font-medium whitespace-nowrap">
+              Group's name:
+            </label>
+            <Input
+              placeholder="Group's name"
+              value={newGroup.name}
+              onChange={(e) =>
+                setNewGroup({ ...newGroup, name: e.target.value })
+              }
+              className="w-full"
+              disabled={isViewMode}
+            />
+          </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="w-full flex justify-between">
-                <span>
-                  {newGroup.admins?.length > 0
-                    ? `Admin: ${newGroup.admins[0].name}`
-                    : "Select Admin (optional)"}
-                </span>
-                <Filter className="w-4 h-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-full">
-              {mockUsers.map((user) => (
-                <DropdownMenuItem
-                  key={user._id}
-                  onClick={() => setNewGroup({ ...newGroup, admins: [user] })}
+          <div
+            className={`flex items-center gap-2 ${
+              isViewMode ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 h-10 text-blue"
                 >
-                  {user.name}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                  <Filter className="w-4 h-4" />
+                  {selectedFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="bg-white text-blue">
+                {["User", "Group", "Department", "Branch"].map((option) => (
+                  <DropdownMenuItem
+                    key={option}
+                    onClick={() => setSelectedFilter(option)}
+                  >
+                    {option}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <span className="text-sm text-gray-500 whitespace-nowrap">
+              {newGroup.members?.length ?? 0} selected
+            </span>
+          </div>
+        </div>
+        {error && <p className="text-red-500 text-sm -mt-3 mb-2">{error}</p>}
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+        <div className="overflow-x-auto">
+          <div className="min-w-[600px] rounded-md overflow-hidden border border-gray-200">
+            <div className="grid grid-cols-5 bg-gray-100 text-sm font-semibold text-gray-700 px-5 py-2">
+              <div className="col-span-1">First name</div>
+              <div className="col-span-1">Last name</div>
+              <div className="col-span-1">Branch</div>
+              <div className="col-span-1">Department</div>
+              <div className="col-span-1">Job</div>
+            </div>
+            {(data?.results || [])?.map((member, i) => {
+              const lastName = `${member?.employee?.name.split(" ")[0]}` || "";
+              const firstName = `${member?.employee?.name.split(" ")[1]}` || "";
+              const fullName = `${lastName} ${firstName}`;
+              const id = member?.employee?.id || member?.id;
+
+              const checked = newGroup?.members?.includes(id) ?? false;
+
+              return (
+                <div
+                  key={member?.id}
+                  className="grid grid-cols-5 items-center px-5 py-2 border-t text-sm"
+                >
+                  <div className="col-span-1 flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      className="accent-blue-500"
+                      checked={checked}
+                      disabled={isViewMode}
+                      onChange={() => {
+                        if (checked) {
+                          setNewGroup({
+                            ...newGroup,
+                            members: newGroup?.members?.filter((a) => a !== id),
+                          });
+                        } else {
+                          setNewGroup({
+                            ...newGroup,
+                            members: [...newGroup?.members, id],
+                          });
+                        }
+                      }}
+                    />
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={
+                          "https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png"
+                        }
+                        alt={fullName}
+                        className="w-7 h-7 rounded-full"
+                      />
+                      <span>{firstName}</span>
+                    </div>
+                  </div>
+                  <div className="col-span-1">{lastName}</div>
+                  <div className="col-span-1">{member?.branch?.name || ""}</div>
+                  <div className="col-span-1">
+                    {member?.department?.name || ""}
+                  </div>
+                  <div className="col-span-1">
+                    {member?.job && (
+                      <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
+                        {member?.job ?? ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        <DialogFooter>
-          <Button onClick={handleFinish} disabled={addGroupMutation.isLoading}>
-            {addGroupMutation.isLoading ? "Creating..." : "Finish"}
-          </Button>
-        </DialogFooter>
+        {!isViewMode && (
+          <DialogFooter className="justify-end mt-6">
+            {isEdit ? (
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+                onClick={onUpdate}
+              >
+                {/* {addGroupMutation.isPending ? "Updating..." : "Update"} */}
+                {"Update"}
+              </Button>
+            ) : (
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+                onClick={handleFinish}
+              >
+                {addGroupMutation.isPending ? "Creating..." : "Finish"}
+              </Button>
+            )}
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   );

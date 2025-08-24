@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 
 // API functions
 import { fetchCompany } from "@/lib/api/company";
+import { fetchMembers } from "@/lib/api/user";
 import { fetchCompanyDepartments, addDepartment } from "@/lib/api/department";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -32,6 +33,11 @@ export default function AddDepartmentDialog() {
   const { data: company } = useQuery({
     queryKey: ["company"],
     queryFn: fetchCompany,
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ["members"],
+    queryFn: fetchMembers,
   });
 
   const { data: departments = [] } = useQuery({
@@ -53,11 +59,18 @@ export default function AddDepartmentDialog() {
 
   const handleSubmit = () => {
     if (!branchId || !departmentName) return;
-    createDepartment({
-      name: departmentName,
-      branch: branchId,
-      manager: managerId || undefined,
-    });
+    createDepartment(
+      !managerId
+        ? {
+            name: departmentName,
+            branch: branchId,
+          }
+        : {
+            name: departmentName,
+            branch: branchId,
+            manager: managerId || undefined,
+          }
+    );
   };
 
   return (
@@ -128,9 +141,16 @@ export default function AddDepartmentDialog() {
               <SelectValue placeholder="Select Manager" />
             </SelectTrigger>
             <SelectContent className="font-custom">
-              <SelectItem value="manager-id-1">Name 1</SelectItem>
-              <SelectItem value="manager-id-2">Name 2</SelectItem>
-              {/* TODO: Replace with dynamic user list */}
+              {members?.results.map((member) => {
+                const lastName = `${member?.employee?.name.split(" ")[0]}`;
+                const firstName = `${member?.employee?.name.split(" ")[1]}`;
+                const fullName = `${lastName} ${firstName}`;
+                return (
+                  <SelectItem key={member.id} value={member?.employee?.id}>
+                    {fullName}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>

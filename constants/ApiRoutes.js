@@ -1,3 +1,5 @@
+import { create } from "domain";
+
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 
 const ApiRoutes = {
@@ -8,14 +10,14 @@ const ApiRoutes = {
   company: {
     create: `${BASE_URL}/companies`,
     get: `${BASE_URL}/companies`,
-    update: `${BASE_URL}/company/{id}`,
-    delete: `${BASE_URL}/company/delete`,
+    update: `${BASE_URL}/companies/{id}`,
+    delete: `${BASE_URL}/companies/{id}`,
   },
   branch: {
     create: `${BASE_URL}/branches`,
     get: `${BASE_URL}/branches`,
-    update: `${BASE_URL}/branch/{id}`,
-    delete: `${BASE_URL}/branch/delete`,
+    update: `${BASE_URL}/branches/{id}`,
+    delete: `${BASE_URL}/branches/{id}`,
   },
   department: {
     create: `${BASE_URL}/departments`,
@@ -29,18 +31,25 @@ const ApiRoutes = {
     update: `${BASE_URL}/title/{id}`,
     delete: `${BASE_URL}/title/delete`,
   },
+  position: {
+    create: `${BASE_URL}/jobs`,
+    get: `${BASE_URL}/jobs`,
+    update: `${BASE_URL}/jobs/{id}`,
+    delete: `${BASE_URL}/jobs/{id}`,
+  },
 
   group: {
     create: `${BASE_URL}/groups`,
     get: `${BASE_URL}/groups`,
-    update: `${BASE_URL}/group/{id}`,
-    delete: `${BASE_URL}/group/delete`,
+    getId: `${BASE_URL}/groups/{id}`,
+    update: `${BASE_URL}/groups/{id}`,
+    delete: `${BASE_URL}/groups/{id}`,
   },
   section: {
     create: `${BASE_URL}/group-sections`,
     get: `${BASE_URL}/group-sections`,
-    update: `${BASE_URL}/section/{id}`,
-    delete: `${BASE_URL}/section/delete`,
+    update: `${BASE_URL}/group-sections/{id}`,
+    delete: `${BASE_URL}/group-sections/{id}`,
   },
   overTimeSetting: {
     getOverTimeType: `${BASE_URL}/overtime-types`,
