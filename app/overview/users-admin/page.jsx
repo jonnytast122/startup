@@ -35,6 +35,8 @@ export default function UserAdminPage() {
 
   const users = data?.results || [];
 
+  console.log("Fetched users:", users);
+
   return (
     <div>
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">

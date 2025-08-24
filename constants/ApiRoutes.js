@@ -57,7 +57,7 @@ const ApiRoutes = {
     delete: `${BASE_URL}/leave-policies/{id}`,
   },
   user: {
-    get: `${BASE_URL}/filter`,
+    get: `${BASE_URL}/users/filter`,
     create: `${BASE_URL}/users`,
     update: `${BASE_URL}/user/{id}`,
     delete: `${BASE_URL}/user/{id}`,
