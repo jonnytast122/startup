@@ -7,9 +7,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchPositions, addPosition } from "@/lib/api/position";
 
-export default function AddTitleDialog() {
+export default function AddTitleDialog({ onSaved }) {
   const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  const queryClient = useQueryClient();
+  const addPositionMutation = useMutation({
+    mutationFn: addPosition,
+    onSuccess: () => {
+      setOpen(false);
+      setTitle("");
+      setDescription("");
+      queryClient.invalidateQueries(["positions"]);
+    },
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -41,6 +56,8 @@ export default function AddTitleDialog() {
               type="text"
               placeholder="Title Name"
               className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
@@ -53,13 +70,20 @@ export default function AddTitleDialog() {
               type="text"
               placeholder="Description"
               className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
             />
           </div>
 
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
-          <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
+          <div
+            onClick={() => {
+              addPositionMutation.mutate({ title, description });
+            }}
+            className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4"
+          >
             <Button className="py-4 px-6 text-md font-custom rounded-full">
-              Save
+              {addPositionMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>

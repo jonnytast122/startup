@@ -20,44 +20,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { addGroup, fetchMembers } from "@/lib/api/group";
 
-const members = [
-  {
-    first: "Lucy",
-    last: "Trevo",
-    dept: "Marketing",
-    job: "Accountant",
-    avatar: "https://via.placeholder.com/28",
-  },
-  {
-    first: "John",
-    last: "Mark",
-    dept: "Marketing",
-    job: "Marketing",
-    avatar: "https://via.placeholder.com/28",
-  },
-  {
-    first: "Doe",
-    last: "Ibrahim",
-    dept: "Officer",
-    job: "HR",
-    avatar: "https://via.placeholder.com/28",
-  },
-  {
-    first: "Luke",
-    last: "Kai",
-    dept: "Officer",
-    job: "General",
-    avatar: "https://via.placeholder.com/28",
-  },
-  {
-    first: "Bob",
-    last: "Mako",
-    dept: "Marketing",
-    job: "Accountant",
-    avatar: "https://via.placeholder.com/28",
-  },
-];
-
 export default function AddGroupDialog({
   isOpen,
   onClose,
@@ -171,18 +133,17 @@ export default function AddGroupDialog({
               <div className="col-span-1">Department</div>
               <div className="col-span-1">Job</div>
             </div>
-            {(data?.results || []).map((member, i) => {
-              const lastName = `${member?.employee?.name.split(" ")[0]}`;
-              const firstName = `${member?.employee?.name.split(" ")[1]}`;
+            {(data?.results || [])?.map((member, i) => {
+              const lastName = `${member?.employee?.name.split(" ")[0]}` || "";
+              const firstName = `${member?.employee?.name.split(" ")[1]}` || "";
               const fullName = `${lastName} ${firstName}`;
               const id = member?.employee?.id || member?.id;
 
-              const checked = newGroup.members?.includes(id) ?? false;
+              const checked = newGroup?.members?.includes(id) ?? false;
 
-              console.log("newGroups", newGroup);
               return (
                 <div
-                  key={i}
+                  key={member?.id}
                   className="grid grid-cols-5 items-center px-5 py-2 border-t text-sm"
                 >
                   <div className="col-span-1 flex items-center gap-2">
@@ -195,12 +156,12 @@ export default function AddGroupDialog({
                         if (checked) {
                           setNewGroup({
                             ...newGroup,
-                            members: newGroup.members.filter((a) => a !== id),
+                            members: newGroup?.members?.filter((a) => a !== id),
                           });
                         } else {
                           setNewGroup({
                             ...newGroup,
-                            members: [...newGroup.members, id],
+                            members: [...newGroup?.members, id],
                           });
                         }
                       }}
@@ -217,8 +178,10 @@ export default function AddGroupDialog({
                     </div>
                   </div>
                   <div className="col-span-1">{lastName}</div>
-                  <div className="col-span-1">{member?.branch ?? ""}</div>
-                  <div className="col-span-1">{member?.department ?? ""}</div>
+                  <div className="col-span-1">{member?.branch?.name || ""}</div>
+                  <div className="col-span-1">
+                    {member?.department?.name || ""}
+                  </div>
                   <div className="col-span-1">
                     {member?.job && (
                       <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
