@@ -1,284 +1,372 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { SketchPicker } from "react-color";
-import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Clock, Users, Check, ChevronDown } from "lucide-react";
+import { useState, useEffect } from "react";
 
-interface Event {
-  id: number;
-  date: Date;
-  title: string;
-  time: string;
-  color: string;
-  assignedTo: string;
-}
+const firstLevelOptions = [
+  { key: "User", label: "User" },
+  { key: "Department", label: "Department" },
+  { key: "Group", label: "Group" },
+  { key: "Branch", label: "Branch" }
+];
 
-interface EventDialogProps {
-  date: Date;
-  isOpen: boolean;
-  onClose: () => void;
-  events: Event[];
-  onSave: (events: Event[]) => void;
-  event?: Event | null;
-}
+const secondLevelData = {
+  User: ["User 1", "User 2", "User 3"],
+  Department: ["Dept 1", "Dept 2"],
+  Group: ["Group 1", "Group 2"],
+  Branch: ["Branch 1", "Branch 2"]
+};
 
-const EventDialog: React.FC<EventDialogProps> = ({
+const colorOptions = [
+  { value: "blue", colorClass: "bg-blue-500" },
+  { value: "red", colorClass: "bg-red-500" },
+];
+
+export default function EventDialog({
   date,
-  isOpen,
   onClose,
-  events,
   onSave,
-  event,
-}) => {
+  event,          // ✅ Accept the event prop
+}) {
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("");
-  const [color, setColor] = useState("#2563eb");
-  const [assignedTo, setAssignedTo] = useState("");
-  const [menuOpen, setMenuOpen] = useState<number | null>(null);
-  const [colorOpen, setColorOpen] = useState(false);
+  const [start, setStart] = useState("13:00");
+  const [end, setEnd] = useState("13:00");
+  const [requireClockIn, setRequireClockIn] = useState(false);
+  const [leavePolicy, setLeavePolicy] = useState("");
+  const [overtimePolicy, setOvertimePolicy] = useState("");
+  const [selectedColor, setSelectedColor] = useState("blue");
 
-  // Sync form with event being edited
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [selectedFirstLevels, setSelectedFirstLevels] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
+
+  // ✅ Load the event data when opening for edit
   useEffect(() => {
     if (event) {
-      setTitle(event.title);
-      setTime(event.time);
-      setColor(event.color);
-      setAssignedTo(event.assignedTo);
+      setTitle(event.name || "");
+      setStart(event.start || "13:00");
+      setEnd(event.end || "13:00");
+      setRequireClockIn(event.requireClockIn || false);
+      setLeavePolicy(event.leavePolicy || "");
+      setOvertimePolicy(event.overtimePolicy || "");
+      setSelectedColor(event.color || "blue");
+      setSelectedFirstLevels(event.assign?.selectedFirstLevels || []);
+      setSelectedItems(event.assign?.selectedItems || {});
     } else {
+      // If creating a new event, reset fields
       setTitle("");
-      setTime("");
-      setColor("#2563eb");
-      setAssignedTo("");
+      setStart("13:00");
+      setEnd("13:00");
+      setRequireClockIn(false);
+      setLeavePolicy("");
+      setOvertimePolicy("");
+      setSelectedColor("blue");
+      setSelectedFirstLevels([]);
+      setSelectedItems({});
     }
   }, [event]);
 
-  const dayEvents = useMemo(
-    () => events.filter((e) => e.date.toDateString() === date.toDateString()),
-    [events, date]
-  );
+  const toggleMenu = () => {
+    setMenuOpen((prev) => !prev);
+    setHoveredItem(null);
+  };
 
-  const handleSave = useCallback(() => {
-    if (!title.trim()) return;
+  const handleFirstLevelChange = (key) => {
+    let newSelection = [];
 
-    if (event) {
-      // Edit existing
-      onSave(
-        events.map((e) =>
-          e.id === event.id ? { ...e, title, time, color, assignedTo } : e
-        )
-      );
+    if (key === "all") {
+      if (selectedFirstLevels.length === firstLevelOptions.length) {
+        newSelection = [];
+      } else {
+        newSelection = firstLevelOptions.map((item) => item.key);
+      }
+      setHoveredItem(null);
     } else {
-      // Add new
-      onSave([
-        ...events,
-        {
-          id: events.length ? Math.max(...events.map((e) => e.id)) + 1 : 1,
-          date: event?.date ?? date,
-          title,
-          time,
-          color,
-          assignedTo,
-        },
-      ]);
+      const exists = selectedFirstLevels.includes(key);
+      if (exists) {
+        newSelection = selectedFirstLevels.filter((k) => k !== key);
+      } else {
+        newSelection = [...selectedFirstLevels, key];
+      }
     }
-    onClose();
-  }, [title, time, color, assignedTo, event, events, date, onSave, onClose]);
 
-  const handleDelete = useCallback(
-    (id: number) => {
-      onSave(events.filter((e) => e.id !== id));
-    },
-    [events, onSave]
-  );
+    const newSelectedItems = {};
+    for (const k of newSelection) {
+      newSelectedItems[k] = selectedItems[k] || [];
+    }
+
+    setSelectedFirstLevels(newSelection);
+    setSelectedItems(newSelectedItems);
+  };
+
+  const handleSecondLevelChange = (firstKey, value) => {
+    const existing = selectedItems[firstKey] || [];
+    const alreadyChecked = existing.includes(value);
+    const updated = alreadyChecked
+      ? existing.filter((v) => v !== value)
+      : [...existing, value];
+
+    setSelectedItems({
+      ...selectedItems,
+      [firstKey]: updated
+    });
+  };
+
+  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+    return acc + (selectedItems[key]?.length || 0);
+  }, 0);
+
+  const isAllSelected =
+    selectedFirstLevels.length === firstLevelOptions.length &&
+    firstLevelOptions.length > 0;
+
+  const firstLevelLabel = isAllSelected
+    ? "All"
+    : selectedFirstLevels
+      .map(
+        (key) => firstLevelOptions.find((item) => item.key === key)?.label
+      )
+      .join(", ") || "Select...";
+
+  const handleSubmit = () => {
+    onSave({
+      name: title,
+      date,
+      start,
+      end,
+      assign: {
+        selectedFirstLevels,
+        selectedItems
+      },
+      requireClockIn,
+      color: selectedColor,
+      leavePolicy,
+      overtimePolicy
+    });
+    onClose();
+  };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      modal
-    >
-      <DialogContent
-        className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto"
-        // Prevent closing when clicking inside popovers
-        onInteractOutside={(e) => {
-          if ((e.target as HTMLElement).closest("[role=dialog]")) {
-            e.preventDefault();
-          }
-        }}
-      >
-        <DialogHeader>
-          <DialogTitle>
-            {event ? "Edit Event" : "Add Event"} – {format(date, "MMMM d, yyyy")}
-          </DialogTitle>
-        </DialogHeader>
+    <Dialog open onOpenChange={onClose}>
+      <DialogContent className="w-[400px] space-y-4">
+        {/* ✅ Change title depending on whether we're editing */}
+        <h2 className="text-lg font-semibold text-gray-700">
+          {event ? "Edit Event" : "Create Event"}
+        </h2>
 
-        <div className="space-y-4">
-          {/* Event Form */}
-          <div className="space-y-2">
-            <Input
-              placeholder="Event Title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-            <Input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-            />
+        <div className="flex items-center justify-between gap-2">
+          <input
+            placeholder="Event Title"
+            className="w-full px-0 py-2 outline-none font-custom text-sm bg-transparent border-b border-gray-300"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
 
-            {/* Assign Dropdown */}
-            <DropdownMenu
-              open={menuOpen === 1 && !colorOpen}
-              onOpenChange={(open) => setMenuOpen(open ? 1 : null)}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  {assignedTo ? `Assigned to: ${assignedTo}` : "Assign to"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {["Alice", "Bob", "Charlie"].map((name) => (
-                  <DropdownMenuItem
-                    key={name}
-                    onClick={() => {
-                      setAssignedTo(name);
-                      setMenuOpen(null);
-                    }}
-                  >
-                    {name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Color Picker */}
-            <Popover open={colorOpen} onOpenChange={setColorOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <div
-                    className="w-4 h-4 rounded-full mr-2"
-                    style={{ backgroundColor: color }}
-                  />
-                  Pick Color
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="p-0 w-auto border-none shadow-none"
-                side="bottom"
-                align="start"
-              >
-                <SketchPicker
-                  color={color}
-                  onChangeComplete={(newColor) => setColor(newColor.hex)}
+          <Popover>
+            <PopoverTrigger asChild>
+              <div className="flex items-center justify-between px-3 py-2 bg-white shadow-sm rounded-md cursor-pointer w-fit">
+                <div
+                  className={`w-4 h-4 rounded-full ${selectedColor === "blue"
+                      ? "bg-blue-500"
+                      : "bg-red-500"
+                    }`}
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+                <ChevronDown size={14} className="text-gray-400 ml-2" />
+              </div>
+            </PopoverTrigger>
 
-          {/* Events Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead className="w-10">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dayEvents.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell>{e.title}</TableCell>
-                  <TableCell>{e.time}</TableCell>
-                  <TableCell>{e.assignedTo}</TableCell>
-                  <TableCell>
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: e.color }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu
-                      open={menuOpen === e.id}
-                      onOpenChange={(open) => setMenuOpen(open ? e.id : null)}
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setMenuOpen(e.id)}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setTitle(e.title);
-                            setTime(e.time);
-                            setColor(e.color);
-                            setAssignedTo(e.assignedTo);
-                            setMenuOpen(null);
-                          }}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            handleDelete(e.id);
-                            setMenuOpen(null);
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+            <PopoverContent className="w-fit p-2 bg-white">
+              <div className="flex flex-col gap-2">
+                {colorOptions.map((opt) => (
+                  <div
+                    key={opt.value}
+                    onClick={() => setSelectedColor(opt.value)}
+                    className={`w-5 h-5 rounded-full cursor-pointer border-2 hover:scale-105 transition ${selectedColor === opt.value
+                        ? `${opt.colorClass} border-gray-300`
+                        : `${opt.colorClass} border-transparent`
+                      }`}
+                  ></div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
+        <div className="flex border rounded-md overflow-hidden">
+          <div className="flex items-center w-1/2 px-3 py-2 gap-2 border-r">
+            <span className="text-sm text-gray-500">Start</span>
+            <input
+              type="time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="text-sm w-full bg-transparent outline-none"
+            />
+          </div>
+          <div className="flex items-center w-1/2 px-3 py-2 gap-2">
+            <span className="text-sm text-gray-500">End</span>
+            <input
+              type="time"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="text-sm w-full bg-transparent outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-pointer">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-gray-500" />
+            <span className="text-sm">Assign</span>
+          </div>
+
+          <div className="relative w-[220px]">
+            <button
+              onClick={toggleMenu}
+              className="flex items-center justify-between w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-100"
+            >
+              <span className="truncate text-gray-600">
+                {firstLevelLabel}
+              </span>
+              <div className="flex items-center gap-2">
+                {totalSecondLevelSelected > 0 && (
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {totalSecondLevelSelected} selected
+                  </span>
+                )}
+                <ChevronDown size={14} className="text-gray-400" />
+              </div>
+            </button>
+
+            {menuOpen && (
+              <>
+                <div className="absolute z-10 top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                  <label
+                    className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    onMouseEnter={() => setHoveredItem(null)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={() => handleFirstLevelChange("all")}
+                      className="mr-2"
+                    />
+                    All
+                  </label>
+                  {firstLevelOptions.map((item) => (
+                    <label
+                      key={item.key}
+                      className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                      onMouseEnter={() => setHoveredItem(item.key)}
+                      onClick={() => setHoveredItem(item.key)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedFirstLevels.includes(item.key)}
+                        onChange={() => handleFirstLevelChange(item.key)}
+                        className="mr-2"
+                      />
+                      {item.label}
+                    </label>
+                  ))}
+                </div>
+
+                {hoveredItem &&
+                  selectedFirstLevels.includes(hoveredItem) && (
+                    <div className="absolute z-20 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                      <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
+                        {
+                          firstLevelOptions.find(
+                            (o) => o.key === hoveredItem
+                          )?.label
+                        }{" "}
+                        Options
+                      </div>
+                      {secondLevelData[hoveredItem].map((value) => (
+                        <label
+                          key={value}
+                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedItems[hoveredItem]?.includes(value) ||
+                              false
+                            }
+                            onChange={() =>
+                              handleSecondLevelChange(hoveredItem, value)
+                            }
+                            className="mr-2"
+                          />
+                          {value}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-blue-500 font-medium">Require Clock In</span>
+          <Switch
+            checked={requireClockIn}
+            onCheckedChange={setRequireClockIn}
+            className="data-[state=checked]:bg-green-500"
+          />
+        </div>
+
+        {requireClockIn && (
+          <div className="flex gap-4">
+            <div className="w-1/2">
+              <span className="text-xs text-gray-500">Leave Policy</span>
+              <select
+                value={leavePolicy}
+                onChange={(e) => setLeavePolicy(e.target.value)}
+                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1"
+              >
+                <option value="">Select</option>
+                <option value="Sick Leave">Sick Leave</option>
+                <option value="Annual Leave">Annual Leave</option>
+              </select>
+            </div>
+            <div className="w-1/2">
+              <span className="text-xs text-gray-500">Overtime Policy</span>
+              <select
+                value={overtimePolicy}
+                onChange={(e) => setOvertimePolicy(e.target.value)}
+                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1"
+              >
+                <option value="">Select</option>
+                <option value="Morning">Morning</option>
+                <option value="Weekend">Weekend</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        <div className="text-right">
+          <Button
+            onClick={handleSubmit}
+            className="h-8 px-5 text-sm rounded-md"
+          >
+            Save
           </Button>
-          <Button onClick={handleSave}>{event ? "Update" : "Save"}</Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default EventDialog;
+}
