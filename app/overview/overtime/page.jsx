@@ -198,12 +198,13 @@ const columns = [
         <div className="flex items-center space-x-6 text-sm">
           <span className="text-gray-800">Annual Leave</span>
           <span
-            className={`font-medium ${status === "Approved"
-              ? "text-blue-500"
-              : status === "Declined"
+            className={`font-medium ${
+              status === "Approved"
+                ? "text-blue-500"
+                : status === "Declined"
                 ? "text-red-500"
                 : "text-gray-500"
-              }`}
+            }`}
           >
             {status}
           </span>
@@ -249,7 +250,11 @@ const Overtime = () => {
           {/* Title Section */}
           <a href="/overview/overtime" className="block">
             <div className="flex items-center space-x-3">
-              <CalendarPlus2 className="text-[#2998FF]" width={40} height={40} />
+              <CalendarPlus2
+                className="text-[#2998FF]"
+                width={40}
+                height={40}
+              />
               <span className="font-custom text-3xl text-black">Overtime</span>
             </div>
           </a>
@@ -270,10 +275,12 @@ const Overtime = () => {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${badge.bg
-                    } rounded-full flex items-center justify-center border-2 border-white 
-           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${badge.textColor || "text-white"
-                    }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${
+                    badge.bg
+                  } rounded-full flex items-center justify-center border-2 border-white 
+           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${
+             badge.textColor || "text-white"
+           }`}
                 >
                   {badge.text}
                 </div>
@@ -374,7 +381,12 @@ const Overtime = () => {
                     const randomFrom = (arr) =>
                       arr[Math.floor(Math.random() * arr.length)];
 
-                    const jobTypes = ["Accountant", "Engineer", "Supervisor", "Manager"];
+                    const jobTypes = [
+                      "Accountant",
+                      "Engineer",
+                      "Supervisor",
+                      "Manager",
+                    ];
                     const departments = ["HR", "IT", "Marketing", "Operations"];
                     const shiftTypes = ["Schedule", "Flexible", "Night"];
 
@@ -389,7 +401,9 @@ const Overtime = () => {
                       department: randomFrom(departments),
                       shifttype: randomFrom(shiftTypes),
                       otrequest: `${data.hours} hours`,
-                      otassigned: `${(parseFloat(data.hours) / 2).toFixed(1)} hours`,
+                      otassigned: `${(parseFloat(data.hours) / 2).toFixed(
+                        1
+                      )} hours`,
                       ottotal: `${data.hours} hours`,
                       onleavestatus: {
                         annual: "Pending",
@@ -403,7 +417,6 @@ const Overtime = () => {
                     setOtData((prev) => [...prev, ...newRows]);
                   }}
                 />
-
 
                 <Select>
                   <SelectTrigger className="w-24 font-custom rounded-full">
@@ -459,7 +472,10 @@ const Overtime = () => {
                             key={cell.id}
                             className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>

@@ -95,22 +95,22 @@ html {
   border-color: #979797;
 }
 .border-blue {
-  color: #5494DA
+  color: #5494DA;
 }
 .text-red {
-  color: #FB5F59
+  color: #FB5F59;
 }
 .text-green {
-  color: #54BD95
+  color: #54BD95;
 }
 .text-orange {
-  color: #FF9500
+  color: #FF9500;
 }
 .bg-blue {
-  color: #2196f3
+  background-color: #2196f3;
 }
 .bg-light-blue {
-  color: #E6EFFF
+  background-color: #E6EFFF;
 }
 
 @keyframes pulse-animation {
@@ -127,7 +127,6 @@ html {
     opacity: 0.6;
   }
 }
-
 
 .breathing-animation {
   animation: pulse-animation 2s infinite;
@@ -244,4 +243,3 @@ html {
     scrollbar-width: none;
   }
 }
-

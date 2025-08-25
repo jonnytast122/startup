@@ -156,7 +156,9 @@ const columns = [
       return (
         <div key={row.id} className="py-2 max-w-[300px] break-words">
           {rows.map((rowText, index) => (
-            <p key={index} className="whitespace-normal">{rowText}</p> // Each row will be a new <p> tag
+            <p key={index} className="whitespace-normal">
+              {rowText}
+            </p> // Each row will be a new <p> tag
           ))}
           {row.original.attachment && (
             <a
@@ -522,7 +524,8 @@ const ApproveAllDialog = () => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">All</span> leave requests?
+          <span className="text-[#5494DA] font-custom">All</span> leave
+          requests?
         </p>
         <input
           type="text"
@@ -576,7 +579,8 @@ const DeclineAllDialog = () => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">All</span> leave requests?
+          <span className="text-[#5494DA] font-custom">All</span> leave
+          requests?
         </p>
         <input
           type="text"

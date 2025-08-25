@@ -12,7 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-export default function AddSectionDialog({ open, setOpen, newSection, setNewSection, onConfirm }) {
+export default function AddSectionDialog({
+  open,
+  setOpen,
+  newSection,
+  setNewSection,
+  onConfirm,
+  isLoading,
+}) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent>
@@ -28,7 +35,9 @@ export default function AddSectionDialog({ open, setOpen, newSection, setNewSect
         />
 
         <DialogFooter>
-          <Button onClick={onConfirm}>Confirm</Button>
+          <Button onClick={onConfirm}>
+            {isLoading ? "Confirming..." : "Confirm"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

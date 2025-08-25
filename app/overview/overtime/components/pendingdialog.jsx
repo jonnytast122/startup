@@ -162,8 +162,10 @@ const columns = [
           startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
         />
 
-        <ApproveDialog employee={row.original.employee}
-          startdate={format(parseISO(row.original.date), "yyyy-MM-dd")} />
+        <ApproveDialog
+          employee={row.original.employee}
+          startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
+        />
       </div>
     ),
   },
@@ -336,8 +338,9 @@ const PendingDialog = ({ onClose }) => {
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${cell.column.id === "actions" ? "text-right" : ""
-                          }`}
+                        className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${
+                          cell.column.id === "actions" ? "text-right" : ""
+                        }`}
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
@@ -387,8 +390,8 @@ const DeclineDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT
-          on <span className="font-custom">{startdate}</span>?
+          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT on{" "}
+          <span className="font-custom">{startdate}</span>?
         </p>
         <input
           id="note_request"

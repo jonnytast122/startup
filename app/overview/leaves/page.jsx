@@ -110,8 +110,8 @@ const columns = [
         percentUsed > 75
           ? "text-red-500"
           : percentUsed > 50
-            ? "text-orange-500"
-            : "text-blue-500";
+          ? "text-orange-500"
+          : "text-blue-500";
 
       return (
         <span className={textColor}>
@@ -159,12 +159,13 @@ const columns = [
         <div className="flex items-center space-x-6 text-sm">
           <span className="text-gray-800">Annual Leave</span>
           <span
-            className={`font-medium ${status === "Approved"
-              ? "text-blue-500"
-              : status === "Declined"
+            className={`font-medium ${
+              status === "Approved"
+                ? "text-blue-500"
+                : status === "Declined"
                 ? "text-red-500"
                 : "text-gray-500"
-              }`}
+            }`}
           >
             {status}
           </span>
@@ -261,10 +262,12 @@ const Leaves = () => {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${badge.bg
-                    } rounded-full flex items-center justify-center border-2 border-white 
-           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${badge.textColor || "text-white"
-                    }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-6 md:h-6 lg:w-8 lg:h-8 ${
+                    badge.bg
+                  } rounded-full flex items-center justify-center border-2 border-white 
+           text-xs sm:text-xs md:text-sm lg:text-md font-bold ${
+             badge.textColor || "text-white"
+           }`}
                 >
                   {badge.text}
                 </div>
@@ -419,7 +422,10 @@ const Leaves = () => {
                             key={cell.id}
                             className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
                           >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )}
                           </TableCell>
                         ))}
                       </TableRow>

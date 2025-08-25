@@ -1,17 +1,14 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Users } from "lucide-react";
+import { Users } from "lucide-react";
 
-export default function ViewEventDialog({ open, onOpenChange, onClose, onSave, event, date }) {
+export default function ViewEventDialog({ event, onClose }) {
   if (!event) return null;
 
   return (
-    <Dialog open={open} onOpenChange={(o) => { onOpenChange?.(o); if (!o) onClose?.(); }}>
+    <Dialog open={!!event} onOpenChange={onClose}>
       <DialogContent className="w-[400px] space-y-4">
         <h2 className="text-lg font-semibold text-gray-700">Event Details</h2>
 
@@ -23,9 +20,8 @@ export default function ViewEventDialog({ open, onOpenChange, onClose, onSave, e
             className="w-full px-0 py-2 outline-none font-custom text-sm bg-transparent border-b border-gray-300"
           />
           <div
-            className={`w-4 h-4 rounded-full ${event.color === "red"
-              ? "bg-red-500"
-              : "bg-blue-500"
+            className={`w-4 h-4 rounded-full ${
+              event.color === "red" ? "bg-red-500" : "bg-blue-500"
             }`}
           />
         </div>
@@ -70,7 +66,9 @@ export default function ViewEventDialog({ open, onOpenChange, onClose, onSave, e
 
         {/* Clock-in toggle */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-blue-500 font-medium">Require Clock In</span>
+          <span className="text-sm text-blue-500 font-medium">
+            Require Clock In
+          </span>
           <Switch checked={event.requireClockIn} disabled />
         </div>
 

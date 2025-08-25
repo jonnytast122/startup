@@ -8,38 +8,80 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { createOvertimeSetting, updateOvertimeSetting } from "@/lib/api/policy";
 
 const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
-  const [policyName, setPolicyName] = useState("");
-  const [overtimeLimit, setOvertimeLimit] = useState(1);
-  const [monthStart, setMonthStart] = useState(1);
-  const [multiplier, setMultiplier] = useState(1);
-  const [selectedMonth, setSelectedMonth] = useState("January");
-  const [selectedDay, setSelectedDay] = useState(1);
-
   const months = [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December"
   ];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
+  const getMonthByNumber = (monthNumber) => months[monthNumber - 1] || "January";
+  const getMonthNumberByName = (monthName) => months.indexOf(monthName) + 1;
+
+  const getDayByNumber = (dayNumber) => days.includes(dayNumber) ? dayNumber : 1;
+
+  const [policyName, setPolicyName] = useState("");
+  const [overtimeLimit, setOvertimeLimit] = useState(1);
+  const [multiplier, setMultiplier] = useState(1);
+  const [selectedMonth, setSelectedMonth] = useState("January");
+  const [selectedDay, setSelectedDay] = useState(1);
+
+  const queryClient = useQueryClient();
+  const company = queryClient.getQueryData(["company"]);
+
+  const createPolicyMutation = useMutation({
+    mutationFn: createOvertimeSetting,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["overtimeSettings"]);
+    },
+    onError: (error) => {
+      console.error("Failed to create policy:", error);
+    },
+  });
+
+  const updatePolicyMutation = useMutation({
+    mutationFn: updateOvertimeSetting,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["overtimeSettings"]);
+    },
+    onError: (error) => {
+      console.error("Failed to update policy:", error);
+    },
+  });
+
   useEffect(() => {
     if (policy) {
-      setPolicyName(policy.name || "");
+      setPolicyName(policy?.name || "");
+      setOvertimeLimit(policy?.maxHourPerMonth || 1);
+      setMultiplier(policy?.multiplier || 1);
+      setSelectedMonth(getMonthByNumber(policy?.startDate?.month) || "January");
+      setSelectedDay(getDayByNumber(policy?.startDate?.day) || 1);
     }
   }, [policy]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!policyName.trim()) return;
+
     const newPolicy = {
-      ...policy,
-      id: policy?.id ?? Date.now(),
+      companyId: company?.id,
       name: policyName,
-      status: "Active",
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile-default.jpg",
+      status: "active",
+      maxHourPerMonth: overtimeLimit,
+      startDate: {
+        month: getMonthNumberByName(selectedMonth),
+        day: selectedDay,
+      },
+      multiplier: multiplier,
     };
-    onSubmit(newPolicy);
+
+    if(policy.id){
+      updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
+    } else {
+      createPolicyMutation.mutate(newPolicy);
+    }
     onClose();
   };
 
@@ -85,7 +127,7 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                 <input
                   type="number"
                   value={overtimeLimit}
-                  onChange={(e) => setOvertimeLimit(e.target.value)}
+                  onChange={(e) => setOvertimeLimit(Number(e.target.value))}
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   disabled={isViewMode}
                 />
@@ -135,7 +177,7 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                 <input
                   type="number"
                   value={multiplier}
-                  onChange={(e) => setMultiplier(e.target.value)}
+                  onChange={(e) => setMultiplier(Number(e.target.value))}
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   disabled={isViewMode}
                 />
