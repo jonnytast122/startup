@@ -16,35 +16,58 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { addGroup, fetchMembers } from "@/lib/api/group";
 
 export default function AddGroupDialog({
-  open,
-  setOpen,
+  isOpen,
+  onClose,
   newGroup,
   setNewGroup,
-  members,
-  onConfirm,
   isViewMode = false,
+  isEdit = false,
+  onUpdate,
 }) {
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("Filter");
+
+  const { data } = useQuery({
+    queryKey: ["members"],
+    queryFn: fetchMembers,
+  });
+
+  const addGroupMutation = useMutation({
+    mutationFn: addGroup,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["sections"]);
+      setNewGroup({ name: "", section: "", members: [] });
+      setError("");
+      onClose();
+    },
+    onError: (error) => {
+      console.log("Error adding group:", error);
+      setError("Something went wrong. Please try again.");
+    },
+  });
 
   const handleFinish = () => {
     if (!newGroup.name.trim()) {
       setError("Group name is required.");
       return;
     }
-    if (newGroup.admins.length === 0) {
-      setError("Select at least one admin.");
-      return;
-    }
+
     setError("");
-    onConfirm();
+    addGroupMutation.mutate({
+      name: newGroup.name,
+      section: newGroup.section,
+      members: newGroup.members,
+    });
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl font-semibold mb-4">
@@ -60,13 +83,19 @@ export default function AddGroupDialog({
             <Input
               placeholder="Group's name"
               value={newGroup.name}
-              onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
+              onChange={(e) =>
+                setNewGroup({ ...newGroup, name: e.target.value })
+              }
               className="w-full"
               disabled={isViewMode}
             />
           </div>
 
-          <div className={`flex items-center gap-2 ${isViewMode ? "pointer-events-none opacity-60" : ""}`}>
+          <div
+            className={`flex items-center gap-2 ${
+              isViewMode ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -89,7 +118,7 @@ export default function AddGroupDialog({
               </DropdownMenuContent>
             </DropdownMenu>
             <span className="text-sm text-gray-500 whitespace-nowrap">
-              {newGroup.admins.length} selected
+              {newGroup.members?.length ?? 0} selected
             </span>
           </div>
         </div>
@@ -97,19 +126,25 @@ export default function AddGroupDialog({
 
         <div className="overflow-x-auto">
           <div className="min-w-[600px] rounded-md overflow-hidden border border-gray-200">
-            <div className="grid grid-cols-4 bg-gray-100 text-sm font-semibold text-gray-700 px-4 py-2">
+            <div className="grid grid-cols-5 bg-gray-100 text-sm font-semibold text-gray-700 px-5 py-2">
               <div className="col-span-1">First name</div>
               <div className="col-span-1">Last name</div>
+              <div className="col-span-1">Branch</div>
               <div className="col-span-1">Department</div>
               <div className="col-span-1">Job</div>
             </div>
-            {(members || []).map((member, i) => {
-              const fullName = `${member.first} ${member.last}`;
-              const checked = newGroup.admins.includes(fullName);
+            {(data?.results || [])?.map((member, i) => {
+              const lastName = `${member?.employee?.name.split(" ")[0]}` || "";
+              const firstName = `${member?.employee?.name.split(" ")[1]}` || "";
+              const fullName = `${lastName} ${firstName}`;
+              const id = member?.employee?.id || member?.id;
+
+              const checked = newGroup?.members?.includes(id) ?? false;
+
               return (
                 <div
-                  key={i}
-                  className="grid grid-cols-4 items-center px-4 py-2 border-t text-sm"
+                  key={member?.id}
+                  className="grid grid-cols-5 items-center px-5 py-2 border-t text-sm"
                 >
                   <div className="col-span-1 flex items-center gap-2">
                     <input
@@ -118,35 +153,41 @@ export default function AddGroupDialog({
                       checked={checked}
                       disabled={isViewMode}
                       onChange={() => {
-                        if (isViewMode) return;
                         if (checked) {
                           setNewGroup({
                             ...newGroup,
-                            admins: newGroup.admins.filter((a) => a !== fullName),
+                            members: newGroup?.members?.filter((a) => a !== id),
                           });
                         } else {
                           setNewGroup({
                             ...newGroup,
-                            admins: [...newGroup.admins, fullName],
+                            members: [...newGroup?.members, id],
                           });
                         }
                       }}
                     />
                     <div className="flex items-center gap-2">
                       <img
-                        src={member.avatar}
+                        src={
+                          "https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png"
+                        }
                         alt={fullName}
                         className="w-7 h-7 rounded-full"
                       />
-                      <span>{member.first}</span>
+                      <span>{firstName}</span>
                     </div>
                   </div>
-                  <div className="col-span-1">{member.last}</div>
-                  <div className="col-span-1">{member.dept}</div>
+                  <div className="col-span-1">{lastName}</div>
+                  <div className="col-span-1">{member?.branch?.name || ""}</div>
                   <div className="col-span-1">
-                    <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
-                      {member.job}
-                    </span>
+                    {member?.department?.name || ""}
+                  </div>
+                  <div className="col-span-1">
+                    {member?.job && (
+                      <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
+                        {member?.job ?? ""}
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -156,12 +197,22 @@ export default function AddGroupDialog({
 
         {!isViewMode && (
           <DialogFooter className="justify-end mt-6">
-            <Button
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-              onClick={handleFinish}
-            >
-              Finish
-            </Button>
+            {isEdit ? (
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+                onClick={onUpdate}
+              >
+                {/* {addGroupMutation.isPending ? "Updating..." : "Update"} */}
+                {"Update"}
+              </Button>
+            ) : (
+              <Button
+                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+                onClick={handleFinish}
+              >
+                {addGroupMutation.isPending ? "Creating..." : "Finish"}
+              </Button>
+            )}
           </DialogFooter>
         )}
       </DialogContent>

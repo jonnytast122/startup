@@ -9,3 +9,8 @@ export const fetchCompany = async () => {
     const response = await api.get(ApiRoutes.company.get);
     return response.data;
 };
+
+export const updateCompany = async ({id, data}: {id: string, data: any}) => {
+    const response = await api.put(ApiRoutes.company.update.replace('{id}', id), data);
+    return response.data;
+}
