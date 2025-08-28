@@ -81,7 +81,7 @@ const data = {
           title: "Workshift",
           url: "/overview/workshift",
           icon: BookCheck,
-          alert: 2,
+          alert: 0,
         },
         {
           title: "Users & Admin",
@@ -145,7 +145,9 @@ export function AppSidebar(props) {
       </SidebarContent>
       <SidebarFooter className="bg-white">
         <Separator className="mb-2" />
-        <span className="text-xs text-blue-600 text-center">ANAN</span>
+        <span className="text-xs text-blue-600 text-center">
+          Powered by ANAN
+        </span>
       </SidebarFooter>
 
       <SidebarRail />

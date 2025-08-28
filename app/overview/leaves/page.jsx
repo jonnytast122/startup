@@ -315,7 +315,6 @@ const Leaves = () => {
                         const newRange = ranges.selection;
                         setSelectedRange(newRange);
 
-                        // ✅ Only close if both dates are selected and not the same
                         const start = newRange.startDate;
                         const end = newRange.endDate;
                         if (start && end && start.getTime() !== end.getTime()) {
