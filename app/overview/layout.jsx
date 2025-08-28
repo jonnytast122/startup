@@ -67,13 +67,13 @@ export default function Layout({ children }) {
             {/* Right section */}
             <div className="flex items-center gap-2">
               {/* Notifications */}
-              <button
+              {/* <button
                 className="relative p-2 rounded-full hover:bg-gray-100"
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5 text-gray-600" />
                 <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-              </button>
+              </button> */}
 
               <Separator orientation="vertical" className="h-6" />
 
@@ -176,7 +176,9 @@ export default function Layout({ children }) {
           </header>
 
           {/* Scrollable content */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-100">{children}</div>
+          <div className="flex-1 overflow-y-auto p-4 bg-gray-100">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </ReactQueryProvider>

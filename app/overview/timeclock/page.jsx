@@ -9,10 +9,9 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import TimesheetScreen from "./components/timesheetscreen";
 import TodayScreen from "./components/todayscreen";
-import SettingDialog from "./components/settingdialog";
+//import SettingDialog from "./components/settingdialog";
 
 export default function TimeClock() {
   const [activeTab, setActiveTab] = useState("TODAY");
@@ -66,7 +65,7 @@ export default function TimeClock() {
                 </div>
               ))}
             </div>
-            <SettingDialog />
+            {/* <SettingDialog /> */}
           </div>
         </div>
       </div>

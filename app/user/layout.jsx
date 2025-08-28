@@ -118,10 +118,10 @@ export default function Layout({ children }) {
           {/* Right section */}
           <div className="flex items-center gap-2">
             {/* Notification Bell - Hidden on mobile */}
-            <button className="relative p-2 rounded-full hover:bg-gray-100 hidden lg:block">
+            {/* <button className="relative p-2 rounded-full hover:bg-gray-100 hidden lg:block">
               <Bell className="h-5 w-5 text-gray-600" />
               <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-            </button>
+            </button> */}
 
             {/* Separator - Hidden on mobile */}
             <Separator orientation="vertical" className="h-6 hidden lg:block" />
