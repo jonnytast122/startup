@@ -1,118 +1,90 @@
 import api from "../api";
 import ApiRoutes from "@/constants/ApiRoutes";
-import { User } from "./user";
-
-// Define Section and Group interfaces
-export interface Section {
-  id?: string;
-  name: string;
-  companyId?: string; // optional if not required in some endpoints
-}
-
-export interface Group {
-  id?: string;
-  name: string;
-  sectionId?: string; // optional if not required in some endpoints
-  members?: string[]; // optional array of user IDs
-}
 
 /**
- * Fetch all sections.
- * @returns Promise resolving to an array of sections
+ * Fetch groups for a specific company.
+ * @param {string} companyId - The ID of the company
+ * @returns {Promise} Axios response with group data
  */
-export const fetchSections = async (): Promise<Section[]> => {
+export const fetchSections = async () => {
   const response = await api.get(ApiRoutes.section.get);
-  if (response.status !== 200) throw new Error("Failed to fetch sections");
   return response.data;
 };
 
-/**
- * Fetch all users/members.
- * @returns Promise resolving to an array of users
- */
-export const fetchMembers = async (): Promise<User[]> => {
+export const fetchMembers = async () => {
   const response = await api.get(ApiRoutes.user.get);
-  if (response.status !== 200) throw new Error("Failed to fetch members");
-  return response.data;
-};
-/**
- * Fetch a single group by ID
- */
-export const fetchGroup = async (groupId: string): Promise<Group> => {
-  const response = await api.get(
-    ApiRoutes.group.getId.replace("{id}", groupId)
-  );
-  if (response.status !== 200) throw new Error("Failed to fetch group");
   return response.data;
 };
 
+export const fetchGroup = async (groupId: string) => {
+  const response = await api.get(ApiRoutes.group.getId.replace("{id}", groupId));
+  return response.data;
+}
+
 /**
- * Add a new section
+ * Add a new section.
+ * @param {Object} data - The group data
+ * @param {string} data.name - The name of the group
+ * @param {string} data.companyId - The company ID
+ * @returns {Promise} Axios response with the created group data
  */
-export const addSection = async (data: { name: string }): Promise<Section> => {
+export const addSection = async (data: { name: string }) => {
   const response = await api.post(ApiRoutes.section.create, data);
-  if (response.status !== 201) throw new Error("Failed to create section");
   return response.data;
 };
 
 /**
- * Add a new group
+ * Add a new group to a section.
+ * @param {string} sectionId - The ID of the section
+ * @param {Object} data - The group data
+ * @param {string} data.name - The name of the group
+ * @returns {Promise} Axios response with the created group data
  */
-export const addGroup = async (data: Group): Promise<Group> => {
-  const response = await api.post(ApiRoutes.group.create, data);
-  if (response.status !== 201) throw new Error("Failed to create group");
+// export const addGroup = async (sectionId: string, data: { name: string }) => {
+export const addGroup = async (data:any) => {
+  const response = await api.post(
+    ApiRoutes.group.create,
+    data
+  );
+  if (response.status !== 201) throw new Error('Failed to create overtime type');
   return response.data;
 };
 
-/**
- * Update an existing group
- */
-export const updateGroup = async ({
-  id,
-  data,
-}: {
-  id: string;
-  data: Partial<Group>;
-}): Promise<Group> => {
+export const updateGroup = async ({id, data}: {id: string, data:any}) => {
   const response = await api.put(
     ApiRoutes.group.update.replace("{id}", id),
     data
   );
-  if (response.status !== 200) throw new Error("Failed to update group");
   return response.data;
-};
+}
+
+export const deleteGroup = async (id: string) => {
+  const response = await api.delete(
+    ApiRoutes.group.delete.replace("{id}", id)
+  );
+  return response.data;
+}
 
 /**
- * Delete a group
+ * Update an existing group.
+ * @param {string} id - The ID of the group to update
+ * @param {Object} data - The updated group data
+ * @returns {Promise} Axios response with the updated group data
  */
-export const deleteGroup = async (
-  id: string
-): Promise<{ success: boolean }> => {
-  const response = await api.delete(ApiRoutes.group.delete.replace("{id}", id));
-  return response.data;
-};
-
-/**
- * Update a section
- */
-export const updateSection = async (
-  id: string,
-  data: { name: string }
-): Promise<Section> => {
+export const updateSection = async (id: string, data: { name: string }) => {
   const response = await api.put(
     ApiRoutes.section.update.replace("{id}", id),
     data
   );
-  if (response.status !== 200) throw new Error("Failed to update section");
   return response.data;
 };
 
 /**
- * Delete a section
+ * Delete a group.
+ * @param {string} id - The ID of the group to delete
+ * @returns {Promise} Axios response confirming deletion
  */
-export const deleteSection = async (
-  id: string
-): Promise<{ success: boolean }> => {
+export const deleteSection = async (id: string) => {
   const response = await api.delete(
     ApiRoutes.section.delete.replace("{id}", id)
   );

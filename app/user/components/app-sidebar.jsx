@@ -8,7 +8,6 @@ import {
   CreditCard,
   User,
   Info,
-  Calendar1,
 } from "lucide-react";
 import { NavMain } from "./nav-main";
 import { Separator } from "@/components/ui/separator";
