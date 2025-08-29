@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 
 const AuthContext = createContext();
 
@@ -11,7 +12,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Restore auth state from localStorage
+  // Restore auth state from localStorage + cookie
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -19,17 +20,22 @@ export function AuthProvider({ children }) {
     if (storedToken && storedUser) {
       setToken(storedToken);
       setUser(JSON.parse(storedUser));
-      setLoading(false);
-    } else {
-      setLoading(false);
     }
+    setLoading(false);
   }, []);
 
   // Login and store tokens + user
   const login = ({ tokens, user }) => {
     localStorage.setItem("token", tokens.access.token);
     localStorage.setItem("refreshToken", tokens.refresh.token);
-    localStorage.setItem("user", JSON.stringify(user)); // Save user info
+    localStorage.setItem("user", JSON.stringify(user));
+
+    // 👇 set cookie for middleware
+    Cookies.set("token", tokens.access.token, {
+      expires: 1, // 1 day
+      sameSite: "lax",
+    });
+
     setToken(tokens.access.token);
     setUser(user);
   };
@@ -39,6 +45,8 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
+    Cookies.remove("token"); // 👈 remove cookie too
+
     setUser(null);
     setToken(null);
     router.push("/login");

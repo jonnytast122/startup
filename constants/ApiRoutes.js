@@ -10,6 +10,7 @@ const ApiRoutes = {
   company: {
     create: `${BASE_URL}/companies`,
     get: `${BASE_URL}/companies`,
+    getMyCompany: `${BASE_URL}/companies/my-company`,
     update: `${BASE_URL}/companies/{id}`,
     delete: `${BASE_URL}/companies/{id}`,
   },
@@ -67,6 +68,7 @@ const ApiRoutes = {
   },
   user: {
     get: `${BASE_URL}/users/filter`,
+    getMyDetails: `${BASE_URL}/users/my-detail`,
     create: `${BASE_URL}/users`,
     update: `${BASE_URL}/user/{id}`,
     delete: `${BASE_URL}/user/{id}`,

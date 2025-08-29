@@ -19,6 +19,8 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useQuery } from "@tanstack/react-query";
+import { getMyCompany } from "@/lib/api/company";
 
 // This is sample data.
 const data = {
@@ -62,6 +64,11 @@ export function AppSidebar(props) {
   // Don't render footer if sidebar is collapsed
   if (collapsed) return null;
 
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: getMyCompany,
+  });
+
   return (
     <Sidebar
       collapsible="icon"
@@ -69,7 +76,17 @@ export function AppSidebar(props) {
       {...props}
     >
       <SidebarHeader className="items-center bg-white">
-        <img src="/images/Logo_2.png" alt="Logo" className="w-28 h-auto" />
+        <img
+          src={
+            company?.logo ||
+            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN-text.png?alt=media&token=f696243c-b9fe-42a4-9292-09823548fedc"
+          }
+          defaultValue={
+            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN-text.png?alt=media&token=f696243c-b9fe-42a4-9292-09823548fedc"
+          }
+          alt="Logo"
+          className="w-28 h-auto"
+        />
       </SidebarHeader>
       <SidebarContent className="bg-white">
         <NavMain items={data.navMain} />

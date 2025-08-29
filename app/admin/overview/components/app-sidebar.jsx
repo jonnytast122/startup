@@ -37,7 +37,7 @@ const data = {
       items: [
         {
           title: "Overview",
-          url: "/overview",
+          url: "/admin/overview",
           icon: LayoutDashboard,
           alert: 0,
         },
@@ -48,20 +48,25 @@ const data = {
       items: [
         {
           title: "Attendance",
-          url: "/overview/attendence",
+          url: "/admin/overview/attendence",
           icon: CalendarClock,
           alert: 2,
         },
         {
           title: "Overtime",
-          url: "/overview/overtime",
+          url: "/admin/overview/overtime",
           icon: CalendarPlus2,
           alert: 0,
         },
-        { title: "Leaves", url: "/overview/leaves", icon: LogOut, alert: 2 },
+        {
+          title: "Leaves",
+          url: "/admin/overview/leaves",
+          icon: LogOut,
+          alert: 2,
+        },
         {
           title: "Payroll",
-          url: "/overview/payroll",
+          url: "/admin/overview/payroll",
           icon: CreditCard,
           alert: 0,
         },
@@ -72,29 +77,41 @@ const data = {
       items: [
         {
           title: "Company",
-          url: "/overview/company",
+          url: "/admin/overview/company",
           icon: Settings,
           alert: 0,
         },
-        { title: "Policy", url: "/overview/policy", icon: Lightbulb, alert: 0 },
+        {
+          title: "Policy",
+          url: "/admin/overview/policy",
+          icon: Lightbulb,
+          alert: 0,
+        },
         {
           title: "Workshift",
-          url: "/overview/workshift",
+          url: "/admin/overview/workshift",
           icon: BookCheck,
           alert: 0,
         },
         {
           title: "Users & Admin",
-          url: "/overview/users-admin",
+          url: "/admin/overview/users-admin",
           icon: User,
           alert: 0,
         },
-        { title: "Groups", url: "/overview/groups", icon: Users, alert: 0 },
+        {
+          title: "Groups",
+          url: "/admin/overview/groups",
+          icon: Users,
+          alert: 0,
+        },
       ],
     },
     {
       title: "Support",
-      items: [{ title: "Help", url: "/overview/help", icon: Info, alert: 0 }],
+      items: [
+        { title: "Help", url: "/admin/overview/help", icon: Info, alert: 0 },
+      ],
     },
   ],
 };
