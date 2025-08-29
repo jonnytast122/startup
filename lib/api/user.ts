@@ -5,6 +5,11 @@ export const fetchUsers = async () => {
   const response = await api.get(ApiRoutes.user.get);
   return response.data;
 };
+
+export const getMyDetails = async () => {
+  const response = await api.get(ApiRoutes.user.getMyDetails);
+  return response.data;
+};
 export const addUser = async (data: {
   name: string;
   email: string;

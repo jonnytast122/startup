@@ -139,10 +139,20 @@ function LoginForm({ className, ...props }) {
       );
 
       if (res.data) {
+        // Set Http cookie so middleware can read it
+        document.cookie = `token=${res.data.tokens.access.token}; path=/;`;
+
+        // Save user info client-side
         login(res.data);
-        router.push("/overview");
-      } else {
-        setErrorMsg("Invalid OTP. Please try again.");
+
+        // Redirect based on role
+        if (res.data.user.role === "owner") {
+          router.push("/admin/overview");
+        } else if (res.data.user.role === "user") {
+          router.push("/user");
+        } else {
+          router.push("/unauthorized");
+        }
       }
     } catch (err) {
       const msg = err?.response?.data?.message || "OTP verification failed.";
