@@ -38,6 +38,12 @@ const ApiRoutes = {
     update: `${BASE_URL}/jobs/{id}`,
     delete: `${BASE_URL}/jobs/{id}`,
   },
+  workShift: {
+    create: `${BASE_URL}/shifts`,
+    get: `${BASE_URL}/shifts/company`,
+    update: `${BASE_URL}/shifts/{id}`,
+    delete: `${BASE_URL}/shifts/{id}`,
+  },
 
   group: {
     create: `${BASE_URL}/groups`,
