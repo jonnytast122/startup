@@ -9,8 +9,25 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createWorkShift, updateWorkShift } from "@/lib/api/work-shift";
+import { fetchCompany } from "@/lib/api/company";
+import { data } from "autoprefixer";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+function toAmPm(timeStr) {
+  let [hours, minutes] = timeStr.split(":").map(Number);
+  let ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12 || 12; // 0 → 12, 13 → 1, etc.
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")} ${ampm}`;
+}
+
+function removeAmPm(time) {
+  return time.replace(/\s?(AM|PM)/i, "");
+}
 
 export default function WorkShiftDialog({
   open,
@@ -30,15 +47,17 @@ export default function WorkShiftDialog({
   const [clockOutReminder, setClockOutReminder] = useState("14:40");
   const [activeReminder, setActiveReminder] = useState(true);
 
+  const queryClient = useQueryClient();
+
   useEffect(() => {
     if (shift) {
       setShiftName(shift.name || "New Shift");
       setShiftDays(shift.shiftDays || []);
       setReminderDays(shift.reminderDays || []);
-      setStartTime(shift.startTime || "09:00");
-      setEndTime(shift.endTime || "17:00");
-      setBreakStart(shift.breakStart || "12:00");
-      setBreakEnd(shift.breakEnd || "13:00");
+      setStartTime(removeAmPm(shift.workDuration.start) || "09:00");
+      setEndTime(removeAmPm(shift.workDuration.end) || "17:00");
+      setBreakStart(removeAmPm(shift.break.start) || "12:00");
+      setBreakEnd(removeAmPm(shift.break.end) || "13:00");
       setClockInReminder(shift.clockInReminder || "08:40");
       setClockOutReminder(shift.clockOutReminder || "14:40");
       setActiveReminder(shift.activeReminder ?? true);
@@ -58,7 +77,9 @@ export default function WorkShiftDialog({
 
   const toggleDay = (state, setter, day) => {
     if (viewOnly) return;
-    setter(state.includes(day) ? state.filter(d => d !== day) : [...state, day]);
+    setter(
+      state.includes(day) ? state.filter((d) => d !== day) : [...state, day]
+    );
   };
 
   const renderDays = (selectedDays, setter) => (
@@ -102,12 +123,70 @@ export default function WorkShiftDialog({
     onClose();
   };
 
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const uploadWorkShift = useMutation({
+    mutationFn: createWorkShift,
+    onSuccess: () => {
+      onClose();
+      queryClient.invalidateQueries({ queryKey: ["workShift", company?.id] });
+    },
+  });
+
+  const updateShift = useMutation({
+    mutationFn: updateWorkShift,
+    onSuccess: () => {
+      onClose();
+      queryClient.invalidateQueries({ queryKey: ["workShift", company?.id] });
+    },
+  });
+
+  const onCreate = () => {
+    uploadWorkShift.mutate({
+      name: shiftName,
+      workDays: shiftDays,
+      workDuration: {
+        start: toAmPm(startTime),
+        end: toAmPm(endTime),
+      },
+      break: {
+        start: toAmPm(breakStart),
+        end: toAmPm(breakEnd),
+      },
+    });
+  };
+
+  const onUpdate = () => {
+    updateShift.mutate({
+      id: shift.id,
+      data: {
+        name: shiftName,
+        workDays: shiftDays,
+        workDuration: {
+          start: toAmPm(startTime),
+          end: toAmPm(endTime),
+        },
+        break: {
+          start: toAmPm(breakStart),
+          end: toAmPm(breakEnd),
+        },
+      },
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-4xl px-6">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">
-            {viewOnly ? "Work Shift Details" : shift ? "Edit Work Shift" : "Add Work Shift"}
+            {viewOnly
+              ? "Work Shift Details"
+              : shift
+              ? "Edit Work Shift"
+              : "Add Work Shift"}
           </DialogTitle>
           <div className="w-full h-[1px] bg-gray-300 my-4" />
         </DialogHeader>
@@ -177,7 +256,7 @@ export default function WorkShiftDialog({
               </div>
             </div>
 
-            <div className="w-full border-t pt-4">
+            {/* <div className="w-full border-t pt-4">
               <div className="flex gap-4 items-start">
                 <div className="w-1/3 font-medium">Active Reminder</div>
                 <div className="w-2/3 flex items-center gap-4 flex-wrap">
@@ -193,9 +272,9 @@ export default function WorkShiftDialog({
                   />
                 </div>
               </div>
-            </div>
+            </div> */}
 
-            {activeReminder && (
+            {/* {activeReminder && (
               <>
                 <div className="flex gap-4 items-start">
                   <div className="w-1/3 font-medium">Reminders active on:</div>
@@ -228,17 +307,19 @@ export default function WorkShiftDialog({
                   </div>
                 </div>
               </>
-            )}
+            )} */}
 
             {!viewOnly && (
               <>
                 <div className="w-full h-[1px] bg-gray-300 mt-6" />
                 <div className="flex justify-end">
                   <Button
-                    onClick={handleConfirm}
+                    onClick={shift ? onUpdate : onCreate}
                     className="mt-4 px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
                   >
-                    Save Changes
+                    {uploadWorkShift.isPending
+                      ? "Saving Changes..."
+                      : "Save Changes"}
                   </Button>
                 </div>
               </>

@@ -19,6 +19,9 @@ import {
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import WorkShiftDialog from "./components/add-shift-dialog"; // Updated import
 import CambodiaCalendar from "./components/calendar-screen";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { fetchWorkShift, deleteWorkShift } from "@/lib/api/work-shift";
+import { fetchCompany } from "@/lib/api/company";
 
 export default function WorkShiftPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -66,6 +69,19 @@ export default function WorkShiftPage() {
   // For View dialog
   const [viewingShift, setViewingShift] = useState(null);
 
+  const client = useQueryClient();
+
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const { data: workshift } = useQuery({
+    queryKey: ["workShift", company?.id],
+    queryFn: () => fetchWorkShift(company?.id),
+    enabled: !!company?.id,
+  });
+
   const handleAddShift = (newShift) => {
     setShifts((prev) => [...prev, newShift]);
   };
@@ -74,6 +90,17 @@ export default function WorkShiftPage() {
     setShifts((prev) =>
       prev.map((s) => (s.id === updatedShift.id ? updatedShift : s))
     );
+  };
+
+  const deleteShift = useMutation({
+    mutationFn: deleteWorkShift,
+    onSuccess: () => {
+      client.invalidateQueries({ queryKey: ["workShift", company?.id] });
+    },
+  });
+
+  const onDelete = (id) => {
+    deleteShift.mutate(id);
   };
 
   return (
@@ -115,10 +142,11 @@ export default function WorkShiftPage() {
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 font-custom text-lg transition-all ${activeTab === tab
-                ? "bg-white text-blue-500 rounded-t-xl text-xl"
-                : "bg-gray-100 text-gray-500 hover:text-gray-700"
-                }`}
+              className={`flex-1 py-3 font-custom text-lg transition-all ${
+                activeTab === tab
+                  ? "bg-white text-blue-500 rounded-t-xl text-xl"
+                  : "bg-gray-100 text-gray-500 hover:text-gray-700"
+              }`}
             >
               {tab}
             </button>
@@ -129,7 +157,9 @@ export default function WorkShiftPage() {
           <div className="m-5">
             <div className="bg-green-100 px-6 py-4">
               <h3 className="text-green-700 font-semibold">Work shift</h3>
-              <p className="text-xs text-gray-600">{shifts.length} shifts</p>
+              <p className="text-xs text-gray-600">
+                {workshift?.results?.results.length ?? 0} shifts
+              </p>
             </div>
 
             <Table>
@@ -138,13 +168,15 @@ export default function WorkShiftPage() {
                   <TableHead>Shift name</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Created by</TableHead>
-                  <TableHead className="text-center align-middle">Edit</TableHead>
+                  <TableHead className="text-center align-middle">
+                    Edit
+                  </TableHead>
                   <TableHead className="text-center align-middle"></TableHead>
                   <TableHead className="text-center align-middle"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {shifts.map((shift) => (
+                {workshift?.results?.results.map((shift) => (
                   <TableRow
                     key={shift.id}
                     className="cursor-pointer hover:bg-gray-100"
@@ -153,12 +185,13 @@ export default function WorkShiftPage() {
                     <TableCell>{shift.name}</TableCell>
                     <TableCell>
                       <span
-                        className={`px-3 py-1 text-xs rounded-full font-medium ${shift.status === "Active"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-red-100 text-red-600"
-                          }`}
+                        className={`px-3 py-1 text-xs rounded-full font-medium ${
+                          shift.status === "Active"
+                            ? "bg-green-100 text-green-600"
+                            : "bg-red-100 text-red-600"
+                        }`}
                       >
-                        {shift.status}
+                        {shift.status ?? "Inactive"}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -169,11 +202,14 @@ export default function WorkShiftPage() {
                           className="w-6 h-6 rounded-full"
                         />
                         <span className="text-sm text-blue-600">
-                          {shift.createdBy}
+                          {shift?.createBy?.name || shift.createdBy}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-center align-middle" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      className="text-center align-middle"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
@@ -214,12 +250,8 @@ export default function WorkShiftPage() {
                         </PopoverContent>
                       </Popover>
                     </TableCell>
-                    <TableCell className="text-right">
-                      &nbsp;
-                    </TableCell>
-                    <TableCell className="text-right">
-                      &nbsp;
-                    </TableCell>
+                    <TableCell className="text-right">&nbsp;</TableCell>
+                    <TableCell className="text-right">&nbsp;</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -265,7 +297,7 @@ export default function WorkShiftPage() {
               onClose={() => setViewingShift(null)}
               shift={viewingShift}
               viewOnly={true}
-              onSubmit={() => { }}
+              onSubmit={() => {}}
             />
           </div>
         )}
@@ -304,9 +336,10 @@ export default function WorkShiftPage() {
                 className="rounded-full px-7 font-custom"
                 style={{ backgroundColor: "#fb5f59", color: "white" }}
                 onClick={() => {
-                  setShifts((prev) =>
-                    prev.filter((s) => s.id !== confirmDelete.id)
-                  );
+                  // setShifts((prev) =>
+                  //   prev.filter((s) => s.id !== confirmDelete.id)
+                  // );
+                  onDelete(confirmDelete.id);
                   setConfirmDelete(null);
                 }}
               >
