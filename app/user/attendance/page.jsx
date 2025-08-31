@@ -1,13 +1,29 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { CalendarClock, MapPin, Timer, CalendarPlus2, LogOut, CreditCard, User } from "lucide-react";
+import {
+  CalendarClock,
+  MapPin,
+  Timer,
+  CalendarPlus2,
+  LogOut,
+  CreditCard,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import ShiftDetailDialog from "./components/shiftdetaildialog.jsx";
 import RequestLeaveDialog from "./components/requestleavedialog.jsx";
 import SuccessDialog from "./components/successdialog.jsx";
 import TimesheetTable from "./components/timesheettable.jsx";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getAttendances,
+  getShift,
+  getTotalWorkedHours,
+  clockIn,
+} from "@/lib/api/userAttendance";
+import { convertToSeconds } from "@/lib/helper/dateTimeConveter";
 
 function formatTime(totalSeconds) {
   const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
@@ -99,21 +115,66 @@ function SlideToStop({ onStop }) {
   );
 }
 
-function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
-  const [seconds, setSeconds] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
+function TimerButton({
+  hasClockedIn,
+  onStopped,
+  onStarted,
+  onShowShiftDetail,
+  shift,
+  currentTotalWorkedHours,
+}) {
+  const [seconds, setSeconds] = useState(currentTotalWorkedHours);
+  const [isRunning, setIsRunning] = useState(hasClockedIn); // Initialize with hasClockedIn
   const [location, setLocation] = useState("Locating...");
   const [showDialog, setShowDialog] = useState(false);
-  const [selectedShift, setSelectedShift] = useState("");
+  const [selectedShift, setSelectedShift] = useState(shift?.name || "");
   const [startTime, setStartTime] = useState("");
+  const [cordinate, setCordinate] = useState({
+    latitude: null,
+    longitude: null,
+  });
   const intervalRef = useRef();
+  const queryClient = useQueryClient();
+
+  // Clock in mutation function
+  const clockInMutation = useMutation({
+    mutationFn: clockIn,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["user-attendances"]);
+      queryClient.invalidateQueries(["my-total-worked-hours"]);
+    },
+  });
+
+  // total worked hours effect
+  useEffect(() => {
+    setSeconds(currentTotalWorkedHours ? currentTotalWorkedHours : 0);
+  }, [currentTotalWorkedHours]);
+
+  // shift name effect
+  useEffect(() => {
+    setSelectedShift(shift?.name || "");
+  }, [shift]);
+
+  // Update isRunning when hasClockedIn changes
+  useEffect(() => {
+    setIsRunning(hasClockedIn);
+  }, [hasClockedIn]);
 
   useEffect(() => {
-    if (!isRunning) return;
+    if (isRunning && !intervalRef.current) {
+      intervalRef.current = setInterval(() => {
+        setSeconds((prev) => prev + 1);
+      }, 1000);
+    }
+
+    // Get current location
     if ("geolocation" in navigator) {
+      console.log("Geolocation is available");
       navigator.geolocation.getCurrentPosition(
         async (pos) => {
           const { latitude, longitude } = pos.coords;
+          setCordinate({ latitude, longitude });
+          console.log("latitude:", latitude, "longitude:", longitude);
           try {
             const res = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
@@ -139,8 +200,11 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
     } else {
       setLocation("Not supported");
     }
+
+    return () => clearInterval(intervalRef.current);
   }, [isRunning]);
 
+  //when click on Clock In button
   const startTimer = (shift) => {
     const now = new Date();
     const formattedStart = now.toLocaleTimeString("en-GB", {
@@ -153,16 +217,25 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
     setStartTime(formattedStart);
     setShowDialog(false);
     setIsRunning(true);
+
+    // call to api to clock in
+    clockInMutation.mutate({
+      geoLocation: {
+        latitude: cordinate.latitude,
+        longitude: cordinate.longitude,
+      },
+    });
     if (onStarted) onStarted(shift, formattedStart);
-    intervalRef.current = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
   };
 
+  //when click on Clock Out button
   const stopTimer = () => {
+    // stop timer
     clearInterval(intervalRef.current);
+    intervalRef.current = null;
     setIsRunning(false);
 
+    // get current time
     const end = new Date();
     const formattedEnd = end.toLocaleTimeString("en-GB", {
       hour12: false,
@@ -172,6 +245,7 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
     });
     const date = end.toLocaleDateString("en-GB");
 
+    // prepare shift detail to show in dialog
     const detail = {
       date,
       shift: selectedShift,
@@ -181,14 +255,9 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
       workHours: formatTime(seconds),
     };
     if (onShowShiftDetail) onShowShiftDetail(detail);
-
     if (onStopped) onStopped(formatTime(seconds));
     setSeconds(0);
   };
-
-  useEffect(() => {
-    return () => clearInterval(intervalRef.current);
-  }, []);
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
@@ -197,40 +266,12 @@ function TimerButton({ onStopped, onStarted, onShowShiftDetail }) {
       {!isRunning ? (
         <>
           <Button
-            onClick={() => setShowDialog(true)}
+            onClick={() => startTimer(shift?.name || null)}
             className="rounded-full w-40 h-40 bg-blue-500 hover:bg-blue-600 text-white text-2xl sm:text-3xl font-custom shadow-lg flex flex-col items-center justify-center"
           >
             <Timer className="w-10 h-10 mb-2" />
             Clock In
           </Button>
-
-          {showDialog && (
-            <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
-              <div className="relative bg-white rounded-xl p-6 w-[90%] max-w-sm text-center space-y-4 shadow-lg">
-                <button
-                  onClick={() => setShowDialog(false)}
-                  className="absolute top-2 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold"
-                  aria-label="Close"
-                >
-                  &times;
-                </button>
-                <h2 className="text-xl font-custom">Select Shift</h2>
-                <div className="grid grid-cols-1 gap-4">
-                  {["Part time", "Security Shift", "HR", "Developer"].map(
-                    (shift) => (
-                      <Button
-                        key={shift}
-                        onClick={() => startTimer(shift)}
-                        className="bg-white hover:bg-blue-400 hover:text-white text-blue-400 font-custom border border-blue-600"
-                      >
-                        {shift}
-                      </Button>
-                    )
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
         </>
       ) : (
         <>
@@ -291,7 +332,7 @@ function MobileHeader() {
       {/* User Profile Section */}
       <div className="bg-white rounded-xl shadow-sm">
         <button
-          onClick={() => { }}
+          onClick={() => {}}
           className="w-full p-4 flex items-center gap-4 hover:bg-[#5494DA33] transition-colors"
         >
           <img
@@ -349,6 +390,43 @@ export default function Attendance() {
   const [activeTab, setActiveTab] = useState("attachments");
   const [attachments, setAttachments] = useState([]);
 
+  // get attendances
+  const { data: attendances = [] } = useQuery({
+    queryKey: ["user-attendances"],
+    queryFn: getAttendances,
+  });
+
+  // get current shift
+  const { data: shift } = useQuery({
+    queryKey: ["user-shift"],
+    queryFn: getShift,
+  });
+
+  //updated total worked hours
+  const { data: totalWorkedHours } = useQuery({
+    queryKey: ["my-total-worked-hours"],
+    queryFn: getTotalWorkedHours,
+  });
+
+  console.log(totalWorkedHours);
+
+  // Get today's attendance record (most recent one)
+  const todayAttendance = attendances.length > 0 ? attendances[0] : null;
+
+  // Check if there's an ongoing session (last transaction is checkIn)
+  const isOnGoing =
+    todayAttendance &&
+    todayAttendance.transactions.length > 0 &&
+    todayAttendance.transactions[todayAttendance.transactions.length - 1]
+      .type === "checkIn";
+
+  // Update hasClockedIn state when isOnGoing changes
+  useEffect(() => {
+    if (isOnGoing) {
+      setHasClockedIn(true);
+    }
+  }, [isOnGoing, attendances]);
+
   return (
     <div>
       {/* Mobile Header - Only visible on mobile */}
@@ -377,6 +455,7 @@ export default function Attendance() {
         {/* Timer Section */}
         <div className="bg-white rounded-xl shadow-sm py-6 px-6 border w-full xl:w-2/3 flex justify-center items-center min-h-[350px]">
           <TimerButton
+            hasClockedIn={hasClockedIn}
             onStopped={(duration) => {
               const end = new Date();
               const endTime = end.toLocaleTimeString("en-GB", {
@@ -404,6 +483,10 @@ export default function Attendance() {
               setShiftDetail(detail);
               setShowShiftDetail(true);
             }}
+            shift={shift}
+            currentTotalWorkedHours={
+              totalWorkedHours ? convertToSeconds(totalWorkedHours) : 0
+            }
           />
         </div>
 
@@ -418,7 +501,7 @@ export default function Attendance() {
             </div>
 
             <p className="text-4xl sm:text-5xl font-custom text-gray-700">
-              {stoppedTime}
+              {totalWorkedHours ? totalWorkedHours : stoppedTime}
             </p>
 
             {startTime && startTime.shift && startTime.time && (
@@ -440,10 +523,11 @@ export default function Attendance() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("attachments")}
-                    className={`text-base font-medium font-custom transition-colors ${activeTab === "attachments"
+                    className={`text-base font-medium font-custom transition-colors ${
+                      activeTab === "attachments"
                         ? "text-blue-500"
                         : "text-black"
-                      }`}
+                    }`}
                   >
                     Attachments
                   </button>
@@ -451,8 +535,9 @@ export default function Attendance() {
                   <button
                     type="button"
                     onClick={() => setActiveTab("daylog")}
-                    className={`text-base font-medium font-custom transition-colors ${activeTab === "daylog" ? "text-blue-500" : "text-black"
-                      }`}
+                    className={`text-base font-medium font-custom transition-colors ${
+                      activeTab === "daylog" ? "text-blue-500" : "text-black"
+                    }`}
                   >
                     Day Log
                   </button>
@@ -466,7 +551,7 @@ export default function Attendance() {
                         type="text"
                         className="w-full text-sm font-custom text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5"
                         placeholder="Add attachment(s) here"
-                        onChange={() => { }}
+                        onChange={() => {}}
                       />
                     </div>
                   ) : (
@@ -523,7 +608,7 @@ export default function Attendance() {
       />
 
       <SuccessDialog open={showSuccess} onClose={() => setShowSuccess(false)} />
-      <TimesheetTable />
+      <TimesheetTable attendances={attendances} shift={shift} />
     </div>
   );
 }
