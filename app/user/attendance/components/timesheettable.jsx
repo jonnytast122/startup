@@ -8,12 +8,17 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import React from "react";
 import { useMemo, useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateRange } from "react-date-range";
 import { format } from "date-fns";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
+import { useQuery } from "@tanstack/react-query";
+import { getAttendances, getShift } from "@/lib/api/userAttendance";
+import { formatTime, formatWorkHours } from "@/lib/helper/dateTimeConveter";
+import { reduce } from "lodash";
 
 /* =======================
    Fake Timesheet Data
@@ -256,14 +261,12 @@ function Controls({ selectedRange, setSelectedRange }) {
 /* =======================
    Main Component
    ======================= */
-export default function TimesheetTable() {
+export default function TimesheetTable({ attendances = [] , shift }) {
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 7, 1),
-    endDate: new Date(2025, 7, 31),
+    endDate: new Date(2025, 12, 31),
     key: "selection",
   });
-
-  const data = useMemo(() => fakeData, [selectedRange]);
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-4 sm:px-6 border mt-5 mb-10 w-full overflow-x-auto">
@@ -284,11 +287,11 @@ export default function TimesheetTable() {
       <div className="mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
         <span>
           <span className="font-semibold text-black">Total Working Day:</span>{" "}
-          {data.length} day
+          {attendances.length} day
         </span>
         <span>
-          <span className="font-semibold text-black">Total Regular:</span> 46:48
-          hours
+          <span className="font-semibold text-black">Total Regular:</span> {formatWorkHours(reduce(attendances, (sum, row) => sum + row.workHours, 0))} 
+          {" "}hours
         </span>
       </div>
 
@@ -311,10 +314,10 @@ export default function TimesheetTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.map((row, i) => (
-            <>
+          {attendances.map((row, i) => (
+            <React.Fragment key={row.date}>
               {/* Main row */}
-              <TableRow key={i} className="text-sm font-custom">
+              <TableRow className="text-sm font-custom">
                 <TableCell></TableCell>
                 <TableCell>
                   {new Date(row.date).toLocaleDateString("en-GB", {
@@ -343,11 +346,11 @@ export default function TimesheetTable() {
                     {row.status}
                   </span>
                 </TableCell>
-                <TableCell>{row.start}</TableCell>
-                <TableCell>{row.break}</TableCell>
-                <TableCell>{row.end}</TableCell>
-                <TableCell>{row.total}</TableCell>
-                <TableCell className="font-semibold">{row.daily}</TableCell>
+                <TableCell>{formatTime(row.transactions[0].time)}</TableCell>
+                <TableCell>{shift?.break ? `${shift.break.start} - ${shift.break.end}` : "--"}</TableCell>
+                <TableCell>{formatTime(row.transactions[row.transactions.length - 1].time)}</TableCell>
+                <TableCell>{formatWorkHours(row.workHours)}</TableCell>
+                <TableCell className="font-semibold">{formatWorkHours(row.workHours)}</TableCell>
                 <TableCell>{row.note}</TableCell>
               </TableRow>
 
@@ -373,7 +376,7 @@ export default function TimesheetTable() {
                     <TableCell></TableCell>
                   </TableRow>
                 ))}
-            </>
+            </React.Fragment>
           ))}
         </TableBody>
       </Table>

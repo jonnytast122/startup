@@ -75,6 +75,15 @@ const ApiRoutes = {
     getById: `${BASE_URL}/user/{id}`,
     search: `${BASE_URL}/users/search`,
   },
+
+  userAttendance: {
+    clockIn: `${BASE_URL}/attendance/clock-in`,
+    clockOut: `${BASE_URL}/attendance/clock-out`,
+    getAttendances: `${BASE_URL}/attendance/me`,
+    getTodayAttendances: `${BASE_URL}/attendance/me/today`,
+    getTotalWorkedHours: `${BASE_URL}/attendance/me/total-work-hours`,
+    getSummary: `${BASE_URL}/attendance/me/summary`,
+  },
 };
 
 export default ApiRoutes;
