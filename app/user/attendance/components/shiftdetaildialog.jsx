@@ -1,9 +1,43 @@
 import { MapPin, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
+import { useState, useEffect } from "react";
+import { useMutation } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
+import { clockOut } from "@/lib/api/userAttendance";
 
 export default function ShiftDetailDialog({ open, detail, onClose, onRequestLeave }) {
-  const [note, setNote] = React.useState("");
+  const [note, setNote] = useState("");
+  const [cordinate,setCordinate] = useState({ latitude: null, longitude: null });
+  const queryClient = useQueryClient();
+
+  // Get current location
+  useEffect(() => {
+
+    if("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCordinate({ latitude, longitude });
+      });
+    }
+
+  }, [])
+
+  // Clock out mutation function
+  const clockOutMutation = useMutation({
+    mutationFn: clockOut,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["attendances"]);
+      queryClient.invalidateQueries(["my-total-worked-hours"]);
+    },
+  });
+
+  //when submit clock out
+  const onSubmit = () => {
+    clockOutMutation.mutate({ geoLocation: { latitude: cordinate.latitude, longitude: cordinate.longitude } });
+    onClose();
+  };
+
 
   if (!open || !detail) return null;
 
@@ -120,7 +154,7 @@ export default function ShiftDetailDialog({ open, detail, onClose, onRequestLeav
         <div className="flex flex-row gap-5 px-8 pb-8">
           <Button
             className="flex-1 rounded-full bg-[#3B8AFF] text-white text-lg font-custom py-3 shadow-none hover:bg-[#246dc3]"
-            onClick={onClose}
+            onClick={onSubmit}
           >
             Confirm hours
           </Button>
