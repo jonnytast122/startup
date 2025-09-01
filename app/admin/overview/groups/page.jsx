@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import AddGroupDialog from "./components/add-group-dialog";
 import EditGroupDialog from "./components/edit-group-dialog";
 import AddSectionDialog from "./components/add-section-dialog";
+import ConfirmDeleteDialog from "./components/confirm-delete-dialog";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -27,6 +28,7 @@ import {
   deleteGroup,
   addSection,
   deleteSection,
+  updateSection,
 } from "@/lib/api/group";
 
 export default function GroupPage() {
@@ -39,7 +41,6 @@ export default function GroupPage() {
   });
 
   // States
-  const [confirmDeleteSection, setConfirmDeleteSection] = useState(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isSectionOpen, setIsSectionOpen] = useState(false);
   const [newGroup, setNewGroup] = useState({
@@ -48,68 +49,28 @@ export default function GroupPage() {
     members: [],
   });
   const [newSection, setNewSection] = useState("");
-  const [confirmDelete, setConfirmDelete] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState({
-    name: "",
-    section: "",
-    members: [],
-  });
   const [isViewOnly, setIsViewOnly] = useState(false);
+  const [newSectionColor, setNewSectionColor] = useState("#000000");
 
-  // Open Add Group dialog - FIXED
-  const openAddModal = (sectionId) => {
-    const initialGroup = {
-      name: "",
-      section: sectionId,
-      members: [],
-    };
-    setNewGroup(initialGroup);
-    setIsAddOpen(true);
+  // Inline section editing
+  const [editingSectionId, setEditingSectionId] = useState(null);
+  const [editName, setEditName] = useState("");
 
-    console.log("Opening Add Group Modal for Section ID:", sectionId);
-    console.log("New Group Data:", initialGroup);
-  };
+  // Delete dialogs
+  const [deleteTarget, setDeleteTarget] = useState(null); // { type: "section"|"group", id, name }
 
-  // Open Edit Group dialog
-  const openEditModal = (sectionId, group, view = false) => {
-    setEditDialogOpen(true);
-    // setEditingGroup({ ...group, section: sectionId });
-    setNewGroup({ ...group, section: sectionId });
-    setIsViewOnly(view);
-  };
-
-  const handleSaveEditedGroup = () => {
-    setEditDialogOpen(false);
-  };
-
-  const handleConfirmSection = () => {
-    setIsSectionOpen(false);
-    setNewSection("");
-    addSectionMutation.mutate({ name: newSection });
-  };
-
+  // --- Mutations ---
   const addSectionMutation = useMutation({
     mutationFn: addSection,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["sections"]);
-      setError("");
-    },
-    onError: (error) => {
-      console.log("Error deleting group:", error);
-      setError("Something went wrong. Please try again.");
-    },
+    onSuccess: () => queryClient.invalidateQueries(["sections"]),
   });
 
   const deleteGroupMutation = useMutation({
     mutationFn: deleteGroup,
     onSuccess: () => {
       queryClient.invalidateQueries(["sections"]);
-      setError("");
-    },
-    onError: (error) => {
-      console.log("Error deleting group:", error);
-      setError("Something went wrong. Please try again.");
+      setDeleteTarget(null);
     },
   });
 
@@ -117,21 +78,63 @@ export default function GroupPage() {
     mutationFn: deleteSection,
     onSuccess: () => {
       queryClient.invalidateQueries(["sections"]);
-      setError("");
-    },
-    onError: (error) => {
-      console.log("Error deleting group:", error);
-      setError("Something went wrong. Please try again.");
+      setDeleteTarget(null);
     },
   });
 
-  const onDeleteGroup = (id) => {
-    deleteGroupMutation.mutate(id);
+  const updateSectionMutation = useMutation({
+    mutationFn: ({ id, name }) => updateSection(id, { name }),
+    onSuccess: () => queryClient.invalidateQueries(["sections"]),
+  });
+
+  // --- Helpers ---
+  const openAddModal = (sectionId) => {
+    setNewGroup({ name: "", section: sectionId, members: [] });
+    setIsAddOpen(true);
   };
 
-  // Render Section with nested groups
+  const openEditModal = (sectionId, group, view = false) => {
+    setEditDialogOpen(true);
+    setNewGroup({ ...group, section: sectionId });
+    setIsViewOnly(view);
+  };
+
+  const handleSaveEditedGroup = () => setEditDialogOpen(false);
+
+  const handleConfirmSection = () => {
+    setIsSectionOpen(false);
+    setNewSection("");
+    addSectionMutation.mutate({ name: newSection, color: newSectionColor });
+  };
+
+  // Inline section edit handlers
+  const startEditing = (section) => {
+    setEditingSectionId(section._id);
+    setEditName(section.name);
+  };
+
+  const cancelEditing = () => {
+    setEditingSectionId(null);
+    setEditName("");
+  };
+
+  const saveEdit = (id) => {
+    updateSectionMutation.mutate({ id, name: editName });
+    setEditingSectionId(null);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === "section") {
+      deleteSectionMutation.mutate(deleteTarget.id);
+    } else {
+      deleteGroupMutation.mutate(deleteTarget.id);
+    }
+  };
+
+  // --- Render Section with groups ---
   const renderGroupSection = (section) => {
-    const bgColor = section.color || "#f3f4f6";
+    const bgColor = section?.color;
 
     return (
       <div key={section._id} className="mb-7 overflow-hidden">
@@ -140,15 +143,47 @@ export default function GroupPage() {
           style={{ backgroundColor: bgColor }}
         >
           <div className="flex items-center gap-6">
-            <h2 className="font-semibold text-xl">{section.name}</h2>
-            <button onClick={() => deleteSectionMutation.mutate(section._id)}>
+            {editingSectionId === section._id ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="border rounded px-2 py-1 text-sm"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEdit(section._id);
+                    if (e.key === "Escape") cancelEditing();
+                  }}
+                />
+              </div>
+            ) : (
+              <h2
+                className="font-semibold text-xl cursor-pointer"
+                onDoubleClick={() => startEditing(section)}
+              >
+                {section.name}
+              </h2>
+            )}
+
+            <button
+              onClick={() =>
+                setDeleteTarget({
+                  type: "section",
+                  id: section._id,
+                  name: section.name,
+                })
+              }
+            >
               <Trash2 className="w-5 h-5 text-black hover:text-red-600" />
             </button>
           </div>
+
           <span className="text-gray-600">
             {section.groups?.length || 0} groups
           </span>
         </div>
+
         <div className="bg-white mt-1">
           <Table>
             <TableHeader>
@@ -156,7 +191,6 @@ export default function GroupPage() {
                 <TableHead className="w-[200px]">Group Name</TableHead>
                 <TableHead className="w-[120px]">Members</TableHead>
                 <TableHead className="w-[200px]">Created By</TableHead>
-                <TableHead className="w-[200px]">Administered By</TableHead>
                 <TableHead className="w-[80px] text-right">Edit</TableHead>
                 <TableHead className="w-[130px] text-right"></TableHead>
               </TableRow>
@@ -169,11 +203,34 @@ export default function GroupPage() {
                   onClick={() => openEditModal(section._id, group, true)}
                 >
                   <TableCell>{group.name}</TableCell>
-                  <TableCell>{group.memberCount || 0}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center space-x-2">
+                      {group.members?.map((member) =>
+                        member.info?.profileImg ? (
+                          <img
+                            key={member._id}
+                            src={member.info.profileImg}
+                            alt={member.name}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div
+                            key={member._id}
+                            className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center"
+                          >
+                            {member.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </TableCell>
+
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <img
-                        // src={group.createdBy?.profilePic || "/default.jpg"}
                         src={`https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png`}
                         alt={group.createdBy?.name || "User"}
                         className="w-8 h-8 rounded-full"
@@ -181,31 +238,7 @@ export default function GroupPage() {
                       <span>{group.createdBy?.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center">
-                      {(group.administeredBy || [])
-                        .slice(0, 3)
-                        .map((admin, i) => (
-                          <img
-                            key={admin}
-                            // src={`/path/to/profiles/${admin
-                            //   .replace(/\s+/g, "")
-                            //   .toLowerCase()}.jpg`}
-                            src={`https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png`}
-                            alt={admin}
-                            className={`w-8 h-8 rounded-full border-2 border-white -ml-2 ${
-                              i === 0 ? "ml-0" : ""
-                            }`}
-                            title={admin}
-                          />
-                        ))}
-                      {(group.administeredBy?.length || 0) > 3 && (
-                        <div className="-ml-2 w-8 h-8 rounded-full bg-gray-300 text-sm text-center leading-8 text-gray-700 border-2 border-white">
-                          +{group.administeredBy.length - 3}
-                        </div>
-                      )}
-                    </div>
-                  </TableCell>
+
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -227,7 +260,13 @@ export default function GroupPage() {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => onDeleteGroup(group._id)}
+                          onClick={() =>
+                            setDeleteTarget({
+                              type: "group",
+                              id: group._id,
+                              name: group.name,
+                            })
+                          }
                         >
                           Delete
                         </DropdownMenuItem>
@@ -242,7 +281,7 @@ export default function GroupPage() {
                 <TableCell colSpan={4} className="text-left">
                   <Button
                     className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                    onClick={() => openAddModal(section._id)} // Only call openAddModal here
+                    onClick={() => openAddModal(section._id)}
                   >
                     <Plus size={12} className="mr-2" /> Add Group
                   </Button>
@@ -275,14 +314,14 @@ export default function GroupPage() {
 
       {/* Add Group Dialog */}
       <AddGroupDialog
-        isOpen={isAddOpen} // matches dialog's `isOpen`
+        isOpen={isAddOpen}
         onClose={() => {
           setNewGroup({ members: [] });
           setIsAddOpen(false);
-        }} // matches dialog's `onClose`
+        }}
         newGroup={newGroup}
         setNewGroup={setNewGroup}
-        members={[]} // your members data here
+        members={[]}
       />
 
       {/* Edit Group Dialog */}
@@ -298,12 +337,22 @@ export default function GroupPage() {
         members={[]}
       />
 
+      {/* Confirm Delete Dialog */}
+      <ConfirmDeleteDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        name={deleteTarget?.name || ""}
+      />
+
       {/* Add Section Dialog */}
       <AddSectionDialog
         open={isSectionOpen}
         setOpen={setIsSectionOpen}
         newSection={newSection}
         setNewSection={setNewSection}
+        newSectionColor={newSectionColor}
+        setNewSectionColor={setNewSectionColor}
         onConfirm={handleConfirmSection}
         isLoading={addSectionMutation.isPending}
       />

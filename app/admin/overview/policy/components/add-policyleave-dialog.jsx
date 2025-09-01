@@ -195,9 +195,9 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
         type: timeOffUnit,
         value: timeOffValue,
       },
-      employee: []
+      employee: [],
     };
-    if(policy.id){
+    if (policy.id) {
       updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
     } else {
       createPolicyMutation.mutate(newPolicy);

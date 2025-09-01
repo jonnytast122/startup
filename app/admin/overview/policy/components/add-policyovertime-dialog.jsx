@@ -13,15 +13,27 @@ import { createOvertimeSetting, updateOvertimeSetting } from "@/lib/api/policy";
 
 const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const months = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
   const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
-  const getMonthByNumber = (monthNumber) => months[monthNumber - 1] || "January";
+  const getMonthByNumber = (monthNumber) =>
+    months[monthNumber - 1] || "January";
   const getMonthNumberByName = (monthName) => months.indexOf(monthName) + 1;
 
-  const getDayByNumber = (dayNumber) => days.includes(dayNumber) ? dayNumber : 1;
+  const getDayByNumber = (dayNumber) =>
+    days.includes(dayNumber) ? dayNumber : 1;
 
   const [policyName, setPolicyName] = useState("");
   const [overtimeLimit, setOvertimeLimit] = useState(1);
@@ -77,7 +89,7 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
       multiplier: multiplier,
     };
 
-    if(policy.id){
+    if (policy.id) {
       updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
     } else {
       createPolicyMutation.mutate(newPolicy);
@@ -102,10 +114,16 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
 
-        <div className={`space-y-6 px-4 ${isViewMode ? "pointer-events-none opacity-60" : ""}`}>
+        <div
+          className={`space-y-6 px-4 ${
+            isViewMode ? "pointer-events-none opacity-60" : ""
+          }`}
+        >
           {/* Policy Name */}
           <div className="flex flex-wrap md:flex-nowrap items-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Policy name:</label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+              Policy name:
+            </label>
             <input
               type="text"
               value={policyName}
@@ -118,7 +136,9 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Overtime Limit */}
           <div className="flex flex-wrap md:flex-nowrap items-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Overtime limit:</label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+              Overtime limit:
+            </label>
             <div className="flex flex-col md:flex-row items-start gap-2 w-full md:w-2/3">
               <p className="text-sm text-[#3F4648]">
                 The amount of hour that will be used
@@ -138,7 +158,9 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Month & Day */}
           <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Beginning of the month:</label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+              Beginning of the month:
+            </label>
             <div className="flex gap-3">
               <select
                 value={selectedMonth}
@@ -147,7 +169,9 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                 disabled={isViewMode}
               >
                 {months.map((m) => (
-                  <option key={m} value={m}>{m}</option>
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
                 ))}
               </select>
 
@@ -159,7 +183,8 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
               >
                 {days.map((d) => (
                   <option key={d} value={d}>
-                    {d}{getOrdinal(d)}
+                    {d}
+                    {getOrdinal(d)}
                   </option>
                 ))}
               </select>
@@ -168,7 +193,9 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
 
           {/* Multiplier */}
           <div className="flex flex-wrap md:flex-nowrap items-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">Multiplier:</label>
+            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+              Multiplier:
+            </label>
             <div className="flex flex-col md:flex-row items-start gap-2 w-full md:w-2/3">
               <p className="text-sm text-[#3F4648]">
                 The amount of multiplier that will be used
@@ -181,7 +208,9 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                   className="border border-gray-300 rounded-lg p-2 w-20 text-sm"
                   disabled={isViewMode}
                 />
-                <span className="text-sm text-[#3F4648]">time of overtime rate</span>
+                <span className="text-sm text-[#3F4648]">
+                  time of overtime rate
+                </span>
               </div>
             </div>
           </div>
