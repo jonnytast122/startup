@@ -17,9 +17,11 @@ export const fetchMembers = async () => {
 };
 
 export const fetchGroup = async (groupId: string) => {
-  const response = await api.get(ApiRoutes.group.getId.replace("{id}", groupId));
+  const response = await api.get(
+    ApiRoutes.group.getId.replace("{id}", groupId)
+  );
   return response.data;
-}
+};
 
 /**
  * Add a new section.
@@ -41,29 +43,25 @@ export const addSection = async (data: { name: string }) => {
  * @returns {Promise} Axios response with the created group data
  */
 // export const addGroup = async (sectionId: string, data: { name: string }) => {
-export const addGroup = async (data:any) => {
-  const response = await api.post(
-    ApiRoutes.group.create,
-    data
-  );
-  if (response.status !== 201) throw new Error('Failed to create overtime type');
+export const addGroup = async (data: any) => {
+  const response = await api.post(ApiRoutes.group.create, data);
+  if (response.status !== 201)
+    throw new Error("Failed to create overtime type");
   return response.data;
 };
 
-export const updateGroup = async ({id, data}: {id: string, data:any}) => {
+export const updateGroup = async ({ id, data }: { id: string; data: any }) => {
   const response = await api.put(
     ApiRoutes.group.update.replace("{id}", id),
     data
   );
   return response.data;
-}
+};
 
 export const deleteGroup = async (id: string) => {
-  const response = await api.delete(
-    ApiRoutes.group.delete.replace("{id}", id)
-  );
+  const response = await api.delete(ApiRoutes.group.delete.replace("{id}", id));
   return response.data;
-}
+};
 
 /**
  * Update an existing group.

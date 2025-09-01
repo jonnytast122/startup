@@ -62,7 +62,7 @@ export default function AddGroupDialog({
     addGroupMutation.mutate({
       name: newGroup.name,
       section: newGroup.section,
-      members: newGroup.members,
+      members: Array.isArray(newGroup.members) ? newGroup.members : [],
     });
   };
 
@@ -138,7 +138,6 @@ export default function AddGroupDialog({
               const firstName = `${member?.employee?.name.split(" ")[1]}` || "";
               const fullName = `${lastName} ${firstName}`;
               const id = member?.employee?.id || member?.id;
-
               const checked = newGroup?.members?.includes(id) ?? false;
 
               return (
@@ -202,7 +201,6 @@ export default function AddGroupDialog({
                 className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
                 onClick={onUpdate}
               >
-                {/* {addGroupMutation.isPending ? "Updating..." : "Update"} */}
                 {"Update"}
               </Button>
             ) : (

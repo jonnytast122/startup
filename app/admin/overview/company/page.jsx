@@ -39,8 +39,6 @@ export default function SettingPage() {
   const [companyName, setCompanyName] = useState("");
   const [industry, setIndustry] = useState("");
   const [numberOfEmployees, setNumberOfEmployees] = useState("");
-  const [country, setCountry] = useState("");
-  const [branchManager, setBranchManager] = useState("");
 
   // Department states
   const [selectedNameDepartment, setSelectedNameDepartment] = useState({});
