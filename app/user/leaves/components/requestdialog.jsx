@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -26,6 +26,9 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getMyPolicies, requestLeave } from "@/lib/api/userLeave";
 
 /* --------- inline TimeInput with scoped CSS to hide native icon --------- */
 function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
@@ -88,6 +91,7 @@ export default function RequestDialog() {
   const [successOpen, setSuccessOpen] = useState(false);
 
   const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
+  const [selectedPolicy,setSeletedPolicy] = useState(null);
   const [allDay, setAllDay] = useState(true);
 
   // All-day ON range (default today)
@@ -105,6 +109,19 @@ export default function RequestDialog() {
   const [openStartPop, setOpenStartPop] = useState(false);
   const [openEndPop, setOpenEndPop] = useState(false);
   const [openOneDayPop, setOpenOneDayPop] = useState(false);
+
+  const { data: policies } = useQuery({ queryKey: ["user-leave-policies"], queryFn: getMyPolicies });
+  const requestLeaveMutation = useMutation({ mutationFn: requestLeave, 
+    onSuccess: () => {;
+      queryClient.invalidateQueries(["user-leave-requests"]);
+    },
+   });
+
+  useEffect(() => {
+    if (policies) {
+      setSeletedPolicy(policies[0]);
+    }
+  }, [policies]);
 
   const closeAllCalendars = () => {
     setOpenStartPop(false);
@@ -128,18 +145,50 @@ export default function RequestDialog() {
   const totalH = Math.floor(totalWorkMins / 60);
   const totalM = String(totalWorkMins % 60).padStart(2, "0");
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    // Validation
     if (!allDay && toMin(endTime) <= toMin(startTime)) {
       alert("End time must be after start time.");
       return;
     }
-    setDrawerOpen(false);
-    setTimeout(() => {
-      setSuccessOpen(true);
-      setTimeout(() => {
-        setSuccessOpen(false);
-      }, 600);
-    }, 220);
+  
+    // Build dateTime array
+    let dateTimes = [];
+    if (allDay) {
+      let d = new Date(startDate);
+      while (d <= endDate) {
+        dateTimes.push({
+          start_time: new Date(d.setHours(0, 0, 0, 0)).toISOString(),
+          end_time: new Date(d.setHours(23, 59, 59, 999)).toISOString(),
+        });
+        d = new Date(d);
+        d.setDate(d.getDate() + 1);
+      }
+    } else {
+      const start = new Date(oneDayDate);
+      start.setHours(...startTime.split(":").map(Number));
+      const end = new Date(oneDayDate);
+      end.setHours(...endTime.split(":").map(Number));
+  
+      dateTimes.push({
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+      });
+    }
+
+    console.log(selectedPolicy)
+  
+    // Build payload
+    const payload = {
+      company: policies[0].company, // replace with actual company ID
+      type: selectedPolicy?._id,
+      dateTime: dateTimes,
+      startDate: dateTimes[0]?.start_time,
+      endDate: dateTimes[dateTimes.length - 1]?.end_time,
+      note,
+    };
+
+    requestLeaveMutation.mutate(payload);
   };
 
   return (
@@ -185,14 +234,14 @@ export default function RequestDialog() {
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Leave Policies</span>
-                  <Select value={overtimeType} onValueChange={setOvertimeType}>
+                  <Select value={selectedPolicy} onValueChange={setSeletedPolicy}>
                     <SelectTrigger className="h-9 w-44 rounded-full text-sm">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {overtimeTypes.map((t) => (
-                        <SelectItem key={t} value={t} className="text-sm">
-                          {t}
+                      {policies?.map((policy) => (
+                        <SelectItem key={policy.id} value={policy} className="text-sm">
+                          {policy.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
