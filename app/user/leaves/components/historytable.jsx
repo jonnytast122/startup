@@ -27,96 +27,8 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
-const fakeData = [
-  {
-    date: "2025-07-02",
-    policy: "Sick Leave",
-    requestedOn: "2025-07-02",
-    totalOvertime: "2 hour",
-    status: "Pending",
-    totalHour: "08:00",
-    note: "Reviewed by manager",
-  },
-  {
-    date: "2025-07-04",
-    policy: "Annual Leave",
-    requestedOn: "2025-07-04",
-    totalOvertime: "3 hour",
-    status: "Approved",
-    totalHour: "07:30",
-    note: "Auto-submitted",
-  },
-  {
-    date: "2025-07-06",
-    policy: "Weekend OT",
-    requestedOn: "2025-07-06",
-    totalOvertime: "4 hour",
-    status: "Rejected",
-    totalHour: "06:45",
-    note: "—",
-  },
-];
-
-const fmtKey = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-};
-
-function getDatesInRange(startDate, endDate) {
-  const dates = [];
-  let current = new Date(startDate);
-  current.setHours(0, 0, 0, 0);
-  const end = new Date(endDate);
-  end.setHours(0, 0, 0, 0);
-  while (current <= end) {
-    dates.push(new Date(current));
-    current.setDate(current.getDate() + 1);
-  }
-  return dates;
-}
-
-function getTimesheetRows(selectedRange) {
-  if (!selectedRange.startDate || !selectedRange.endDate) return [];
-  const allDates = getDatesInRange(
-    selectedRange.startDate,
-    selectedRange.endDate
-  );
-
-  const fakeMap = {};
-  for (const item of fakeData) {
-    fakeMap[item.date] = item;
-  }
-
-  const weeks = [];
-  for (let i = 0; i < allDates.length; i += 7) {
-    const slice = allDates.slice(i, i + 7);
-    const weekLabel = `${slice[0].toLocaleDateString("en-GB", {
-      month: "short",
-      day: "2-digit",
-    })} - ${slice[slice.length - 1].toLocaleDateString("en-GB", {
-      month: "short",
-      day: "2-digit",
-    })}`;
-
-    weeks.push({
-      week: weekLabel,
-      days: slice.map((date) => {
-        const key = fmtKey(date);
-        const info = fakeMap[key];
-        return info ? { ...info, date } : { date };
-      }),
-    });
-  }
-
-  const out = [];
-  for (const wk of weeks) {
-    out.push({ _section: true, week: wk.week });
-    out.push(...wk.days);
-  }
-  return out;
-}
+import { getMyRequests } from "@/lib/api/userLeave";
+import { useQuery } from "@tanstack/react-query";
 
 const columns = [
   {
@@ -130,7 +42,7 @@ const columns = [
     header: "Date",
     cell: ({ row }) => {
       let d = row.original.date;
-      if (!d || row.original._section) return "";
+      if (!d) return "--";
       if (typeof d === "string") d = new Date(d);
       return d.toLocaleDateString("en-GB", {
         weekday: "short",
@@ -172,9 +84,9 @@ const columns = [
       const s = row.original.status;
       if (!s) return "--";
       const color =
-        s === "Approved"
+        s.toLowerCase() === "approved"
           ? "text-blue-600"
-          : s === "Pending"
+          : s.toLowerCase() === "pending"
           ? "text-yellow-600"
           : "text-red-600";
       return <span className={`font-medium ${color}`}>{s}</span>;
@@ -192,6 +104,32 @@ const columns = [
   },
 ];
 
+// 🔹 Transform API data into flat rows for table
+function normalizeRequests(requests) {
+  return requests.flatMap((req) =>
+    req.dateTime.map((dt) => {
+      const start = new Date(dt.start_time);
+      const end = new Date(dt.end_time);
+      const diffHrs = Math.floor((end - start) / (1000 * 60 * 60));
+      const diffMin = Math.floor(((end - start) % (1000 * 60 * 60)) / (1000 * 60));
+
+      return {
+        date: dt.start_time,
+        policy: req.type?.name || "--",
+        requestedOn: req.createdAt,
+        totalOvertime: "--", // adjust if you track OT separately
+        status: req.status
+          ? req.status.charAt(0).toUpperCase() + req.status.slice(1)
+          : "--",
+        totalHour: `${String(diffHrs).padStart(2, "0")}:${String(
+          diffMin
+        ).padStart(2, "0")}`,
+        note: req.note || "--",
+      };
+    })
+  );
+}
+
 export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
@@ -201,18 +139,13 @@ export default function TimesheetTable() {
   });
   const datePickerRef = useRef(null);
 
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
-        setShowDatePicker(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside, true);
-    return () =>
-      document.removeEventListener("mousedown", handleClickOutside, true);
-  }, []);
+  const { data: requests = [] } = useQuery({
+    queryKey: ["user-leave-requests"],
+    queryFn: getMyRequests,
+  });
 
-  const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
+  // 🔹 transform requests
+  const data = useMemo(() => normalizeRequests(requests), [requests]);
 
   const table = useReactTable({
     columns,
@@ -224,6 +157,17 @@ export default function TimesheetTable() {
     { value: "as CSV", label: "as CSV" },
     { value: "as XLS", label: "as XLS" },
   ];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(e.target)) {
+        setShowDatePicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside, true);
+    return () =>
+      document.removeEventListener("mousedown", handleClickOutside, true);
+  }, []);
 
   return (
     <div className="w-full overflow-x-auto">
@@ -287,7 +231,7 @@ export default function TimesheetTable() {
         <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
           <span>
             <span className="font-semibold text-black">Total Leaves:</span>{" "}
-            {data.filter((r) => !r._section).length} day
+            {data.length} day
           </span>
         </div>
 
@@ -322,24 +266,20 @@ export default function TimesheetTable() {
                   </TableCell>
                 </TableRow>
               ) : (
-                data.map((row, i) =>
-                  row._section ? (
-                    <tr key={`section-${row.week}`}></tr>
-                  ) : (
-                    <TableRow key={i} className="hover:bg-white transition">
-                      {table.getAllColumns().map((col) => (
-                        <TableCell
-                          key={col.id}
-                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
-                        >
-                          {flexRender(col.columnDef.cell, {
-                            row: { original: row, index: i },
-                          })}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  )
-                )
+                data.map((row, i) => (
+                  <TableRow key={i} className="hover:bg-white transition">
+                    {table.getAllColumns().map((col) => (
+                      <TableCell
+                        key={col.id}
+                        className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
+                      >
+                        {flexRender(col.columnDef.cell, {
+                          row: { original: row, index: i },
+                        })}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
               )}
             </TableBody>
           </Table>

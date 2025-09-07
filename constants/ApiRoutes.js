@@ -84,6 +84,12 @@ const ApiRoutes = {
     getTotalWorkedHours: `${BASE_URL}/attendance/me/total-work-hours`,
     getSummary: `${BASE_URL}/attendance/me/summary`,
   },
+
+  userLeave: {
+    myPolicies: `${BASE_URL}/leaves/my-leave-policies`,
+    request: `${BASE_URL}/leaves/request`,
+    getRequests: `${BASE_URL}/leaves/my-requests`,
+  }
 };
 
 export default ApiRoutes;
