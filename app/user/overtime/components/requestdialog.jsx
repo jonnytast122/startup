@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import {
   Drawer,
   DrawerTrigger,
@@ -26,6 +26,10 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
+
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { requestOvertime } from "@/lib/api/userOvertime";
+import { getMyOvertimeTypes } from "@/lib/api/userOvertime";
 
 /* --------- inline TimeInput with scoped CSS to hide native icon --------- */
 function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
@@ -88,7 +92,8 @@ export default function RequestDialog() {
   const [successOpen, setSuccessOpen] = useState(false);
 
   const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
-  const [allDay, setAllDay] = useState(true);
+  const [selectedOvertimeType, setSelectedOvertimeType] = useState("");
+  const [allDay, setAllDay] = useState(false);
 
   // All-day ON range (default today)
   const [startDate, setStartDate] = useState(new Date());
@@ -105,6 +110,26 @@ export default function RequestDialog() {
   const [openStartPop, setOpenStartPop] = useState(false);
   const [openEndPop, setOpenEndPop] = useState(false);
   const [openOneDayPop, setOpenOneDayPop] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  const { data: overtimeSetting } = useQuery({
+    queryKey: ["user-overtime-setting"],
+    queryFn: () => getMyOvertimeTypes(),
+  });
+
+  const requestOvertimeMutation = useMutation({
+    mutationFn: requestOvertime,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["user-overtime-requests"]);
+    },
+  });
+
+  useEffect(() => {
+    if (overtimeSetting) {
+      setSelectedOvertimeType(overtimeSetting);
+    }
+  }, [overtimeSetting]);
 
   const closeAllCalendars = () => {
     setOpenStartPop(false);
@@ -133,13 +158,32 @@ export default function RequestDialog() {
       alert("End time must be after start time.");
       return;
     }
-    setDrawerOpen(false);
-    setTimeout(() => {
-      setSuccessOpen(true);
-      setTimeout(() => {
-        setSuccessOpen(false);
-      }, 600);
-    }, 220);
+
+    const payload = {
+      overtimeType: selectedOvertimeType, // ✅ already an ID string
+      date: format(allDay ? startDate : oneDayDate, "yyyy-MM-dd"),
+      startTime: allDay ? "00:00" : startTime,
+      endTime: allDay ? "23:59" : endTime,
+      description: note,
+    };
+
+    console.log("Payload:", payload);
+
+    requestOvertimeMutation.mutate(payload, {
+      onSuccess: () => {
+        setDrawerOpen(false);
+        setTimeout(() => {
+          setSuccessOpen(true);
+          setTimeout(() => {
+            setSuccessOpen(false);
+          }, 600);
+        }, 220);
+      },
+      onError: (err) => {
+        console.error(err);
+        alert(err?.message || "Failed to request overtime");
+      },
+    });
   };
 
   return (
@@ -163,6 +207,7 @@ export default function RequestDialog() {
         </DrawerTrigger>
 
         <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
+          <DialogTitle></DialogTitle>
           <div className="h-full min-h-screen max-h-screen w-full bg-gray-100 font-custom flex flex-col border-l border-gray-200">
             {/* Header */}
             <div className="flex items-center gap-1 px-5 py-4 flex-shrink-0">
@@ -185,14 +230,17 @@ export default function RequestDialog() {
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Overtime type</span>
-                  <Select value={overtimeType} onValueChange={setOvertimeType}>
+                  <Select
+                    value={selectedOvertimeType.name}
+                    onValueChange={setSelectedOvertimeType}
+                  >
                     <SelectTrigger className="h-9 w-44 rounded-full text-sm">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      {overtimeTypes.map((t) => (
-                        <SelectItem key={t} value={t} className="text-sm">
-                          {t}
+                      {overtimeSetting?.map((t) => (
+                        <SelectItem key={t.id} value={t.id} className="text-sm">
+                          {t.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -208,7 +256,7 @@ export default function RequestDialog() {
                   <Switch
                     checked={allDay}
                     onCheckedChange={(v) => {
-                      setAllDay(v);
+                      // setAllDay(v);
                       closeAllCalendars();
                     }}
                     className="data-[state=checked]:bg-green-500"
@@ -316,7 +364,9 @@ export default function RequestDialog() {
                   /* All day OFF -> single date + time range */
                   <>
                     <div className="mb-3">
-                      <div className="text-sm font-medium mb-1">Date and time</div>
+                      <div className="text-sm font-medium mb-1">
+                        Date and time
+                      </div>
                       <Popover
                         open={openOneDayPop}
                         onOpenChange={(o) => {
@@ -374,7 +424,11 @@ export default function RequestDialog() {
 
                     {/* Duration preview */}
                     <div className="mt-3 text-xs text-gray-700">
-                      Total time leaves: <span className="font-semibold">{totalH}:{totalM}</span> hours
+                      Total time leaves:{" "}
+                      <span className="font-semibold">
+                        {totalH}:{totalM}
+                      </span>{" "}
+                      hours
                     </div>
                   </>
                 )}
@@ -420,7 +474,9 @@ export default function RequestDialog() {
             Successfully Sent?
           </DialogTitle>
           <Smile className="w-16 h-16 mx-auto text-green-500 mb-2" />
-          <div className="text-lg text-gray-700">Please wait for the approvals.</div>
+          <div className="text-lg text-gray-700">
+            Please wait for the approvals.
+          </div>
         </DialogContent>
       </Dialog>
     </>

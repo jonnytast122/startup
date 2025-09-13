@@ -95,7 +95,13 @@ const ApiRoutes = {
     myPolicies: `${BASE_URL}/leaves/my-leave-policies`,
     request: `${BASE_URL}/leaves/request`,
     getRequests: `${BASE_URL}/leaves/my-requests`,
-  }
+  },
+
+  userOvertime: {
+    myOvertimeTypes: `${BASE_URL}/overtime-settings/me`,
+    request: `${BASE_URL}/overtime-requests`,
+    getRequests: `${BASE_URL}/overtime-requests/me`,
+  },
 };
 
 export default ApiRoutes;
