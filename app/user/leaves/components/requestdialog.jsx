@@ -27,7 +27,7 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMyPolicies, requestLeave } from "@/lib/api/userLeave";
 
 /* --------- inline TimeInput with scoped CSS to hide native icon --------- */
@@ -110,9 +110,11 @@ export default function RequestDialog() {
   const [openEndPop, setOpenEndPop] = useState(false);
   const [openOneDayPop, setOpenOneDayPop] = useState(false);
 
+  const queryClient = useQueryClient();
+
   const { data: policies } = useQuery({ queryKey: ["user-leave-policies"], queryFn: getMyPolicies });
   const requestLeaveMutation = useMutation({ mutationFn: requestLeave, 
-    onSuccess: () => {;
+    onSuccess: () => {
       queryClient.invalidateQueries(["user-leave-requests"]);
     },
    });
@@ -212,6 +214,7 @@ export default function RequestDialog() {
         </DrawerTrigger>
 
         <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
+          <DialogTitle></DialogTitle>
           <div className="h-full min-h-screen max-h-screen w-full bg-gray-100 font-custom flex flex-col border-l border-gray-200">
             {/* Header */}
             <div className="flex items-center gap-1 px-5 py-4 flex-shrink-0">
@@ -234,7 +237,7 @@ export default function RequestDialog() {
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Leave Policies</span>
-                  <Select value={selectedPolicy} onValueChange={setSeletedPolicy}>
+                  <Select value={selectedPolicy.name} onValueChange={setSeletedPolicy}>
                     <SelectTrigger className="h-9 w-44 rounded-full text-sm">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>

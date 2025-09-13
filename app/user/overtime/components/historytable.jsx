@@ -27,6 +27,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+import { getMyRequests } from "@/lib/api/userOvertime";
+import { useQuery } from "@tanstack/react-query";
+
 /* =======================
    Fake Data (unchanged)
    ======================= */
@@ -253,6 +256,35 @@ function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
   );
 }
 
+// 🔹 Transform API data into flat rows for table
+function normalizeRequests(requests) {
+  return requests.map((req) => {
+    // Parse start/end times to calculate total hours
+    const [sh, sm] = req.startTime.split(":").map(Number);
+    const [eh, em] = req.endTime.split(":").map(Number);
+
+    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60; // handle overnight cases
+    const diffHrs = Math.floor(diffMinutes / 60);
+    const diffMin = diffMinutes % 60;
+
+    return {
+      date: req.date, // keep ISO string, format in column
+      policy: req.overtimeType?.name || "--",
+      requestedOn: req.createdAt || req.date, // fallback if API doesn’t provide createdAt
+      totalOvertime: `${diffHrs}h ${diffMin}m`,
+      status: req.status
+        ? req.status.charAt(0).toUpperCase() + req.status.slice(1)
+        : "--",
+      totalHour: `${String(diffHrs).padStart(2, "0")}:${String(
+        diffMin
+      ).padStart(2, "0")}`,
+      note: req.description || "--",
+    };
+  });
+}
+
+
 /* =======================
    Component
    ======================= */
@@ -263,7 +295,12 @@ export default function TimesheetTable() {
     key: "selection",
   });
 
-  const data = useMemo(() => getTimesheetRows(selectedRange), [selectedRange]);
+  const { data: requests = [] } = useQuery({
+    queryKey: ["user-overtime-requests"],
+    queryFn: getMyRequests,
+  });
+
+  const data = useMemo(() => normalizeRequests(requests), [requests]);
 
   const table = useReactTable({
     columns,
