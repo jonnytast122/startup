@@ -81,6 +81,12 @@ const ApiRoutes = {
     getById: `${BASE_URL}/user/{id}`,
     search: `${BASE_URL}/users/search`,
   },
+  calendar: {
+    get: `${BASE_URL}/calendars/all`,
+    create: `${BASE_URL}/calendars`,
+    update: `${BASE_URL}/calendars/{id}`,
+    delete: `${BASE_URL}/calendars/{id}`,
+  },
 
   userAttendance: {
     clockIn: `${BASE_URL}/attendance/clock-in`,

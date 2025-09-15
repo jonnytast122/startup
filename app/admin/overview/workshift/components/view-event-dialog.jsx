@@ -1,28 +1,38 @@
 "use client";
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Users } from "lucide-react";
+import { format } from "date-fns";
 
 export default function ViewEventDialog({ event, onClose }) {
   if (!event) return null;
 
+  const startTime = format(new Date(event.startDate), "HH:mm");
+  const endTime = format(new Date(event.endDate), "HH:mm");
+
   return (
     <Dialog open={!!event} onOpenChange={onClose}>
       <DialogContent className="w-[400px] space-y-4">
-        <h2 className="text-lg font-semibold text-gray-700">Event Details</h2>
+        <DialogHeader>
+          <DialogTitle>Event Details</DialogTitle>
+        </DialogHeader>
 
         {/* Title */}
         <div className="flex items-center justify-between gap-2">
           <input
             disabled
-            value={event.name}
+            value={event.title}
             className="w-full px-0 py-2 outline-none font-custom text-sm bg-transparent border-b border-gray-300"
           />
           <div
-            className={`w-4 h-4 rounded-full ${
-              event.color === "red" ? "bg-red-500" : "bg-blue-500"
-            }`}
+            className="w-4 h-4 rounded-full"
+            style={{ backgroundColor: event.color }}
           />
         </div>
 
@@ -33,7 +43,7 @@ export default function ViewEventDialog({ event, onClose }) {
             <input
               disabled
               type="time"
-              value={event.start}
+              value={startTime}
               className="text-sm w-full bg-transparent outline-none"
             />
           </div>
@@ -42,7 +52,7 @@ export default function ViewEventDialog({ event, onClose }) {
             <input
               disabled
               type="time"
-              value={event.end}
+              value={endTime}
               className="text-sm w-full bg-transparent outline-none"
             />
           </div>
@@ -54,13 +64,36 @@ export default function ViewEventDialog({ event, onClose }) {
             <Users size={16} className="text-gray-500" />
             <span className="text-sm">Assigned To</span>
           </div>
-          <div className="text-xs text-gray-600 text-right">
-            {(event.assign?.selectedFirstLevels || [])
-              .map((type) => {
-                const items = event.assign?.selectedItems?.[type] || [];
-                return `${type}: ${items.join(", ")}`;
+
+          <div className="flex items-center gap-1">
+            {event.assignee?.length ? (
+              event.assignee.map((a) => {
+                const [first, ...rest] = a.name.split(" ");
+                const last = rest.length ? rest[rest.length - 1] : "";
+                const initials = (first?.[0] || "") + (last?.[0] || "");
+
+                return (
+                  <div
+                    key={a.id}
+                    className="flex items-center gap-1 text-xs text-gray-600"
+                  >
+                    {a.profile?.imageUrl ? (
+                      <img
+                        src={a.profile.imageUrl}
+                        alt={a.name}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 flex items-center justify-center text-[10px] font-medium text-white">
+                        {initials.toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                );
               })
-              .join(" • ")}
+            ) : (
+              <span className="text-xs text-gray-600">No assignees</span>
+            )}
           </div>
         </div>
 
@@ -69,34 +102,32 @@ export default function ViewEventDialog({ event, onClose }) {
           <span className="text-sm text-blue-500 font-medium">
             Require Clock In
           </span>
-          <Switch checked={event.requireClockIn} disabled />
+          <Switch checked={event.isRequireClockInOut} disabled />
         </div>
 
-        {/* Policies */}
-        {event.requireClockIn && (
+        {event.isRequireClockInOut && (
           <div className="flex gap-4">
+            {/* Leave Policy */}
             <div className="w-1/2">
               <span className="text-xs text-gray-500">Leave Policy</span>
-              <select
-                disabled
-                value={event.leavePolicy}
-                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1 bg-gray-100 text-gray-700"
-              >
-                <option value="">None</option>
-                <option value="Sick Leave">Sick Leave</option>
-                <option value="Annual Leave">Annual Leave</option>
+              <select className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1">
+                {event.leavePolicies ? (
+                  <option value="">{event.leavePolicies.name}</option>
+                ) : (
+                  <option value="">None</option>
+                )}
               </select>
             </div>
+
+            {/* Overtime Policy */}
             <div className="w-1/2">
               <span className="text-xs text-gray-500">Overtime Policy</span>
-              <select
-                disabled
-                value={event.overtimePolicy}
-                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1 bg-gray-100 text-gray-700"
-              >
-                <option value="">None</option>
-                <option value="Morning">Morning</option>
-                <option value="Weekend">Weekend</option>
+              <select className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1">
+                {event.overtimeType ? (
+                  <option value="">{event.overtimeType.name}</option>
+                ) : (
+                  <option value="">None</option>
+                )}
               </select>
             </div>
           </div>

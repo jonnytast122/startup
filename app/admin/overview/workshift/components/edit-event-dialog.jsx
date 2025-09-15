@@ -1,288 +1,420 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
 import {
   Popover,
-  PopoverContent,
   PopoverTrigger,
+  PopoverContent,
 } from "@/components/ui/popover";
-import { SketchPicker } from "react-color";
-import { Plus, MoreHorizontal, Trash2 } from "lucide-react";
-import { format } from "date-fns";
+import { Users, ChevronDown } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  fetchCompanyOverTimeSetting,
+  fetchCompanyLeavePolicy,
+} from "@/lib/api/policy";
+import { fetchCompany } from "@/lib/api/company";
+import { fetchMembers } from "@/lib/api/user";
 
-/**
- * @typedef {Object} Event
- * @property {number} id
- * @property {Date} date
- * @property {string} title
- * @property {string} time
- * @property {string} color
- * @property {string} assignedTo
- */
+// First and second level options
+const firstLevelOptions = [
+  { key: "User", label: "User" },
+  { key: "Department", label: "Department" },
+  { key: "Group", label: "Group" },
+  { key: "Branch", label: "Branch" },
+];
 
-/**
- * @typedef {Object} EventDialogProps
- * @property {Date} date
- * @property {boolean} isOpen
- * @property {() => void} onClose
- * @property {Event[]} events
- * @property {(events: Event[]) => void} onSave
- * @property {Event | null} [event]
- */
+const colorOptions = [
+  { value: "blue", colorClass: "bg-blue-500", hex: "#2998FF" },
+  { value: "red", colorClass: "bg-red-500", hex: "#FF5733" },
+];
 
-const EventDialog = ({ date, isOpen, onClose, events, onSave, event }) => {
+export default function EditEventDialog({ date, onClose, onSave, event }) {
   const [title, setTitle] = useState("");
-  const [time, setTime] = useState("");
-  const [color, setColor] = useState("#2563eb");
-  const [assignedTo, setAssignedTo] = useState("");
-  const [menuOpen, setMenuOpen] = (useState < number) | (null > null);
+  const [start, setStart] = useState("08:00");
+  const [end, setEnd] = useState("17:00");
+  const [assignee, setAssignee] = useState([]);
+  const [requireClockIn, setRequireClockIn] = useState(false);
+  const [leavePolicies, setLeavePolicies] = useState("");
+  const [overtimeType, setOvertimeType] = useState("");
+  const [selectedColor, setSelectedColor] = useState("blue");
+
+  const [errors, setErrors] = useState({});
+
+  // Fetch company data
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const { data: overtimeSettings, isLoading: overtimeLoading } = useQuery({
+    queryKey: ["overtimeSettings", company?.id],
+    queryFn: () => fetchCompanyOverTimeSetting(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: leaveSettings, isLoading: leaveLoading } = useQuery({
+    queryKey: ["leaveSettings", company?.id],
+    queryFn: () => fetchCompanyLeavePolicy(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data } = useQuery({
+    queryKey: ["members"],
+    queryFn: fetchMembers,
+  });
+
+  // Assign menu
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [hoveredItem, setHoveredItem] = useState(null);
+  const [selectedFirstLevels, setSelectedFirstLevels] = useState([]);
+  const [selectedItems, setSelectedItems] = useState({});
+
+  // Color popover
   const [colorOpen, setColorOpen] = useState(false);
 
-  // Sync form with event being edited
+  // Initialize dialog state
   useEffect(() => {
     if (event) {
-      setTitle(event.title);
-      setTime(event.time);
-      setColor(event.color);
-      setAssignedTo(event.assignedTo);
+      setTitle(event.title || "");
+      setStart(event.startDate?.slice(11, 16) || "08:00");
+      setEnd(event.endDate?.slice(11, 16) || "17:00");
+      setRequireClockIn(!!event.isRequireClockInOut);
+      setLeavePolicies(event.leavePolicies || "");
+      setOvertimeType(event.overtimeType || "");
+      setSelectedColor(
+        colorOptions.find((c) => c.hex === event.color)?.value || "blue"
+      );
+      setSelectedFirstLevels(event.assign?.selectedFirstLevels || []);
+      setSelectedItems(event.assign?.selectedItems || {});
     } else {
       setTitle("");
-      setTime("");
-      setColor("#2563eb");
-      setAssignedTo("");
+      setStart("08:00");
+      setEnd("17:00");
+      setAssignee([]);
+      setRequireClockIn(false);
+      setLeavePolicies("");
+      setOvertimeType("");
+      setSelectedColor("blue");
+      setSelectedFirstLevels([]);
+      setSelectedItems({});
     }
+    setErrors({});
   }, [event]);
 
-  const dayEvents = useMemo(
-    () => events.filter((e) => e.date.toDateString() === date.toDateString()),
-    [events, date]
-  );
+  // Toggle Assign menu
+  const toggleMenu = () => {
+    setColorOpen(false);
+    setMenuOpen((prev) => !prev);
+    setHoveredItem(null);
+  };
 
-  const handleSave = useCallback(() => {
-    if (!title.trim()) return;
-
-    if (event) {
-      // Edit existing
-      onSave(
-        events.map((e) =>
-          e.id === event.id ? { ...e, title, time, color, assignedTo } : e
-        )
-      );
+  // Handle first-level selection
+  const handleFirstLevelChange = (key) => {
+    let newSelection = [];
+    if (key === "all") {
+      newSelection =
+        selectedFirstLevels.length === firstLevelOptions.length
+          ? []
+          : firstLevelOptions.map((item) => item.key);
+      setHoveredItem(null);
     } else {
-      // Add new
-      onSave([
-        ...events,
-        {
-          id: events.length ? Math.max(...events.map((e) => e.id)) + 1 : 1,
-          date: event?.date ?? date,
-          title,
-          time,
-          color,
-          assignedTo,
-        },
-      ]);
+      const exists = selectedFirstLevels.includes(key);
+      newSelection = exists
+        ? selectedFirstLevels.filter((k) => k !== key)
+        : [...selectedFirstLevels, key];
     }
-    onClose();
-  }, [title, time, color, assignedTo, event, events, date, onSave, onClose]);
+    const newSelectedItems = {};
+    for (const k of newSelection) newSelectedItems[k] = selectedItems[k] || [];
+    setSelectedFirstLevels(newSelection);
+    setSelectedItems(newSelectedItems);
+  };
 
-  const handleDelete = useCallback(
-    (id) => {
-      onSave(events.filter((e) => e.id !== id));
-    },
-    [events, onSave]
+  // Handle second-level selection
+  const handleSecondLevelChange = (firstKey, value) => {
+    const existing = selectedItems[firstKey] || [];
+    const updated = existing.includes(value)
+      ? existing.filter((v) => v !== value)
+      : [...existing, value];
+    setSelectedItems({ ...selectedItems, [firstKey]: updated });
+  };
+
+  const totalSecondLevelSelected = selectedFirstLevels.reduce(
+    (acc, key) => acc + (selectedItems[key]?.length || 0),
+    0
   );
+
+  const isAllSelected =
+    selectedFirstLevels.length === firstLevelOptions.length &&
+    firstLevelOptions.length > 0;
+
+  const firstLevelLabel =
+    (isAllSelected
+      ? "All"
+      : selectedFirstLevels
+          .map((key) => firstLevelOptions.find((i) => i.key === key)?.label)
+          .join(", ")) || "Select...";
+
+  // Submit handler with validation
+  const handleSubmit = () => {
+    const newErrors = {};
+    if (!title.trim()) {
+      newErrors.title = "Title is required.";
+    }
+    if (requireClockIn && !leavePolicies && !overtimeType) {
+      newErrors.clockIn =
+        "Select at least one Leave Policy or Overtime Policy.";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    const startDateTime = new Date(`${date}T${start}`);
+    const endDateTime = new Date(`${date}T${end}`);
+    const colorHex = colorOptions.find((c) => c.value === selectedColor)?.hex;
+
+    const body = {
+      title,
+      color: colorHex,
+      startDate: startDateTime.toISOString(),
+      endDate: endDateTime.toISOString(),
+      assignee: assignee || [],
+      isRequireClockInOut: requireClockIn,
+      leavePolicies: leavePolicies || null,
+      overtimeType: overtimeType || null,
+    };
+    onSave?.(body);
+    onClose?.();
+  };
+
+  // Prevent dialog closing when interacting with popovers
+  const ignoreIfPopover = (e) => {
+    const el = e.target;
+    if (el instanceof HTMLElement && el.closest("[data-radix-popover-content]"))
+      e.preventDefault();
+  };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
-      modal
-    >
+    <Dialog open onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto"
-        // Prevent closing when clicking inside popovers
-        onInteractOutside={(e) => {
-          if (
-            e.target &&
-            typeof e.target.closest === "function" &&
-            e.target.closest("[role=dialog]")
-          ) {
-            e.preventDefault();
-          }
-        }}
+        className="w-[400px] space-y-4"
+        onPointerDownOutside={ignoreIfPopover}
+        onInteractOutside={ignoreIfPopover}
       >
         <DialogHeader>
-          <DialogTitle>
-            {event ? "Edit Event" : "Add Event"} –{" "}
-            {format(date, "MMMM d, yyyy")}
-          </DialogTitle>
+          <DialogTitle>{event ? "Edit Event" : "Create Event"}</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Event Form */}
-          <div className="space-y-2">
-            <Input
+        {/* Title + Color */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="w-full">
+            <input
               placeholder="Event Title"
+              className="w-full px-0 py-2 outline-none font-custom text-sm bg-transparent border-b border-gray-300"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
-            <Input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-            />
-
-            {/* Assign Dropdown */}
-            <DropdownMenu
-              open={menuOpen === 1 && !colorOpen}
-              onOpenChange={(open) => setMenuOpen(open ? 1 : null)}
-            >
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  {assignedTo ? `Assigned to: ${assignedTo}` : "Assign to"}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {["Alice", "Bob", "Charlie"].map((name) => (
-                  <DropdownMenuItem
-                    key={name}
-                    onClick={() => {
-                      setAssignedTo(name);
-                      setMenuOpen(null);
-                    }}
-                  >
-                    {name}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            {/* Color Picker */}
-            <Popover open={colorOpen} onOpenChange={setColorOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="w-full justify-start">
-                  <div
-                    className="w-4 h-4 rounded-full mr-2"
-                    style={{ backgroundColor: color }}
-                  />
-                  Pick Color
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                className="p-0 w-auto border-none shadow-none"
-                side="bottom"
-                align="start"
-              >
-                <SketchPicker
-                  color={color}
-                  onChangeComplete={(newColor) => setColor(newColor.hex)}
-                />
-              </PopoverContent>
-            </Popover>
+            {errors.title && (
+              <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+            )}
           </div>
 
-          {/* Events Table */}
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Time</TableHead>
-                <TableHead>Assigned To</TableHead>
-                <TableHead>Color</TableHead>
-                <TableHead className="w-10">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {dayEvents.map((e) => (
-                <TableRow key={e.id}>
-                  <TableCell>{e.title}</TableCell>
-                  <TableCell>{e.time}</TableCell>
-                  <TableCell>{e.assignedTo}</TableCell>
-                  <TableCell>
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: e.color }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu
-                      open={menuOpen === e.id}
-                      onOpenChange={(open) => setMenuOpen(open ? e.id : null)}
-                    >
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setMenuOpen(e.id)}
-                        >
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          onClick={() => {
-                            setTitle(e.title);
-                            setTime(e.time);
-                            setColor(e.color);
-                            setAssignedTo(e.assignedTo);
-                            setMenuOpen(null);
-                          }}
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => {
-                            handleDelete(e.id);
-                            setMenuOpen(null);
-                          }}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <Popover
+            open={colorOpen}
+            onOpenChange={(o) => {
+              if (o) setMenuOpen(false);
+              setColorOpen(o);
+            }}
+          >
+            <PopoverTrigger asChild>
+              <button className="relative z-[60] flex items-center justify-between px-3 py-2 bg-white shadow-sm rounded-md cursor-pointer w-fit">
+                <span
+                  className="w-4 h-4 rounded-full"
+                  style={{
+                    backgroundColor:
+                      selectedColor === "blue" ? "#2998FF" : "#FF5733",
+                  }}
+                />
+                <ChevronDown size={14} className="text-gray-400 ml-2" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="z-[1000] pointer-events-auto w-fit p-2 bg-white rounded-md shadow border">
+              <div className="flex gap-2">
+                {colorOptions.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => {
+                      setSelectedColor(opt.value);
+                      setColorOpen(false);
+                    }}
+                    className="w-5 h-5 rounded-full border-2 transition hover:scale-105"
+                    style={{
+                      backgroundColor: opt.hex,
+                      borderColor:
+                        selectedColor === opt.value ? "#ccc" : "transparent",
+                    }}
+                    aria-label={opt.value}
+                  />
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
-            Cancel
+        {/* Time range */}
+        <div className="flex border rounded-md overflow-hidden">
+          <div className="flex items-center w-1/2 px-3 py-2 gap-2 border-r">
+            <span className="text-sm text-gray-500">Start</span>
+            <input
+              type="time"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="text-sm w-full bg-transparent outline-none"
+            />
+          </div>
+          <div className="flex items-center w-1/2 px-3 py-2 gap-2">
+            <span className="text-sm text-gray-500">End</span>
+            <input
+              type="time"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="text-sm w-full bg-transparent outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Assign */}
+        <div className="flex items-center justify-between px-3 py-2 border rounded-md">
+          <div className="flex items-center gap-2">
+            <Users size={16} className="text-gray-500" />
+            <span className="text-sm">Assign</span>
+          </div>
+          <div className="relative w-[220px]">
+            <button
+              onClick={() => {
+                setColorOpen(false);
+                toggleMenu();
+              }}
+              className="flex items-center justify-between w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-100"
+            >
+              <span className="truncate text-gray-700">{firstLevelLabel}</span>
+              <div className="flex items-center gap-2">
+                {totalSecondLevelSelected > 0 && (
+                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                    {totalSecondLevelSelected} selected
+                  </span>
+                )}
+                <ChevronDown size={14} className="text-gray-400" />
+              </div>
+            </button>
+            {menuOpen && (
+              <div className="absolute z-20 top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                <label
+                  className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                  onMouseEnter={() => setHoveredItem(null)}
+                >
+                  <input
+                    type="checkbox"
+                    checked={isAllSelected}
+                    onChange={() => handleFirstLevelChange("all")}
+                    className="mr-2"
+                  />
+                  All
+                </label>
+                {firstLevelOptions.map((item) => (
+                  <label
+                    key={item.key}
+                    className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                    onMouseEnter={() => setHoveredItem(item.key)}
+                    onClick={() => setHoveredItem(item.key)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedFirstLevels.includes(item.key)}
+                      onChange={() => handleFirstLevelChange(item.key)}
+                      className="mr-2"
+                    />
+                    {item.label}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Clock In */}
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-blue-500 font-medium">
+            Require Clock In
+          </span>
+          <Switch
+            checked={requireClockIn}
+            onCheckedChange={setRequireClockIn}
+            className="data-[state=checked]:bg-green-500"
+          />
+        </div>
+        {errors.clockIn && (
+          <p className="text-xs text-red-500">{errors.clockIn}</p>
+        )}
+
+        {requireClockIn && (
+          <div className="flex gap-4">
+            {/* Leave Policy */}
+            <div className="w-1/2">
+              <span className="text-xs text-gray-500">Leave Policy</span>
+              <select
+                value={leavePolicies}
+                onChange={(e) => setLeavePolicies(e.target.value)}
+                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1"
+                disabled={leaveLoading}
+              >
+                <option value="">Select</option>
+                {leaveSettings?.map((policy) => (
+                  <option key={policy.id} value={policy.id}>
+                    {policy.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Overtime Policy */}
+            <div className="w-1/2">
+              <span className="text-xs text-gray-500">Overtime Policy</span>
+              <select
+                value={overtimeType}
+                onChange={(e) => setOvertimeType(e.target.value)}
+                className="w-full mt-1 text-sm border border-gray-300 rounded-md px-2 py-1"
+                disabled={overtimeLoading}
+              >
+                <option value="">Select</option>
+                {overtimeSettings?.map((policy) => (
+                  <option key={policy.id} value={policy.id}>
+                    {policy.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        <div className="text-right">
+          <Button
+            onClick={handleSubmit}
+            className="h-8 px-5 text-sm rounded-md"
+          >
+            Save
           </Button>
-          <Button onClick={handleSave}>{event ? "Update" : "Save"}</Button>
-        </DialogFooter>
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default EventDialog;
+}

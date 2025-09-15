@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -11,22 +8,21 @@ import {
   PopoverTrigger,
   PopoverContent,
 } from "@/components/ui/popover";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Clock, Users, Check, ChevronDown } from "lucide-react";
+import { Users, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 const firstLevelOptions = [
   { key: "User", label: "User" },
   { key: "Department", label: "Department" },
   { key: "Group", label: "Group" },
-  { key: "Branch", label: "Branch" }
+  { key: "Branch", label: "Branch" },
 ];
 
 const secondLevelData = {
   User: ["User 1", "User 2", "User 3"],
   Department: ["Dept 1", "Dept 2"],
   Group: ["Group 1", "Group 2"],
-  Branch: ["Branch 1", "Branch 2"]
+  Branch: ["Branch 1", "Branch 2"],
 };
 
 const colorOptions = [
@@ -91,7 +87,7 @@ export default function EventDialog({ date, onClose, onSave }) {
 
     setSelectedItems({
       ...selectedItems,
-      [firstKey]: updated
+      [firstKey]: updated,
     });
   };
 
@@ -106,10 +102,8 @@ export default function EventDialog({ date, onClose, onSave }) {
   const firstLevelLabel = isAllSelected
     ? "All"
     : selectedFirstLevels
-      .map(
-        (key) => firstLevelOptions.find((item) => item.key === key)?.label
-      )
-      .join(", ") || "Select...";
+        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+        .join(", ") || "Select...";
 
   const handleSubmit = () => {
     onSave({
@@ -119,12 +113,12 @@ export default function EventDialog({ date, onClose, onSave }) {
       end,
       assign: {
         selectedFirstLevels,
-        selectedItems
+        selectedItems,
       },
       requireClockIn,
       color: selectedColor,
       leavePolicy,
-      overtimePolicy
+      overtimePolicy,
     });
     onClose();
   };
@@ -146,10 +140,9 @@ export default function EventDialog({ date, onClose, onSave }) {
             <PopoverTrigger asChild>
               <div className="flex items-center justify-between px-3 py-2 bg-white shadow-sm rounded-md cursor-pointer w-fit">
                 <div
-                  className={`w-4 h-4 rounded-full ${selectedColor === "blue"
-                      ? "bg-blue-500"
-                      : "bg-red-500"
-                    }`}
+                  className={`w-4 h-4 rounded-full ${
+                    selectedColor === "blue" ? "bg-blue-500" : "bg-red-500"
+                  }`}
                 />
                 <ChevronDown size={14} className="text-gray-400 ml-2" />
               </div>
@@ -161,10 +154,11 @@ export default function EventDialog({ date, onClose, onSave }) {
                   <div
                     key={opt.value}
                     onClick={() => setSelectedColor(opt.value)}
-                    className={`w-5 h-5 rounded-full cursor-pointer border-2 hover:scale-105 transition ${selectedColor === opt.value
+                    className={`w-5 h-5 rounded-full cursor-pointer border-2 hover:scale-105 transition ${
+                      selectedColor === opt.value
                         ? `${opt.colorClass} border-gray-300`
                         : `${opt.colorClass} border-transparent`
-                      }`}
+                    }`}
                   ></div>
                 ))}
               </div>
@@ -208,9 +202,7 @@ export default function EventDialog({ date, onClose, onSave }) {
               onClick={toggleMenu}
               className="flex items-center justify-between w-full border border-gray-300 rounded-md px-3 py-2 text-sm bg-white hover:bg-gray-100"
             >
-              <span className="truncate text-gray-100">
-                {firstLevelLabel}
-              </span>
+              <span className="truncate text-gray-100">{firstLevelLabel}</span>
               <div className="flex items-center gap-2">
                 {totalSecondLevelSelected > 0 && (
                   <span className="text-xs text-gray-500 whitespace-nowrap">
@@ -257,47 +249,45 @@ export default function EventDialog({ date, onClose, onSave }) {
                 </div>
 
                 {/* Second-level panel */}
-                {hoveredItem &&
-                  selectedFirstLevels.includes(hoveredItem) && (
-                    <div className="absolute z-20 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
-                      <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
-                        {
-                          firstLevelOptions.find(
-                            (o) => o.key === hoveredItem
-                          )?.label
-                        }{" "}
-                        Options
-                      </div>
-                      {secondLevelData[hoveredItem].map((value) => (
-                        <label
-                          key={value}
-                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedItems[hoveredItem]?.includes(value) ||
-                              false
-                            }
-                            onChange={() =>
-                              handleSecondLevelChange(hoveredItem, value)
-                            }
-                            className="mr-2"
-                          />
-                          {value}
-                        </label>
-                      ))}
+                {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
+                  <div className="absolute z-20 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
+                    <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
+                      {
+                        firstLevelOptions.find((o) => o.key === hoveredItem)
+                          ?.label
+                      }{" "}
+                      Options
                     </div>
-                  )}
+                    {secondLevelData[hoveredItem].map((value) => (
+                      <label
+                        key={value}
+                        className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={
+                            selectedItems[hoveredItem]?.includes(value) || false
+                          }
+                          onChange={() =>
+                            handleSecondLevelChange(hoveredItem, value)
+                          }
+                          className="mr-2"
+                        />
+                        {value}
+                      </label>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
         </div>
 
-
         {/* Clock In */}
         <div className="flex items-center justify-between">
-          <span className="text-sm text-blue-500 font-medium">Require Clock In</span>
+          <span className="text-sm text-blue-500 font-medium">
+            Require Clock In
+          </span>
           <Switch
             checked={requireClockIn}
             onCheckedChange={setRequireClockIn}
