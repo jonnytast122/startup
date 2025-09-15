@@ -17,50 +17,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import WorkShiftDialog from "./components/add-shift-dialog"; // Updated import
+import WorkShiftDialog from "./components/add-shift-dialog";
 import CambodiaCalendar from "./components/calendar-screen";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchWorkShift, deleteWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
 
 export default function WorkShiftPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Shift");
   const [confirmDelete, setConfirmDelete] = useState(null);
-  const [shifts, setShifts] = useState([
-    {
-      id: 1,
-      name: "Morning shift",
-      status: "Active",
-      createdBy: "Vely Sokheng",
-      profilePic: "/path/to/vely.jpg",
-      shiftDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      reminderDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      startTime: "09:00",
-      endTime: "17:00",
-      breakStart: "12:00",
-      breakEnd: "13:00",
-      clockInReminder: "08:40",
-      clockOutReminder: "14:40",
-      activeReminder: true,
-    },
-    {
-      id: 2,
-      name: "General shift",
-      status: "Inactive",
-      createdBy: "Vely Sokheng",
-      profilePic: "/path/to/vely.jpg",
-      shiftDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      reminderDays: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-      startTime: "10:00",
-      endTime: "18:00",
-      breakStart: "13:00",
-      breakEnd: "14:00",
-      clockInReminder: "09:40",
-      clockOutReminder: "17:40",
-      activeReminder: true,
-    },
-  ]);
 
   // For Add/Edit dialog
   const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
@@ -202,7 +167,7 @@ export default function WorkShiftPage() {
                           className="w-6 h-6 rounded-full"
                         />
                         <span className="text-sm text-blue-600">
-                          {shift?.createBy?.name || shift.createdBy}
+                          {shift?.createdBy?.name}
                         </span>
                       </div>
                     </TableCell>
@@ -322,7 +287,7 @@ export default function WorkShiftPage() {
               strokeWidth={1.5}
             />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete this workshift?
+              Do you want to delete this work shift?
             </h2>
             <div className="flex items-center gap-4 mt-8">
               <Button
@@ -336,9 +301,6 @@ export default function WorkShiftPage() {
                 className="rounded-full px-7 font-custom"
                 style={{ backgroundColor: "#fb5f59", color: "white" }}
                 onClick={() => {
-                  // setShifts((prev) =>
-                  //   prev.filter((s) => s.id !== confirmDelete.id)
-                  // );
                   onDelete(confirmDelete.id);
                   setConfirmDelete(null);
                 }}

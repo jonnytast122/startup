@@ -60,7 +60,7 @@ function Navbar() {
             >
               <User className="h-6 w-4 text-gray-700 group-hover:font-semibold" />
               <span className="text-dark-blue text-xl font-custom group-hover:font-semibold">
-                Log In
+                Login
               </span>
             </Link>
 

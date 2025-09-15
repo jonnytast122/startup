@@ -8,11 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createWorkShift, updateWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
-import { data } from "autoprefixer";
 
 const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
