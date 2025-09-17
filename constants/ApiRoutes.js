@@ -109,7 +109,6 @@ const ApiRoutes = {
     getRequests: `${BASE_URL}/overtime-requests/me`,
   },
 
-
   //============== Thing Yet To Implement ===================
 
   userPayroll: {
@@ -126,7 +125,6 @@ const ApiRoutes = {
     getLeaveRate: `${BASE_URL}/dashboard/me/leave-rate`,
     getWorkShiffRate: `${BASE_URL}/dashboard/me/work-shift-rate`,
   },
-
 
   adminOverview: {
     getDailyAttendance: `${BASE_URL}/dashboard/daily-attendance`,
@@ -149,7 +147,7 @@ const ApiRoutes = {
 
   adminTimeSheet: {
     getTimeSheet: `${BASE_URL}/attendance/time-sheet`,
-    getTimeSheetInsight: `${BASE_URL}/attendance/time-sheet-insight`
+    getTimeSheetInsight: `${BASE_URL}/attendance/time-sheet-insight`,
   },
 
   adminLeave: {
@@ -170,8 +168,8 @@ const ApiRoutes = {
 
   adminPayroll: {
     getPayroll: `${BASE_URL}/payrolls`,
-    getPayrollByEmployee: `${BASE_URL}/payrolls/employee/{id}`
-  }
+    getPayrollByEmployee: `${BASE_URL}/payrolls/employee/{id}`,
+  },
 };
 
 export default ApiRoutes;

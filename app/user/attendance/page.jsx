@@ -8,7 +8,6 @@ import {
   CalendarPlus2,
   LogOut,
   CreditCard,
-  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
@@ -24,6 +23,9 @@ import {
   clockIn,
 } from "@/lib/api/userAttendance";
 import { convertToSeconds } from "@/lib/helper/dateTimeConveter";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { getMyDetails } from "@/lib/api/user";
 
 function formatTime(totalSeconds) {
   const h = String(Math.floor(totalSeconds / 3600)).padStart(2, "0");
@@ -303,11 +305,7 @@ function TimerButton({
 function MobileHeader() {
   const router = useRouter();
 
-  const user_data = {
-    firstname: "Veiy",
-    lastname: "Sokheng",
-    avatar: "/avatars/cameron.png",
-  };
+  const { user, logout } = useAuth();
 
   const quickActions = [
     {
@@ -327,6 +325,11 @@ function MobileHeader() {
     },
   ];
 
+  const { data: user_data } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
+
   return (
     <div className="lg:hidden mb-4 space-y-3">
       {/* User Profile Section */}
@@ -335,14 +338,28 @@ function MobileHeader() {
           onClick={() => {}}
           className="w-full p-4 flex items-center gap-4 hover:bg-[#5494DA33] transition-colors"
         >
-          <img
-            src={user_data.avatar}
-            alt="Profile"
-            className="w-12 h-12 rounded-full border-2 border-gray-200"
-          />
-          <div className="text-left">
-            <div className="font-custom font-semibold text-lg text-gray-900">
-              {user_data.firstname} {user_data.lastname}
+          {user_data?.profileImg ? (
+            <img
+              src={user_data.profileImg}
+              alt="Profile"
+              className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+              {user_data?.employee?.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()}
+            </div>
+          )}
+
+          <div className="font-custom text-left">
+            <div className="font-semibold text-lg text-gray-900">
+              {user_data?.employee?.name}
+            </div>
+            <div className="text-sm text-gray-500">
+              {user_data?.position?.title || "No Position"}
             </div>
           </div>
         </button>

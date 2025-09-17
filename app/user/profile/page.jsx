@@ -27,6 +27,9 @@ import WorkShiftDialog from "./components/shiftdialog";
 import BranchDetail from "./components/branchdetail";
 import AddUserDialog from "./components/groupsettingdialog";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getMyDetails } from "@/lib/api/user";
+
 const user = {
   firstname: "John",
   lastname: "Doe",
@@ -48,6 +51,11 @@ const user = {
 };
 
 export default function UserProfile() {
+  const { data: user_data } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
+
   const [firstname] = useState(user.firstname);
   const [lastname] = useState(user.lastname);
   const [mobile] = useState(user.phone);
@@ -168,9 +176,9 @@ export default function UserProfile() {
     <>
       <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
       <div className="flex flex-wrap gap-2">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <button
-            key={item}
+            key={index}
             type="button"
             onClick={() => onItemClick?.(item)}
             className="bg-blue-100 rounded-xl border border-blue-200 p-3 shadow-sm w-auto max-w-full
@@ -203,35 +211,32 @@ export default function UserProfile() {
 
       <div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
         <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
-          Hello, {firstname}
+          Hello, {user_data?.employee?.name}!
         </div>
-        <p className="font-custom text-sm text-gray-400 px-6 mt-2">
-          Good morning!
-        </p>
-
         {/* Profile Holder */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
-            {profile && !imageError ? (
-              <img
-                src={profile}
-                alt="Profile"
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <span className="text-gray-700">
-                {firstInitial}
-                {lastInitial}
-              </span>
-            )}
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-custom">
-              {firstname} {lastname}
+          {user_data?.profileImg ? (
+            <img
+              src={user_data.profileImg}
+              alt="Profile"
+              className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
+            />
+          ) : (
+            <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+              {user_data?.employee?.name
+                ?.split(" ")
+                .map((n) => n[0])
+                .join("")
+                .toUpperCase()}
             </div>
-            <div className="text-sm font-custom text-gray-500">
-              {AccessLevel}
+          )}
+
+          <div className="font-custom text-left">
+            <div className="font-semibold text-lg text-gray-900">
+              {user_data?.employee?.name}
+            </div>
+            <div className="text-sm text-gray-500">
+              {user_data?.job || "No Job Title"}
             </div>
           </div>
         </div>
@@ -249,7 +254,7 @@ export default function UserProfile() {
             </label>
             <input
               type="text"
-              value={firstname}
+              value={user_data?.employee?.name.split(" ")[0]}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -259,7 +264,7 @@ export default function UserProfile() {
             </label>
             <input
               type="text"
-              value={lastname}
+              value={user_data?.employee?.name.split(" ")[1]}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -269,7 +274,7 @@ export default function UserProfile() {
             </label>
             <input
               type="text"
-              value={mobile}
+              value={user_data?.employee?.phoneNumber || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -279,7 +284,7 @@ export default function UserProfile() {
             </label>
             <input
               type="date"
-              value={birthday}
+              value={user_data?.dateOfBirth || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -293,7 +298,7 @@ export default function UserProfile() {
             </label>
             <input
               type="text"
-              value={branch}
+              value={user_data?.branch?.name || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -303,17 +308,17 @@ export default function UserProfile() {
             </label>
             <input
               type="text"
-              value={department}
+              value={user_data?.department?.name || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
-              Title
+              Position
             </label>
             <input
               type="text"
-              value={title}
+              value={user_data?.position?.title || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -323,29 +328,28 @@ export default function UserProfile() {
             </label>
             <input
               type="date"
-              value={employmentstartdate}
+              value={user_data?.startDate || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <DropdownSection
-              title="Policies"
-              items={["Leaves", "OT"]}
+              title="Leave Policies"
+              items={user_data?.leavePolicies?.name || ["N/A"]}
               onItemClick={(item) => {
-                if (item === "Leaves") setIsLeaveDetailOpen(true);
-                if (item === "OT") setIsOTDetailOpen(true);
+                setIsLeaveDetailOpen(true);
               }}
             />
 
             <DropdownSection
-              title="Work Shift"
-              items={["Morning", "Afternoon"]}
+              title="Shift Type"
+              items={[user_data?.shiftType?.name] || ["N/A"]}
               onItemClick={() => setIsShiftDialogOpen(true)}
             />
 
             <DropdownSection
-              title="Group"
-              items={["Admin", "HR Manager"]}
+              title="Groups"
+              items={user_data?.groups?.name || ["N/A"]}
               onItemClick={() => setIsAddUserOpen(true)}
             />
 

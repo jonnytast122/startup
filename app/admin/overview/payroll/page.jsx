@@ -9,7 +9,7 @@ import {
   Search,
   List,
   Trash2,
-  CircleX
+  CircleX,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,10 +37,7 @@ import {
   DropdownMenuContent,
   DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import AddPayrollDialog from "./components/add-payroll-dialog";
 import CustomizeReportDialog from "./components/customize-report-dialog";
 import UserProfileSection from "./components/user-profile-section";
@@ -126,7 +123,6 @@ export default function PayrollPage() {
     { key: "netSalary", label: "Net Salary" },
   ];
 
-
   const PayrollSection = ({ title, totalPay, onDelete }) => {
     const [showDialog, setShowDialog] = useState(false);
     const [visibleCols, setVisibleCols] = useState(
@@ -156,7 +152,10 @@ export default function PayrollPage() {
 
           <div className="flex gap-2 items-center">
             <div className="relative">
-              <Search className="absolute right-3 top-2 text-gray-400" size={20} />
+              <Search
+                className="absolute right-3 top-2 text-gray-400"
+                size={20}
+              />
               <input
                 type="text"
                 value={searchQuery}
@@ -189,17 +188,21 @@ export default function PayrollPage() {
                 </SelectItem>
               </SelectContent>
             </Select>
-
           </div>
         </div>
         <div className="flex justify-between items-center p-2">
           <div className="flex items-center gap-8">
             <h2 className="font-semibold text-lg text-[#5494DA]">{title}</h2>
             <button onClick={() => setShowDialog(true)}>
-              <Trash2 size={20} className="text-black hover:text-red-600 transition-colors" />
+              <Trash2
+                size={20}
+                className="text-black hover:text-red-600 transition-colors"
+              />
             </button>
           </div>
-          <p className="text-sm font-semibold text-right">Total Pay: {totalPay}</p>
+          <p className="text-sm font-semibold text-right">
+            Total Pay: {totalPay}
+          </p>
         </div>
         {/* Confirmation Dialog */}
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -233,10 +236,13 @@ export default function PayrollPage() {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-200">
-                <TableHead className="w-10" /> {/* <-- Empty header for profile */}
+                <TableHead className="w-10" />{" "}
+                {/* <-- Empty header for profile */}
                 {allColumns.map(
                   (col) =>
-                    visibleCols[col.key] && <TableHead key={col.key}>{col.label}</TableHead>
+                    visibleCols[col.key] && (
+                      <TableHead key={col.key}>{col.label}</TableHead>
+                    )
                 )}
                 <TableHead className="w-12 text-right">
                   <DropdownMenu>
@@ -246,16 +252,15 @@ export default function PayrollPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" className="w-56 bg-white">
-                      {allColumns
-                        .map((col) => (
-                          <DropdownMenuCheckboxItem
-                            key={col.key}
-                            checked={visibleCols[col.key]}
-                            onCheckedChange={() => toggleCol(col.key)}
-                          >
-                            {col.label}
-                          </DropdownMenuCheckboxItem>
-                        ))}
+                      {allColumns.map((col) => (
+                        <DropdownMenuCheckboxItem
+                          key={col.key}
+                          checked={visibleCols[col.key]}
+                          onCheckedChange={() => toggleCol(col.key)}
+                        >
+                          {col.label}
+                        </DropdownMenuCheckboxItem>
+                      ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableHead>
@@ -263,9 +268,11 @@ export default function PayrollPage() {
             </TableHeader>
             <TableBody>
               {employeeData.map((emp, idx) => (
-                <TableRow key={idx}
+                <TableRow
+                  key={idx}
                   onClick={() => handleRowClick(emp)}
-                  className="cursor-pointer hover:bg-gray-100 transition-colors">
+                  className="cursor-pointer hover:bg-gray-100 transition-colors"
+                >
                   <TableCell>
                     <img
                       src={emp.profile}
@@ -280,8 +287,12 @@ export default function PayrollPage() {
                       </div>
                     </TableCell>
                   )}
-                  {visibleCols.lastName && <TableCell>{emp.lastName}</TableCell>}
-                  {visibleCols.department && <TableCell>{emp.department}</TableCell>}
+                  {visibleCols.lastName && (
+                    <TableCell>{emp.lastName}</TableCell>
+                  )}
+                  {visibleCols.department && (
+                    <TableCell>{emp.department}</TableCell>
+                  )}
                   {visibleCols.job && (
                     <TableCell>
                       <div className="px-5 py-1 text-md font-custom rounded-xl border inline-flex items-center gap-1 border-[#5494DA] text-blue">
@@ -290,21 +301,33 @@ export default function PayrollPage() {
                     </TableCell>
                   )}
                   {visibleCols.shift && <TableCell>{emp.shift}</TableCell>}
-                  {visibleCols.regularHour && <TableCell>{emp.regularHour}</TableCell>}
-                  {visibleCols.dailyRate && <TableCell>${emp.dailyRate}</TableCell>}
-                  {visibleCols.regularPay && <TableCell>${emp.regularPay}</TableCell>}
-                  {visibleCols.overtimePay && <TableCell>${emp.overtimePay}</TableCell>}
-                  {visibleCols.grossSalary && <TableCell>${emp.grossSalary}</TableCell>}
+                  {visibleCols.regularHour && (
+                    <TableCell>{emp.regularHour}</TableCell>
+                  )}
+                  {visibleCols.dailyRate && (
+                    <TableCell>${emp.dailyRate}</TableCell>
+                  )}
+                  {visibleCols.regularPay && (
+                    <TableCell>${emp.regularPay}</TableCell>
+                  )}
+                  {visibleCols.overtimePay && (
+                    <TableCell>${emp.overtimePay}</TableCell>
+                  )}
+                  {visibleCols.grossSalary && (
+                    <TableCell>${emp.grossSalary}</TableCell>
+                  )}
                   {visibleCols.tax && <TableCell>${emp.tax}</TableCell>}
                   {visibleCols.nssf && <TableCell>${emp.nssf}</TableCell>}
-                  {visibleCols.netSalary && <TableCell>${emp.netSalary}</TableCell>}
+                  {visibleCols.netSalary && (
+                    <TableCell>${emp.netSalary}</TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </div>
       </div>
-    )
+    );
   };
 
   return (
@@ -331,16 +354,16 @@ export default function PayrollPage() {
               ].map((badge, index) => (
                 <div
                   key={index}
-                  className={`w-7 h-7 sm:w-8 sm:h-8 ${badge.bg} rounded-full flex items-center justify-center border-2 border-white text-xs font-bold ${badge.textColor || "text-white"}`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 ${
+                    badge.bg
+                  } rounded-full flex items-center justify-center border-2 border-white text-xs font-bold ${
+                    badge.textColor || "text-white"
+                  }`}
                 >
                   {badge.text}
                 </div>
               ))}
             </div>
-            <Button className="text-blue font-custom h-12 border border-gray-400 bg-transparent rounded-full flex items-center px-6 hover:bg-blue-500 hover:text-white transition-colors duration-200">
-              <Settings />
-              <span>Setting</span>
-            </Button>
           </div>
         </div>
       </div>
@@ -374,7 +397,6 @@ export default function PayrollPage() {
                 />
               </div>
             )}
-
           </div>
 
           {sections.map((section) => (

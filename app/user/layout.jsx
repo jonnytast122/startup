@@ -16,7 +16,6 @@ import {
   Eye,
   Globe,
   LogOut,
-  User,
 } from "lucide-react";
 import {
   Select,
