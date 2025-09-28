@@ -1,9 +1,9 @@
 import ApiRoutes from "@/constants/ApiRoutes";
 import api from "../api";
 
-export const getAttendances = async () => {
-    const response = await api.get(ApiRoutes.adminAttendance.getAttendances);
-    return response.data
+export const getAttendances = async (companyId,startDate,endDate) => {
+    const response = await api.get(ApiRoutes.adminAttendance.getAttendances.replace('{id}', companyId), { params: { startDate, endDate } });
+    return response.data.data
 }
 
 export const getActivity = async () => {
@@ -21,7 +21,7 @@ export const getEmployeeLocation = async () => {
     return response.data
 }
 
-export const getEmployeeAttendance = async () => {
-    const response = await api.get(ApiRoutes.adminAttendance.getEmployeeAttendance);
-    return response.data
+export const getEmployeeAttendance = async (employeeId,startDate,endDate) => {
+    const response = await api.get(ApiRoutes.adminAttendance.getEmployeeAttendance.replace('{id}', employeeId), { params: { startDate, endDate } });
+    return response.data.data
 }

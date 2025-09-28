@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Fragment } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
@@ -14,11 +15,14 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+import { getLeave } from "@/lib/api/adminLeave";
+import { useQuery } from "@tanstack/react-query";
+
 export default function UserProfileSection({ employee, onClose }) {
   const [showPicker, setShowPicker] = useState(false);
   const [payPeriod, setPayPeriod] = useState({
-    startDate: new Date(2025, 6, 26),
-    endDate: new Date(2025, 7, 25),
+    startDate: new Date(2025, 4, 26),
+    endDate: new Date(2025, 10, 25),
     key: "selection",
   });
 
@@ -28,6 +32,23 @@ export default function UserProfileSection({ employee, onClose }) {
   ];
 
   if (!employee) return null;
+  console.log(employee)
+
+  const { data: leave } = useQuery({
+    queryKey: ["employee-leave", employee.employee._id],
+    queryFn: () =>
+      getLeave(
+        {
+          employeeId: employee.employee._id,
+          startDate: payPeriod.startDate.toISOString().split("T")[0],
+          endDate: payPeriod.endDate.toISOString().split("T")[0],
+        }
+      ),
+    enabled: !!employee?.employee?._id,
+  });
+
+  console.log(leave)
+
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-6">
@@ -115,41 +136,8 @@ export default function UserProfileSection({ employee, onClose }) {
                 </button>
               </td>
             </tr>
-            {[
-              {
-                date: "Mon 19/08",
-                type: "Annual Leave",
-                status: "Approved",
-                shift: "Morning",
-                start: "2025-08-19",
-                end: "2025-08-19",
-              },
-              {
-                date: "Tue 20/08",
-                type: "Sick Leave",
-                status: "Declined",
-                shift: "Morning",
-                start: "2025-08-20",
-                end: "2025-08-20",
-              },
-              {
-                date: "Wed 21/08",
-                type: "Unpaid Leave",
-                status: "Approved",
-                shift: "Full Day",
-                start: "2025-08-21",
-                end: "2025-08-21",
-              },
-              {
-                date: "Thu 22/08",
-                type: "Annual Leave",
-                status: "Pending",
-                shift: "Afternoon",
-                start: "2025-08-22",
-                end: "2025-08-22",
-              },
-            ].map((entry, idx, arr) => (
-              <>
+            {leave?.map((entry, idx, arr) => (
+              <Fragment key={idx}>
                 <tr key={idx} className="text-sm text-center">
                   <td className="px-3 py-2"></td>
                   <td className="px-3 py-2">{entry.date}</td>
@@ -158,7 +146,7 @@ export default function UserProfileSection({ employee, onClose }) {
                       {employee.job}
                     </span>
                   </td>
-                  <td className="px-3 py-2">{entry.type}</td>
+                  <td className="px-3 py-2">{entry.type.name}</td>
                   <td className="px-3 py-2 font-medium">
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs ${
@@ -173,10 +161,10 @@ export default function UserProfileSection({ employee, onClose }) {
                     </span>
                   </td>
                   <td className="px-3 py-2">{entry.shift}</td>
-                  <td className="px-3 py-2">{entry.start}</td>
-                  <td className="px-3 py-2">{entry.end}</td>
-                  <td className="px-3 py-2 text-gray-400 italic">—</td>
-                  <td className="px-3 py-2 text-gray-400 italic">—</td>
+                  <td className="px-3 py-2">{entry.startDate.split("T")[0]}</td>
+                  <td className="px-3 py-2">{entry.endDate.split("T")[0]}</td>
+                  <td className="px-3 py-2 text-gray-400 italic">{entry.note || "-"}</td>
+                  <td className="px-3 py-2 text-gray-400 italic">{entry.response || "-"}</td>
                 </tr>
                 {idx !== arr.length - 1 && (
                   <tr>
@@ -185,7 +173,7 @@ export default function UserProfileSection({ employee, onClose }) {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>

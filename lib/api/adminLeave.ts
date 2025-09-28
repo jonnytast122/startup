@@ -1,9 +1,9 @@
 import ApiRoutes from "@/constants/ApiRoutes";
 import api from "../api";
 
-export const getLeave = async () => {
-    const response = await api.get(ApiRoutes.adminLeave.getLeave);
-    return response.data
+export const getLeave = async (params) => {
+    const response = await api.get(ApiRoutes.adminLeave.getLeave, { params });
+    return response.data.data
 }
     
 

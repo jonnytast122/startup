@@ -33,6 +33,8 @@ import "react-date-range/dist/theme/default.css";
 import AddLeaveDialog from "./components/addleavedialog";
 import UserProfileSection from "./components/user-profile-section";
 import { DateRangePicker } from "react-date-range";
+import { useQuery } from "@tanstack/react-query";
+import { getLeave } from "@/lib/api/adminLeave";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -50,14 +52,13 @@ const columns = [
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
-      const profileExists = row.original.profile; // Check if profile exists
-      const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
-      const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
+      const profileExists = row.original.profile;
+      const firstNameInitial = row.original.employee?.name?.charAt(0)?.toUpperCase() || 'U';
+      const lastNameInitial = row.original.employee?.name?.split(' ')[1]?.charAt(0)?.toUpperCase() || '';
 
       return (
         <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
           {profileExists ? (
-            // Replace with an actual image if available
             <img
               src={row.original.profile}
               alt="Profile"
@@ -73,24 +74,46 @@ const columns = [
       );
     },
   },
-  { accessorKey: "firstname", header: "First name" },
-  { accessorKey: "lastname", header: "Last name" },
-  { accessorKey: "department", header: "Department" },
+  { 
+    accessorKey: "firstname", 
+    header: "First name",
+    cell: ({ row }) => {
+      const name = row.original.employee?.name || 'Unknown';
+      return name.split(' ')[0];
+    }
+  },
+  { 
+    accessorKey: "lastname", 
+    header: "Last name",
+    cell: ({ row }) => {
+      const name = row.original.employee?.name || 'Unknown';
+      return name.split(' ').slice(1).join(' ') || 'User';
+    }
+  },
+  { 
+    accessorKey: "department", 
+    header: "Department",
+    cell: ({ row }) => row.original.department || 'Not specified'
+  },
   {
     accessorKey: "job",
     header: "Job",
     cell: ({ row }) => (
       <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
-        {row.original.job}
+        {row.original.job || 'Employee'}
       </div>
     ),
   },
-  { accessorKey: "shifttype", header: "Shift Type" },
+  { 
+    accessorKey: "shifttype", 
+    header: "Shift Type",
+    cell: ({ row }) => row.original.shifttype || 'Standard'
+  },
   {
     accessorKey: "annualleave",
     header: "Annual Leaves",
     cell: ({ row }) => {
-      const value = row.original.annualleave; // Format: "2.5 / 15 days"
+      const value = row.original.annualleave || "0 / 0 days";
       return value;
     },
   },
@@ -98,13 +121,13 @@ const columns = [
     accessorKey: "sickleave",
     header: "Sick Leave",
     cell: ({ row }) => {
-      const value = row.original.sickleave; // Expected format: "1.5 / 15 days"
+      const value = row.original.sickleave || "0 / 0 days";
       const match = value.match(/([\d.]+)\s*\/\s*([\d.]+)\s*(\w+)/);
 
       if (!match) return value;
 
       const [used, total, unit] = match.slice(1);
-      const percentUsed = (parseFloat(used) / parseFloat(total)) * 100;
+      const percentUsed = total > 0 ? (parseFloat(used) / parseFloat(total)) * 100 : 0;
 
       const textColor =
         percentUsed > 75
@@ -124,7 +147,7 @@ const columns = [
     accessorKey: "unpaidleave",
     header: "Unpaid Leave",
     cell: ({ row }) => {
-      const value = row.original.unpaidleave; // Expected format: "0 / Unlimited"
+      const value = row.original.unpaidleave || "0 / Unlimited";
       const match = value.match(/([\d.]+)\s*\/\s*(\w+)/);
 
       if (!match) return value;
@@ -145,7 +168,7 @@ const columns = [
     accessorKey: "assignleave",
     header: "Assigned Leaves",
     cell: ({ row }) => {
-      const value = row.original.assignleave;
+      const value = row.original.assignleave || "0";
       return value;
     },
   },
@@ -153,24 +176,33 @@ const columns = [
     accessorKey: "onleavestatus",
     header: "On Leave Status",
     cell: ({ row }) => {
-      const status = row.original.onleavestatus?.annual || "Pending";
+      const status = row.original.status || "pending";
 
       return (
         <div className="flex items-center space-x-6 text-sm">
-          <span className="text-gray-800">Annual Leave</span>
+          <span className="text-gray-800">{row.original.type?.name || 'Leave'}</span>
           <span
             className={`font-medium ${
-              status === "Approved"
+              status === "approved"
                 ? "text-blue-500"
-                : status === "Declined"
+                : status === "rejected"
                 ? "text-red-500"
                 : "text-gray-500"
             }`}
           >
-            {status}
+            {status.charAt(0).toUpperCase() + status.slice(1)}
           </span>
         </div>
       );
+    },
+  },
+  {
+    accessorKey: "dates",
+    header: "Leave Dates",
+    cell: ({ row }) => {
+      const startDate = new Date(row.original.startDate).toLocaleDateString();
+      const endDate = new Date(row.original.endDate).toLocaleDateString();
+      return `${startDate} - ${endDate}`;
     },
   },
 ];
@@ -179,44 +211,47 @@ const Leaves = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddLeaveDialog, setOpenAddLeaveDialog] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1),
-    endDate: new Date(2025, 6, 31),
+    startDate: new Date(2025, 4, 1), // July 1, 2025
+    endDate: new Date(2025, 10, 20), // July 31, 2025
     key: "selection",
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [leaveData, setLeaveData] = useState([
-    {
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Fetch leave data from API
+  const { data: leaveResponse, isLoading, error } = useQuery({
+    queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
+    queryFn: () =>
+      getLeave({
+        startDate: selectedRange.startDate.toISOString().split("T")[0],
+        endDate: selectedRange.endDate.toISOString().split("T")[0],
+      }),
+    enabled: !!selectedRange.startDate && !!selectedRange.endDate,
+  });
+
+  // Transform API data to match table format
+  const leaveData = useMemo(() => {
+    if (!leaveResponse) return [];
+    
+    return leaveResponse.map(leave => ({
+      ...leave,
+      // Add mock data for fields not in API response
       profile: "/avatars/ralph.png",
-      firstname: "John",
-      lastname: "Doe",
-      department: "Marketing",
-      job: "Account",
+      department: "Department", // You might want to get this from employee data
+      job: "Employee",
       shifttype: "Schedule",
       annualleave: "2.5 / 15 days",
-      sickleave: "2.5 / 15 days",
-      assignleave: "",
+      sickleave: "1.5 / 15 days",
+      assignleave: "5",
       unpaidleave: "0 / Unlimited",
-      onleavestatus: { annual: "Declined", sick: "Approved" },
-      date: "2025-03-12",
-    },
-    {
-      profile: "/avatars/ralph.png",
-      firstname: "Jane",
-      lastname: "Smith",
-      department: "HR",
-      job: "Manager",
-      shifttype: "Schedule",
-      annualleave: "2.5 / 15 days",
-      sickleave: "2.5 / 15 days",
-      assignleave: "",
-      unpaidleave: "0 / Unlimited",
-      onleavestatus: { annual: "Declined", sick: "Approved" },
-      date: "2025-03-20",
-    },
-  ]);
+    }));
+  }, [leaveResponse]);
+
+  // Filter data based on search query
   const filteredData = useMemo(() => {
     return leaveData.filter((item) => {
-      const matchesSearch = `${item.firstname} ${item.lastname}`
+      const employeeName = item.employee?.name || '';
+      const matchesSearch = employeeName
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
 
@@ -230,8 +265,46 @@ const Leaves = () => {
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: 10,
+      },
+    },
   });
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  const datePickerRef = useRef(null);
+
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+        setShowDatePicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg font-custom">Loading leave data...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-lg font-custom text-red-500">
+          Error loading leave data: {error.message}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -277,6 +350,7 @@ const Leaves = () => {
           </div>
         </div>
       </div>
+      
       {selectedEmployee ? (
         <UserProfileSection
           employee={selectedEmployee}
@@ -300,31 +374,35 @@ const Leaves = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                <button
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
-                >
-                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-                  <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
-                </button>
-                {showDatePicker && (
-                  <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
-                    <DateRangePicker
-                      ranges={[selectedRange]}
-                      onChange={(ranges) => {
-                        const newRange = ranges.selection;
-                        setSelectedRange(newRange);
+                
+                <div className="relative" ref={datePickerRef}>
+                  <button
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                  >
+                    {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
+                    <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+                  </button>
+                  {showDatePicker && (
+                    <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
+                      <DateRangePicker
+                        ranges={[selectedRange]}
+                        onChange={(ranges) => {
+                          const newRange = ranges.selection;
+                          setSelectedRange(newRange);
 
-                        const start = newRange.startDate;
-                        const end = newRange.endDate;
-                        if (start && end && start.getTime() !== end.getTime()) {
-                          setShowDatePicker(false);
-                        }
-                      }}
-                      rangeColors={["#3b82f6"]}
-                    />
-                  </div>
-                )}
+                          const start = newRange.startDate;
+                          const end = newRange.endDate;
+                          if (start && end && start.getTime() !== end.getTime()) {
+                            setShowDatePicker(false);
+                          }
+                        }}
+                        rangeColors={["#3b82f6"]}
+                      />
+                    </div>
+                  )}
+                </div>
+                
                 <Button
                   onClick={() => {
                     const today = new Date();
@@ -339,6 +417,7 @@ const Leaves = () => {
                   Today
                 </Button>
               </div>
+              
               {/* Right Side Dropdowns */}
               <div className="flex w-full sm:w-auto gap-4">
                 {/* Search Input */}
@@ -366,7 +445,8 @@ const Leaves = () => {
                   open={openAddLeaveDialog}
                   onOpenChange={setOpenAddLeaveDialog}
                   onConfirm={(newLeave) => {
-                    setLeaveData((prev) => [...prev, newLeave]);
+                    // Handle new leave creation if needed
+                    console.log('New leave:', newLeave);
                   }}
                 />
                 <Select>
@@ -383,9 +463,10 @@ const Leaves = () => {
                 </Select>
               </div>
             </div>
+            
             {filteredData.length === 0 ? (
               <p className="text-center text-gray-300 mt-4 text-xl font-custom">
-                No Data Available
+                No Leave Data Available
               </p>
             ) : (
               <div className="rounded-md border mt-6">
@@ -434,6 +515,7 @@ const Leaves = () => {
                 </Table>
               </div>
             )}
+            
             <div className="flex items-center justify-end space-x-2 py-4">
               <Button
                 variant="outline"
