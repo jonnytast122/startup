@@ -230,11 +230,20 @@ export default function GroupPage() {
 
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      <img
-                        src={`https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png`}
-                        alt={group.createdBy?.name || "User"}
-                        className="w-8 h-8 rounded-full"
-                      />
+                      {group.createdBy?.info?.profileImg ? (
+                        <img
+                          src={group.createdBy.info.profileImg}
+                          alt={group.createdBy.name}
+                          className="w-6 h-6 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
+                          {group.createdBy?.name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")}
+                        </div>
+                      )}
                       <span>{group.createdBy?.name}</span>
                     </div>
                   </TableCell>

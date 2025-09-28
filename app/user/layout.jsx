@@ -26,13 +26,21 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import ReactQueryProvider from "./react-query-provider";
+import ReactQueryProvider from "../react-query-provider";
+
+import { useQuery } from "@tanstack/react-query";
+import { getMyDetails } from "@/lib/api/user";
 
 export default function Layout({ children }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const containerRef = useRef(null);
   const router = useRouter();
   const { user, logout } = useAuth();
+
+  const { data: user_data } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
 
   const handleLogout = () => {
     logout();
@@ -127,14 +135,21 @@ export default function Layout({ children }) {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className="flex items-center gap-2 cursor-pointer select-none px-2 py-1 rounded-md hover:bg-gray-100"
                 >
-                  <img
-                    src={user?.avatar || "/images/feature.png"}
-                    alt="Profile"
-                    className="h-9 w-9 rounded-full border"
-                    onError={(e) => {
-                      e.currentTarget.src = "/images/feature.png";
-                    }}
-                  />
+                  {user_data?.profileImg ? (
+                    <img
+                      src={user_data.profileImg}
+                      alt="Profile"
+                      className="w-9 h-9 rounded-full border-2 border-gray-200 object-cover"
+                    />
+                  ) : (
+                    <div className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+                      {user_data?.employee?.name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()}
+                    </div>
+                  )}
                   <span className="text-sm font-custom font-medium text-blue-400 hidden sm:inline">
                     {user?.name || "User"}
                   </span>
@@ -145,14 +160,21 @@ export default function Layout({ children }) {
                   <div className="absolute right-0 z-50 mt-2 w-64 rounded-xl border bg-white py-2 shadow-lg">
                     {/* Profile Summary */}
                     <div className="mx-3 flex items-center gap-3 px-2 py-2 rounded-xl bg-blue-100">
-                      <img
-                        src={user?.avatar || "/images/feature.png"}
-                        alt="Profile"
-                        className="h-10 w-10 rounded-full border"
-                        onError={(e) => {
-                          e.currentTarget.src = "/images/feature.png";
-                        }}
-                      />
+                      {user_data?.profileImg ? (
+                        <img
+                          src={user_data.profileImg}
+                          alt="Profile"
+                          className="w-9 h-9 rounded-full border-2 border-gray-200 object-cover"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+                          {user_data?.employee?.name
+                            ?.split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .toUpperCase()}
+                        </div>
+                      )}
                       <div>
                         <div className="font-custom text-md font-medium">
                           {user?.name || "User"}

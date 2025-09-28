@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useState, useCallback } from "react";
 import { FaDownload } from "react-icons/fa";
 import { FiMapPin } from "react-icons/fi";
