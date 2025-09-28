@@ -79,6 +79,22 @@ function LoginForm({ className, ...props }) {
     }
   };
 
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return "";
+    let clean = phone.replace(/\D/g, ""); // remove non-digits
+    if (clean.startsWith("855")) clean = "+" + clean;
+    if (!clean.startsWith("+")) clean = "+" + clean;
+
+    // Format Cambodia (+855)
+    if (clean.startsWith("+855")) {
+      const local = clean.slice(4);
+      return `+855 ${local.replace(/(\d{2})(\d{3})(\d{3})/, "$1 $2 $3")}`;
+    }
+
+    // Fallback for others
+    return clean;
+  };
+
   // Handle OTP typing
   const handleOtpChange = (e, index) => {
     const value = e.target.value;
@@ -164,7 +180,7 @@ function LoginForm({ className, ...props }) {
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden shadow-lg shadow-gray-300 rounded-[30px]">
+      <Card className="font-custom overflow-hidden shadow-lg shadow-gray-300 rounded-[30px]">
         <CardContent className="grid p-0 md:grid-cols-[3fr,2.1fr] min-h-[400px] md:min-h-[600px]">
           {showOtpScreen ? (
             <form
@@ -189,7 +205,9 @@ function LoginForm({ className, ...props }) {
                 </h1>
                 <p className="text-sm text-gray-500 text-center">
                   Enter the OTP sent to{" "}
-                  <span className="text-blue-500">{phoneNumber}</span>
+                  <span className="text-blue-500">
+                    {formatPhoneNumber(phoneNumber)}
+                  </span>
                 </p>
 
                 <div

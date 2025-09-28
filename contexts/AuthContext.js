@@ -12,7 +12,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Restore auth state from localStorage + cookie
+  // Restore from storage
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -24,15 +24,14 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // Login and store tokens + user
+  // Login helper
   const login = ({ tokens, user }) => {
     localStorage.setItem("token", tokens.access.token);
     localStorage.setItem("refreshToken", tokens.refresh.token);
     localStorage.setItem("user", JSON.stringify(user));
 
-    // 👇 set cookie for middleware
     Cookies.set("token", tokens.access.token, {
-      expires: 1, // 1 day
+      expires: 1,
       sameSite: "lax",
     });
 
@@ -40,12 +39,48 @@ export function AuthProvider({ children }) {
     setUser(user);
   };
 
-  // Logout and cleanup
+  // Register (does not log in immediately)
+  const register = async (formData) => {
+    const res = await fetch("/v1/auth/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    });
+
+    if (!res.ok) throw new Error("Registration failed");
+    const data = await res.json();
+
+    // Save token + user temporarily so we can verify phone
+    setToken(data.tokens.access.token);
+    setUser(data.user);
+
+    return data; // return so UI can trigger send-verification-phone
+  };
+
+  // Verify phone (logs in after OTP is correct)
+  const verifyPhone = async ({ id, otp }) => {
+    const res = await fetch("/v1/auth/verify-phone", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // use token from register
+      },
+      body: JSON.stringify({ id, otp }),
+    });
+
+    if (!res.ok) throw new Error("Phone verification failed");
+    const data = await res.json();
+
+    // Now log user in fully
+    login({ tokens: data.tokens, user: data.user });
+    return data;
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
-    Cookies.remove("token"); // 👈 remove cookie too
+    Cookies.remove("token");
 
     setUser(null);
     setToken(null);
@@ -60,6 +95,8 @@ export function AuthProvider({ children }) {
         loading,
         login,
         logout,
+        register,
+        verifyPhone,
         isAuthenticated: !!user,
       }}
     >

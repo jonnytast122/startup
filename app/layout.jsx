@@ -1,6 +1,7 @@
+// app/layout.jsx
 import "./globals.css";
-import { AuthProvider } from "@/contexts/AuthContext"; // Make sure the path is correct
-
+import { AuthProvider } from "@/contexts/AuthContext";
+import ReactQueryProvider from "./react-query-provider";
 export const metadata = {
   title: "Anan",
   description:
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <AuthProvider>
-          <main className="relative overflow-hidden">{children}</main>
+          <ReactQueryProvider>
+            <main className="relative overflow-hidden">{children}</main>
+          </ReactQueryProvider>
         </AuthProvider>
       </body>
     </html>

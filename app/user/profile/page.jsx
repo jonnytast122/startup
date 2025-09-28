@@ -27,7 +27,7 @@ import WorkShiftDialog from "./components/shiftdialog";
 import BranchDetail from "./components/branchdetail";
 import AddUserDialog from "./components/groupsettingdialog";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getMyDetails } from "@/lib/api/user";
 
 const user = {
