@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, MapPin } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
@@ -14,11 +14,22 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 
+import { getOvertime } from "@/lib/api/adminOvertime";
+import { useQuery } from "@tanstack/react-query";
+
+const calculateHours = (start, end) => {
+  const [startH, startM] = start.split(":").map(Number);
+  const [endH, endM] = end.split(":").map(Number);
+  let hours = endH - startH + (endM - startM) / 60;
+  if (hours < 0) hours += 24;
+  return hours;
+};
+
 export default function UserProfileSection({ employee, onClose }) {
   const [showPicker, setShowPicker] = useState(false);
   const [payPeriod, setPayPeriod] = useState({
-    startDate: new Date(2025, 6, 26),
-    endDate: new Date(2025, 7, 25),
+    startDate: new Date(2025, 4, 26),
+    endDate: new Date(2025, 10, 25),
     key: "selection",
   });
 
@@ -28,6 +39,23 @@ export default function UserProfileSection({ employee, onClose }) {
   ];
 
   if (!employee) return null;
+
+  console.log(employee);
+
+  const { data: overtime } = useQuery({
+    queryKey: ["employee-overtime", employee.employee.id],
+    queryFn: () =>
+      getOvertime(
+        {
+          employee: employee.employee.id,
+          startDate: payPeriod.startDate.toISOString().split("T")[0],
+          endDate: payPeriod.endDate.toISOString().split("T")[0],
+        }
+      ),
+    enabled: !!employee?.employee?.id,
+  });
+
+  console.log(overtime);
 
   return (
     <div className="bg-white rounded-xl shadow-md py-6 px-6">
@@ -118,56 +146,11 @@ export default function UserProfileSection({ employee, onClose }) {
                 </button>
               </td>
             </tr>
-            {[
-              {
-                date: "Mon 19/08",
-                status: "Approved",
-                req: "Request",
-                otType: "Weekend",
-                start: "08:00",
-                end: "10:30",
-                total: "07:03",
-                daily: "07:03",
-                weekly: "07:03",
-              },
-              {
-                date: "Tue 20/08",
-                status: "Pending",
-                req: "Assigned",
-                otType: "Weekday",
-                start: "18:00",
-                end: "20:00",
-                total: "07:03",
-                daily: "07:03",
-                weekly: "07:03",
-              },
-              {
-                date: "Wed 21/08",
-                status: "Declined",
-                req: "Request",
-                otType: "Holiday",
-                start: "10:00",
-                end: "14:00",
-                total: "07:03",
-                daily: "07:03",
-                weekly: "07:03",
-              },
-              {
-                date: "Thu 22/08",
-                status: "Approved",
-                req: "Assigned",
-                otType: "Weekday",
-                start: "17:30",
-                end: "20:00",
-                total: "07:03",
-                daily: "07:03",
-                weekly: "07:03",
-              },
-            ].map((entry, idx, arr) => (
+            {overtime?.map((entry, idx, arr) => (
               <>
                 <tr key={idx} className="text-sm text-center">
                   <td className="px-3 py-2"></td>
-                  <td className="px-3 py-2">{entry.date}</td>
+                  <td className="px-3 py-2">{entry.date.split("T")[0]}</td>
                   <td className="px-3 py-2">
                     <span className="border border-blue-400 text-blue-500 px-3 py-1 rounded-full text-xs">
                       {employee.job}
@@ -185,25 +168,25 @@ export default function UserProfileSection({ employee, onClose }) {
                       {entry.status}
                     </span>
                   </td>
-                  <td className="px-3 py-2">{entry.req}</td>
-                  <td className="px-3 py-2">{entry.otType}</td>
+                  <td className="px-3 py-2">{entry.createdBy.name || "—"}</td>
+                  <td className="px-3 py-2">{entry.overtimeType.name || "—"}</td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-start">
-                      <span>{entry.start}</span>
+                      <span>{entry.startTime}</span>
                       <MapPin className="w-4 h-4 text-gray-600" />
                     </div>
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-start">
-                      <span>{entry.end}</span>
+                      <span>{entry.endTime}</span>
                       <MapPin className="w-4 h-4 text-gray-600" />
                     </div>
                   </td>
-                  <td className="px-3 py-2">{entry.total}</td>
-                  <td className="px-3 py-2">{entry.daily}</td>
-                  <td className="px-3 py-2">{entry.weekly}</td>
-                  <td className="px-3 py-2 text-gray-400 italic">—</td>
-                  <td className="px-3 py-2 text-gray-400 italic">—</td>
+                  <td className="px-3 py-2">{calculateHours(entry.startTime, entry.endTime) + " hours" || "—"}</td>
+                  <td className="px-3 py-2">{entry.daily || "—"}</td>
+                  <td className="px-3 py-2">{entry.weekly || "—"}</td>
+                  <td className="px-3 py-2 text-gray-400 italic">{entry.description || "—"}</td>
+                  <td className="px-3 py-2 text-gray-400 italic">{entry.managerNote || "—"}</td>
                 </tr>
                 {idx !== arr.length - 1 && (
                   <tr>

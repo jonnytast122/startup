@@ -1,11 +1,12 @@
 import ApiRoutes from "@/constants/ApiRoutes";
 import api from "../api";
 
-export const getOvertime = async () => {
-    const response = await api.get(ApiRoutes.adminOvertime.getOvertime);
-    return response.data
+export const getOvertime = async (params) => {
+    const response = await api.get(ApiRoutes.adminOvertime.getOvertime,{
+        params: params
+    });
+    return response.data.data
 }
-    
 
 export const responseOvertimeRequest = async () => {
     const response = await api.post(ApiRoutes.adminOvertime.responseOvertimeRequest);

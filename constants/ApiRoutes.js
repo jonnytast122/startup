@@ -138,11 +138,11 @@ const ApiRoutes = {
   },
 
   adminAttendance: {
-    getAttendances: `${BASE_URL}/attendance`,
+    getAttendances: `${BASE_URL}/attendance/company/{id}/range`,
     getActivity: `${BASE_URL}/attendance/activity`,
     addAttendances: `${BASE_URL}/attendance`,
     getEmployeeLocation: `${BASE_URL}/attendance/employee-location`,
-    getEmployeeAttendance: `${BASE_URL}/attendance/employee/{id}`,
+    getEmployeeAttendance: `${BASE_URL}/attendance/employee/{id}/range`,
   },
 
   adminTimeSheet: {
@@ -151,7 +151,7 @@ const ApiRoutes = {
   },
 
   adminLeave: {
-    getLeave: `${BASE_URL}/leaves`,
+    getLeave: `${BASE_URL}/leaves/company`,
     getLeaveRequest: `${BASE_URL}/leaves/requests`,
     createLeave: `${BASE_URL}/leaves/request`,
     responseLeaveRequest: `${BASE_URL}/leaves/response`,
