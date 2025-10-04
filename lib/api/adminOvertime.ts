@@ -8,8 +8,13 @@ export const getOvertime = async (params) => {
     return response.data.data
 }
 
-export const responseOvertimeRequest = async () => {
-    const response = await api.post(ApiRoutes.adminOvertime.responseOvertimeRequest);
+export const approveOvertime = async ({id,message}) => {
+    const response = await api.put(ApiRoutes.adminOvertime.approveOvertime.replace("{id}",id),{message});
+    return response.data
+}
+
+export const rejectOvertime = async ({id,message}) => {
+    const response = await api.put(ApiRoutes.adminOvertime.rejectOvertime.replace("{id}",id),{message});
     return response.data
 }
 

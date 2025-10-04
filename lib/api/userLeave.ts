@@ -7,6 +7,11 @@ export const getMyPolicies = async () => {
   return response.data.policies;
 };
 
+export const getMyBalance = async (id) => {
+  const response = await api.get(ApiRoutes.userLeave.myBalance.replace("{id}", id));
+  return response.data.policies;
+};
+
 export const requestLeave = async (data) => {
   const response = await api.post(ApiRoutes.userLeave.request, data);
   return response.data;

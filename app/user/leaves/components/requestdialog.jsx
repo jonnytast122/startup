@@ -91,7 +91,7 @@ export default function RequestDialog() {
   const [successOpen, setSuccessOpen] = useState(false);
 
   const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
-  const [selectedPolicy,setSeletedPolicy] = useState(null);
+  const [selectedPolicy, setSeletedPolicy] = useState({});
   const [allDay, setAllDay] = useState(true);
 
   // All-day ON range (default today)
@@ -112,12 +112,16 @@ export default function RequestDialog() {
 
   const queryClient = useQueryClient();
 
-  const { data: policies } = useQuery({ queryKey: ["user-leave-policies"], queryFn: getMyPolicies });
-  const requestLeaveMutation = useMutation({ mutationFn: requestLeave, 
+  const { data: policies } = useQuery({
+    queryKey: ["user-leave-policies"],
+    queryFn: getMyPolicies,
+  });
+  const requestLeaveMutation = useMutation({
+    mutationFn: requestLeave,
     onSuccess: () => {
       queryClient.invalidateQueries(["user-leave-requests"]);
     },
-   });
+  });
 
   useEffect(() => {
     if (policies) {
@@ -153,7 +157,7 @@ export default function RequestDialog() {
       alert("End time must be after start time.");
       return;
     }
-  
+
     // Build dateTime array
     let dateTimes = [];
     if (allDay) {
@@ -171,15 +175,15 @@ export default function RequestDialog() {
       start.setHours(...startTime.split(":").map(Number));
       const end = new Date(oneDayDate);
       end.setHours(...endTime.split(":").map(Number));
-  
+
       dateTimes.push({
         start_time: start.toISOString(),
         end_time: end.toISOString(),
       });
     }
 
-    console.log(selectedPolicy)
-  
+    console.log(selectedPolicy);
+
     // Build payload
     const payload = {
       company: policies[0].company, // replace with actual company ID
@@ -237,13 +241,23 @@ export default function RequestDialog() {
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Leave Policies</span>
-                  <Select value={selectedPolicy.name} onValueChange={setSeletedPolicy}>
+                  <Select
+                    value={selectedPolicy?._id || ""}
+                    onValueChange={(id) => {
+                      const policy = policies.find((p) => p._id === id);
+                      setSeletedPolicy(policy);
+                    }}
+                  >
                     <SelectTrigger className="h-9 w-44 rounded-full text-sm">
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
                     <SelectContent>
                       {policies?.map((policy) => (
-                        <SelectItem key={policy.id} value={policy} className="text-sm">
+                        <SelectItem
+                          key={policy._id}
+                          value={policy._id}
+                          className="text-sm"
+                        >
                           {policy.name}
                         </SelectItem>
                       ))}
@@ -368,7 +382,9 @@ export default function RequestDialog() {
                   /* All day OFF -> single date + time range */
                   <>
                     <div className="mb-3">
-                      <div className="text-sm font-medium mb-1">Date and time</div>
+                      <div className="text-sm font-medium mb-1">
+                        Date and time
+                      </div>
                       <Popover
                         open={openOneDayPop}
                         onOpenChange={(o) => {
@@ -426,7 +442,11 @@ export default function RequestDialog() {
 
                     {/* Duration preview */}
                     <div className="mt-3 text-xs text-gray-700">
-                      Total time leaves: <span className="font-semibold">{totalH}:{totalM}</span> hours
+                      Total time leaves:{" "}
+                      <span className="font-semibold">
+                        {totalH}:{totalM}
+                      </span>{" "}
+                      hours
                     </div>
                   </>
                 )}
@@ -472,7 +492,9 @@ export default function RequestDialog() {
             Successfully Sent?
           </DialogTitle>
           <Smile className="w-16 h-16 mx-auto text-green-500 mb-2" />
-          <div className="text-lg text-gray-700">Please wait for the approvals.</div>
+          <div className="text-lg text-gray-700">
+            Please wait for the approvals.
+          </div>
         </DialogContent>
       </Dialog>
     </>
