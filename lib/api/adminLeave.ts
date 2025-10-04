@@ -17,8 +17,13 @@ export const createLeave = async () => {
     return response.data
 }
 
-export const responseLeaveRequest = async () => {
-    const response = await api.post(ApiRoutes.adminLeave.responseLeaveRequest);
+export const approveLeave = async ({id,message}) => {
+    const response = await api.put(ApiRoutes.adminLeave.approveLeave.replace("{id}",id),{message});
+    return response.data
+}
+
+export const rejectLeave = async ({id,message}) => {
+    const response = await api.put(ApiRoutes.adminLeave.rejectLeave.replace("{id}",id),{message});
     return response.data
 }
 

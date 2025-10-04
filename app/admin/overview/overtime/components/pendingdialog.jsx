@@ -36,6 +36,8 @@ import { DateRange } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format, isWithinInterval, parseISO } from "date-fns";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getOvertime, approveOvertime, rejectOvertime } from "@/lib/api/adminOvertime";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -91,7 +93,7 @@ const columns = [
     header: "Employee",
     cell: ({ row }) => (
       <div className="flex flex-col">
-        <span className="font-medium">{row.original.employee}</span>
+        <span className="font-medium">{row.original.employee.name}</span>
         <span className="text-[#5494DA] font-custom text-sm border border-[#5494DA] px-2.5 py-1 rounded-lg w-fit mt-2">
           {row.original.jobType}
         </span>
@@ -108,31 +110,25 @@ const columns = [
     ),
   },
   {
-    accessorKey: "starttime",
+    accessorKey: "startTime",
     header: "Start Time",
-    cell: ({ row }) => (
-      <div className="font-custom">{row.original.starttime}</div>
-    ),
   },
   {
-    accessorKey: "endtime",
+    accessorKey: "endTime",
     header: "End Time",
-    cell: ({ row }) => (
-      <div className="font-custom">{row.original.endtime}</div>
-    ),
   },
   {
-    accessorKey: "totalhours",
+    accessorKey: "ottotal",
     header: "Total Hours",
     cell: ({ row }) => (
-      <div className="font-custom">{row.original.totalhours}</div>
+      <div className="font-custom">{row.original.ottotal}</div>
     ),
   },
   {
-    accessorKey: "note",
+    accessorKey: "description",
     header: "Attachment",
     cell: ({ row }) => {
-      const words = row.original.note.split(" "); // Split the sentence into words
+      const words = row.original.description.split(" "); // Split the sentence into words
       const chunkSize = 5; // Define the number of words per row
       const rows = [];
 
@@ -160,24 +156,91 @@ const columns = [
         <DeclineDialog
           employee={row.original.employee}
           startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
+          overTime={row.original}
         />
 
         <ApproveDialog
           employee={row.original.employee}
           startdate={format(parseISO(row.original.date), "yyyy-MM-dd")}
+          overTime={row.original}
         />
       </div>
     ),
   },
 ];
 
+// Helpers
+const calculateHours = (start, end) => {
+  const [startH, startM] = start.split(":").map(Number);
+  const [endH, endM] = end.split(":").map(Number);
+  let hours = endH - startH + (endM - startM) / 60;
+  if (hours < 0) hours += 24;
+  return hours;
+};
+
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const useTransformedOvertimeData = (apiData) => {
+  return useMemo(() => {
+    if (!apiData || !Array.isArray(apiData)) return [];
+    return apiData.map((item) => {
+      const startTime = item.startTime || "";
+      const endTime = item.endTime || "";
+      const otHours =
+        startTime && endTime
+          ? `${calculateHours(startTime, endTime)} hours`
+          : "";
+
+      return {
+        id: item.id,
+        employee: item.employee,
+        startTime: item.startTime,
+        endTime: item.endTime,
+        profile: item.employee?.profile || "/avatars/ralph.png",
+        firstname: item.employee?.name?.split(" ")[0] || "",
+        lastname: item.employee?.name?.split(" ")[1] || "",
+        department: item.department || "N/A",
+        job: item.overtimeType?.name || "N/A",
+        shifttype: item.shifttype || "Schedule",
+        otrequest: otHours,
+        otassigned: otHours,
+        ottotal: otHours,
+        description: item.description || "Request for overtime",
+        status: item.status || "Pending",
+        date: item.date ? formatDate(item.date) : "",
+      };
+    });
+  }, [apiData]);
+};
+
+
 const PendingDialog = ({ onClose }) => {
+  const [open, isOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
     startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 2, 30),
+    endDate: new Date(2025, 10, 30),
     key: "selection",
   });
+
+  const { data: overtimeRespone , isLoading: overtimeLoading , error: overtimeError } = useQuery({
+    queryKey: ["overtime-pending", selectedRange.startDate, selectedRange.endDate],
+    queryFn: () =>
+      getOvertime({
+        startDate: selectedRange.startDate.toISOString().split("T")[0],
+        endDate: selectedRange.endDate.toISOString().split("T")[0],
+        status: "pending",
+      }),
+    enabled: open,
+  });
+
+  const transformedOvertimeData = useTransformedOvertimeData(overtimeRespone);
 
   const datePickerRef = useRef(null);
 
@@ -212,7 +275,7 @@ const PendingDialog = ({ onClose }) => {
   }, [selectedRange]);
 
   const table = useReactTable({
-    data: filteredData,
+    data: transformedOvertimeData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -221,10 +284,10 @@ const PendingDialog = ({ onClose }) => {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild onClick={() => isOpen(true)}>
         <Button className="text-orange font-custom w-42 h-10 border border-gray-400 bg-transparent rounded-full flex items-center pl-2 pr-4 hover:bg-orange-500 hover:text-white transition-colors duration-200">
           <span className="bg-orange-500 text-white text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full">
-            3
+            {transformedOvertimeData.length || 0}
           </span>
           <span>Pending Request</span>
         </Button>
@@ -305,7 +368,7 @@ const PendingDialog = ({ onClose }) => {
           </div>
         </div>
 
-        {filteredData.length === 0 ? (
+        {transformedOvertimeData.length === 0 ? (
           <p className="text-center text-gray-300 mt-4 text-xl font-custom">
             No Data Available
           </p>
@@ -368,9 +431,26 @@ const PendingDialog = ({ onClose }) => {
   );
 };
 
-const DeclineDialog = ({ employee, startdate }) => {
+const DeclineDialog = ({ employee, startdate, overTime }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  console.log(overTime);
+
+  const queryClient = useQueryClient();
+  const declineMutation = useMutation({
+    mutationFn: rejectOvertime,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      alert("Decline successfully for " + employee.name + " on " + startdate.split("T")[0] );
+    },
+  });
+
+  const handleDecline = () => {
+    declineMutation.mutate({id: overTime.id, message: comment});
+    setOpen(false);
+    setComment("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -390,13 +470,15 @@ const DeclineDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT on{" "}
-          <span className="font-custom">{startdate}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s OT on{" "}
+          <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
           type="text"
           placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
         />
 
@@ -409,12 +491,7 @@ const DeclineDialog = ({ employee, startdate }) => {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              setOpen(false);
-              alert(`Declined ${employee}'s request!\nComment: ${comment}`);
-              setComment("");
-              // Run your API call here
-            }}
+            onClick={handleDecline}
             className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full transition-colors"
           >
             Decline
@@ -424,9 +501,25 @@ const DeclineDialog = ({ employee, startdate }) => {
     </Dialog>
   );
 };
-const ApproveDialog = ({ employee, startdate }) => {
+const ApproveDialog = ({ employee, startdate, overTime }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+
+  const queryClient = useQueryClient();
+  const approveMutation = useMutation({
+    mutationFn: approveOvertime,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      alert("Aprove successfully for " + employee.name + " on " + startdate.split("T")[0] );
+    },
+  });
+
+  const handleApprove = () => {
+    approveMutation.mutate({id: overTime.id, message: comment});
+    setOpen(false);
+    setComment("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -445,13 +538,15 @@ const ApproveDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s OT
-          request on <span className="font-custom">{startdate}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s OT
+          request on <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
           type="text"
           placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
         />
 
@@ -464,12 +559,7 @@ const ApproveDialog = ({ employee, startdate }) => {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              setOpen(false);
-              alert(`Approved ${employee}'s request!\nComment: ${comment}`);
-              setComment("");
-              // Run your API call here
-            }}
+            onClick={handleApprove}
             className="bg-[#5494DA] text-white rounded-full"
           >
             Approve
