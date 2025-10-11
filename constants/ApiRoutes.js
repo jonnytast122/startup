@@ -1,4 +1,6 @@
+import { approveLeave } from "@/lib/api/adminLeave";
 import { getSummary } from "@/lib/api/userAttendance";
+import { rejects } from "assert";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
 
@@ -103,6 +105,7 @@ const ApiRoutes = {
 
   userLeave: {
     myPolicies: `${BASE_URL}/leaves/my-leave-policies`,
+    myBalance: `${BASE_URL}/leave-balances/employee/{id}`,
     request: `${BASE_URL}/leaves/request`,
     getRequests: `${BASE_URL}/leaves/my-requests`,
   },
@@ -158,13 +161,15 @@ const ApiRoutes = {
     getLeave: `${BASE_URL}/leaves/company`,
     getLeaveRequest: `${BASE_URL}/leaves/requests`,
     createLeave: `${BASE_URL}/leaves/request`,
-    responseLeaveRequest: `${BASE_URL}/leaves/response`,
+    approveLeave: `${BASE_URL}/leaves/{id}/approve`,
+    rejectLeave: `${BASE_URL}/leaves/{id}/reject`,
     getLeaveByEmployee: `${BASE_URL}/leaves/employee/{id}`,
   },
 
   adminOvertime: {
     getOvertime: `${BASE_URL}/overtime-requests`,
-    responseOvertimeRequest: `${BASE_URL}/overtime-requests/response`,
+    approveOvertime: `${BASE_URL}/overtime-requests/{id}/approve`,
+    rejectOvertime: `${BASE_URL}/overtime-requests/{id}/reject`,
     getOvertimeByEmployee: `${BASE_URL}/overtime-requests/employee/{id}`,
     createOvertime: `${BASE_URL}/overtime-requests`,
     getOvertimeRequests: `${BASE_URL}/overtime-requests/requests`,

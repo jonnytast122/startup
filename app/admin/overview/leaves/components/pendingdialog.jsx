@@ -37,56 +37,15 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format, isWithinInterval, parseISO } from "date-fns";
 
+import { useQuery,useMutation,useQueryClient } from "@tanstack/react-query";
+import { getLeave, approveLeave, rejectLeave } from "@/lib/api/adminLeave";
+
 const ALL = [
   { value: "Select all", label: "Select all" },
   { value: "All users group", label: "All users group" },
   { value: "Assigned features", label: "Assigned features" },
 ];
 
-const statusOptions = [
-  "Marketing",
-  "Administration",
-  "Finance",
-  "HR",
-  "IT",
-  "Operations",
-  "Sales",
-  "Support",
-  "Others",
-].map((dept) => ({ value: dept, label: dept }));
-
-const data = [
-  {
-    profile: "/avatars/ralph.png",
-    employee: "Lucy Trevo",
-    attachment: "/images/attachment.png",
-    jobType: "Accountant",
-    startdate: "10-09-2024",
-    enddate: "12-02-2024",
-    starttime: "--",
-    endtime: "--",
-    totalhours: "01:30",
-    leavetype: "Sick Leave",
-    paidtype: "Paid",
-    note: "blah blah",
-    date: "2025-03-20",
-  },
-  {
-    profile: "/avatars/ralph.png",
-    employee: "Lucy Trevo",
-    attachment: "/images/attachment.png",
-    jobType: "Accountant",
-    startdate: "10-09-2024",
-    enddate: "12-02-2024",
-    starttime: "--",
-    endtime: "--",
-    totalhours: "01:30",
-    leavetype: "Sick Leave",
-    paidtype: "Paid",
-    note: "Hi boss, today is my graduation day. i would like to ask for a permission.",
-    date: "2025-03-20",
-  },
-];
 
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
@@ -118,25 +77,72 @@ const columns = [
     header: "Employee",
     cell: ({ row }) => (
       <div className="flex flex-col">
-        <span className="font-medium">{row.original.employee}</span>
+        <span className="font-medium">{row.original.employee.name}</span>
         <span className="text-[#5494DA] font-custom text-sm border border-[#5494DA] px-2.5 py-1 rounded-lg w-fit mt-2">
           {row.original.jobType}
         </span>
       </div>
     ),
   },
-  { accessorKey: "startdate", header: "Start date" },
-  { accessorKey: "enddate", header: "End date" },
-  { accessorKey: "starttime", header: "Start time" },
-  { accessorKey: "endtime", header: "End time" },
-  { accessorKey: "totalhours", header: "Total hours" },
-  { accessorKey: "leavetype", header: "Leave type" },
+  { accessorKey: "startDate", header: "Start date",
+    cell: ({ row }) => {
+      const startTime = row.original.startDate.split("T")[0];
+      return startTime;
+    },
+   },
+  { accessorKey: "endDate", header: "End date",
+    cell: ({ row }) => {
+      const startTime = row.original.endDate.split("T")[0];
+      return startTime;
+    },
+   },
+  {
+    accessorKey: "start_time",
+    header: "Start Time",
+    cell: ({ row }) => {
+      const startTime = row.original.dateTime?.[0]?.start_time;
+      return startTime ? format(new Date(startTime), "hh:mm a") : "—";
+    },
+  },
+  {
+    accessorKey: "end_time",
+    header: "End Time",
+    cell: ({ row }) => {
+      const endTime = row.original.dateTime?.[0]?.end_time;
+      return endTime ? format(new Date(endTime), "hh:mm a") : "—";
+    },
+  },
+  {
+    accessorKey: "totalhours",
+    header: "Total Hours",
+    cell: ({ row }) => {
+      const start = row.original.dateTime?.[0]?.start_time
+        ? new Date(row.original.dateTime[0].start_time)
+        : null;
+      const end = row.original.dateTime?.[0]?.end_time
+        ? new Date(row.original.dateTime[0].end_time)
+        : null;
+
+      if (!start || !end) return "—";
+      const hours = Math.abs(end - start) / 36e5; // milliseconds to hours
+      return `${hours.toFixed(1)} hrs`;
+    },
+  },
+  {
+    accessorKey: "type",
+    header: "Leave type",
+    cell: ({ row }) => (
+      <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 bg-[#5494DA33] text-blue">
+        {row.original.type.name}
+      </div>
+    ),
+  },
   {
     accessorKey: "paidtype",
     header: "Paid type",
     cell: ({ row }) => (
       <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 bg-[#5494DA33] text-blue">
-        {row.original.paidtype}
+        {row.original.type.type}
       </div>
     ),
   },
@@ -183,11 +189,13 @@ const columns = [
           {/* Decline Button */}
           <DeclineDialog
             employee={row.original.employee}
-            startdate={row.original.startdate}
+            startdate={row.original.startDate}
+            leave={row.original}
           />
           <ApproveDialog
             employee={row.original.employee}
-            startdate={row.original.startdate}
+            startdate={row.original.startDate}
+            leave={row.original}
           />
         </div>
       </div>
@@ -196,12 +204,48 @@ const columns = [
 ];
 
 const PendingDialog = ({ onClose }) => {
+  const [open, setOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 2, 30),
+    startDate: new Date(2025, 4, 1),
+    endDate: new Date(2025, 10, 25),
     key: "selection",
   });
+
+  const {
+    data: leaveResponse,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["leave-pending", selectedRange.startDate, selectedRange.endDate],
+    queryFn: () =>
+      getLeave({
+        startDate: selectedRange.startDate.toISOString().split("T")[0],
+        endDate: selectedRange.endDate.toISOString().split("T")[0],
+        status: "pending",
+      }),
+    enabled: open,
+  });
+
+  console.log(leaveResponse);
+
+  // Transform API data to match table format
+  const leaveData = useMemo(() => {
+    if (!leaveResponse) return [];
+
+    return leaveResponse.map((leave) => ({
+      ...leave,
+      // Add mock data for fields not in API response
+      profile: "/avatars/ralph.png",
+      department: "Department", // You might want to get this from employee data
+      job: "Employee",
+      shifttype: "Schedule",
+      annualleave: "2.5 / 15 days",
+      sickleave: "1.5 / 15 days",
+      assignleave: "5",
+      unpaidleave: "0 / Unlimited",
+    }));
+  }, [leaveResponse]);
 
   const datePickerRef = useRef(null);
 
@@ -226,17 +270,13 @@ const PendingDialog = ({ onClose }) => {
   }, []);
 
   const filteredData = useMemo(() => {
-    return data.filter((item) => {
-      const itemDate = parseISO(item.date);
-      return isWithinInterval(itemDate, {
-        start: selectedRange.startDate,
-        end: selectedRange.endDate,
-      });
-    });
+    return leaveData;
   }, [selectedRange]);
 
+  console.log(filteredData);
+
   const table = useReactTable({
-    data: filteredData,
+    data: leaveData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -245,10 +285,10 @@ const PendingDialog = ({ onClose }) => {
 
   return (
     <Dialog>
-      <DialogTrigger asChild>
+      <DialogTrigger asChild onClick={() => setOpen(!open)}>
         <Button className="text-orange font-custom w-42 h-10 border border-gray-400 bg-transparent rounded-full flex items-center pl-2 pr-4 hover:bg-orange-500 hover:text-white transition-colors duration-200">
           <span className="bg-orange-500 text-white text-sm font-bold w-6 h-6 flex items-center justify-center rounded-full">
-            3
+            {leaveData.length || 0}
           </span>
           <span>Pending Request</span>
         </Button>
@@ -330,7 +370,7 @@ const PendingDialog = ({ onClose }) => {
           </div>
         </div>
 
-        {filteredData.length === 0 ? (
+        {leaveData.length === 0 ? (
           <p className="text-center text-gray-300 mt-4 text-xl font-custom">
             No Data Available
           </p>
@@ -391,9 +431,26 @@ const PendingDialog = ({ onClose }) => {
   );
 };
 
-const ApproveDialog = ({ employee, startdate }) => {
+const ApproveDialog = ({ employee, startdate, leave }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+
+  const queryClient = useQueryClient();
+  const approveMutation = useMutation({
+    mutationFn: approveLeave,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
+      alert("Aprove successfully for " + employee.name + " on " + startdate.split("T")[0] );
+    },
+  });
+
+  const handleApprove = () => {
+    approveMutation.mutate({id: leave._id, message: comment});
+    setOpen(false);
+    setComment("");
+  };
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -412,13 +469,15 @@ const ApproveDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s leave
-          on <span className="font-custom">{startdate}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s leave
+          on <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
           type="text"
           placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
         />
 
@@ -431,12 +490,7 @@ const ApproveDialog = ({ employee, startdate }) => {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              setOpen(false);
-              alert(`Approved ${employee}'s request!\nComment: ${comment}`);
-              setComment("");
-              // Run your API call here
-            }}
+            onClick={handleApprove}
             className="bg-[#5494DA] text-white rounded-full"
           >
             Approve
@@ -447,9 +501,25 @@ const ApproveDialog = ({ employee, startdate }) => {
   );
 };
 
-const DeclineDialog = ({ employee, startdate }) => {
+const DeclineDialog = ({ employee, startdate, leave }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+
+  const queryClient = useQueryClient();
+  const approveMutation = useMutation({
+    mutationFn: rejectLeave,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
+      alert("Decline successfully for " + employee.name + " on " + startdate.split("T")[0] );
+    },
+  });
+
+  const handleDecline = () => {
+    approveMutation.mutate({id: leave._id, message: comment});
+    setOpen(false);
+    setComment("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -469,13 +539,15 @@ const DeclineDialog = ({ employee, startdate }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee}</span>'s leave
-          on <span className="font-custom">{startdate}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s leave
+          on <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
           type="text"
           placeholder="✏️ Add note to the request"
+          value={comment}
+          onChange={(e) => setComment(e.target.value)}
           className="font-custom border border-gray-300 rounded-lg p-2 w-full mb-6"
         />
 
@@ -488,12 +560,7 @@ const DeclineDialog = ({ employee, startdate }) => {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              setOpen(false);
-              alert(`Declined ${employee}'s request!\nComment: ${comment}`);
-              setComment("");
-              // Run your API call here
-            }}
+            onClick={handleDecline}
             className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full transition-colors"
           >
             Decline
