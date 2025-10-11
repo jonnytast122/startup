@@ -184,7 +184,7 @@ export default function GroupPage() {
           </span>
         </div>
 
-        <div className="bg-white mt-1">
+        <div className="bg-white mt-1 font-custom">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-100">

@@ -125,7 +125,7 @@ export default function EventDialog({ date, onClose, onSave }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="w-[400px] space-y-4">
+      <DialogContent className="w-[400px] space-y-4 font-custom">
         {/* Title + Color Picker */}
         <div className="flex items-center justify-between gap-2">
           <input

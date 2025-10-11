@@ -34,7 +34,7 @@ function Map({ userData = [], selectedDate }) {
   useEffect(() => {
     const initMap = async () => {
       const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAP_API_KEY,
+        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
         version: "weekly",
       });
 
@@ -136,7 +136,7 @@ function Map({ userData = [], selectedDate }) {
 
   return (
     <div className="relative w-full h-[500px]">
-      <div className="absolute top-5 left-5 z-10 bg-white shadow-lg p-6 rounded-lg border border-[#5494DA] w-80 animate__animated animate__fadeIn">
+      {/* <div className="absolute top-5 left-5 z-10 bg-white shadow-lg p-6 rounded-lg border border-[#5494DA] w-80 animate__animated animate__fadeIn">
         <h2 className="text-lg font-custom text-dark-blue mb-4">
           All users that clocked in today
         </h2>
@@ -242,7 +242,7 @@ function Map({ userData = [], selectedDate }) {
             );
           })}
         </ul>
-      </div>
+      </div> */}
 
       <div ref={mapRef} className="h-full w-full rounded-md border" />
     </div>

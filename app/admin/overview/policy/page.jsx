@@ -146,7 +146,7 @@ export default function PolicyPage() {
   const renderPolicySection = (title, data, category, colorClass) => (
     <div key={category} className="mb-7 overflow-hidden">
       <div
-        className={`${colorClass.bg} py-3 px-4 flex justify-between items-center`}
+        className={`${colorClass.bg} py-3 px-4 flex justify-between items-center rounded-xl font-custom`}
       >
         <div>
           <h2 className={`font-semibold text-xl ${colorClass.text}`}>
@@ -156,7 +156,7 @@ export default function PolicyPage() {
         </div>
       </div>
 
-      <div className="bg-white mt-1 overflow-x-auto">
+      <div className="bg-white mt-1 overflow-x-auto font-custom">
         <Table>
           <TableHeader>
             <TableRow className="bg-gray-100">
@@ -189,17 +189,35 @@ export default function PolicyPage() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center space-x-2">
+                  {/* <div className="flex items-center space-x-2">
                     <img
                       src={data?.createdBy?.profilePic}
                       alt={data?.createdBy?.name}
                       className="w-8 h-8 rounded-full"
                     />
                     <span>{data?.createdBy?.name}</span>
+                  </div> */}
+
+                  <div className="flex items-center space-x-2">
+                    {data.createdBy?.info?.profileImg ? (
+                      <img
+                        src={data.createdBy.info.profileImg}
+                        alt={data.createdBy.name}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
+                        {data.createdBy?.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </div>
+                    )}
+                    <span>{data.createdBy?.name}</span>
                   </div>
                 </TableCell>
                 <TableCell
-                  className="text-center align-middle"
+                  className="text-center align-middle font-custom"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <DropdownMenu>
@@ -211,7 +229,7 @@ export default function PolicyPage() {
                     <DropdownMenuContent
                       align="start"
                       side="right"
-                      className="bg-white border px-4 border-gray-200 shadow-lg rounded-md"
+                      className="bg-white border px-4 border-gray-200 shadow-lg rounded-md font-custom"
                     >
                       <DropdownMenuItem
                         onClick={() => openModal(category, data, false)}
@@ -224,7 +242,6 @@ export default function PolicyPage() {
                       >
                         Delete {category === "leave" ? "Leave" : "Overtime"}
                       </DropdownMenuItem>
-                      π
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -251,7 +268,7 @@ export default function PolicyPage() {
 
   return (
     <div>
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 font-custom">
         <div className="flex items-center justify-between p-5">
           <div className="flex items-center space-x-3">
             <Lightbulb className="text-[#2998FF]" width={40} height={40} />
@@ -325,7 +342,7 @@ export default function PolicyPage() {
       {/* Delete Dialog */}
       {confirmDelete && (
         <Dialog open onOpenChange={() => setConfirmDelete(null)}>
-          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center">
+          <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center font-custom">
             <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
               Do you want to delete this policy?

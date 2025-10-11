@@ -29,13 +29,12 @@ export default function UserAdminPage() {
       const admins = data?.results?.filter(
         (u) => u.employee?.role === "admin" || u.employee?.role === "owner"
       );
+      console.log(admins);
       setAdminsCount(admins?.length || 0);
     },
   });
 
   const users = data?.results || [];
-
-  console.log("Fetched users:", users);
 
   return (
     <div>
@@ -51,7 +50,7 @@ export default function UserAdminPage() {
       {/* Tabs */}
       <div className="relative bg-white rounded-xl shadow-md">
         <div className="flex">
-          {["Users", "Admins", "Archived"].map((tab) => (
+          {["Users", "Archived"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -65,7 +64,7 @@ export default function UserAdminPage() {
               }`}
             >
               {tab} {tab === "Users" && `(${usersCount})`}
-              {tab === "Admins" && `(${adminsCount})`}
+              {/* {tab === "Admins" && `(${adminsCount})`} */}
             </button>
           ))}
         </div>
@@ -101,18 +100,18 @@ export default function UserAdminPage() {
               isLoading={isLoading}
             />
           )}
-          {activeTab === "Admins" && (
+          {/* {activeTab === "Admins" && (
             <AdminsScreen
-              admins={users.filter(
-                (u) =>
-                  u.employee?.role === "admin" || u.employee?.role === "owner"
-              )}
+              admins={users.filter((user) => {
+                const role = user?.employee?.role?.toLowerCase();
+                return role === "admin" || role === "owner";
+              })}
               setAdminsCount={setAdminsCount}
               searchQuery={searchQuery}
               onAddAdmin={() => setDialogType("admin")}
               isLoading={isLoading}
             />
-          )}
+          )} */}
           {activeTab === "Archived" && (
             <ArchivedScreen searchQuery={searchQuery} />
           )}
@@ -123,9 +122,9 @@ export default function UserAdminPage() {
       {dialogType === "user" && (
         <AddUserDialog open={true} onClose={() => setDialogType(null)} />
       )}
-      {dialogType === "admin" && (
+      {/* {dialogType === "admin" && (
         <AddAdminDialog open={true} onClose={() => setDialogType(null)} />
-      )}
+      )} */}
     </div>
   );
 }

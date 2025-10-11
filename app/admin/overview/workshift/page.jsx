@@ -70,14 +70,14 @@ export default function WorkShiftPage() {
 
   return (
     <div>
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border font-custom">
         <div className="flex items-center justify-between p-5">
           <div className="flex items-center space-x-3">
             <BookCheck className="text-[#2998FF]" width={40} height={40} />
             <span className="font-custom text-3xl text-black">Work shift</span>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* <div className="flex items-center gap-4">
             <p className="text-right text-sm font-medium text-gray-600 leading-tight">
               Asset
               <br />
@@ -97,11 +97,11 @@ export default function WorkShiftPage() {
                 2+
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-md">
+      <div className="bg-white rounded-xl shadow-md font-custom">
         <div className="flex">
           {["Shift", "Calendar"].map((tab) => (
             <button
@@ -120,7 +120,7 @@ export default function WorkShiftPage() {
 
         {activeTab === "Shift" && (
           <div className="m-5">
-            <div className="bg-green-100 px-6 py-4">
+            <div className="bg-green-100 px-6 py-4 rounded-xl">
               <h3 className="text-green-700 font-semibold">Work shift</h3>
               <p className="text-xs text-gray-600">
                 {workshift?.results?.results.length ?? 0} shifts
@@ -131,7 +131,7 @@ export default function WorkShiftPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Shift name</TableHead>
-                  <TableHead>Status</TableHead>
+                  {/* <TableHead>Status</TableHead> */}
                   <TableHead>Created by</TableHead>
                   <TableHead className="text-center align-middle">
                     Edit
@@ -148,7 +148,7 @@ export default function WorkShiftPage() {
                     onClick={() => setViewingShift(shift)}
                   >
                     <TableCell>{shift.name}</TableCell>
-                    <TableCell>
+                    {/* <TableCell>
                       <span
                         className={`px-3 py-1 text-xs rounded-full font-medium ${
                           shift.status === "Active"
@@ -158,9 +158,9 @@ export default function WorkShiftPage() {
                       >
                         {shift.status ?? "Inactive"}
                       </span>
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell>
-                      <div className="flex items-center space-x-2">
+                      {/* <div className="flex items-center space-x-2">
                         <img
                           src={shift.profilePic}
                           alt={shift.createdBy}
@@ -169,6 +169,24 @@ export default function WorkShiftPage() {
                         <span className="text-sm text-blue-600">
                           {shift?.createdBy?.name}
                         </span>
+                      </div> */}
+
+                      <div className="flex items-center space-x-2">
+                        {shift.createdBy?.info?.profileImg ? (
+                          <img
+                            src={shift.createdBy.info.profileImg}
+                            alt={shift.createdBy.name}
+                            className="w-6 h-6 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
+                            {shift.createdBy?.name
+                              ?.split(" ")
+                              .map((n) => n[0])
+                              .join("")}
+                          </div>
+                        )}
+                        <span>{shift.createdBy?.name}</span>
                       </div>
                     </TableCell>
                     <TableCell
@@ -188,7 +206,7 @@ export default function WorkShiftPage() {
                         <PopoverContent
                           side="right"
                           align="start"
-                          className="w-32 p-2 space-y-1 bg-white"
+                          className="w-32 p-2 space-y-1 bg-white font-custom"
                           onClick={(e) => e.stopPropagation()} // stop bubbling from popover content
                         >
                           <Button
