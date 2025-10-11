@@ -108,19 +108,19 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl text-center text-gray-600">
+          <DialogTitle className="text-2xl text-center text-gray-600 font-custom">
             {isViewMode ? "View Overtime Policy" : "Overtime Details"}
           </DialogTitle>
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
 
         <div
-          className={`space-y-6 px-4 ${
+          className={`space-y-6 px-4 font-custom ${
             isViewMode ? "pointer-events-none opacity-60" : ""
           }`}
         >
           {/* Policy Name */}
-          <div className="flex flex-wrap md:flex-nowrap items-center">
+          <div className="flex flex-wrap md:flex-nowrap items-center ">
             <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
               Policy name:
             </label>

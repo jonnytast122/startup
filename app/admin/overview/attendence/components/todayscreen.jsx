@@ -215,9 +215,7 @@ const columns = [
     header: "Total Hours",
     cell: ({ row }) => {
       return (
-        <div className="text-md font-custom">
-          {row.original.totalhours}
-        </div>
+        <div className="text-md font-custom">{row.original.totalhours}</div>
       );
     },
   },
@@ -225,15 +223,12 @@ const columns = [
   { accessorKey: "overtime", header: "Overtime" },
 ];
 
-
-
 // Helper to format time (HH:mm)
 const formatTime = (isoString) => {
   if (!isoString) return "";
   const date = new Date(isoString);
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
-
 
 // Transform attendances into table-friendly rows
 
@@ -296,7 +291,7 @@ const TodayScreen = () => {
   }, []);
 
   const queryClient = useQueryClient();
-  
+
   const { data: company } = useQuery({
     queryKey: ["company"],
     queryFn: fetchCompany,
@@ -316,17 +311,19 @@ const TodayScreen = () => {
 
   const transformedData = useMemo(() => {
     if (!attendances) return [];
-  
+
     return attendances.map((record) => {
       // Get first checkIn
       const checkIns = record.transactions.filter((t) => t.type === "checkIn");
       const firstCheckIn = checkIns.length > 0 ? checkIns[0] : null;
-  
+
       // Get last checkOut
-      const checkOuts = record.transactions.filter((t) => t.type === "checkOut");
+      const checkOuts = record.transactions.filter(
+        (t) => t.type === "checkOut"
+      );
       const lastCheckOut =
         checkOuts.length > 0 ? checkOuts[checkOuts.length - 1] : null;
-  
+
       return {
         id: record._id,
         employee: record.employee,
@@ -348,7 +345,6 @@ const TodayScreen = () => {
       };
     });
   }, [attendances]);
-  
 
   return (
     <>
@@ -487,7 +483,7 @@ const TodayScreen = () => {
                   variant="outline"
                   className="rounded-full border border-gray-400 flex items-center justify-between font-custom w-auto h-9 text-blue-500"
                 >
-                  Add Attendence
+                  Add Attendance
                 </Button>
                 <AddAttendanceDialog
                   open={openAddAttendenceDialog}
@@ -568,14 +564,14 @@ const TodayScreen = () => {
             </div>
           ))}
           {/* Add More Attendence button */}
-          <div className="flex justify-center mt-4">
+          {/* <div className="flex justify-center mt-4">
             <Button
               className="mt-4 w-full sm:w-auto font-custom rounded-full h-9 bg-blue-500 text-white hover:bg-blue-600"
               onClick={() => setShowAddAttendenceTableDialog(true)}
             >
               Add More Attendance
             </Button>
-          </div>
+          </div> */}
           <AddAttendanceTableDialog
             open={showAddAttendenceTableDialog}
             onOpenChange={setShowAddAttendenceTableDialog}

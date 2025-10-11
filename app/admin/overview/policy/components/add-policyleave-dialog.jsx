@@ -221,10 +221,10 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   }, 0);
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={onClose} className="font-custom">
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader className="text-center">
-          <DialogTitle className="text-2xl text-center">
+          <DialogTitle className="text-2xl text-center font-custom">
             {isViewMode
               ? "View Leave Policy"
               : policy
@@ -234,7 +234,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-6 font-custom">
           {/* Policy Name */}
           <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
             <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
@@ -479,7 +479,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           </div>
 
           {/* Footer */}
-          <div className="w-full h-[1px] bg-[#A6A6A6] mt-10" />
+          <div className="w-full h-[1px] bg-[#A6A6A6] mt-10 font-custom" />
           {!isViewMode && (
             <div className="w-full flex justify-end mt-4">
               <Button

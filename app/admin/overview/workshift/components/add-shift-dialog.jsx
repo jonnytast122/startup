@@ -177,7 +177,7 @@ export default function WorkShiftDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl px-6">
+      <DialogContent className="sm:max-w-4xl px-6 font-custom">
         <DialogHeader>
           <DialogTitle className="text-center text-2xl">
             {viewOnly

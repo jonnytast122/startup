@@ -43,31 +43,23 @@ import PromoteDemoteDialog from "./promotedemotedialog";
 import UploadDialog from "./uploaddialog";
 import AddUserManuallyDialog from "./addmanuallydialog";
 import DeleteDialog from "./deletedialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-const roleOptions = [
-  { value: "Select all", label: "Select all" },
-  { value: "All users group", label: "All users group" },
-  { value: "Assigned features", label: "Assigned features" },
-];
-
-const statusOptions = [
-  { value: "Marketing", label: "Marketing" },
-  { value: "Administration", label: "Administration" },
-  { value: "Finance", label: "Finance" },
-  { value: "HR", label: "HR" },
-  { value: "IT", label: "IT" },
-  { value: "Operations", label: "Operations" },
-  { value: "Sales", label: "Sales" },
-  { value: "Support", label: "Support" },
-  { value: "Others", label: "Others" },
-];
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { deleteUser } from "@/lib/api/user";
+import { type } from "os";
 
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
 ];
 
-const statusFilter = ["Active", "Inactive", "Pending"];
+// const statusFilter = ["Active", "Inactive", "Pending"];
 
 // Component to handle profile rendering safely
 const ProfileCell = ({ profileImg, employeeName }) => {
@@ -99,7 +91,6 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
-
   const columns = [
     {
       id: "role",
@@ -161,21 +152,23 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
     {
       accessorKey: "groups",
       header: "Groups",
-      cell: ({ row }) =>
-        row.original.groups?.map((g) => g.name).join(", ") || "-",
+      cell: ({ row }) => {
+        const groups = row.original.groups || [];
+        if (groups.length === 0) return "-";
+        if (groups.length === 1) return groups[0].name;
+        return `${groups.length} Groups`;
+      },
     },
     {
       accessorKey: "leavePolicies",
       header: "Leave Policies",
-      cell: ({ row }) =>
-        row.original.leavePolicies?.map((lp) => lp.name).join(", ") || "-",
+      cell: ({ row }) => {
+        const leaves = row.original.leavePolicies || [];
+        if (leaves.length === 0) return "-";
+        if (leaves.length === 1) return leaves[0].name;
+        return `${leaves.length} Policies`;
+      },
     },
-    {
-      accessorFn: (row) => row.shiftType?.name || "",
-      id: "shiftType",
-      header: "Shift Type",
-    },
-
     {
       accessorKey: "startDate",
       header: "Employment Date",
@@ -185,76 +178,74 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
         return format(new Date(value), "dd/MM/yyyy");
       },
     },
-
-    {
-      accessorKey: "status",
-      filterFn: (row, columnId, filterValue) =>
-        row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase(),
-      header: ({ column }) => (
-        <div className="flex items-center gap-1">
-          <span>Status</span>
-          <Select
-            onValueChange={(value) => {
-              column.setFilterValue(value === "All" ? "" : value.toLowerCase());
-            }}
-          >
-            <SelectTrigger className="border-none p-0 w-6" />
-            <SelectContent>
-              <SelectItem value="All" className="font-custom">
-                All
-              </SelectItem>
-              {statusFilter.map((status) => (
-                <SelectItem
-                  key={status}
-                  value={status}
-                  className="font-custom text-light-gray"
-                >
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ),
-      cell: ({ row }) => {
-        const status =
-          row.original.isActive === true
-            ? "Active"
-            : row.original.isActive === false
-            ? "Inactive"
-            : "Pending";
-
-        const statusStyles = {
-          Active: "bg-[#05C16833] text-[#14CA74] border-[#14CA74]",
-          Inactive: "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]",
-          Pending: "bg-[#FFF6C4] text-[#F7D000] border-[#F7D000]",
-        };
-        const dotColor = {
-          Active: "#14CA74",
-          Inactive: "#AEB9E1",
-          Pending: "#F7D000",
-        };
-        return (
-          <span
-            className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
-              statusStyles[status] ||
-              "bg-gray-200 text-gray-700 border-gray-400"
-            }`}
-            style={{
-              borderWidth: "1px",
-              minWidth: "80px",
-              justifyContent: "center",
-            }}
-          >
-            <span
-              className="w-2 h-2 rounded-full inline-block"
-              style={{ backgroundColor: dotColor[status] || "#999" }}
-            />
-            {status}
-          </span>
-        );
-      },
-    },
+    // {
+    //   accessorKey: "status",
+    //   filterFn: (row, columnId, filterValue) =>
+    //     row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase(),
+    //   header: ({ column }) => (
+    //     <div className="flex items-center gap-1">
+    //       <span>Status</span>
+    //       <Select
+    //         onValueChange={(value) => {
+    //           column.setFilterValue(value === "All" ? "" : value.toLowerCase());
+    //         }}
+    //       >
+    //         <SelectTrigger className="border-none p-0 w-6" />
+    //         <SelectContent>
+    //           <SelectItem value="All" className="font-custom">
+    //             All
+    //           </SelectItem>
+    //           {statusFilter.map((status) => (
+    //             <SelectItem
+    //               key={status}
+    //               value={status}
+    //               className="font-custom text-light-gray"
+    //             >
+    //               {status}
+    //             </SelectItem>
+    //           ))}
+    //         </SelectContent>
+    //       </Select>
+    //     </div>
+    //   ),
+    //   cell: ({ row }) => {
+    //     const status =
+    //       row.original.isActive === true
+    //         ? "Active"
+    //         : row.original.isActive === false
+    //         ? "Inactive"
+    //         : "Pending";
+    //     const statusStyles = {
+    //       Active: "bg-[#05C16833] text-[#14CA74] border-[#14CA74]",
+    //       Inactive: "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]",
+    //       Pending: "bg-[#FFF6C4] text-[#F7D000] border-[#F7D000]",
+    //     };
+    //     const dotColor = {
+    //       Active: "#14CA74",
+    //       Inactive: "#AEB9E1",
+    //       Pending: "#F7D000",
+    //     };
+    //     return (
+    //       <span
+    //         className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
+    //           statusStyles[status] ||
+    //           "bg-gray-200 text-gray-700 border-gray-400"
+    //         }`}
+    //         style={{
+    //           borderWidth: "1px",
+    //           minWidth: "80px",
+    //           justifyContent: "center",
+    //         }}
+    //       >
+    //         <span
+    //           className="w-2 h-2 rounded-full inline-block"
+    //           style={{ backgroundColor: dotColor[status] || "#999" }}
+    //         />
+    //         {status}
+    //       </span>
+    //     );
+    //   },
+    // },
     {
       id: "actions",
       header: "",
@@ -324,8 +315,30 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
 const ActionsCell = ({ user }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
+
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState(null);
   const role = user.employee?.role;
+
+  const queryClient = useQueryClient();
+  const deleteUserMutation = useMutation({
+    mutationFn: (userId) => deleteUser(userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+    },
+  });
+  const openDeleteDialog = (item) => {
+    setDeleteItem(item);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteItem) {
+      deleteUserMutation.mutate(deleteItem.id);
+      setDeleteDialogOpen(false);
+      setDeleteItem(null);
+    }
+  };
 
   const handleOpen = (type) => {
     setActionType(type);
@@ -356,9 +369,12 @@ const ActionsCell = ({ user }) => {
       <Trash2
         className="w-4 h-4 text-red-500 cursor-pointer"
         title="Delete"
-        onClick={(e) => {
-          e.stopPropagation();
-          setDeleteDialogOpen(true);
+        onClick={() => {
+          // e.stopPropagation();
+          openDeleteDialog({
+            id: user.employee?.id,
+            name: user.employee?.name,
+          });
         }}
       />
       <Archive
@@ -366,7 +382,6 @@ const ActionsCell = ({ user }) => {
         title="Archive"
         onClick={(e) => {
           e.stopPropagation();
-          console.log("Archive", user);
         }}
       />
       <PromoteDemoteDialog
@@ -380,11 +395,9 @@ const ActionsCell = ({ user }) => {
       />
       <DeleteDialog
         open={deleteDialogOpen}
-        setOpen={setDeleteDialogOpen}
-        user={user}
-        onConfirm={() => {
-          setDeleteDialogOpen(false);
-        }}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={confirmDelete}
+        name={deleteItem?.name}
       />
     </div>
   );
@@ -423,11 +436,11 @@ const ColumnVisibilityDropdown = ({ table }) => (
   </DropdownMenu>
 );
 
-const TopControls = ({ onAddUser, setShowUploadDialog, setShowAddDialog }) => {
+const TopControls = ({ onAddUser, setShowAddDialog }) => {
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
-        <Select>
+        {/* <Select>
           <SelectTrigger className="w-48 font-custom rounded-full">
             <SelectValue placeholder="Group" />
           </SelectTrigger>
@@ -439,7 +452,6 @@ const TopControls = ({ onAddUser, setShowUploadDialog, setShowAddDialog }) => {
             ))}
           </SelectContent>
         </Select>
-
         <Select>
           <SelectTrigger className="w-48 font-custom rounded-full">
             <SelectValue placeholder="Job" />
@@ -451,7 +463,7 @@ const TopControls = ({ onAddUser, setShowUploadDialog, setShowAddDialog }) => {
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       <div className="flex w-full sm:w-auto gap-4">
@@ -472,20 +484,18 @@ const TopControls = ({ onAddUser, setShowUploadDialog, setShowAddDialog }) => {
             >
               <Plus className="w-4 h-4 mr-2" /> Add Manually
             </DropdownMenuItem>
-
-            <DropdownMenuItem
+            {/* <DropdownMenuItem
               onClick={() => setShowUploadDialog(true)}
               className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
             >
               <Download className="w-4 h-4 mr-2" /> Import
             </DropdownMenuItem>
-
             <DropdownMenuItem
               onClick={() => alert("Importing...")}
               className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
             >
               <PanelTopOpen className="w-4 h-4 mr-2" /> Download Template
-            </DropdownMenuItem>
+            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -526,11 +536,106 @@ const UsersTable = ({ table, router }) => (
           </TableRow>
         ))}
       </TableHeader>
+
       <TableBody>
         {table.getRowModel().rows.map((row) => (
           <TableRow key={row.id} className="hover:bg-gray-100">
             {row.getVisibleCells().map((cell) => {
               const isActions = cell.column.id === "actions";
+
+              // Add hover tooltip for Groups column
+              if (cell.column.id === "groups") {
+                const groups = row.original.groups || [];
+                let cellContent;
+                if (groups.length === 0) cellContent = "-";
+                else if (groups.length === 1) cellContent = groups[0].name;
+                else
+                  cellContent = (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                            {groups.length} Groups
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          align="start"
+                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                        >
+                          <p className="whitespace-pre-wrap font-custom font-custom">
+                            <h1 className="text-xl">Groups</h1>
+                            <br />
+                            {groups.map((g) => (
+                              <span
+                                key={g.id || g.name}
+                                className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                              >
+                                {g.name}
+                              </span>
+                            ))}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
+                    {cellContent}
+                  </TableCell>
+                );
+              }
+
+              if (cell.column.id === "leavePolicies") {
+                const leaves = row.original.leavePolicies || [];
+                let cellContent;
+                if (leaves.length === 0) cellContent = "-";
+                else if (leaves.length === 1) cellContent = leaves[0].name;
+                else
+                  cellContent = (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                            {leaves.length} Policies
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          align="start"
+                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                        >
+                          <p className="whitespace-pre-wrap font-custom font-custom">
+                            <h1 className="font-bold text-xl">Policies</h1>
+                            <br />
+                            {leaves.map((g) => (
+                              <span
+                                key={g.id || g.name}
+                                className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                              >
+                                {g.name}
+                              </span>
+                            ))}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  >
+                    {cellContent}
+                  </TableCell>
+                );
+              }
+
               return (
                 <TableCell
                   key={cell.id}

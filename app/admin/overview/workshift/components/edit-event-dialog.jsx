@@ -205,7 +205,7 @@ export default function EditEventDialog({ date, onClose, onSave, event }) {
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent
-        className="w-[400px] space-y-4"
+        className="w-[400px] space-y-4 font-custom"
         onPointerDownOutside={ignoreIfPopover}
         onInteractOutside={ignoreIfPopover}
       >

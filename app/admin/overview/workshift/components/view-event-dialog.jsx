@@ -18,7 +18,7 @@ export default function ViewEventDialog({ event, onClose }) {
 
   return (
     <Dialog open={!!event} onOpenChange={onClose}>
-      <DialogContent className="w-[400px] space-y-4">
+      <DialogContent className="w-[400px] space-y-4 font-custom">
         <DialogHeader>
           <DialogTitle>Event Details</DialogTitle>
         </DialogHeader>

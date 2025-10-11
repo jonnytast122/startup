@@ -160,9 +160,10 @@ function LoginForm({ className, ...props }) {
 
         // Save user info client-side
         login(res.data);
+        console.log("Login successful:", res.data);
 
         // Redirect based on role
-        if (res.data.user.role === "owner") {
+        if (res.data.user.role === "owner" || res.data.user.role === "admin") {
           router.push("/admin/overview");
         } else if (res.data.user.role === "user") {
           router.push("/user");

@@ -24,11 +24,17 @@ export default function TimeClock() {
         <div className="flex items-center justify-between p-5">
           <a href="/overview/attendence" className="block">
             <div className="flex items-center space-x-3">
-              <CalendarClock className="text-[#2998FF]" width={40} height={40} />
-              <span className="font-custom text-3xl text-black">Attendence</span>
+              <CalendarClock
+                className="text-[#2998FF]"
+                width={40}
+                height={40}
+              />
+              <span className="font-custom text-3xl text-black">
+                Attendance
+              </span>
             </div>
           </a>
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
               <br /> admins
@@ -53,7 +59,7 @@ export default function TimeClock() {
               ))}
             </div>
             <SettingDialog />
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -67,10 +73,11 @@ export default function TimeClock() {
                 setActiveTab(tab);
                 setSearchQuery(""); // reset search
               }}
-              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${activeTab === tab
+              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
+                activeTab === tab
                   ? "bg-white text-blue-500 rounded-t-xl"
                   : "bg-gray-100 text-gray-500 hover:text-gray-700"
-                }`}
+              }`}
             >
               {tab}
             </button>
@@ -80,10 +87,7 @@ export default function TimeClock() {
         {/* Tab Content */}
         <div className="p-6 font-custom">
           {activeTab === "TODAY" && <TodayScreen />}
-          {activeTab === "TIMESHEETS" && (
-            <TimesheetScreen
-            />
-          )}
+          {activeTab === "TIMESHEETS" && <TimesheetScreen />}
         </div>
       </div>
     </div>
