@@ -32,7 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import Map from "./map";
+import Map from "../../attendence/components/map";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
