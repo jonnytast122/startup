@@ -32,7 +32,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import Map from "./map";
+//import Map from "./map";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -384,7 +384,7 @@ const TodayScreen = () => {
         </div>
         <div className="w-full h-[1px] bg-[#A6A6A6] mt-6"></div>
         {/* Map */}
-        <Map userData={data} selectedDate={selectedDate} />
+        {/* <Map userData={data} selectedDate={selectedDate} /> */}
       </div>
 
       {/* Activity Section */}

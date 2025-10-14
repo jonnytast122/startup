@@ -1,36 +1,77 @@
 import api from "../api";
 import ApiRoutes from "@/constants/ApiRoutes";
 
-export const fetchUsers = async () => {
-  const response = await api.get(ApiRoutes.user.get);
+// Define User type for clarity
+export interface User {
+  id?: string;
+  name: string;
+  email: string;
+  phoneNumber?: string;
+  role?: string;
+  company?: string;
+  isPhoneVerified?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * Fetch all users.
+ */
+export const fetchUsers = async (): Promise<User[]> => {
+  const response = await api.get<User[]>(ApiRoutes.user.get);
   return response.data;
 };
 
-export const getMyDetails = async () => {
-  const response = await api.get(ApiRoutes.user.getMyDetails);
-  return response.data;
-};
-export const addUsers = async (data: any) => {
-  const response = await api.post(ApiRoutes.user.create, data);
+/**
+ * Fetch the authenticated user's details.
+ */
+export const getMyDetails = async (): Promise<User> => {
+  const response = await api.get<User>(ApiRoutes.user.getMyDetails);
   return response.data;
 };
 
+/**
+ * Add a new user.
+ * @param {User} data - New user data
+ */
+export const addUsers = async (data: User): Promise<User> => {
+  const response = await api.post<User>(ApiRoutes.user.create, data);
+  return response.data;
+};
+
+/**
+ * Update an existing user.
+ * @param {string} id - User ID
+ * @param {Partial<User>} data - Fields to update
+ */
 export const updateUser = async (
   id: string,
-  data: { name: string; email: string }
-) => {
-  const response = await api.put(
+  data: Partial<User>
+): Promise<User> => {
+  const response = await api.put<User>(
     ApiRoutes.user.update.replace("{id}", id),
     data
   );
   return response.data;
 };
-export const deleteUser = async (id: string) => {
-  const response = await api.delete(ApiRoutes.user.delete.replace("{id}", id));
+
+/**
+ * Delete a user.
+ * @param {string} id - User ID
+ */
+export const deleteUser = async (
+  id: string
+): Promise<{ success: boolean; message?: string }> => {
+  const response = await api.delete<{ success: boolean; message?: string }>(
+    ApiRoutes.user.delete.replace("{id}", id)
+  );
   return response.data;
 };
 
-export const fetchMembers = async () => {
-  const response = await api.get(ApiRoutes.user.get);
+/**
+ * Fetch all members (same as fetchUsers, kept for clarity or future distinction).
+ */
+export const fetchMembers = async (): Promise<User[]> => {
+  const response = await api.get<User[]>(ApiRoutes.user.get);
   return response.data;
 };

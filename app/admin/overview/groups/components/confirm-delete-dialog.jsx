@@ -8,11 +8,12 @@ export default function DeleteDialog({ open, onClose, onConfirm, name }) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center">
+        <DialogTitle className="hidden">Delete confirmation</DialogTitle>
         <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
-        <DialogTitle className="text-xl text-gray-900 font-custom">
-          Do you want to delete <strong>{name}</strong>?
-        </DialogTitle>
-
+        <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
+          Do you want to delete{" "}
+          <span className="text-red-500 font-semibold">{name}</span> ?
+        </h2>
         <div className="flex items-center gap-4 mt-4">
           <Button
             variant="outline"

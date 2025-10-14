@@ -310,6 +310,7 @@ const TodayScreen = () => {
   });
 
   const transformedData = useMemo(() => {
+    console.log("Raw attendances:", attendances); // Debug log
     if (!attendances) return [];
 
     return attendances.map((record) => {
@@ -572,7 +573,7 @@ const TodayScreen = () => {
               Add More Attendance
             </Button>
           </div> */}
-          <AddAttendanceTableDialog
+          {/* <AddAttendanceTableDialog
             open={showAddAttendenceTableDialog}
             onOpenChange={setShowAddAttendenceTableDialog}
             onConfirm={(data) => {
@@ -634,10 +635,10 @@ const TodayScreen = () => {
               setAttendanceTables((prev) => [...prev, newTable]);
               setShowAddAttendenceTableDialog(false);
             }}
-          />
+          /> */}
           <div className="bg-white rounded-lg mb-3 mt-6">
             {/* Map */}
-            <Map userData={data} selectedDate={selectedDate} />
+            {/* <Map userData={data} selectedDate={selectedDate} /> */}
           </div>
 
           {/* Activity Section */}

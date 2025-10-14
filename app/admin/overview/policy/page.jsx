@@ -18,7 +18,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import PolicyLeave from "./components/add-policyleave-dialog";
 import PolicyOvertime from "./components/add-policyovertime-dialog";
 import {
@@ -30,43 +30,7 @@ import {
 import { fetchCompany } from "@/lib/api/company";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
-const initialPolicies = {
-  leave: [
-    {
-      id: 1,
-      name: "Sick Leave",
-      status: "Active",
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile1.jpg",
-    },
-    {
-      id: 2,
-      name: "Annual Leave",
-      status: "Unactive",
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile2.jpg",
-    },
-  ],
-  overtime: [
-    {
-      id: 3,
-      name: "Normal OT",
-      status: "Active",
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile1.jpg",
-    },
-    {
-      id: 4,
-      name: "Weekend OT",
-      status: "Unactive",
-      createdBy: "Admin",
-      createdByProfilePic: "/path/to/profile3.jpg",
-    },
-  ],
-};
-
 export default function PolicyPage() {
-  const [policyData, setPolicyData] = useState(initialPolicies);
   const [openDialogType, setOpenDialogType] = useState(null);
   const [selectedPolicy, setSelectedPolicy] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
@@ -137,8 +101,10 @@ export default function PolicyPage() {
       // setConfirmDelete(null);
       if (confirmDelete.category === "overtime") {
         deleteOvertimeMutation.mutate(confirmDelete.data.id);
+        closeModal();
       } else {
         deleteLeaveMutation.mutate(confirmDelete.data.id);
+        closeModal();
       }
     }
   };
@@ -189,30 +155,7 @@ export default function PolicyPage() {
                   </span>
                 </TableCell>
                 <TableCell>
-                  {/* <div className="flex items-center space-x-2">
-                    <img
-                      src={data?.createdBy?.profilePic}
-                      alt={data?.createdBy?.name}
-                      className="w-8 h-8 rounded-full"
-                    />
-                    <span>{data?.createdBy?.name}</span>
-                  </div> */}
-
                   <div className="flex items-center space-x-2">
-                    {data.createdBy?.info?.profileImg ? (
-                      <img
-                        src={data.createdBy.info.profileImg}
-                        alt={data.createdBy.name}
-                        className="w-6 h-6 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
-                        {data.createdBy?.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </div>
-                    )}
                     <span>{data.createdBy?.name}</span>
                   </div>
                 </TableCell>
@@ -343,9 +286,14 @@ export default function PolicyPage() {
       {confirmDelete && (
         <Dialog open onOpenChange={() => setConfirmDelete(null)}>
           <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center font-custom">
+            <DialogTitle className="hidden">Delete confirmation</DialogTitle>
             <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete this policy?
+              Do you want to delete{" "}
+              <span className="text-red-500 font-semibold">
+                {confirmDelete.data.name}
+              </span>{" "}
+              ?
             </h2>
             <div className="flex items-center gap-4 mt-8">
               <Button
