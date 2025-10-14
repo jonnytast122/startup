@@ -15,12 +15,15 @@ export const getMyCompany = async () => {
   return response.data;
 };
 
+// Safe replacement for 'any'
+type CompanyPayload = Record<string, unknown>;
+
 export const updateCompany = async ({
   id,
   data,
 }: {
   id: string;
-  data: any;
+  data: CompanyPayload;
 }) => {
   const response = await api.put(
     ApiRoutes.company.update.replace("{id}", id),

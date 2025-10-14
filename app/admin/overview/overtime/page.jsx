@@ -265,7 +265,7 @@ const Overtime = () => {
               <span className="font-custom text-3xl text-black">Overtime</span>
             </div>
           </a>
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
               <br /> admins
@@ -290,7 +290,7 @@ const Overtime = () => {
               ))}
             </div>
             <SettingDialog />
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -319,7 +319,7 @@ const Overtime = () => {
               </Select>
 
               {/* Date Picker */}
-              <div className="relative">
+              <div className="flex items-center relative">
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
@@ -328,7 +328,7 @@ const Overtime = () => {
                   <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
                 </button>
                 {showDatePicker && (
-                  <div className="absolute z-10 font-custom mt-2 bg-white shadow-lg border p-2 rounded-md">
+                  <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
                     <DateRangePicker
                       ranges={[selectedRange]}
                       onChange={(ranges) => {
@@ -344,20 +344,20 @@ const Overtime = () => {
                     />
                   </div>
                 )}
-                <Button
-                  onClick={() => {
-                    const today = new Date();
-                    setSelectedRange({
-                      startDate: today,
-                      endDate: today,
-                      key: "selection",
-                    });
-                  }}
-                  className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"
-                >
-                  Today
-                </Button>
               </div>
+              <Button
+                onClick={() => {
+                  const today = new Date();
+                  setSelectedRange({
+                    startDate: today,
+                    endDate: today,
+                    key: "selection",
+                  });
+                }}
+                className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"
+              >
+                Today
+              </Button>
             </div>
 
             <div className="flex w-full sm:w-auto gap-4 items-center">

@@ -230,25 +230,11 @@ export default function GroupPage() {
 
                   <TableCell>
                     <div className="flex items-center space-x-2">
-                      {group.createdBy?.info?.profileImg ? (
-                        <img
-                          src={group.createdBy.info.profileImg}
-                          alt={group.createdBy.name}
-                          className="w-6 h-6 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
-                          {group.createdBy?.name
-                            ?.split(" ")
-                            .map((n) => n[0])
-                            .join("")}
-                        </div>
-                      )}
                       <span>{group.createdBy?.name}</span>
                     </div>
                   </TableCell>
 
-                  <TableCell className="text-right">
+                  <TableCell className="text-right font-custom">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <button className="p-1 rounded hover:bg-gray-100">
@@ -256,9 +242,9 @@ export default function GroupPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
-                        side="right"
                         align="start"
-                        className="bg-white border border-gray-200 shadow-lg rounded-md"
+                        side="right"
+                        className="bg-white border px-4 border-gray-200 shadow-lg rounded-md font-custom"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <DropdownMenuItem
@@ -276,6 +262,7 @@ export default function GroupPage() {
                               name: group.name,
                             })
                           }
+                          className="text-red-500"
                         >
                           Delete
                         </DropdownMenuItem>
@@ -314,7 +301,7 @@ export default function GroupPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4 font-custom">
         {sections.map((section) => renderGroupSection(section))}
         <Button className="w-fit mt-4" onClick={() => setIsSectionOpen(true)}>
           <Plus size={16} className="mr-2" /> Add Section

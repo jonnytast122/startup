@@ -16,7 +16,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import WorkShiftDialog from "./components/add-shift-dialog";
 import CambodiaCalendar from "./components/calendar-screen";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -172,20 +172,6 @@ export default function WorkShiftPage() {
                       </div> */}
 
                       <div className="flex items-center space-x-2">
-                        {shift.createdBy?.info?.profileImg ? (
-                          <img
-                            src={shift.createdBy.info.profileImg}
-                            alt={shift.createdBy.name}
-                            className="w-6 h-6 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-gray-300 text-xs font-medium flex items-center justify-center">
-                            {shift.createdBy?.name
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("")}
-                          </div>
-                        )}
                         <span>{shift.createdBy?.name}</span>
                       </div>
                     </TableCell>
@@ -295,6 +281,7 @@ export default function WorkShiftPage() {
       {/* Confirm Delete Dialog */}
       {confirmDelete && (
         <Dialog open onOpenChange={() => setConfirmDelete(null)}>
+          <DialogTitle className="hidden">Delete confirmation</DialogTitle>
           <DialogContent
             className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center"
             style={{ minHeight: "280px", display: "flex" }}
@@ -305,7 +292,11 @@ export default function WorkShiftPage() {
               strokeWidth={1.5}
             />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
-              Do you want to delete this work shift?
+              Do you want to delete{" "}
+              <span className="text-red-500 font-semibold">
+                {confirmDelete.name}
+              </span>{" "}
+              ?
             </h2>
             <div className="flex items-center gap-4 mt-8">
               <Button

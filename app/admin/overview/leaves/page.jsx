@@ -53,8 +53,11 @@ const columns = [
     header: "",
     cell: ({ row }) => {
       const profileExists = row.original.profile;
-      const firstNameInitial = row.original.employee?.name?.charAt(0)?.toUpperCase() || 'U';
-      const lastNameInitial = row.original.employee?.name?.split(' ')[1]?.charAt(0)?.toUpperCase() || '';
+      const firstNameInitial =
+        row.original.employee?.name?.charAt(0)?.toUpperCase() || "U";
+      const lastNameInitial =
+        row.original.employee?.name?.split(" ")[1]?.charAt(0)?.toUpperCase() ||
+        "";
 
       return (
         <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
@@ -74,40 +77,40 @@ const columns = [
       );
     },
   },
-  { 
-    accessorKey: "firstname", 
+  {
+    accessorKey: "firstname",
     header: "First name",
     cell: ({ row }) => {
-      const name = row.original.employee?.name || 'Unknown';
-      return name.split(' ')[0];
-    }
+      const name = row.original.employee?.name || "Unknown";
+      return name.split(" ")[0];
+    },
   },
-  { 
-    accessorKey: "lastname", 
+  {
+    accessorKey: "lastname",
     header: "Last name",
     cell: ({ row }) => {
-      const name = row.original.employee?.name || 'Unknown';
-      return name.split(' ').slice(1).join(' ') || 'User';
-    }
+      const name = row.original.employee?.name || "Unknown";
+      return name.split(" ").slice(1).join(" ") || "User";
+    },
   },
-  { 
-    accessorKey: "department", 
+  {
+    accessorKey: "department",
     header: "Department",
-    cell: ({ row }) => row.original.department || 'Not specified'
+    cell: ({ row }) => row.original.department || "Not specified",
   },
   {
     accessorKey: "job",
     header: "Job",
     cell: ({ row }) => (
       <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
-        {row.original.job || 'Employee'}
+        {row.original.job || "Employee"}
       </div>
     ),
   },
-  { 
-    accessorKey: "shifttype", 
+  {
+    accessorKey: "shifttype",
     header: "Shift Type",
-    cell: ({ row }) => row.original.shifttype || 'Standard'
+    cell: ({ row }) => row.original.shifttype || "Standard",
   },
   {
     accessorKey: "annualleave",
@@ -127,7 +130,8 @@ const columns = [
       if (!match) return value;
 
       const [used, total, unit] = match.slice(1);
-      const percentUsed = total > 0 ? (parseFloat(used) / parseFloat(total)) * 100 : 0;
+      const percentUsed =
+        total > 0 ? (parseFloat(used) / parseFloat(total)) * 100 : 0;
 
       const textColor =
         percentUsed > 75
@@ -180,7 +184,9 @@ const columns = [
 
       return (
         <div className="flex items-center space-x-6 text-sm">
-          <span className="text-gray-800">{row.original.type?.name || 'Leave'}</span>
+          <span className="text-gray-800">
+            {row.original.type?.name || "Leave"}
+          </span>
           <span
             className={`font-medium ${
               status === "approved"
@@ -219,7 +225,11 @@ const Leaves = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
   // Fetch leave data from API
-  const { data: leaveResponse, isLoading, error } = useQuery({
+  const {
+    data: leaveResponse,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
     queryFn: () =>
       getLeave({
@@ -232,8 +242,8 @@ const Leaves = () => {
   // Transform API data to match table format
   const leaveData = useMemo(() => {
     if (!leaveResponse) return [];
-    
-    return leaveResponse.map(leave => ({
+
+    return leaveResponse.map((leave) => ({
       ...leave,
       // Add mock data for fields not in API response
       profile: "/avatars/ralph.png",
@@ -250,7 +260,7 @@ const Leaves = () => {
   // Filter data based on search query
   const filteredData = useMemo(() => {
     return leaveData.filter((item) => {
-      const employeeName = item.employee?.name || '';
+      const employeeName = item.employee?.name || "";
       const matchesSearch = employeeName
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -277,7 +287,10 @@ const Leaves = () => {
   // Close date picker when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (datePickerRef.current && !datePickerRef.current.contains(event.target)) {
+      if (
+        datePickerRef.current &&
+        !datePickerRef.current.contains(event.target)
+      ) {
         setShowDatePicker(false);
       }
     };
@@ -319,13 +332,12 @@ const Leaves = () => {
           </a>
 
           {/* Asset Admins (Moved before badges) */}
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
               <br /> admins
             </p>
 
-            {/* Overlapping Circular Badges */}
             <div className="flex items-center flex-wrap sm:flex-nowrap -space-x-4 sm:-space-x-4 min-w-0">
               {[
                 { text: "W", bg: "bg-gray-600" },
@@ -347,10 +359,10 @@ const Leaves = () => {
               ))}
             </div>
             <SettingDialog />
-          </div>
+          </div> */}
         </div>
       </div>
-      
+
       {selectedEmployee ? (
         <UserProfileSection
           employee={selectedEmployee}
@@ -374,8 +386,8 @@ const Leaves = () => {
                     ))}
                   </SelectContent>
                 </Select>
-                
-                <div className="relative" ref={datePickerRef}>
+
+                <div className="flex items-center relative" ref={datePickerRef}>
                   <button
                     onClick={() => setShowDatePicker(!showDatePicker)}
                     className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
@@ -393,7 +405,11 @@ const Leaves = () => {
 
                           const start = newRange.startDate;
                           const end = newRange.endDate;
-                          if (start && end && start.getTime() !== end.getTime()) {
+                          if (
+                            start &&
+                            end &&
+                            start.getTime() !== end.getTime()
+                          ) {
                             setShowDatePicker(false);
                           }
                         }}
@@ -402,7 +418,7 @@ const Leaves = () => {
                     </div>
                   )}
                 </div>
-                
+
                 <Button
                   onClick={() => {
                     const today = new Date();
@@ -417,7 +433,7 @@ const Leaves = () => {
                   Today
                 </Button>
               </div>
-              
+
               {/* Right Side Dropdowns */}
               <div className="flex w-full sm:w-auto gap-4">
                 {/* Search Input */}
@@ -446,7 +462,7 @@ const Leaves = () => {
                   onOpenChange={setOpenAddLeaveDialog}
                   onConfirm={(newLeave) => {
                     // Handle new leave creation if needed
-                    console.log('New leave:', newLeave);
+                    console.log("New leave:", newLeave);
                   }}
                 />
                 <Select>
@@ -463,7 +479,7 @@ const Leaves = () => {
                 </Select>
               </div>
             </div>
-            
+
             {filteredData.length === 0 ? (
               <p className="text-center text-gray-300 mt-4 text-xl font-custom">
                 No Leave Data Available
@@ -515,7 +531,7 @@ const Leaves = () => {
                 </Table>
               </div>
             )}
-            
+
             <div className="flex items-center justify-end space-x-2 py-4">
               <Button
                 variant="outline"
