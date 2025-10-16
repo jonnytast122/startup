@@ -9,20 +9,38 @@ type GroupPayload = Record<string, unknown>;
  * @returns {Promise<unknown>} Axios response with section data
  */
 export const fetchSections = async (): Promise<unknown> => {
-  const response = await api.get(ApiRoutes.section.get);
-  return response.data;
+	const response = await api.get(ApiRoutes.section.get);
+	return response.data;
 };
 
-export const fetchMembers = async (): Promise<unknown> => {
-  const response = await api.get(ApiRoutes.user.get);
-  return response.data;
+export const fetchMembers = async (
+	filters: {
+		branches?: string[];
+		departments?: string[];
+		page?: number;
+		limit?: number;
+		sortBy?: string;
+	} = {}
+) => {
+	const params = new URLSearchParams();
+
+	filters.branches?.forEach((b) => params.append("branch", b));
+	filters.departments?.forEach((d) => params.append("department", d));
+
+	if (filters.page) params.append("page", filters.page.toString());
+	if (filters.limit) params.append("limit", filters.limit.toString());
+	if (filters.sortBy) params.append("sortBy", filters.sortBy);
+
+	const url = `${ApiRoutes.user.get}?${params.toString()}`;
+	const response = await api.get(url);
+	return response.data;
 };
 
 export const fetchGroup = async (groupId: string): Promise<unknown> => {
-  const response = await api.get(
-    ApiRoutes.group.getId.replace("{id}", groupId)
-  );
-  return response.data;
+	const response = await api.get(
+		ApiRoutes.group.getId.replace("{id}", groupId)
+	);
+	return response.data;
 };
 
 /**
@@ -32,8 +50,8 @@ export const fetchGroup = async (groupId: string): Promise<unknown> => {
  * @returns {Promise<unknown>} Axios response with the created section data
  */
 export const addSection = async (data: { name: string }) => {
-  const response = await api.post(ApiRoutes.section.create, data);
-  return response.data;
+	const response = await api.post(ApiRoutes.section.create, data);
+	return response.data;
 };
 
 /**
@@ -42,9 +60,9 @@ export const addSection = async (data: { name: string }) => {
  * @returns {Promise<unknown>} Axios response with the created group data
  */
 export const addGroup = async (data: GroupPayload) => {
-  const response = await api.post(ApiRoutes.group.create, data);
-  if (response.status !== 201) throw new Error("Failed to create group");
-  return response.data;
+	const response = await api.post(ApiRoutes.group.create, data);
+	if (response.status !== 201) throw new Error("Failed to create group");
+	return response.data;
 };
 
 /**
@@ -54,22 +72,22 @@ export const addGroup = async (data: GroupPayload) => {
  * @returns {Promise<unknown>} Axios response with updated group data
  */
 export const updateGroup = async ({
-  id,
-  data,
+	id,
+	data,
 }: {
-  id: string;
-  data: GroupPayload;
+	id: string;
+	data: GroupPayload;
 }) => {
-  const response = await api.put(
-    ApiRoutes.group.update.replace("{id}", id),
-    data
-  );
-  return response.data;
+	const response = await api.put(
+		ApiRoutes.group.update.replace("{id}", id),
+		data
+	);
+	return response.data;
 };
 
 export const deleteGroup = async (id: string) => {
-  const response = await api.delete(ApiRoutes.group.delete.replace("{id}", id));
-  return response.data;
+	const response = await api.delete(ApiRoutes.group.delete.replace("{id}", id));
+	return response.data;
 };
 
 /**
@@ -79,11 +97,11 @@ export const deleteGroup = async (id: string) => {
  * @returns {Promise<unknown>} Axios response with updated section data
  */
 export const updateSection = async (id: string, data: { name: string }) => {
-  const response = await api.put(
-    ApiRoutes.section.update.replace("{id}", id),
-    data
-  );
-  return response.data;
+	const response = await api.put(
+		ApiRoutes.section.update.replace("{id}", id),
+		data
+	);
+	return response.data;
 };
 
 /**
@@ -92,8 +110,8 @@ export const updateSection = async (id: string, data: { name: string }) => {
  * @returns {Promise<unknown>} Axios response confirming deletion
  */
 export const deleteSection = async (id: string) => {
-  const response = await api.delete(
-    ApiRoutes.section.delete.replace("{id}", id)
-  );
-  return response.data;
+	const response = await api.delete(
+		ApiRoutes.section.delete.replace("{id}", id)
+	);
+	return response.data;
 };
