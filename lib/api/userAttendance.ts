@@ -11,7 +11,6 @@ interface ClockRequest {
   geoLocation: GeoLocation;
 }
 
-
 // API functions
 export const clockIn = async (data: ClockRequest) => {
   const response = await api.post(ApiRoutes.userAttendance.clockIn, data);

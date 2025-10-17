@@ -11,7 +11,6 @@ export const getMyRequests = async () => {
   return response.data;
 };
 
-
 export const getMyOvertimeTypes = async () => {
   const response = await api.get(ApiRoutes.userOvertime.myOvertimeTypes);
   return response.data;

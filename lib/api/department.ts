@@ -1,6 +1,9 @@
 import api from "../api";
 import ApiRoutes from "@/constants/ApiRoutes";
 
+/** Generic object type that replaces `any` safely */
+type DepartmentPayload = Record<string, unknown>;
+
 /**
  * Fetch departments for a specific company.
  * @param {string} companyId - The ID of the company
@@ -8,7 +11,7 @@ import ApiRoutes from "@/constants/ApiRoutes";
  */
 export const fetchCompanyDepartments = async (
   companyId: string
-): Promise<any> => {
+): Promise<unknown> => {
   const endpoint = ApiRoutes.department.get.replace("{id}", companyId);
   const response = await api.get(endpoint);
   return response.data;
@@ -22,7 +25,6 @@ export const fetchCompanyDepartments = async (
  * @param {string} [data.manager] - Optional manager ID
  * @returns {Promise} Axios response with the created department data
  */
-
 export const addDepartment = async (data: {
   name: string;
   branch: string;
@@ -38,14 +40,19 @@ export const addDepartment = async (data: {
  * @param {Object} data - The updated department data
  * @returns {Promise} Axios response with the updated department data
  */
-export const updateDepartment = async ({id, data}: {id: string, data: any}) => {
+export const updateDepartment = async ({
+  id,
+  data,
+}: {
+  id: string;
+  data: DepartmentPayload;
+}) => {
   const response = await api.put(
     ApiRoutes.department.update.replace("{id}", id),
     data
   );
   return response.data;
-}
-
+};
 
 export const deleteDepartment = async (id: string) => {
   const response = await api.delete(
