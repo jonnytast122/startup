@@ -1,14 +1,22 @@
 import ApiRoutes from "@/constants/ApiRoutes";
 import api from "../api";
 
-export const getDailyAttendance = async () => {
-  const response = await api.get(ApiRoutes.userReport.getDailyAttendance);
+export const getDailyAttendance = async ({startDate,endDate}: {startDate: string, endDate: string}) => {
+  const response = await api.get(ApiRoutes.userReport.getDailyAttendance, {
+    params: {
+      startDate, endDate
+    }
+  });
   return response.data;
 }
   
 
-export const getMonthlyCalendar = async () => {
-  const response = await api.get(ApiRoutes.userReport.getMontlyCalendar);
+export const getMonthlyCalendar = async ({month,year}: {month: string, year: string}) => {
+  const response = await api.get(ApiRoutes.userReport.getMontlyCalendar, {
+    params: {
+      month, year
+    }
+  });
   return response.data;
 }
 

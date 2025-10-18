@@ -126,7 +126,7 @@ const ApiRoutes = {
 
   userReport: {
     getDailyAttendance: `${BASE_URL}/dashboard/me/daily-attendance`,
-    getMontlyCalendar: `${BASE_URL}/dashboard/me/calendar`,
+    getMontlyCalendar: `${BASE_URL}/dashboard/me/monthly-calendar`,
     getEstimatePayroll: `${BASE_URL}/dashboard/me/estimate-payroll`,
     getUpcomintEvent: `${BASE_URL}/dashboard/me/upcoming-event`,
     getLeaveRate: `${BASE_URL}/dashboard/me/leave-rate`,
