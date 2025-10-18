@@ -87,15 +87,18 @@ export default function CambodiaHolidayCalendar() {
       setHolidays(
         allHolidays.map((h) => {
           const type = (h.type?.[0] || "").toLowerCase();
+          const isHoliday = type.includes("holiday");
 
           return {
-            color: type.includes("holiday") ? "#F1C40F" : "#72B0AB",
+            color: isHoliday ? "#F1C40F" : "#72B0AB",
             startDate: h.date.iso,
             endDate: h.date.iso,
             isRequireClockInOut: false,
             leavePolicies: null,
             overtimeType: null,
             title: h.name,
+            isHoliday,
+            source: "holiday",
           };
         })
       );
@@ -283,10 +286,12 @@ export default function CambodiaHolidayCalendar() {
                       >
                         <div>
                           {ev.title}
-                          <div className="block text-[10px] text-gray-700">
-                            {format(new Date(ev.startDate), "HH:mm")} -{" "}
-                            {format(new Date(ev.endDate), "HH:mm")}
-                          </div>
+                          {ev.source !== "holiday" && (
+                            <div className="block text-[10px] text-gray-700">
+                              {format(new Date(ev.startDate), "HH:mm")} -{" "}
+                              {format(new Date(ev.endDate), "HH:mm")}
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}
@@ -355,40 +360,45 @@ export default function CambodiaHolidayCalendar() {
                       <span>{item.title}</span>
 
                       {/* Dropdown Actions */}
-                      <DropdownMenu
-                        open={openMenuId === `${date}-${idx}`}
-                        onOpenChange={(o) =>
-                          setOpenMenuId(o ? `${date}-${idx}` : null)
-                        }
-                      >
-                        <DropdownMenuTrigger asChild>
-                          <button className="p-1 rounded hover:bg-gray-100">
-                            <MoreHorizontal className="w-4 h-4" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-white">
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setOpenMenuId(null);
-                              resetAllDialogStates();
-                              setEditEvent(item);
-                              setSelectedDate(date);
-                            }}
+                      {item.source !== "holiday" && (
+                        <DropdownMenu
+                          open={openMenuId === `${date}-${idx}`}
+                          onOpenChange={(o) =>
+                            setOpenMenuId(o ? `${date}-${idx}` : null)
+                          }
+                        >
+                          <DropdownMenuTrigger asChild>
+                            <button className="p-1 rounded hover:bg-gray-100">
+                              <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="end"
+                            className="bg-white font-custom"
                           >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={(e) => {
-                              e.preventDefault();
-                              setOpenMenuId(null);
-                              setTimeout(() => setConfirmDelete(item), 0);
-                            }}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setOpenMenuId(null);
+                                resetAllDialogStates();
+                                setEditEvent(item);
+                                setSelectedDate(date);
+                              }}
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={(e) => {
+                                e.preventDefault();
+                                setOpenMenuId(null);
+                                setTimeout(() => setConfirmDelete(item), 0);
+                              }}
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -419,10 +429,12 @@ export default function CambodiaHolidayCalendar() {
                     >
                       <div>
                         {ev.title}
-                        <div className="block text-[10px] text-gray-700">
-                          {format(new Date(ev.startDate), "HH:mm")} -{" "}
-                          {format(new Date(ev.endDate), "HH:mm")}
-                        </div>
+                        {ev.source !== "holiday" && (
+                          <div className="block text-[10px] text-gray-700">
+                            {format(new Date(ev.startDate), "HH:mm")} -{" "}
+                            {format(new Date(ev.endDate), "HH:mm")}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

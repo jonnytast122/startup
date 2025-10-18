@@ -189,14 +189,12 @@ export default function EventDialog({ date, onClose, onSave }) {
         </div>
 
         {/* Assignment selector */}
-        <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-pointer">
-          {/* Fixed left label */}
+        {/* <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-pointer">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-gray-500" />
             <span className="text-sm">Assign</span>
           </div>
 
-          {/* Right: the dropdown trigger */}
           <div className="relative w-[220px]">
             <button
               onClick={toggleMenu}
@@ -213,10 +211,8 @@ export default function EventDialog({ date, onClose, onSave }) {
               </div>
             </button>
 
-            {/* The cascading dropdown panels */}
             {menuOpen && (
               <>
-                {/* First-level panel */}
                 <div className="absolute z-10 top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
                   <label
                     className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
@@ -248,7 +244,6 @@ export default function EventDialog({ date, onClose, onSave }) {
                   ))}
                 </div>
 
-                {/* Second-level panel */}
                 {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
                   <div className="absolute z-20 top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow rounded">
                     <div className="px-3 py-2 text-sm font-semibold border-b border-gray-200">
@@ -281,7 +276,7 @@ export default function EventDialog({ date, onClose, onSave }) {
               </>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Clock In */}
         <div className="flex items-center justify-between">

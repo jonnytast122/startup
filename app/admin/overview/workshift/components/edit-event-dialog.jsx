@@ -293,7 +293,7 @@ export default function EditEventDialog({ date, onClose, onSave, event }) {
         </div>
 
         {/* Assign */}
-        <div className="flex items-center justify-between px-3 py-2 border rounded-md">
+        {/* <div className="flex items-center justify-between px-3 py-2 border rounded-md">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-gray-500" />
             <span className="text-sm">Assign</span>
@@ -349,7 +349,7 @@ export default function EditEventDialog({ date, onClose, onSave, event }) {
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Clock In */}
         <div className="flex items-center justify-between">
