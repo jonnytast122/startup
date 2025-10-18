@@ -1,8 +1,8 @@
 import ApiRoutes from "@/constants/ApiRoutes";
 import api from "../api";
 
-export const getDailyAttendance = async () => {
-    const response = await api.get(ApiRoutes.adminOverview.getDailyAttendance);
+export const getDailyAttendance = async (id: string) => {
+    const response = await api.get(ApiRoutes.adminOverview.getDailyAttendance.replace("{id}",id));
     return response.data
 }
     

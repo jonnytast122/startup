@@ -136,7 +136,7 @@ const ApiRoutes = {
   adminOverview: {
     getDailyAttendance: `${BASE_URL}/dashboard/company/{id}/daily-attendance`,
     getMontlyCalendar: `${BASE_URL}/dashboard/company/{id}/monthly-calendar`,
-    getDailyOvertime: `${BASE_URL}/dashbaord/company/{id}/leave-ot-summary`,
+    getDailyOvertime: `${BASE_URL}/dashboard/company/{id}/leave-ot-summary`,
     getEstimatePayroll: `${BASE_URL}/dashboard/company/{id}/estimate-payroll`,
     getUpcomintEvent: `${BASE_URL}/dashboard/company/{id}/upcoming-events`,
     getLeaveRate: `${BASE_URL}/dashboard/company/{id}/leave-rate`,
