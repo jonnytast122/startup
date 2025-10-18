@@ -51,8 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteUser } from "@/lib/api/user";
-import { type } from "os";
+import { deleteUser, fetchUser } from "@/lib/api/user";
 
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
@@ -121,8 +120,8 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       header: "Fullname",
     },
     {
-      accessorKey: "nameInKhmer",
-      header: "Name in Khmer",
+      accessorKey: "otherName",
+      header: "Other Name",
     },
 
     {
@@ -160,15 +159,20 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       },
     },
     {
-      accessorKey: "leavePolicies",
-      header: "Leave Policies",
-      cell: ({ row }) => {
-        const leaves = row.original.leavePolicies || [];
-        if (leaves.length === 0) return "-";
-        if (leaves.length === 1) return leaves[0].name;
-        return `${leaves.length} Policies`;
-      },
+      accessorFn: (row) => row.shiftType?.name || "",
+      id: "shiftType",
+      header: "Shift Type",
     },
+    // {
+    //   accessorKey: "leavePolicies",
+    //   header: "Leave Policies",
+    //   cell: ({ row }) => {
+    //     const leaves = row.original.leavePolicies || [];
+    //     if (leaves.length === 0) return "-";
+    //     if (leaves.length === 1) return leaves[0].name;
+    //     return `${leaves.length} Policies`;
+    //   },
+    // },
     {
       accessorKey: "startDate",
       header: "Employment Date",
@@ -268,7 +272,7 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       columnVisibility: {
         profile: true,
         Name: true,
-        nameInKhmer: true,
+        otherName: true,
         phone: true,
         branch: true,
         department: true,
@@ -436,7 +440,7 @@ const ColumnVisibilityDropdown = ({ table }) => (
   </DropdownMenu>
 );
 
-const TopControls = ({ onAddUser, setShowAddDialog }) => {
+const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
@@ -642,9 +646,13 @@ const UsersTable = ({ table, router }) => (
                   className="whitespace-nowrap overflow-hidden text-ellipsis"
                   onClick={() => {
                     if (!isActions) {
-                      const { status, ...rest } = row.original;
-                      const query = new URLSearchParams(rest).toString();
-                      router.push(`/overview/users-admin/profile?${query}`);
+                      const user = row.original;
+                      const employeeId = user.employee?.id || user.id;
+
+                      if (!employeeId) return;
+                      router.push(
+                        `/admin/overview/users-admin/profile/${employeeId}`
+                      );
                     }
                   }}
                   style={{ cursor: isActions ? "default" : "pointer" }}

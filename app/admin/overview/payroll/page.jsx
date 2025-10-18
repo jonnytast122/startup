@@ -50,7 +50,6 @@ export default function PayrollPage() {
   });
   const [sections, setSections] = useState([
     { id: 1, name: "Site A Payroll", totalPay: "$1905" },
-    { id: 2, name: "Security Payroll", totalPay: "$375" },
   ]);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -134,7 +133,7 @@ export default function PayrollPage() {
     };
 
     return (
-      <div className="border rounded-xl mb-6 p-4">
+      <div className="border rounded-xl mb-6 p-4 font-custom">
         <div className="flex justify-between items-center mb-4">
           <Select>
             <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative text-[#5494DA]">
@@ -193,19 +192,19 @@ export default function PayrollPage() {
         <div className="flex justify-between items-center p-2">
           <div className="flex items-center gap-8">
             <h2 className="font-semibold text-lg text-[#5494DA]">{title}</h2>
-            <button onClick={() => setShowDialog(true)}>
+            {/* <button onClick={() => setShowDialog(true)}>
               <Trash2
                 size={20}
                 className="text-black hover:text-red-600 transition-colors"
               />
-            </button>
+            </button> */}
           </div>
           <p className="text-sm font-semibold text-right">
             Total Pay: {totalPay}
           </p>
         </div>
         {/* Confirmation Dialog */}
-        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+        {/* <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="w-[400px] bg-white p-8 rounded-xl flex flex-col items-center justify-center text-center">
             <CircleX className="w-12 h-12 text-red-500" strokeWidth={1.5} />
             <h2 className="text-lg font-semibold text-gray-900 mt-5 font-custom">
@@ -231,7 +230,7 @@ export default function PayrollPage() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
         <div className="overflow-auto mt-2">
           <Table>
             <TableHeader>
@@ -341,7 +340,7 @@ export default function PayrollPage() {
             </div>
           </a>
 
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset <br /> admins
             </p>
@@ -364,16 +363,16 @@ export default function PayrollPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
       {!selectedEmployee ? (
-        <div className="bg-white rounded-xl shadow-md py-6 px-6">
+        <div className="bg-white rounded-xl shadow-md py-6 px-6 font-custom">
           <div className="mb-4 relative">
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+              className="flex items-center justify-between px-4 py-2 border text-sm bg-white shadow-sm rounded-full w-auto focus:outline-none"
             >
               {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
               <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
@@ -411,20 +410,20 @@ export default function PayrollPage() {
             />
           ))}
 
-          <div className="flex justify-center">
+          {/* <div className="flex justify-center">
             <Button
               onClick={() => setDialogOpen(true)}
               className="mt-4 px-6 py-2 rounded-full bg-[#5494DA] shadow-lg hover:bg-blue-600 text-white"
             >
               + Add Payroll Table
             </Button>
-          </div>
+          </div> */}
 
-          <AddPayrollDialog
+          {/* <AddPayrollDialog
             open={dialogOpen}
             setOpen={setDialogOpen}
             onAdd={handleAddSection}
-          />
+          /> */}
         </div>
       ) : (
         <UserProfileSection

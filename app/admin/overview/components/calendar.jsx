@@ -1,6 +1,17 @@
 import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isToday } from "date-fns";
+import {
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  addDays,
+  isSameMonth,
+  isToday,
+} from "date-fns";
 import { Separator } from "@/components/ui/separator";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -20,7 +31,9 @@ export default function Calendar() {
     return dayNames.map((day, idx) => (
       <div
         key={idx}
-        className={`text-center font-medium text-base ${day === "Sun" || day === "Sat" ? "text-blue-500" : "text-gray-700"}`}
+        className={`text-center font-medium text-base ${
+          day === "Sun" || day === "Sat" ? "text-blue-500" : "text-gray-700"
+        }`}
       >
         {day}
       </div>
@@ -48,7 +61,11 @@ export default function Calendar() {
             className="text-center text-base py-2 h-10 flex items-center justify-center"
           >
             {isCurrentMonth ? (
-              <span className={`rounded-full px-2 ${isTodayDate ? "text-blue-500 font-semibold" : "text-gray-800"}`}>
+              <span
+                className={`rounded-full px-2 ${
+                  isTodayDate ? "text-blue-500 font-semibold" : "text-gray-800"
+                }`}
+              >
                 {format(day, "d")}
               </span>
             ) : (
@@ -68,36 +85,33 @@ export default function Calendar() {
     return <div className="space-y-1 mt-2">{rows}</div>;
   };
 
-return (
-  <div className="bg-white rounded-lg p-5 h-[510px] font-custom flex flex-col">
-    <div className="flex items-center justify-between mb-4 mt-1">
-      <h2 className="text-xl text-black">Calendar</h2>
-    </div>
-    <Separator />
-
-    {/* Month & Controls */}
-    <div className="m-5 shadow-md rounded-lg flex-1 overflow-auto">
-      <div className="flex items-center justify-between mt-5 m-3 mb-5">
-        <button onClick={handlePrevMonth}>
-          <ChevronLeft className="w-5 h-5 text-gray-600 hover:text-black" />
-        </button>
-        <h3 className="text-lg font-semibold text-gray-800">
-          {format(currentMonth, "MMMM yyyy")}
-        </h3>
-        <button onClick={handleNextMonth}>
-          <ChevronRight className="w-5 h-5 text-gray-600 hover:text-black" />
-        </button>
+  return (
+    <div className="bg-white rounded-lg p-5 h-[510px] font-custom flex flex-col">
+      <div className="flex items-center justify-between mb-4 mt-1">
+        <h2 className="text-xl text-black">Calendar</h2>
       </div>
+      <Separator />
 
-      {/* Days of Week */}
-      <div className="grid grid-cols-7 mt-3 mb-5">
-        {renderDays()}
+      {/* Month & Controls */}
+      <div className="m-5 shadow-md rounded-lg flex-1 overflow-auto">
+        <div className="flex items-center justify-between mt-5 m-3 mb-5">
+          <button onClick={handlePrevMonth}>
+            <ChevronLeft className="w-5 h-5 text-gray-600 hover:text-black" />
+          </button>
+          <h3 className="text-lg font-semibold text-gray-800">
+            {format(currentMonth, "MMMM yyyy")}
+          </h3>
+          <button onClick={handleNextMonth}>
+            <ChevronRight className="w-5 h-5 text-gray-600 hover:text-black" />
+          </button>
+        </div>
+
+        {/* Days of Week */}
+        <div className="grid grid-cols-7 mt-3 mb-5">{renderDays()}</div>
+
+        {/* Calendar Dates */}
+        {renderCells()}
       </div>
-
-      {/* Calendar Dates */}
-      {renderCells()}
     </div>
-  </div>
-);
-
+  );
 }

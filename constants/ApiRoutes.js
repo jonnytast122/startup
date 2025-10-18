@@ -81,10 +81,10 @@ const ApiRoutes = {
   user: {
     get: `${BASE_URL}/users/filter`,
     getMyDetails: `${BASE_URL}/users/my-detail`,
+    getById: `${BASE_URL}/users/details/{id}`,
     create: `${BASE_URL}/users`,
     update: `${BASE_URL}/users/{id}`,
     delete: `${BASE_URL}/users/{id}`,
-    getById: `${BASE_URL}/user/{id}`,
     search: `${BASE_URL}/users/search`,
   },
   calendar: {

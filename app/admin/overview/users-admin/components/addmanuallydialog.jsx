@@ -36,6 +36,7 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import { List, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
 //import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBranches } from "@/lib/api/branch";
@@ -89,12 +90,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      job: "",
       baseSalary: "",
       cash: "",
       ibanking: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
     }))
   );
 
@@ -112,12 +118,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      job: "",
       baseSalary: "",
       cash: "",
       ibanking: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
     };
     setData((prev) => [...prev, newRow]);
     setAddedRowIds((prev) => [...prev, newId]);
@@ -148,12 +159,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           department: "",
           position: "",
           shiftType: "",
+          job: "",
           baseSalary: "",
           cash: "",
           ibanking: "",
           currencyType: "",
           bankProvider: "",
           bankAccount: "",
+          spoused: "",
+          numberOfChildren: "",
+          otherName: "",
+          nssfId: "",
         },
       ]);
       setAddedRowIds([]);
@@ -172,6 +188,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       row.department.trim() &&
       row.position.trim() &&
       row.shiftType.trim() &&
+      row.job.trim() &&
       row.baseSalary.trim() &&
       row.cash.trim() &&
       row.ibanking.trim()
@@ -193,7 +210,12 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       branch: row.branch,
       department: row.department,
       position: row.position,
+      job: row.job,
       shiftType: row.shiftType,
+      spoused: row.spoused,
+      numberOfChildren: Number(row.numberOfChildren) || 0,
+      otherName: row.otherName,
+      nssfId: row.nssfId,
       paymentMethod: {
         cashPercentage: Number(row.cash),
         ibankingPercentage: Number(row.ibanking),
@@ -287,6 +309,49 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
   ];
 
+  const bankProviders = [
+    {
+      value: "aba",
+      label: "ABA Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtY2aqkYA54jTqgCQmP2Zl0W7BwjM_XQ7vjg&s",
+    },
+    {
+      value: "acleda",
+      label: "ACLEDA Bank",
+      icon: "https://www.acledasecurities.com.kh/as/assets/listed_company/ABC/logo.png",
+    },
+    {
+      value: "canadia",
+      label: "Canadia Bank",
+      icon: "https://play-lh.googleusercontent.com/hZhdx8AuJsmnZyy6rSLi3fZsWeOJ3qD5LRy2KmKOaXf8uWtsvrYScl_lxyhBsyan2-c",
+    },
+    {
+      value: "ftb",
+      label: "FTB Bank",
+      icon: "https://play-lh.googleusercontent.com/dBXpI2QOfWndhjQKboqdt6sOdSeeGk_pxeXqVC8hHD-xCDQIKoD_MLHhVH51gb25F1rY",
+    },
+    {
+      value: "wing",
+      label: "Wing Bank",
+      icon: "https://play-lh.googleusercontent.com/A8bangMCdTPS1Xa9hbuc4pcXxUspKpJhDHWW3QSw3OB-VMtUv6NCnqAd7pUv2C-2OnjJHn0Xmv1cs6c2hFUZMw",
+    },
+    {
+      value: "phillip",
+      label: "Phillip Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl5AQ8pKBWNSLy2jNDa3-4ie1RudZ81DUXgg&s",
+    },
+    {
+      value: "sathapana",
+      label: "Sathapana Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRttioRPdS1xu-MygwdD1Qb7wTmRAxAo4s0pg&s",
+    },
+    {
+      value: "chipmong",
+      label: "Chip Mong Bank",
+      icon: "https://play-lh.googleusercontent.com/IwZLaZnWhlINs7AoIg7m7qNR-JNLInrme1xtrXkYoNxWwdTlWZozZnIligkyjUhiO0Q5",
+    },
+  ];
+
   const columns = useMemo(
     () => [
       {
@@ -312,7 +377,21 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </div>
         ),
       },
-
+      {
+        accessorKey: "otherName",
+        header: "Other Names",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.otherName}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "otherName", e.target.value)
+            }
+            placeholder="Other Names"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
       {
         accessorKey: "Phone Number",
         header: "Phone Number",
@@ -447,7 +526,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               <SelectValue placeholder="Select Shift Type" />
             </SelectTrigger>
             <SelectContent className="font-custom">
-              {workshift?.results?.results?.map((shift) => (
+              {workshift?.results?.results.map((shift) => (
                 <SelectItem key={shift.id} value={shift.id}>
                   {shift.name}
                 </SelectItem>
@@ -458,17 +537,40 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
 
       {
+        accessorKey: "Job Title",
+        header: "Job Title",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.job}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "job", e.target.value)
+            }
+            placeholder="Job Title"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
+      {
         accessorKey: "Base Salary",
         header: "Base Salary",
         cell: ({ row }) => (
           <Input
             type="number"
-            value={row.original.baseSalary}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "baseSalary", e.target.value)
-            }
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.baseSalary ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "baseSalary", value);
+              }
+            }}
             placeholder="Base Salary"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         ),
       },
@@ -478,12 +580,19 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         cell: ({ row }) => (
           <Input
             type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
             value={row.original.cash ?? ""}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "cash", e.target.value)
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "cash", value);
+              }
+            }}
             placeholder="Cash"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         ),
       },
@@ -493,15 +602,23 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         cell: ({ row }) => (
           <Input
             type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
             value={row.original.ibanking ?? ""}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "ibanking", e.target.value)
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "ibanking", value);
+              }
+            }}
             placeholder="iBanking"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         ),
       },
+
       {
         accessorKey: "Currency Type",
         header: "Currency",
@@ -525,23 +642,55 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       {
         accessorKey: "Bank Provider",
         header: "Bank Provider",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.bankProvider}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "bankProvider", value)
-            }
-          >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-              <SelectValue placeholder="Select Bank Provider" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              <SelectItem value="schedule">ABA</SelectItem>
-              <SelectItem value="flexible">Wings</SelectItem>
-              <SelectItem value="part-time">Aceleda</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
+        cell: ({ row }) => {
+          const selected = bankProviders.find(
+            (bank) => bank.value === row.original.bankProvider
+          );
+
+          return (
+            <Select
+              value={row.original.bankProvider}
+              onValueChange={(value) =>
+                handleInputChange(row.original.id, "bankProvider", value)
+              }
+            >
+              <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+                <SelectValue placeholder="Select Bank Provider">
+                  {selected ? (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={selected.icon}
+                        alt={selected.label}
+                        width={20}
+                        height={20}
+                        className="object-contain rounded-sm"
+                      />
+                      <span>{selected.label}</span>
+                    </div>
+                  ) : (
+                    "Select Bank Provider"
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                {bankProviders.map((bank) => (
+                  <SelectItem key={bank.value} value={bank.value}>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={bank.icon}
+                        alt={bank.label}
+                        width={20}
+                        height={20}
+                        className="object-contain rounded-sm"
+                      />
+                      <span>{bank.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        },
       },
       {
         accessorKey: "Bank Account ",
@@ -557,6 +706,63 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
+      {
+        accessorKey: "spoused",
+        header: "Spouse",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.spoused}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "spoused", value)
+            }
+          >
+            <SelectTrigger className="h-9 w-28 font-custom text-black border-gray-300">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "numberOfChildren",
+        header: "Children",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            min="0"
+            value={row.original.numberOfChildren}
+            onChange={(e) =>
+              handleInputChange(
+                row.original.id,
+                "numberOfChildren",
+                e.target.value
+              )
+            }
+            placeholder="0"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
+      {
+        accessorKey: "nssfId",
+        header: "NSSF ID",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.nssfId}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "nssfId", e.target.value)
+            }
+            placeholder="NSSF ID"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
       {
         id: "actions",
         header: ({ table }) => (

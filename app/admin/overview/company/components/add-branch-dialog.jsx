@@ -33,6 +33,7 @@ function AddBranchDialog({ isEdit, branch }) {
 
   const [branchName, setBranchName] = useState("");
   const [siteAddress, setSiteAddress] = useState("");
+  const [branchCode, setBranchCode] = useState("");
   const [fenceSize, setFenceSize] = useState(300);
   const [formatAddress, setFormatAddress] = useState("");
 
@@ -225,6 +226,7 @@ function AddBranchDialog({ isEdit, branch }) {
     const data = {
       name: branchName,
       location: siteAddress,
+      code: branchCode,
       geofence: [
         {
           latitude: centerCoords.lat,
@@ -288,6 +290,19 @@ function AddBranchDialog({ isEdit, branch }) {
                   placeholder="Enter branch name"
                   value={branchName}
                   onChange={(e) => setBranchName(e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className="text-lg text-dark-gray font-custom mb-2">
+                  Code
+                </label>
+                <input
+                  type="text"
+                  className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
+                  placeholder="Enter branch code"
+                  value={branchCode}
+                  onChange={(e) => setBranchCode(e.target.value)}
                 />
               </div>
 
