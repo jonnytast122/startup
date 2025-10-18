@@ -134,14 +134,14 @@ const ApiRoutes = {
   },
 
   adminOverview: {
-    getDailyAttendance: `${BASE_URL}/dashboard/daily-attendance`,
-    getMontlyCalendar: `${BASE_URL}/dashboard/calendar`,
-    getDailyOvertime: `${BASE_URL}/dashbaord/leave-overview`,
-    getEstimatePayroll: `${BASE_URL}/dashboard/estimate-payroll`,
-    getUpcomintEvent: `${BASE_URL}/dashboard/upcoming-event`,
-    getLeaveRate: `${BASE_URL}/dashboard/leave-rate`,
-    getWorkShiffRate: `${BASE_URL}/dashboard/work-shift-rate`,
-    getCompanyOverview: `${BASE_URL}/dashboard/company-overview`,
+    getDailyAttendance: `${BASE_URL}/dashboard/company/{id}/daily-attendance`,
+    getMontlyCalendar: `${BASE_URL}/dashboard/company/{id}/monthly-calendar`,
+    getDailyOvertime: `${BASE_URL}/dashboard/company/{id}/leave-ot-summary`,
+    getEstimatePayroll: `${BASE_URL}/dashboard/company/{id}/estimate-payroll`,
+    getUpcomintEvent: `${BASE_URL}/dashboard/company/{id}/upcoming-events`,
+    getLeaveRate: `${BASE_URL}/dashboard/company/{id}/leave-rate`,
+    getWorkShiffRate: `${BASE_URL}/dashboard/company/{id}/workshift-rate`,
+    getCompanyOverview: `${BASE_URL}/dashboard/company/{id}/overview`,
   },
 
   adminAttendance: {

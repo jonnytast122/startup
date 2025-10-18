@@ -9,8 +9,15 @@ import UpcomingEvent from "./components/upcoming-event";
 import LeavePolicy from "./components/leave-policy";
 import WorkShift from "./components/work-shift";
 import CompanyOverview from "./components/company-overview";
+import { fetchCompany } from "@/lib/api/company";
+import { useQuery } from "@tanstack/react-query";
 
 export default function OverviewPage() {
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
   return (
     <div className="space-y-2 scrollbar-hide font-custom">
       {/* Header */}
