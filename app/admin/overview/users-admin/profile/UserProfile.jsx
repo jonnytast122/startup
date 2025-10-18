@@ -1,22 +1,23 @@
 "use client";
 
 import {
-  CreditCard,
-  Banknote,
-  Ellipsis,
-  Landmark,
-  Percent,
-  Trash2,
-  Download,
-  User,
+	CreditCard,
+	Banknote,
+	Ellipsis,
+	Landmark,
+	Percent,
+	Trash2,
+	Download,
+	User,
 } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
+	DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
@@ -27,361 +28,395 @@ import { fetchBranches } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
 import { fetchCompany } from "@/lib/api/company";
 import { fetchCompanyDepartments } from "@/lib/api/department";
+import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
+import { ref } from "firebase/storage";
 
 export default function UserProfile({ user }) {
-  console.log("Rendering UserProfile for:", user);
-  const queryClient = useQueryClient();
+	console.log("Rendering UserProfile for:", user);
+	const queryClient = useQueryClient();
 
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: fetchCompany,
-  });
+	const { data: company } = useQuery({
+		queryKey: ["company"],
+		queryFn: fetchCompany,
+	});
 
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments", company?.id],
-    queryFn: () => fetchCompanyDepartments(company?.id),
-    enabled: !!company?.id,
-  });
+	const { data: departments = [] } = useQuery({
+		queryKey: ["departments", company?.id],
+		queryFn: () => fetchCompanyDepartments(company?.id),
+		enabled: !!company?.id,
+	});
 
-  const { data: branches } = useQuery({
-    queryKey: ["branches"],
-    queryFn: fetchBranches,
-  });
+	const { data: branches } = useQuery({
+		queryKey: ["branches"],
+		queryFn: fetchBranches,
+	});
 
-  const { data: positions } = useQuery({
-    queryKey: ["positions"],
-    queryFn: fetchPositions,
-  });
+	const { data: positions } = useQuery({
+		queryKey: ["positions"],
+		queryFn: fetchPositions,
+	});
 
-  console.log("Fetched positions:", positions);
+	const { data: leaveSettings, isLoading: leaveLoading } = useQuery({
+		queryKey: ["leaveSettings", company?.id],
+		queryFn: () => fetchCompanyLeavePolicy(company?.id),
+		enabled: !!company?.id,
+	});
 
-  // Helper function to format date to YYYY-MM-DD
-  const formatDateForInput = (date) => {
-    if (!date) return "";
-    const d = new Date(date);
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const year = d.getFullYear();
-    return `${year}-${month}-${day}`;
-  };
-  // 2. State is initialized from user
-  // Split name into first and last name for state
-  const [firstname, setFirstname] = useState(
-    user?.employee?.name ? user.employee.name.split(" ")[0] : ""
-  );
-  const [lastname, setLastname] = useState(
-    user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
-  );
+	// Helper function to format date to YYYY-MM-DD
+	const formatDateForInput = (date) => {
+		if (!date) return "";
+		const d = new Date(date);
+		const month = String(d.getMonth() + 1).padStart(2, "0");
+		const day = String(d.getDate()).padStart(2, "0");
+		const year = d.getFullYear();
+		return `${year}-${month}-${day}`;
+	};
+	// 2. State is initialized from user
+	// Split name into first and last name for state
+	const [firstname, setFirstname] = useState(
+		user?.employee?.name ? user.employee.name.split(" ")[0] : ""
+	);
+	const [lastname, setLastname] = useState(
+		user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
+	);
 
-  const [mobile, setMobile] = useState(user?.employee?.phoneNumber || "");
-  const [birthday, setBirthday] = useState(
-    formatDateForInput(user?.dateOfBirth)
-  );
-  const [employmentStartDate, setEmploymentStartDate] = useState(
-    formatDateForInput(user?.startDate)
-  );
+	const [mobile, setMobile] = useState(user?.employee?.phoneNumber || "");
+	const [birthday, setBirthday] = useState(
+		formatDateForInput(user?.dateOfBirth)
+	);
+	const [employmentStartDate, setEmploymentStartDate] = useState(
+		formatDateForInput(user?.startDate)
+	);
+	const maritalStatus = user?.isMarried ? "Married" : "Single";
+	const childrenCount = `${user?.numberOfChildren || 0}`;
 
-  const [branch, setBranch] = useState(user?.branch?.name || "");
-  const [department, setDepartment] = useState(user?.department?.name || "");
-  const [title, setTitle] = useState(user?.position?.title || "");
+	const [branch, setBranch] = useState(user?.branch?.name || "");
+	const [department, setDepartment] = useState(user?.department?.name || "");
+	const [title, setTitle] = useState(user?.position?.title || "");
 
-  const [cash, setCash] = useState(
-    user?.employee?.finance?.paymentMethod?.cashPercentage || 0
-  );
-  const [banktransfer, setBankTransfer] = useState(
-    user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0
-  );
+	const [cash, setCash] = useState(
+		user?.employee?.finance?.paymentMethod?.cashPercentage || 0
+	);
+	const [banktransfer, setBankTransfer] = useState(
+		user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0
+	);
 
-  const [single, setSingle] = useState(0);
+	const [single, setSingle] = useState(0);
+	const bankName = user?.employee?.finance?.bankDetails?.bankProvider || "N/A";
 
-  const profile = user?.profileImg || "";
-  const accountnumber =
-    user?.employee?.finance?.bankDetails?.accountNumber || "";
-  const AccessLevel = user?.employee?.role || "";
-  const [nochildren, setNoChildren] = useState(0);
+	const profile = user?.profileImg || "";
+	const employeeId = user?.employee?.id || "";
+	const accountnumber =
+		user?.employee?.finance?.bankDetails?.accountNumber || "";
+	const AccessLevel = user?.employee?.role || "";
+	const [nochildren, setNoChildren] = useState(0);
 
-  const subtotal = (banktransfer || 0) - ((single || 0) + (nochildren || 0));
-  const netsalary = (cash || 0) + subtotal;
+	const subtotal = (banktransfer || 0) - ((single || 0) + (nochildren || 0));
+	const netsalary = (cash || 0) + subtotal;
 
-  const [imageError, setImageError] = useState(false);
+	const [imageError, setImageError] = useState(false);
 
-  // Dialog states - using refs to prevent re-render loops
-  const [dialogStates, setDialogStates] = useState({
-    cash: false,
-    bank: false,
-    delete: false,
-    deleteContext: null,
-  });
+	// Dialog states - using refs to prevent re-render loops
+	const [dialogStates, setDialogStates] = useState({
+		cash: false,
+		bank: false,
+		delete: false,
+		deleteContext: null,
+	});
 
-  // Use refs to track if we're already processing
-  const processingRef = useRef(false);
+	// Use refs to track if we're already processing
+	const processingRef = useRef(false);
 
-  const [files, setFiles] = useState([]);
+	const [files, setFiles] = useState([]);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (
-      file &&
-      ["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(
-        file.type
-      )
-    ) {
-      const newFile = {
-        name: file.name,
-        type: file.type,
-        size: (file.size / 1024).toFixed(1) + " KB",
-        date: new Date().toLocaleDateString(),
-        file: URL.createObjectURL(file),
-      };
-      setFiles((prev) => [...prev, newFile]);
-    }
-  };
+	const handleFileChange = (e) => {
+		const file = e.target.files[0];
+		if (
+			file &&
+			["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(
+				file.type
+			)
+		) {
+			const newFile = {
+				name: file.name,
+				type: file.type,
+				size: (file.size / 1024).toFixed(1) + " KB",
+				date: new Date().toLocaleDateString(),
+				file: URL.createObjectURL(file),
+			};
+			setFiles((prev) => [...prev, newFile]);
+		}
+	};
 
-  const handleDelete = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
+	const handleDelete = (index) => {
+		setFiles(files.filter((_, i) => i !== index));
+	};
 
-  const [selectedPolicies, setSelectedPolicies] = useState([
-    "Leave Policy",
-    "Overtime Policy",
-  ]);
+	const [selectedWorkShift, setSelectedWorkShift] = useState(
+		user.shiftType ? [user.shiftType.name] : []
+	);
 
-  const [selectedWorkShift, setSelectedWorkShift] = useState([
-    "Morning",
-    "Afternoon",
-  ]);
+	const toggleWorkShift = (shift) => {
+		setSelectedWorkShift((prev) =>
+			prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
+		);
+	};
 
-  const toggleWorkShift = (shift) => {
-    setSelectedWorkShift((prev) =>
-      prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
-    );
-  };
+	const [selectedGroup, setSelectedGroup] = useState(
+		user.groups ? user.groups.map((g) => g.name) : []
+	);
 
-  const [selectedGroup, setSelectedGroup] = useState(["Admin", "HR Manager"]);
+	const toggleGroup = (value) => {
+		setSelectedGroup((prev) =>
+			prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+		);
+	};
 
-  const toggleGroup = (value) => {
-    setSelectedGroup((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
+	const [selectedLocation, setSelectedLocation] = useState(
+		user.allowedRemoteCheckIn ? "Flexible" : "Geofencing"
+	);
 
-  const [selectedLocation, setSelectedLocation] = useState([
-    "Geo Fence",
-    "Flexible",
-    "GPS",
-  ]);
+	const toggleLocation = (value) => {
+		setSelectedLocation((prev) =>
+			prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+		);
+	};
 
-  const toggleLocation = (value) => {
-    setSelectedLocation((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
+	const handleAddLeavePolicy = (policy) => {
+		// Check if already added
+		const exists = leaveSubPolicies.some((p) => p.id === policy.id);
+		if (exists) return;
 
-  // Simplified dialog handlers - prevent multiple calls
-  const openDialog = useCallback((type, context = null) => {
-    if (processingRef.current) return;
-    processingRef.current = true;
+		setLeaveSubPolicies((prev) => [...prev, policy]);
+		setShowFirstMenu(false);
+	};
 
-    setTimeout(() => {
-      setDialogStates((prev) => ({
-        ...prev,
-        [type]: true,
-        deleteContext: context,
-      }));
-      processingRef.current = false;
-    }, 0);
-  }, []);
+	// Simplified dialog handlers - prevent multiple calls
+	const openDialog = useCallback((type, context = null) => {
+		if (processingRef.current) return;
+		processingRef.current = true;
 
-  const closeDialog = useCallback((type) => {
-    if (processingRef.current) return;
-    processingRef.current = true;
+		setTimeout(() => {
+			setDialogStates((prev) => ({
+				...prev,
+				[type]: true,
+				deleteContext: context,
+			}));
+			processingRef.current = false;
+		}, 0);
+	}, []);
 
-    setTimeout(() => {
-      setDialogStates((prev) => ({
-        ...prev,
-        [type]: false,
-        deleteContext: type === "delete" ? null : prev.deleteContext,
-      }));
-      processingRef.current = false;
-    }, 0);
-  }, []);
+	const closeDialog = useCallback((type) => {
+		if (processingRef.current) return;
+		processingRef.current = true;
 
-  // Simplified menu handlers
-  const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
-  const handleCashDelete = useCallback(
-    () => openDialog("delete", "cash"),
-    [openDialog]
-  );
-  const handleBankEdit = useCallback(() => openDialog("bank"), [openDialog]);
-  const handleBankDelete = useCallback(
-    () => openDialog("delete", "bank"),
-    [openDialog]
-  );
+		setTimeout(() => {
+			setDialogStates((prev) => ({
+				...prev,
+				[type]: false,
+				deleteContext: type === "delete" ? null : prev.deleteContext,
+			}));
+			processingRef.current = false;
+		}, 0);
+	}, []);
 
-  const handleArchive = useCallback(() => {
-    console.log("Archive clicked");
-    // Add your archive logic here
-  }, []);
+	// Simplified menu handlers
+	const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
+	const handleCashDelete = useCallback(
+		() => openDialog("delete", "cash"),
+		[openDialog]
+	);
+	const handleBankEdit = useCallback(() => openDialog("bank"), [openDialog]);
+	const handleBankDelete = useCallback(
+		() => openDialog("delete", "bank"),
+		[openDialog]
+	);
 
-  const DropdownSection = ({
-    title,
-    items,
-    selectedItems,
-    toggleItem,
-    dropdownWidth = "w-40",
-  }) => (
-    <>
-      <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
-      <div className="flex justify-between items-start flex-wrap gap-4">
-        <div className="flex flex-wrap gap-4">
-          {items.map(
-            (item) =>
-              selectedItems.includes(item) && (
-                <div
-                  key={item}
-                  className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm w-auto max-w-full"
-                >
-                  <h2 className="text-sm font-custom text-blue">{item}</h2>
-                </div>
-              )
-          )}
-        </div>
+	const handleArchive = useCallback(() => {
+		console.log("Archive clicked");
+		// Add your archive logic here
+	}, []);
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-            >
-              <span className="relative w-3 h-3">
-                <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
-                <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
-              </span>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
-          >
-            <div className="space-y-1">
-              {items.map((item) => (
-                <DropdownMenuItem
-                  key={item}
-                  onSelect={() => toggleItem(item)}
-                  className={
-                    selectedItems.includes(item)
-                      ? "bg-blue-100 text-blue-700"
-                      : "hover:bg-blue-50"
-                  }
-                >
-                  {item}
-                </DropdownMenuItem>
-              ))}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </>
-  );
+	const DropdownSection = ({
+		title,
+		items,
+		selectedItems,
+		toggleItem,
+		renderItem = (item) => item,
+		dropdownWidth = "w-40",
+	}) => {
+		return (
+			<div className="mb-6">
+				<h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
+					{title}
+				</h2>
 
-  const InfoRow = ({ label, value }) => (
-    <div className="flex items-center justify-between">
-      <p className="text-md font-custom text-light-pearl">{label}</p>
-      <p className="font-custom text-md text-dark-blue font-semibold">
-        {value}
-      </p>
-    </div>
-  );
+				{/* Selected items display */}
+				<div className="flex flex-wrap gap-4 mb-2">
+					{items.map(
+						(item) =>
+							selectedItems.includes(String(item.id || item)) && (
+								<div
+									key={item.id || item}
+									className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm w-auto max-w-full"
+								>
+									<h2 className="text-sm font-custom text-blue">
+										{renderItem(item)}
+									</h2>
+								</div>
+							)
+					)}
+				</div>
 
-  const [showFirstMenu, setShowFirstMenu] = useState(false);
-  const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
+				{/* Dropdown menu */}
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<button
+							type="button"
+							className="inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+						>
+							<span className="relative w-3 h-3">
+								<span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
+								<span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
+							</span>
+						</button>
+					</DropdownMenuTrigger>
 
-  const [leaveSubPolicies, setLeaveSubPolicies] = useState(["Annual Leave"]);
-  const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
+					<DropdownMenuContent
+						align="end"
+						className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
+					>
+						{items.map((item) => {
+							const itemId = String(item.id || item);
+							const isSelected = selectedItems.includes(itemId);
 
-  const toggleLeaveSubPolicy = (opt) => {
-    setLeaveSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
+							return (
+								<DropdownMenuItem
+									key={itemId}
+									onSelect={() => toggleItem(item)}
+									className={
+										isSelected
+											? "bg-blue-100 text-blue-700"
+											: "hover:bg-blue-50"
+									}
+								>
+									{renderItem(item)}
+								</DropdownMenuItem>
+							);
+						})}
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</div>
+		);
+	};
 
-  const toggleOvertimeSubPolicy = (opt) => {
-    setOvertimeSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
+	const InfoRow = ({ label, value }) => (
+		<div className="flex items-center justify-between">
+			<p className="text-md font-custom text-light-pearl">{label}</p>
+			<p className="font-custom text-md text-dark-blue font-semibold">
+				{value}
+			</p>
+		</div>
+	);
 
-  const handleSave = () => {
-    const updatedProfile = {
-      name: `${firstname} ${lastname}`,
-      mobile,
-      birthday,
-      branch,
-      department,
-      title,
-      employmentstartdate,
-    };
-    alert("Changes saved successfully!");
-  };
+	const [showFirstMenu, setShowFirstMenu] = useState(false);
+	const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
 
-  return (
-    <>
-      <div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
-        <div className="flex items-center space-x-3 p-5">
-          <User className="text-[#2998FF]" width={40} height={40} />
-          <span className="font-custom text-3xl text-black">Profile</span>
-        </div>
-      </div>
+	const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
 
-      <div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
-        <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
-          Hello, {user?.name}
-        </div>
-        <p className="font-custom text-sm text-gray-400 px-6 mt-2">
-          Good morning!
-        </p>
+	useEffect(() => {
+		if (leaveSettings && user?.leavePolicies) {
+			console.log("User leavePolicies:", user.leavePolicies);
+			console.log("Company leaveSettings:", leaveSettings);
 
-        {/* Profile Holder Container with fallback initials */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-            {user?.profileImg ? (
-              <img
-                src={user.profileImg}
-                alt="Profile"
-                className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
-                {user?.employee?.name
-                  ?.split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .toUpperCase()}
-              </div>
-            )}
+			const selectedIds = user.leavePolicies
+				.map((p) => String(p.id)) // convert to string
+				.filter((id) => leaveSettings.some((ls) => String(ls.id) === id)); // only valid policies
 
-            <div className="font-custom text-left">
-              <div className="font-semibold text-lg text-gray-900">
-                {user?.employee?.name}
-              </div>
-              <div className="text-sm text-gray-500">
-                {user?.job || "No Job Title"}
-              </div>
-            </div>
-          </div>
-          {/* <div>
+			console.log("Filtered leaveSubPolicies:", selectedIds);
+			setLeaveSubPolicies(selectedIds);
+		}
+	}, [leaveSettings, user?.leavePolicies]);
+
+	const handleSave = () => {
+		const updatedProfile = {
+			name: `${firstname} ${lastname}`,
+			mobile,
+			birthday,
+			branch,
+			department,
+			title,
+			employmentStartDate,
+			leavePolicies: leaveSubPolicies,
+			workShifts: selectedWorkShift,
+			groups: selectedGroup,
+			location: selectedLocation,
+			payroll: {
+				cash,
+				bankTransfer: banktransfer,
+				tax: single,
+				nssf: nochildren,
+				subtotal,
+				netSalary: netsalary,
+			},
+			attachments: files.map((f) => ({
+				name: f.name,
+				type: f.type,
+				size: f.size,
+				url: f.file,
+			})),
+		};
+
+		console.log("Body to send for update:", updatedProfile);
+		alert("Changes saved successfully!");
+	};
+
+	return (
+		<>
+			<div className="bg-white rounded-xl shadow-md py-6 px-6 mb-1">
+				<div className="flex items-center space-x-3 p-5">
+					<User className="text-[#2998FF]" width={40} height={40} />
+					<span className="font-custom text-3xl text-black">Profile</span>
+				</div>
+			</div>
+
+			<div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
+				<div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
+					Hello, {user?.name}
+				</div>
+				<p className="font-custom text-sm text-gray-400 px-6 mt-2">
+					Good morning!
+				</p>
+
+				{/* Profile Holder Container with fallback initials */}
+				<div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
+					<div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
+						{user?.profileImg ? (
+							<img
+								src={user.profileImg}
+								alt="Profile"
+								className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
+							/>
+						) : (
+							<div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+								{user?.employee?.name
+									?.split(" ")
+									.map((n) => n[0])
+									.join("")
+									.toUpperCase()}
+							</div>
+						)}
+
+						<div className="font-custom text-left">
+							<div className="font-semibold text-lg text-gray-900">
+								{user?.employee?.name}
+							</div>
+							<div className="text-sm text-gray-500">
+								{user?.job || "No Job Title"}
+							</div>
+						</div>
+					</div>
+					{/* <div>
             <div className="text-2xl font-bold font-custom">
               {firstname} {lastname}
             </div>
@@ -389,538 +424,492 @@ export default function UserProfile({ user }) {
               {AccessLevel}
             </div>
           </div> */}
-        </div>
+				</div>
 
-        {/* Two-column layout: left has container, right has text */}
-        <div className="mt-4 flex flex-col md:flex-row gap-4">
-          {/* Left container */}
-          <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
-            <h2 className="text-2xl font-semibold font-custom mb-2">
-              Personal details
-            </h2>
+				{/* Two-column layout: left has container, right has text */}
+				<div className="mt-4 flex flex-col md:flex-row gap-4">
+					{/* Left container */}
+					<div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
+						<h2 className="text-2xl font-semibold font-custom mb-2">
+							Personal details
+						</h2>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              First Name
-            </label>
-            <input
-              type="text"
-              value={firstname}
-              onChange={(e) => setFirstname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+						<label className="text-sm font-custom text-[#3F4648] w-full">
+							First Name
+						</label>
+						<input
+							type="text"
+							value={firstname}
+							onChange={(e) => setFirstname(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Last Name
-            </label>
-            <input
-              type="text"
-              value={lastname}
-              onChange={(e) => setLastname(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+						<label className="text-sm font-custom text-[#3F4648] w-full">
+							Last Name
+						</label>
+						<input
+							type="text"
+							value={lastname}
+							onChange={(e) => setLastname(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Mobile Phone
-            </label>
-            <input
-              type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+						<label className="text-sm font-custom text-[#3F4648] w-full">
+							Mobile Phone
+						</label>
+						<input
+							type="text"
+							value={mobile}
+							onChange={(e) => setMobile(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Birthday
-            </label>
-            <input
-              type="date"
-              value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+						<label className="text-sm font-custom text-[#3F4648] w-full">
+							Birthday
+						</label>
+						<input
+							type="date"
+							value={birthday}
+							onChange={(e) => setBirthday(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
 
-            <h2 className="text-2xl font-semibold font-custom mb-2">
-              Company details
-            </h2>
+						<h2 className="text-2xl font-semibold font-custom mb-2">
+							Company details
+						</h2>
+						<div className="font-custom flex flex-wrap gap-4 items-center justify-between w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4">
+							{/* Branch dropdown */}
+							<div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+								<label className="text-sm text-[#3F4648] w-full">Branch</label>
+								<select
+									value={branch}
+									onChange={(e) => setBranch(e.target.value)}
+									className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+								>
+									<option value="">Select branch</option>
+									{branches?.results?.map((b) => (
+										<option key={b.id} value={b.name}>
+											{b.name}
+										</option>
+									))}
+								</select>
+							</div>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Branch
-            </label>
-            <select value={branch} onChange={(e) => setBranch(e.target.value)}>
-              {branches?.results?.map((b) => (
-                <option key={b.id} value={b.name}>
-                  {b.name}
-                </option>
-              ))}
-            </select>
+							{/* Department dropdown */}
+							<div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+								<label className="text-sm text-[#3F4648] w-full">
+									Department
+								</label>
+								<select
+									value={department}
+									onChange={(e) => setDepartment(e.target.value)}
+									className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+								>
+									<option value="">Select department</option>
+									{departments?.results?.map((d) => (
+										<option key={d.id} value={d.name}>
+											{d.name}
+										</option>
+									))}
+								</select>
+							</div>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Department
-            </label>
-            {/* <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-            >
-              {departments?.map((d) => (
-                <option key={d.id} value={d.name}>
-                  {d.name}
-                </option>
-              ))}
-            </select> */}
+							{/* Position dropdown */}
+							<div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+								<label className="text-sm text-[#3F4648] w-full">
+									Position
+								</label>
+								<select
+									value={title}
+									onChange={(e) => setTitle(e.target.value)}
+									className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+								>
+									<option value="">Select position</option>
+									{positions?.results?.map((p) => (
+										<option key={p.id} value={p.title}>
+											{p.title}
+										</option>
+									))}
+								</select>
+							</div>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Position
-            </label>
-            {/* <select value={title} onChange={(e) => setTitle(e.target.value)}>
-              {positions?.map((p) => (
-                <option key={p.id} value={p.title}>
-                  {p.title}
-                </option>
-              ))}
-            </select> */}
+							<label className="text-sm text-[#3F4648] w-full">
+								Employment Start Date
+							</label>
+							<input
+								type="date"
+								value={employmentStartDate}
+								onChange={(e) => setEmploymentStartDate(e.target.value)}
+								className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+							/>
+						</div>
 
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Employment Start Date
-            </label>
-            <input
-              type="date"
-              value={employmentStartDate}
-              onChange={(e) => setEmploymentStartDate(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+						{!leaveLoading && leaveSettings && leaveSettings.length > 0 && (
+							<DropdownSection
+								title="Leave Policies"
+								items={leaveSettings}
+								selectedItems={leaveSubPolicies}
+								toggleItem={(policy) => {
+									setLeaveSubPolicies((prev) =>
+										prev.includes(String(policy.id))
+											? prev.filter((id) => id !== String(policy.id))
+											: [...prev, String(policy.id)]
+									);
+								}}
+								renderItem={(policy) => policy.name}
+							/>
+						)}
 
-            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
-              Policies
-            </h2>
-            <div className="relative flex justify-between items-start flex-wrap gap-4">
-              {/* Display Selected Tags */}
-              <div className="flex flex-wrap gap-4">
-                {leaveSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Leave - {item}
-                    </h2>
-                  </div>
-                ))}
-                {overtimeSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Overtime - {item}
-                    </h2>
-                  </div>
-                ))}
-              </div>
+						<DropdownSection
+							title="Work Shift"
+							items={user.shiftType ? [user.shiftType.name] : []}
+							selectedItems={
+								selectedWorkShift.length
+									? selectedWorkShift
+									: user.shiftType
+									? [user.shiftType.name]
+									: []
+							}
+							toggleItem={toggleWorkShift}
+						/>
 
-              {/* + Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowFirstMenu((prev) => !prev);
-                    setOpenSecondLayerFor(""); // Reset second layer when reopening first
-                  }}
-                  className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-                >
-                  <span className="relative w-3 h-3">
-                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
-                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
-                  </span>
-                </button>
+						<DropdownSection
+							title="Group"
+							items={user.groups.map((g) => g.name)}
+							selectedItems={
+								selectedGroup.length
+									? selectedGroup
+									: user.groups.map((g) => g.name)
+							}
+							toggleItem={toggleGroup}
+							dropdownWidth="w-44"
+						/>
 
-                {/* First Menu */}
-                {showFirstMenu && (
-                  <div className="absolute top-10 left-0 z-50 font-custom text-sm w-40 bg-white shadow-md rounded-md">
-                    {["Leave Policy", "Overtime Policy"].map((item) => (
-                      <div
-                        key={item}
-                        onClick={() => setOpenSecondLayerFor(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50"
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                )}
+						<DropdownSection
+							title="Location"
+							items={["Flexible", "Geofencing"]}
+							selectedItems={[selectedLocation]}
+							toggleItem={(value) => setSelectedLocation(value)}
+							renderItem={(item) => item}
+							dropdownWidth="w-44"
+						/>
+					</div>
 
-                {/* Second Menu */}
-                {openSecondLayerFor === "Leave Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Sick Leave", "Annual Leave"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          leaveSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
+					{/* Right container with text aligned left */}
+					<div className="w-full md:w-[60%] p-6">
+						<div className="text-md font-custom text-light-pearl w-full space-y-2">
+							<h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
+								Payroll Info
+							</h2>
 
-                {openSecondLayerFor === "Overtime Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Morning", "Weekend"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          overtimeSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+							<InfoRow
+								label="Employee Name"
+								value={user?.employee?.name || ""}
+							/>
+							{/* <InfoRow label="Employee ID" value={employeeId} /> */}
+							<InfoRow label="Bank Name" value={bankName} />
+							<InfoRow label="Account Number" value={accountnumber} />
+						</div>
 
-            <DropdownSection
-              title="Work Shift"
-              items={["Morning", "Afternoon", "Full Day"]}
-              selectedItems={selectedWorkShift}
-              toggleItem={toggleWorkShift}
-            />
+						{/* Cash Section - SIMPLIFIED */}
+						<div className="relative">
+							<div className="absolute -top-8 right-0 z-10">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button className="m-2 focus:outline-none" type="button">
+											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="end"
+										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+									>
+										<DropdownMenuItem onSelect={handleCashEdit}>
+											Edit
+										</DropdownMenuItem>
+										<DropdownMenuItem onSelect={handleArchive}>
+											Archive
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											onSelect={handleCashDelete}
+											className="text-red-500"
+										>
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
 
-            <DropdownSection
-              title="Group"
-              items={["Admin", "HR Manager", "Employee"]}
-              selectedItems={selectedGroup}
-              toggleItem={toggleGroup}
-              dropdownWidth="w-44"
-            />
+							<div className="flex items-center justify-between mt-8 bg-white shadow-md rounded-lg p-4">
+								<div className="flex items-center">
+									<Banknote className="text-blue w-12 h-12 mr-6" />
+									<p className="font-custom text-md font-semibold">Cash</p>
+								</div>
+								<p className="text-dark-blue font-custom text-md font-semibold">
+									${cash}
+								</p>
+							</div>
+						</div>
 
-            <DropdownSection
-              title="Location"
-              items={["Geo Fence", "Flexible", "GPS"]}
-              selectedItems={selectedLocation}
-              toggleItem={toggleLocation}
-            />
-          </div>
+						{/* Bank Transfer Section - SIMPLIFIED */}
+						<div className="relative">
+							<div className="absolute -top-8 right-0 z-10">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button className="m-2 focus:outline-none" type="button">
+											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="end"
+										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+									>
+										<DropdownMenuItem onSelect={handleBankEdit}>
+											Edit
+										</DropdownMenuItem>
+										<DropdownMenuItem onSelect={handleArchive}>
+											Archive
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											onSelect={handleBankDelete}
+											className="text-red-500"
+										>
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
 
-          {/* Right container with text aligned left */}
-          <div className="w-full md:w-[60%] p-6">
-            <div className="text-md font-custom text-light-pearl w-full space-y-2">
-              <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
-                Payroll Info
-              </h2>
+							<div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
+								<div className="flex items-center justify-between">
+									<div className="flex items-center">
+										<Landmark className="text-blue w-10 h-10 mr-6" />
+										<p className="font-custom text-md font-semibold">
+											Bank Transfer
+										</p>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										$
+										{user?.employee?.finance?.paymentMethod
+											?.ibankingPercentage || "N/A"}
+									</p>
+								</div>
 
-              <InfoRow
-                label="Employee Name"
-                value={user?.employee?.name || ""}
-              />
-              <InfoRow label="Employee ID" value="#1234565" />
-              <InfoRow label="Bank Name" value="--------------" />
-              <InfoRow label="Account Number" value={accountnumber} />
-            </div>
+								<div className="flex items-center justify-between">
+									<div className="flex items-center ml-10">
+										<Percent className="text-blue w-8 h-8 mr-6" />
+										<div>
+											<p className="font-custom text-md font-semibold">Tax</p>
+											<p className="text-xs text-gray-500 font-custom">
+												{maritalStatus} / Children{" "}
+												<span className="text-blue">{childrenCount} </span>
+											</p>
+										</div>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${single}
+									</p>
+								</div>
 
-            {/* Cash Section - SIMPLIFIED */}
-            <div className="relative">
-              <div className="absolute -top-8 right-0 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none" type="button">
-                      <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-                  >
-                    <DropdownMenuItem onSelect={handleCashEdit}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleCashDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+								<div className="flex items-center justify-between">
+									<div className="flex items-center ml-10">
+										<CreditCard className="text-blue w-8 h-8 mr-6" />
+										<div>
+											<p className="font-custom text-md font-semibold">NSSF</p>
+										</div>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${nochildren}
+									</p>
+								</div>
 
-              <div className="flex items-center justify-between mt-8 bg-white shadow-md rounded-lg p-4">
-                <div className="flex items-center">
-                  <Banknote className="text-blue w-12 h-12 mr-6" />
-                  <p className="font-custom text-md font-semibold">Cash</p>
-                </div>
-                <p className="text-dark-blue font-custom text-md font-semibold">
-                  ${cash}
-                </p>
-              </div>
-            </div>
+								<div className="border-t border-blue-500 my-2"></div>
+								<div className="flex items-center justify-between">
+									<div className="flex items-center ml-10">
+										<Banknote className="text-blue w-8 h-8 mr-6" />
+										<p className="font-custom text-md font-semibold">
+											Sub total Salary
+										</p>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${subtotal}
+									</p>
+								</div>
+							</div>
 
-            {/* Bank Transfer Section - SIMPLIFIED */}
-            <div className="relative">
-              <div className="absolute -top-8 right-0 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none" type="button">
-                      <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-                  >
-                    <DropdownMenuItem onSelect={handleBankEdit}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleBankDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+							{/* Estimated Section */}
+							<div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
+								<div className="flex items-center justify-between">
+									<div className="flex items-center">
+										<p className="font-custom text-lg font-semibold">
+											Estimated{" "}
+											<span className="text-blue-600">
+												{new Date().toLocaleString("en-US", { month: "long" })}
+											</span>
+										</p>
+									</div>
+								</div>
 
-              <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Landmark className="text-blue w-10 h-10 mr-6" />
-                    <p className="font-custom text-md font-semibold">
-                      Bank Transfer
-                    </p>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${banktransfer}
-                  </p>
-                </div>
+								<hr className="border-t border-blue-500" />
+								<div className="flex items-center justify-between">
+									<div className="flex items-center ml-10">
+										<Banknote className="text-blue w-8 h-8 mr-6" />
+										<div>
+											<p className="font-custom text-md font-semibold">Cash</p>
+										</div>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${cash}
+									</p>
+								</div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Percent className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">
-                        Single
-                      </p>
-                      <p className="text-xs text-gray-500 font-custom">Tax</p>
-                    </div>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${single}
-                  </p>
-                </div>
+								<div className="flex items-center justify-between">
+									<div className="flex items-center ml-10">
+										<Banknote className="text-blue w-8 h-8 mr-6" />
+										<div>
+											<p className="font-custom text-md font-semibold">
+												Bank Transfer
+											</p>
+										</div>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${subtotal}
+									</p>
+								</div>
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <CreditCard className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">
-                        No Children
-                      </p>
-                      <p className="text-xs text-gray-500 font-custom">NSSF</p>
-                    </div>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${nochildren}
-                  </p>
-                </div>
+								<div className="border-t border-blue-500"></div>
+								<div className="flex items-center justify-between">
+									<div className="flex items-center">
+										<p className="font-custom text-lg font-semibold">
+											Net Salary
+										</p>
+									</div>
+									<p className="text-dark-blue font-custom text-md font-semibold">
+										${netsalary}
+									</p>
+								</div>
+							</div>
 
-                <div className="border-t border-blue-500 my-2"></div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <p className="font-custom text-md font-semibold">
-                      Sub total Salary
-                    </p>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${subtotal}
-                  </p>
-                </div>
-              </div>
+							{/* Attachment Section */}
+							<div>
+								<h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
+									Attachment
+									<label
+										htmlFor="pdf-upload"
+										className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+									>
+										<span className="relative w-3 h-3">
+											<span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
+											<span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
+										</span>
+										<input
+											id="pdf-upload"
+											type="file"
+											accept=".pdf,.png,.jpg,.jpeg"
+											className="hidden"
+											onChange={handleFileChange}
+										/>
+									</label>
+								</h2>
 
-              {/* Estimated Section */}
-              <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Estimated
-                    </p>
-                  </div>
-                </div>
-                <hr className="border-t border-blue-500" />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">Cash</p>
-                    </div>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${cash}
-                  </p>
-                </div>
+								<div className="mt-4 flex flex-col items-start gap-3">
+									{files.map((f, idx) => (
+										<div
+											key={idx}
+											className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm"
+										>
+											<div className="flex items-center gap-4">
+												{f.type === "application/pdf" ? (
+													<img
+														src="/images/Pdf_icon.png"
+														alt="PDF Icon"
+														className="h-10 w-auto object-contain"
+													/>
+												) : (
+													<img
+														src={f.file}
+														alt={f.name}
+														className="h-10 w-10 rounded object-cover"
+													/>
+												)}
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">
-                        Bank Transfer
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${subtotal}
-                  </p>
-                </div>
+												<div>
+													<p className="font-medium text-gray-800">{f.name}</p>
+													<p className="text-sm text-gray-500">
+														{f.size} • {f.date}
+													</p>
+												</div>
+											</div>
+											<div className="flex items-center gap-2 ml-6">
+												<a href={f.file} download={f.name}>
+													<Download className="w-5 h-5 text-blue-600 hover:text-blue-800 cursor-pointer" />
+												</a>
+												<Trash2
+													className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
+													onClick={() => handleDelete(idx)}
+												/>
+											</div>
+										</div>
+									))}
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
 
-                <div className="border-t border-blue-500"></div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Net Salary
-                    </p>
-                  </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${netsalary}
-                  </p>
-                </div>
-              </div>
+			<div className="flex justify-center">
+				<Button
+					onClick={handleSave}
+					className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+				>
+					Save Changes
+				</Button>
+			</div>
 
-              {/* Attachment Section */}
-              <div>
-                <h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
-                  Attachment
-                  <label
-                    htmlFor="pdf-upload"
-                    className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
-                  >
-                    <span className="relative w-3 h-3">
-                      <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
-                      <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
-                    </span>
-                    <input
-                      id="pdf-upload"
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </label>
-                </h2>
+			{/* Dialogs - Only render when needed */}
+			{dialogStates.cash && (
+				<UpdateCashDialog
+					open={true}
+					onOpenChange={() => closeDialog("cash")}
+					oldCash={cash}
+					onSubmit={(newAmount) => {
+						setCash(newAmount);
+						closeDialog("cash");
+					}}
+				/>
+			)}
 
-                <div className="mt-4 flex flex-col items-start gap-3">
-                  {files.map((f, idx) => (
-                    <div
-                      key={idx}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-white shadow-sm"
-                    >
-                      <div className="flex items-center gap-4">
-                        {f.type === "application/pdf" ? (
-                          <img
-                            src="/images/Pdf_icon.png"
-                            alt="PDF Icon"
-                            className="h-10 w-auto object-contain"
-                          />
-                        ) : (
-                          <img
-                            src={f.file}
-                            alt={f.name}
-                            className="h-10 w-10 rounded object-cover"
-                          />
-                        )}
+			{dialogStates.bank && (
+				<UpdateBankTransferDialog
+					open={true}
+					onOpenChange={() => closeDialog("bank")}
+					oldBank={banktransfer}
+					onSubmit={(data) => {
+						closeDialog("bank");
+					}}
+				/>
+			)}
 
-                        <div>
-                          <p className="font-medium text-gray-800">{f.name}</p>
-                          <p className="text-sm text-gray-500">
-                            {f.size} • {f.date}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 ml-6">
-                        <a href={f.file} download={f.name}>
-                          <Download className="w-5 h-5 text-blue-600 hover:text-blue-800 cursor-pointer" />
-                        </a>
-                        <Trash2
-                          className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
-                          onClick={() => handleDelete(idx)}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-center">
-        <Button
-          onClick={handleSave}
-          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          Save Changes
-        </Button>
-      </div>
-
-      {/* Dialogs - Only render when needed */}
-      {dialogStates.cash && (
-        <UpdateCashDialog
-          open={true}
-          onOpenChange={() => closeDialog("cash")}
-          oldCash={cash}
-          onSubmit={(newAmount) => {
-            setCash(newAmount);
-            closeDialog("cash");
-          }}
-        />
-      )}
-
-      {dialogStates.bank && (
-        <UpdateBankTransferDialog
-          open={true}
-          onOpenChange={() => closeDialog("bank")}
-          oldBank={banktransfer}
-          onSubmit={(data) => {
-            closeDialog("bank");
-          }}
-        />
-      )}
-
-      {dialogStates.delete && (
-        <DeleteDialog
-          open={dialogStates.delete}
-          setOpen={(isOpen) => {
-            if (!isOpen) {
-              closeDialog("delete");
-            }
-          }}
-          context={dialogStates.deleteContext}
-          onConfirm={() => {
-            if (dialogStates.deleteContext === "cash") {
-              console.log("Deleting cash record");
-            } else if (dialogStates.deleteContext === "bank") {
-              console.log("Deleting bank record");
-            }
-            closeDialog("delete");
-          }}
-        />
-      )}
-    </>
-  );
+			{dialogStates.delete && (
+				<DeleteDialog
+					open={dialogStates.delete}
+					setOpen={(isOpen) => {
+						if (!isOpen) {
+							closeDialog("delete");
+						}
+					}}
+					context={dialogStates.deleteContext}
+					onConfirm={() => {
+						if (dialogStates.deleteContext === "cash") {
+							console.log("Deleting cash record");
+						} else if (dialogStates.deleteContext === "bank") {
+							console.log("Deleting bank record");
+						}
+						closeDialog("delete");
+					}}
+				/>
+			)}
+		</>
+	);
 }
