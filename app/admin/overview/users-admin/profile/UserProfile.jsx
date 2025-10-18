@@ -22,53 +22,86 @@ import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
 import { Button } from "react-scroll";
 import DeleteDialog from "../components/deletedialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchBranches } from "@/lib/api/branch";
+import { fetchPositions } from "@/lib/api/position";
+import { fetchCompany } from "@/lib/api/company";
+import { fetchCompanyDepartments } from "@/lib/api/department";
 
-// 1. All user data is here:
-const user = {
-  firstname: "John",
-  lastname: "Doe",
-  avatar: "/avatars/cameron.png",
-  role: "Owner",
-  accessLevel: "Admin",
-  phone: "012345678",
-  birthday: "1990-01-01",
-  branch: "Main Branch",
-  department: "HR",
-  title: "Manager",
-  dateadded: "2022-01-01",
-  cash: 123,
-  profile: "/avatars/cameron.png",
-  banknumber: "12345678",
-  banktransfer: 100,
-  single: 25,
-  nochildren: 0.6,
-};
+export default function UserProfile({ user }) {
+  console.log("Rendering UserProfile for:", user);
+  const queryClient = useQueryClient();
 
-export default function UserProfile() {
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments", company?.id],
+    queryFn: () => fetchCompanyDepartments(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+  });
+
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: fetchPositions,
+  });
+
+  console.log("Fetched positions:", positions);
+
+  // Helper function to format date to YYYY-MM-DD
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
   // 2. State is initialized from user
-  const [firstname, setFirstname] = useState(user.firstname);
-  const [lastname, setLastname] = useState(user.lastname);
-  const [mobile, setMobile] = useState(user.phone);
-  const [birthday, setBirthday] = useState(user.birthday);
-  const [branch, setBranch] = useState(user.branch);
-  const [department, setDepartment] = useState(user.department);
-  const [title, setTitle] = useState(user.title);
-  const [employmentstartdate, setEmploymentStartDate] = useState(
-    user.dateadded
+  // Split name into first and last name for state
+  const [firstname, setFirstname] = useState(
+    user?.employee?.name ? user.employee.name.split(" ")[0] : ""
   );
-  const [cash, setCash] = useState(user.cash);
-  const profile = user.profile;
-  const accountnumber = user.banknumber;
-  const AccessLevel = user.accessLevel;
-  const banktransfer = user.banktransfer;
-  const single = user.single;
-  const nochildren = user.nochildren;
+  const [lastname, setLastname] = useState(
+    user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
+  );
 
-  const subtotal = banktransfer - (single + nochildren);
-  const netsalary = cash + subtotal;
+  const [mobile, setMobile] = useState(user?.employee?.phoneNumber || "");
+  const [birthday, setBirthday] = useState(
+    formatDateForInput(user?.dateOfBirth)
+  );
+  const [employmentStartDate, setEmploymentStartDate] = useState(
+    formatDateForInput(user?.startDate)
+  );
 
-  const firstInitial = firstname.charAt(0).toUpperCase();
-  const lastInitial = lastname.charAt(0).toUpperCase();
+  const [branch, setBranch] = useState(user?.branch?.name || "");
+  const [department, setDepartment] = useState(user?.department?.name || "");
+  const [title, setTitle] = useState(user?.position?.title || "");
+
+  const [cash, setCash] = useState(
+    user?.employee?.finance?.paymentMethod?.cashPercentage || 0
+  );
+  const [banktransfer, setBankTransfer] = useState(
+    user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0
+  );
+
+  const [single, setSingle] = useState(0);
+
+  const profile = user?.profileImg || "";
+  const accountnumber =
+    user?.employee?.finance?.bankDetails?.accountNumber || "";
+  const AccessLevel = user?.employee?.role || "";
+  const [nochildren, setNoChildren] = useState(0);
+
+  const subtotal = (banktransfer || 0) - ((single || 0) + (nochildren || 0));
+  const netsalary = (cash || 0) + subtotal;
 
   const [imageError, setImageError] = useState(false);
 
@@ -292,8 +325,7 @@ export default function UserProfile() {
 
   const handleSave = () => {
     const updatedProfile = {
-      firstname,
-      lastname,
+      name: `${firstname} ${lastname}`,
       mobile,
       birthday,
       branch,
@@ -301,8 +333,6 @@ export default function UserProfile() {
       title,
       employmentstartdate,
     };
-
-    console.log("✅ Saving profile:", updatedProfile);
     alert("Changes saved successfully!");
   };
 
@@ -317,7 +347,7 @@ export default function UserProfile() {
 
       <div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
         <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
-          Hello, {firstname}
+          Hello, {user?.name}
         </div>
         <p className="font-custom text-sm text-gray-400 px-6 mt-2">
           Good morning!
@@ -325,29 +355,40 @@ export default function UserProfile() {
 
         {/* Profile Holder Container with fallback initials */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
-            {profile && !imageError ? (
+          <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
+            {user?.profileImg ? (
               <img
-                src={profile}
+                src={user.profileImg}
                 alt="Profile"
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
+                className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
               />
             ) : (
-              <span className="text-gray-700">
-                {firstInitial}
-                {lastInitial}
-              </span>
+              <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+                {user?.employee?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()}
+              </div>
             )}
+
+            <div className="font-custom text-left">
+              <div className="font-semibold text-lg text-gray-900">
+                {user?.employee?.name}
+              </div>
+              <div className="text-sm text-gray-500">
+                {user?.job || "No Job Title"}
+              </div>
+            </div>
           </div>
-          <div>
+          {/* <div>
             <div className="text-2xl font-bold font-custom">
               {firstname} {lastname}
             </div>
             <div className="text-sm font-custom text-gray-500">
               {AccessLevel}
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* Two-column layout: left has container, right has text */}
@@ -405,39 +446,45 @@ export default function UserProfile() {
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Branch
             </label>
-            <input
-              type="text"
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+            <select value={branch} onChange={(e) => setBranch(e.target.value)}>
+              {branches?.results?.map((b) => (
+                <option key={b.id} value={b.name}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Department
             </label>
-            <input
-              type="text"
+            {/* <select
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+            >
+              {departments?.map((d) => (
+                <option key={d.id} value={d.name}>
+                  {d.name}
+                </option>
+              ))}
+            </select> */}
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
-              Title
+              Position
             </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
+            {/* <select value={title} onChange={(e) => setTitle(e.target.value)}>
+              {positions?.map((p) => (
+                <option key={p.id} value={p.title}>
+                  {p.title}
+                </option>
+              ))}
+            </select> */}
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Employment Start Date
             </label>
             <input
               type="date"
-              value={employmentstartdate}
+              value={employmentStartDate}
               onChange={(e) => setEmploymentStartDate(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
@@ -572,7 +619,7 @@ export default function UserProfile() {
 
               <InfoRow
                 label="Employee Name"
-                value={`${firstname} ${lastname}`}
+                value={user?.employee?.name || ""}
               />
               <InfoRow label="Employee ID" value="#1234565" />
               <InfoRow label="Bank Name" value="--------------" />
@@ -848,9 +895,8 @@ export default function UserProfile() {
         <UpdateBankTransferDialog
           open={true}
           onOpenChange={() => closeDialog("bank")}
-          oldCash={cash}
+          oldBank={banktransfer}
           onSubmit={(data) => {
-            console.log("🧾 Updated bank transfer data:", data);
             closeDialog("bank");
           }}
         />

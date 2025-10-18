@@ -41,6 +41,7 @@ export default function SettingPage() {
 
   // Department states
   const [selectedNameDepartment, setSelectedNameDepartment] = useState({});
+  const [selectedCodeDepartment, setSelectedCodeDepartment] = useState({});
   const [selectedBranches, setSelectedBranches] = useState({});
   const [selectedManager, setSelectedManagers] = useState({});
   const [selectedPosition, setSelectedPosition] = useState({});
@@ -232,6 +233,18 @@ export default function SettingPage() {
     });
   };
 
+  const handleDepartmentCodeChange = (deptId, code) => {
+    setSelectedCodeDepartment((prev) => ({
+      ...prev,
+      [deptId]: code,
+    }));
+
+    updateDepartmentMutation.mutate({
+      id: deptId,
+      data: { code },
+    });
+  };
+
   const handlePositionChange = (deptId, title) => {
     setSelectedPosition((prev) => ({
       ...prev,
@@ -244,15 +257,18 @@ export default function SettingPage() {
     });
   };
 
-  const handleBranchDefaultChange = (branchId, name) => {
+  const handleBranchDefaultChange = (branchId, field, value) => {
     setSelectedBranchesDefault((prev) => ({
       ...prev,
-      [branchId]: name,
+      [branchId]: {
+        ...prev[branchId],
+        [field]: value,
+      },
     }));
 
     updateBranchMutation.mutate({
       id: branchId,
-      data: { name },
+      data: { [field]: value },
     });
   };
 
@@ -424,18 +440,44 @@ export default function SettingPage() {
                 key={branch.id}
                 className="font-custom border border-gray-300 rounded-lg p-2 flex items-center justify-between flex-wrap sm:flex-nowrap gap-2 w-full sm:w-5/6 lg:w-3/4 text-sm mb-3"
               >
+                {/* Branch Name Input */}
                 <div className="flex items-center space-x-1 min-w-0">
                   <FiMapPin className="text-gray-500 flex-shrink-0" />
                   <input
-                    value={selectedBranchesDefault[branch.id] || branch.name}
-                    onChange={(e) =>
-                      handleBranchDefaultChange(branch.id, e.target.value)
+                    value={
+                      selectedBranchesDefault[branch.id]?.name ?? branch.name
                     }
-                    onKeyUp={() => {}}
+                    onChange={(e) =>
+                      handleBranchDefaultChange(
+                        branch.id,
+                        "name",
+                        e.target.value
+                      )
+                    }
                     placeholder={branch.name}
-                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55"
+                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55 focus:outline-none focus:ring-0"
                   />
                 </div>
+
+                {/* Branch Code Input */}
+                <div className="flex items-center space-x-1 min-w-0">
+                  <input
+                    value={
+                      selectedBranchesDefault[branch.id]?.code ?? branch.code
+                    }
+                    onChange={(e) =>
+                      handleBranchDefaultChange(
+                        branch.id,
+                        "code",
+                        e.target.value
+                      )
+                    }
+                    placeholder={branch.code}
+                    className="font-custom rounded-lg p-2 w-full xl:w-55 border-none focus:outline-none focus:ring-0"
+                  />
+                </div>
+
+                {/* Manager + Actions */}
                 <div className="flex items-center space-x-2 min-w-0 ml-auto">
                   <span className="text-gray-500 text-sm flex-shrink-0">
                     Manager
@@ -452,13 +494,11 @@ export default function SettingPage() {
                     }
                   >
                     {members?.results.map((member) => {
-                      const lastName = `${
-                        member?.employee?.name.split(" ")[0]
-                      }`;
-                      const firstName = `${
-                        member?.employee?.name.split(" ")[1]
-                      }`;
-                      const fullName = `${lastName} ${firstName}`;
+                      const [lastName, firstName] =
+                        member?.employee?.name.split(" ");
+                      const fullName = `${lastName || ""} ${
+                        firstName || ""
+                      }`.trim();
                       return (
                         <option key={member.id} value={member?.employee?.id}>
                           {fullName}
@@ -468,6 +508,7 @@ export default function SettingPage() {
                   </select>
 
                   <AddBranchDialog isEdit={true} branch={branch} />
+
                   <button
                     className="text-grey-400 hover:text-red-700"
                     onClick={() =>
@@ -510,9 +551,22 @@ export default function SettingPage() {
                     }
                     onKeyUp={() => {}}
                     placeholder={dept.name}
-                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55"
+                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55 focus:outline-none focus:ring-0"
                   />
                 </div>
+
+                <div className="flex items-center space-x-1 min-w-0 flex-1">
+                  <input
+                    value={selectedCodeDepartment[dept.id] || dept.code}
+                    onChange={(e) =>
+                      handleDepartmentCodeChange(dept.id, e.target.value)
+                    }
+                    onKeyUp={() => {}}
+                    placeholder={dept.name}
+                    className="font-custom rounded-lg p-2 w-full xl:w-55 border-none focus:outline-none focus:ring-0"
+                  />
+                </div>
+
                 <div className="flex items-center space-x-1 justify-center flex-1">
                   <FiMapPin className="text-gray-500" />
                   <select
@@ -594,7 +648,7 @@ export default function SettingPage() {
                     }
                     onKeyUp={() => {}}
                     placeholder={title.title}
-                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55"
+                    className="font-custom border border-gray-300 rounded-lg p-2 w-full xl:w-55 focus:outline-none focus:ring-0"
                   />
 
                   {/* <span className="text-gray-700">{title.title}</span> */}
