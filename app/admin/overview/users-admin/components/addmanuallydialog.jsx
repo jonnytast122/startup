@@ -2,38 +2,38 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
+	Table,
+	TableHeader,
+	TableBody,
+	TableRow,
+	TableHead,
+	TableCell,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import {
-  useReactTable,
-  getCoreRowModel,
-  flexRender,
+	useReactTable,
+	getCoreRowModel,
+	flexRender,
 } from "@tanstack/react-table";
 import {
-  Select,
-  SelectValue,
-  SelectContent,
-  SelectTrigger,
-  SelectItem,
+	Select,
+	SelectValue,
+	SelectContent,
+	SelectTrigger,
+	SelectItem,
 } from "@/components/ui/select";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
+	DropdownMenu,
+	DropdownMenuTrigger,
+	DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import { List, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
@@ -943,7 +943,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           onOpenChange();
         }}
       /> */}
-      ;
-    </>
-  );
+		</>
+	);
 }
