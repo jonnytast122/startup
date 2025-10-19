@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { List, Plus, Trash2 } from "lucide-react";
 import Image from "next/image";
-//import SuccessDialog from "./successdialog";
+import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchBranches } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
@@ -65,50 +65,50 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
   //   enabled: !!company?.id,
   // });
 
-  const { data: workshift } = useQuery({
+  const { data: workshift, isLoading: workshiftLoading } = useQuery({
     queryKey: ["workShift", company?.id],
     queryFn: () => fetchWorkShift(company?.id),
     enabled: !!company?.id,
   });
 
-  const { data: branches } = useQuery({
+  const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ["branches"],
     queryFn: fetchBranches,
   });
 
-  const DepartmentCell = ({ row }) => {
-    const selectedBranchId = row.original.branch; // branch selected in this row
+  // const DepartmentCell = ({ row }) => {
+  //   const selectedBranchId = row.original.branch; // branch selected in this row
 
-    console.log("selectedBranchId", selectedBranchId);
+  //   console.log("selectedBranchId", selectedBranchId);
 
-    const { data: departmentsData = { results: [] } } = useQuery({
-      queryKey: ["departments", selectedBranchId],
-      queryFn: () => fetchDepartmentsByBranch(selectedBranchId),
-      enabled: !!selectedBranchId, // only fetch when branch is selected
-    });
+  //   const { data: departmentsData = { results: [] } } = useQuery({
+  //     queryKey: ["departments", selectedBranchId],
+  //     queryFn: () => fetchDepartmentsByBranch(selectedBranchId),
+  //     enabled: !!selectedBranchId, // only fetch when branch is selected
+  //   });
 
-    console.log("departmentsData", departmentsData);
+  //   console.log("departmentsData", departmentsData);
 
-    return (
-      <Select
-        value={row.original.department}
-        onValueChange={(value) =>
-          handleInputChange(row.original.id, "department", value)
-        }
-      >
-        <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-          <SelectValue placeholder="Select Department" />
-        </SelectTrigger>
-        <SelectContent className="font-custom">
-          {departmentsData.results.map((dept) => (
-            <SelectItem key={dept.id} value={dept.id}>
-              {dept.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  };
+  //   return (
+  //     <Select
+  //       value={row.original.department}
+  //       onValueChange={(value) =>
+  //         handleInputChange(row.original.id, "department", value)
+  //       }
+  //     >
+  //       <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+  //         <SelectValue placeholder="Select Department" />
+  //       </SelectTrigger>
+  //       <SelectContent className="font-custom">
+  //         {departmentsData.results.map((dept) => (
+  //           <SelectItem key={dept.id} value={dept.id}>
+  //             {dept.name}
+  //           </SelectItem>
+  //         ))}
+  //       </SelectContent>
+  //     </Select>
+  //   );
+  // };
 
   const { data: positions } = useQuery({
     queryKey: ["positions"],
@@ -173,12 +173,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     setAddedRowIds((prev) => prev.filter((rowId) => rowId !== id));
   }, []);
 
-  const handleInputChange = useCallback((id, field, value) => {
-    setData((prevData) =>
-      prevData.map((row) => (row.id === id ? { ...row, [field]: value } : row))
-    );
-  }, []);
-
   // ✅ Mutation fixed here
   const addUserMutation = useMutation({
     mutationFn: (users) => addUsers(users),
@@ -213,133 +207,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       console.error("Failed to add users:", error);
     },
   });
-
-  const isRowComplete = (row) => {
-    return (
-      row.fullName.trim() &&
-      row.phone.trim() &&
-      row.branch.trim() &&
-      row.department.trim() &&
-      row.position.trim() &&
-      row.shiftType.trim() &&
-      row.job.trim() &&
-      row.baseSalary.trim() &&
-      row.cash.trim() &&
-      row.ibanking.trim()
-    );
-  };
-
-  const handleAddUsers = () => {
-    const isValid = validateRows();
-    if (!isValid) {
-      console.warn("Validation failed. Please fill all required fields.");
-      return;
-    }
-
-    const formattedUsers = data.map((row) => ({
-      name: row.fullName,
-      phoneNumber: row.phone.startsWith("855")
-        ? row.phone
-        : `855${row.phone.replace(/^0+/, "")}`,
-      branch: row.branch || null,
-      department: row.department || null,
-      position: row.position || null,
-      job: row.job || null,
-      shiftType: row.shiftType,
-      spoused: row.spoused,
-      numberOfChildren: Number(row.numberOfChildren) || 0,
-      otherName: row.otherName || null,
-      nssfId: row.nssfId || null,
-      paymentMethod: {
-        cashPercentage: Number(row.cash),
-        ibankingPercentage: Number(row.ibanking),
-      },
-      salaryInfo: {
-        baseSalary: Number(row.baseSalary),
-        currencyType: row.currencyType,
-      },
-      bankDetails: {
-        bankProvider: row.bankProvider || null,
-        accountNumber: row.bankAccount || null,
-      },
-    }));
-
-    console.log("Formatted Users:", formattedUsers);
-
-    addUserMutation.mutate(formattedUsers);
-  };
-
-  useEffect(() => {
-    if (successOpen) {
-      const timer = setTimeout(() => {
-        setSuccessOpen(false);
-        onOpenChange();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [successOpen, onOpenChange]);
-
-  const existingPhones = useMemo(() => {
-    if (!usersData?.results) return new Set();
-    return new Set(usersData.results.map((u) => u.phoneNumber));
-  }, [usersData]);
-
-  const getDuplicateCount = () => {
-    const completeRows = data.filter(isRowComplete);
-    const seen = new Map();
-    let count = 0;
-
-    for (const row of completeRows) {
-      const phone = row.phone.startsWith("855")
-        ? row.phone
-        : `855${row.phone.replace(/^0+/, "")}`;
-
-      // Check against previously entered rows
-      if (seen.has(phone)) {
-        count++;
-        continue;
-      }
-
-      // Check against existing users from backend
-      if (existingPhones.has(phone)) {
-        count++;
-        continue;
-      }
-
-      seen.set(phone, true);
-    }
-
-    return count;
-  };
-
-  const validateRows = useCallback(() => {
-    const newErrors = {};
-    let hasError = false;
-
-    data.forEach((row) => {
-      const rowErrors = {};
-
-      // Full name validation
-      if (!row.fullName?.trim()) {
-        rowErrors.fullName = "Full name is required";
-      }
-
-      // Phone validation
-      if (!row.phone?.trim()) {
-        rowErrors.phone = "Phone number is required";
-      } else if (!/^\d+$/.test(row.phone.trim())) {
-        rowErrors.phone = "Phone number must contain only digits";
-      }
-
-      if (Object.keys(rowErrors).length > 0) {
-        newErrors[row.id] = rowErrors;
-        hasError = true;
-      }
-    });
-
-    setErrorsMap(newErrors);
-    return !hasError;
-  }, [data]);
 
   const countryCodes = [
     { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
@@ -388,6 +255,177 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     },
   ];
 
+  const isRowComplete = (row) => {
+    return (
+      row.fullName.trim() &&
+      row.phone.trim() &&
+      row.branch.trim() &&
+      row.department.trim() &&
+      row.position.trim() &&
+      row.shiftType.trim() &&
+      row.job.trim() &&
+      row.baseSalary.trim() &&
+      row.cash.trim() &&
+      row.ibanking.trim()
+    );
+  };
+
+  const validateRows = useCallback((dataToValidate) => {
+    const newErrors = {};
+
+    dataToValidate.forEach((row) => {
+      const rowErrors = {};
+
+      if (!row.fullName?.trim()) rowErrors.fullName = true;
+      if (!row.phone?.trim() || !/^\d{8,15}$/.test(row.phone.trim()))
+        rowErrors.phone = true;
+      // if (!row.branch?.trim()) rowErrors.branch = true;
+      // if (!row.shiftType?.trim()) rowErrors.shiftType = true;
+      if (!row.baseSalary || isNaN(Number(row.baseSalary)))
+        rowErrors.baseSalary = true;
+      if (!row.currencyType?.trim()) rowErrors.currencyType = true;
+
+      if (Object.keys(rowErrors).length > 0) {
+        newErrors[row.id] = rowErrors;
+      }
+    });
+
+    setErrorsMap(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, []);
+
+  const handleInputChange = useCallback(
+    (id, field, value) => {
+      setData((prevData) => {
+        const newData = prevData.map((row) =>
+          row.id === id ? { ...row, [field]: value } : row
+        );
+
+        // Validate immediately with the updated data
+        validateRows(newData);
+
+        return newData;
+      });
+    },
+    [setData, validateRows]
+  );
+
+  const handleAddUsers = () => {
+    if (!validateRows(data)) {
+      return;
+    }
+
+    const formattedUsers = data.map((row) => ({
+      name: row.fullName,
+      phoneNumber: row.phone.startsWith("855")
+        ? row.phone
+        : `855${row.phone.replace(/^0+/, "")}`,
+      branch: row.branch || null,
+      department: row.department || null,
+      position: row.position || null,
+      job: row.job || null,
+      shiftType: row.shiftType,
+      spoused: row.spoused === "true",
+      numberOfChildren: Number(row.numberOfChildren) || 0,
+      otherName: row.otherName || null,
+      nssfId: row.nssfId || null,
+      paymentMethod: {
+        cashPercentage: Number(row.cash) || 0,
+        ibankingPercentage: Number(row.ibanking) || 0,
+      },
+      salaryInfo: {
+        baseSalary: Number(row.baseSalary),
+        currencyType: row.currencyType,
+      },
+      bankDetails: {
+        bankProvider: row.bankProvider || null,
+        accountNumber: row.bankAccount || null,
+      },
+    }));
+
+    addUserMutation.mutate(formattedUsers, {
+      onSuccess: () => {
+        setSuccessOpen(true);
+      },
+
+      onError: (error) => {
+        const apiErrors = {};
+
+        const msg = error?.response?.data?.error;
+        if (msg) {
+          // Detect if it’s a phone number error
+          if (msg.toLowerCase().includes("phone")) {
+            // Highlight the phone field in the matching row
+            const phoneMatch = msg.match(/\d{8,15}/); // extract the number
+            if (phoneMatch) {
+              const phoneNumber = phoneMatch[0];
+              const row = data.find((r) => {
+                const formattedPhone = r.phone.startsWith("855")
+                  ? r.phone
+                  : `855${r.phone.replace(/^0+/, "")}`;
+                return formattedPhone === phoneNumber;
+              });
+
+              if (row) {
+                apiErrors[row.id] = {
+                  phone: true,
+                  message: msg,
+                };
+              }
+            }
+          } else {
+            // fallback for other messages
+            alert(msg);
+          }
+        }
+        setErrorsMap(apiErrors);
+      },
+    });
+  };
+
+  useEffect(() => {
+    if (successOpen) {
+      const timer = setTimeout(() => {
+        setSuccessOpen(false);
+        onOpenChange();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successOpen, onOpenChange]);
+
+  const existingPhones = useMemo(() => {
+    if (!usersData?.results) return new Set();
+    return new Set(usersData.results.map((u) => u.phoneNumber));
+  }, [usersData]);
+
+  const getDuplicateCount = () => {
+    const completeRows = data.filter(isRowComplete);
+    const seen = new Map();
+    let count = 0;
+
+    for (const row of completeRows) {
+      const phone = row.phone.startsWith("855")
+        ? row.phone
+        : `855${row.phone.replace(/^0+/, "")}`;
+
+      // Check against previously entered rows
+      if (seen.has(phone)) {
+        count++;
+        continue;
+      }
+
+      // Check against existing users from backend
+      if (existingPhones.has(phone)) {
+        count++;
+        continue;
+      }
+
+      seen.set(phone, true);
+    }
+
+    return count;
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -405,11 +443,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 errorsMap[row.original.id]?.fullName ? "border-red-500" : ""
               }`}
             />
-            {errorsMap[row.original.id]?.fullName && (
-              <p className="text-xs text-red-500 mt-1">
-                {errorsMap[row.original.id]?.fullName}
-              </p>
-            )}
           </div>
         ),
       },
@@ -453,11 +486,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                   errorsMap[row.original.id]?.phone ? "border-red-500" : ""
                 }`}
               />
-              {errorsMap[row.original.id]?.fullName && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errorsMap[row.original.id]?.phone}
-                </p>
-              )}
             </div>
           </div>
         ),
@@ -475,7 +503,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               handleInputChange(row.original.id, "department", "");
             }}
           >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+            <SelectTrigger
+              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.branch ? "border-red-500" : ""
+              }`}
+            >
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
             <SelectContent className="font-custom">
@@ -498,12 +530,21 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             onValueChange={(value) =>
               handleInputChange(row.original.id, "shiftType", value)
             }
+            disabled={workshiftLoading}
           >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-              <SelectValue placeholder="Select Shift Type" />
+            <SelectTrigger
+              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.shiftType ? "border-red-500" : ""
+              }`}
+            >
+              <SelectValue
+                placeholder={
+                  workshiftLoading ? "Loading..." : "Select Shift Type"
+                }
+              />
             </SelectTrigger>
             <SelectContent className="font-custom">
-              {workshift?.results?.results.map((shift) => (
+              {workshift?.results?.results?.map((shift) => (
                 <SelectItem key={shift.id} value={shift.id}>
                   {shift.name}
                 </SelectItem>
@@ -512,7 +553,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
-
       {
         accessorKey: "Base Salary",
         header: "Base Salary*",
@@ -530,8 +570,12 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               }
             }}
             placeholder="Base Salary"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
-                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                   errorsMap[row.original.id]?.baseSalary
+                     ? "border-red-500"
+                     : ""
+                 }`}
           />
         ),
       },
@@ -545,10 +589,16 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               handleInputChange(row.original.id, "currencyType", value)
             }
           >
-            <SelectTrigger className="h-9 w-28 font-custom">
+            <SelectTrigger
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.currencyType
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
+            >
               <SelectValue placeholder="Currency" />
             </SelectTrigger>
-            <SelectContent className="font-custom">
+            <SelectContent className="font-custom text-center">
               <SelectItem value="USD">USD</SelectItem>
               <SelectItem value="KHR">KHR</SelectItem>
             </SelectContent>
@@ -774,7 +824,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
       {
         accessorKey: "spoused",
-        header: "Spouse",
+        header: "Spoused",
         cell: ({ row }) => (
           <Select
             value={row.original.spoused}
@@ -918,15 +968,16 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             <div className="flex items-center justify-center space-x-3">
               <h1 className="text-2xl font-custom text-light-gray">Review</h1>
             </div>
+
             {(addedCount > 0 || duplicateCount > 0) && (
               <div className="flex justify-start gap-6 pt-2 pl-2">
                 {addedCount > 0 && (
-                  <p className="text-red-500 font-medium text-sm">
+                  <p className="text-blue-500 font-medium text-sm">
                     {addedCount} Added
                   </p>
                 )}
                 {duplicateCount > 0 && (
-                  <p className="text-blue-500 font-medium text-sm">
+                  <p className="text-red-500 font-medium text-sm">
                     {duplicateCount} Duplicated
                   </p>
                 )}
@@ -972,6 +1023,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             </Table>
           </div>
 
+          {/*  Add Row Button      */}
           <div className="flex justify-center mt-4">
             <Button
               onClick={handleAddRow}
@@ -995,20 +1047,24 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               onClick={() => {
                 handleAddUsers();
               }}
-              className="rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9"
+              className={`rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9 ${
+                errorsMap && Object.keys(errorsMap).length > 0
+                  ? "bg-red-500 hover:bg-red-600 "
+                  : ""
+              }`}
             >
               Confirm
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* <SuccessDialog
+      <SuccessDialog
         open={successOpen}
         onClose={() => {
           setSuccessOpen(false);
           onOpenChange();
         }}
-      /> */}
+      />
     </>
   );
 }
