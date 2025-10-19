@@ -24,6 +24,15 @@ export const updateBranch = async ({
   return response.data;
 };
 
+export const fetchDepartmentsByBranch = async (branchId: string) => {
+  const response = await api.get(
+    ApiRoutes.branch.getDepartmentsByBranch.replace("{id}", branchId)
+  );
+  if (response.status !== 200)
+    throw new Error("Failed to fetch departments for branch");
+  return response.data;
+};
+
 export const addBranch = async (data: BranchPayload) => {
   const response = await api.post(ApiRoutes.branch.create, data);
   if (response.status !== 201) throw new Error("Failed to add branch");
