@@ -46,7 +46,6 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const [durationValue, setDurationValue] = useState(1);
   const [timeOffValue, setTimeOffValue] = useState(1);
   const [timeOffUnit, setTimeOffUnit] = useState("day");
-  const [selectedEmployees, setSelectedEmployees] = useState([]);
 
   const firstLevelOptions = [
     { key: "user", label: "User" },
@@ -90,14 +89,6 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     },
   });
 
-  const { data: employees } = useQuery({
-    queryKey: ["company-employees", company?.id],
-    queryFn: () => getEmployee(company?.id),
-    enabled: !!company?.id,
-  });
-
-  console.log(employees);
-
   useEffect(() => {
     if (policy) {
       setPolicyName(policy?.name || "");
@@ -116,13 +107,6 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
       setTimeOffUnit(policy?.leaveNotice?.type || "day");
       setSelectedFirstLevels(policy?.firstLevelSelection || []);
       setSelectedItems(policy?.secondLevelSelection || {});
-
-      // Handle employee selection - ensure it's an array of IDs
-      if (policy?.employee) {
-        setSelectedEmployees(policy.employee);
-      } else {
-        setSelectedEmployees([]);
-      }
     } else {
       setPolicyName("");
       setSelectedType("paid");
@@ -133,7 +117,6 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
       setTimeOffUnit("day");
       setSelectedFirstLevels([]);
       setSelectedItems({});
-      setSelectedEmployees([]);
     }
   }, [policy]);
 
@@ -194,17 +177,8 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     setDays([...Array(daysInMonth[month]).keys()].map((d) => d + 1));
   };
 
-  const handleEmployeeChange = (e) => {
-    const selectedOptions = Array.from(
-      e.target.selectedOptions,
-      (option) => option.value
-    );
-    setSelectedEmployees(selectedOptions);
-  };
-
   const handleConfirm = () => {
     if (!policyName.trim()) return;
-
     const newPolicy = {
       company: company?.id,
       name: policyName,
@@ -222,9 +196,8 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
         type: timeOffUnit,
         value: timeOffValue,
       },
-      employee: selectedEmployees.map((emp) => emp.id), // Use the selected employee IDs
+      employee: [],
     };
-
     if (policy?.id) {
       updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
     } else {
@@ -233,8 +206,20 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     onClose();
   };
 
-  // Check if we're in create mode (no policy provided)
-  const isCreateMode = !policy;
+  // const isAllSelected =
+  // 	selectedFirstLevels.length === firstLevelOptions.length &&
+  // 	firstLevelOptions.length > 0;
+
+  // const firstLevelLabel = isAllSelected
+  // 	? "All"
+  // 	: selectedFirstLevels
+  // 			.map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+  // 			.join(", ") || "Select...";
+
+  // const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+  // 	const count = selectedItems[key]?.length || 0;
+  // 	return acc + count;
+  // }, 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose} className="font-custom">
@@ -406,80 +391,93 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
             </div>
           </div>
 
-          {/* Assignment - Fixed select input for employees */}
           {/* Assignment */}
-          <div className="flex flex-wrap md:flex-nowrap items-start justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648] mt-2">
-              Assignment
-            </label>
+          {/* <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
+						<label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+							Assignment
+						</label>
+						<div
+							className={`w-full md:w-2/3 relative flex items-center ${
+								isViewMode ? "pointer-events-none opacity-60" : ""
+							}`}
+						>
+							<button
+								onClick={handleToggleMenu}
+								className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
+							>
+								<span className="truncate">{firstLevelLabel}</span>
+								<ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
+							</button>
 
-            <div className="w-full md:w-2/3">
-              {employees?.length ? (
-                <div className="border border-gray-300 rounded-lg p-3 bg-white max-h-40 overflow-y-auto">
-                  {employees.map((emp) => {
-                    const isChecked = selectedEmployees.some(
-                      (e) => e.id === emp.id
-                    );
-                    return (
-                      <label
-                        key={emp.id}
-                        className="flex items-center gap-2 py-1 cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          className="rounded text-blue-600 focus:ring-blue-500"
-                          checked={isChecked}
-                          disabled={isViewMode}
-                          onChange={() => {
-                            if (isViewMode) return;
-                            if (isChecked) {
-                              // remove
-                              setSelectedEmployees((prev) =>
-                                prev.filter((e) => e.id !== emp.id)
-                              );
-                            } else {
-                              // add
-                              setSelectedEmployees((prev) => [...prev, emp]);
-                            }
-                          }}
-                        />
-                        <span className="text-sm text-gray-700">
-                          {emp.name}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="text-sm text-gray-500 border border-gray-200 rounded-lg p-3 bg-gray-50">
-                  No employees found
-                </div>
-              )}
+							{totalSecondLevelSelected > 0 && (
+								<span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
+									{totalSecondLevelSelected} selected
+								</span>
+							)}
 
-              {/* Show selected employees */}
-              {selectedEmployees.length > 0 ? (
-                <div className="mt-3">
-                  <div className="text-xs text-gray-600 mb-1">
-                    Selected employees ({selectedEmployees.length}):
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {selectedEmployees.map((emp, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
-                      >
-                        {emp.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-xs text-gray-500 mt-1">
-                  No employees selected yet
-                </div>
-              )}
-            </div>
-          </div>
+							{!isViewMode && menuOpen && (
+								<>
+									<div className="absolute top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-10">
+										<label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={isAllSelected}
+												onChange={() => handleFirstLevelChange("all")}
+												className="mr-2"
+											/>
+											All
+										</label>
+										{firstLevelOptions.map((item) => (
+											<label
+												key={item.key}
+												className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+												onMouseEnter={() => setHoveredItem(item.key)}
+											>
+												<input
+													type="checkbox"
+													checked={selectedFirstLevels.includes(item.key)}
+													onChange={() => handleFirstLevelChange(item.key)}
+													className="mr-2"
+												/>
+												{item.label}
+											</label>
+										))}
+									</div>
+
+									{hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
+										<div className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20">
+											<div className="px-3 py-2 font-semibold border-b border-gray-200">
+												{
+													firstLevelOptions.find((o) => o.key === hoveredItem)
+														?.label
+												}{" "}
+												Options
+											</div>
+											{secondLevelData[hoveredItem].map((value) => (
+												<label
+													key={value}
+													className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+												>
+													<input
+														type="checkbox"
+														checked={
+															selectedItems[hoveredItem]?.includes(value) ||
+															false
+														}
+														onChange={() =>
+															handleSecondLevelChange(hoveredItem, value)
+														}
+														className="mr-2"
+													/>
+													{value}
+												</label>
+											))}
+										</div>
+									)}
+								</>
+							)}
+						</div>
+					</div> */}
 
           {/* Footer */}
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10 font-custom" />
