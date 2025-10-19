@@ -269,7 +269,7 @@ const Leaves = () => {
 
       return matchesSearch;
     });
-  }, [searchQuery, leaveData]);
+  }, [searchQuery, leaveData, selectedRange]);
 
   const table = useReactTable({
     data: filteredData,
@@ -309,7 +309,7 @@ const Leaves = () => {
         queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
       });
     }
-  }, [selectedRange, company?.id, queryClient]);
+  }, [selectedRange, queryClient]);
 
   if (isLoading) {
     return (
