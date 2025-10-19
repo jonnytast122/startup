@@ -331,13 +331,17 @@ const TodayScreen = () => {
         profile: record.employee?.profile || null, // if you add profile later
         firstname: record.employee?.name?.split(" ")[0] || "",
         lastname: record.employee?.name?.split(" ")[1] || "",
-        department: record.company?.name || "",
-        job: record.jobTitle || "Unknown", // fallback if not in API
-        shifttype: record.shiftType || "Scheduled",
+        department: record.employee?.info?.department?.name || "--",
+        job: record.employee?.info?.job || "--", // fallback if not in API
+        shifttype: record.employee?.info?.shiftType?.name || "Scheduled",
         status: record.status || "",
         Clockin: firstCheckIn ? formatTime(firstCheckIn.time) : "",
         Clockout: lastCheckOut ? formatTime(lastCheckOut.time) : "",
-        regularhours: record.regularHours || "",
+        regularhours: record.employee?.info?.shiftType?.workDuration
+          ? `${record.employee.info.shiftType.workDuration.start || "--"} - ${
+              record.employee.info.shiftType.workDuration.end || "--"
+            }`
+          : "--",
         overtime: record.overtime || "",
         totalhours: formatWorkHours(record.workHours),
         date: record.date,
@@ -346,6 +350,14 @@ const TodayScreen = () => {
       };
     });
   }, [attendances]);
+
+  useEffect(() => {
+    if (company?.id && selectedRange.startDate && selectedRange.endDate) {
+      queryClient.invalidateQueries({
+        queryKey: ["attendances", company.id],
+      });
+    }
+  }, [selectedRange, company?.id, queryClient]);
 
   return (
     <>
@@ -398,6 +410,12 @@ const TodayScreen = () => {
                         if (start && end && start.getTime() !== end.getTime()) {
                           setShowDatePicker(false);
                         }
+                        //revalidate query
+                        queryClient.invalidateQueries({
+                          queryKey: ["attendances", company?.id],
+                        });
+
+                        console.log("Selected range:", newRange);
                       }}
                       rangeColors={["#3b82f6"]}
                     />
