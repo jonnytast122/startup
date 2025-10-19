@@ -8,8 +8,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { createLeavePolicy, updateLeavePolicy } from "@/lib/api/policy";
+import { getEmployee } from "@/lib/api/company";
 
 const months = [
   "January",

@@ -19,6 +19,7 @@ const ApiRoutes = {
     getMyCompany: `${BASE_URL}/companies/my-company`,
     update: `${BASE_URL}/companies/{id}`,
     delete: `${BASE_URL}/companies/{id}`,
+    getEmployee: `${BASE_URL}/companies/{id}/employees`,
   },
   branch: {
     create: `${BASE_URL}/branches`,
