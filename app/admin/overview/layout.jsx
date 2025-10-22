@@ -74,7 +74,7 @@ export default function Layout({ children }) {
 								<input
 									type="text"
 									placeholder="Search anything..."
-									className="text-sm border rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 pr-12 py-2 px-3"
+									className="text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
 								/>
 							</form>
 						</div>
