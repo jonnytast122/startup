@@ -10,7 +10,8 @@ import {
   Download,
   User,
 } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
+
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -22,55 +23,125 @@ import UpdateCashDialog from "../components/updatecashdialog";
 import UpdateBankTransferDialog from "../components/updatebanktransferdialog";
 import { Button } from "react-scroll";
 import DeleteDialog from "../components/deletedialog";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { fetchWorkShift } from "@/lib/api/work-shift";
+import { updateUser } from "@/lib/api/user";
+import { fetchBranches } from "@/lib/api/branch";
+import { fetchPositions } from "@/lib/api/position";
+import { fetchCompany } from "@/lib/api/company";
+import { fetchCompanyDepartments } from "@/lib/api/department";
+import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
+import { ref } from "firebase/storage";
 
-// 1. All user data is here:
-const user = {
-  firstname: "John",
-  lastname: "Doe",
-  avatar: "/avatars/cameron.png",
-  role: "Owner",
-  accessLevel: "Admin",
-  phone: "012345678",
-  birthday: "1990-01-01",
-  branch: "Main Branch",
-  department: "HR",
-  title: "Manager",
-  dateadded: "2022-01-01",
-  cash: 123,
-  profile: "/avatars/cameron.png",
-  banknumber: "12345678",
-  banktransfer: 100,
-  single: 25,
-  nochildren: 0.6,
-};
+export default function UserProfile({ user }) {
+  const queryClient = useQueryClient();
 
-export default function UserProfile() {
-  // 2. State is initialized from user
-  const [firstname, setFirstname] = useState(user.firstname);
-  const [lastname, setLastname] = useState(user.lastname);
-  const [mobile, setMobile] = useState(user.phone);
-  const [birthday, setBirthday] = useState(user.birthday);
-  const [branch, setBranch] = useState(user.branch);
-  const [department, setDepartment] = useState(user.department);
-  const [title, setTitle] = useState(user.title);
-  const [employmentstartdate, setEmploymentStartDate] = useState(
-    user.dateadded
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
+  const { data: workshift } = useQuery({
+    queryKey: ["workShift", company?.id],
+    queryFn: () => fetchWorkShift(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: departments = [] } = useQuery({
+    queryKey: ["departments", company?.id],
+    queryFn: () => fetchCompanyDepartments(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+  });
+
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: fetchPositions,
+  });
+
+  const { data: leaveSettings, isLoading: leaveLoading } = useQuery({
+    queryKey: ["leaveSettings", company?.id],
+    queryFn: () => fetchCompanyLeavePolicy(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: updateUser,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+    },
+  });
+
+  // Helper function to format date to YYYY-MM-DD
+  const formatDateForInput = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const year = d.getFullYear();
+    return `${year}-${month}-${day}`;
+  };
+
+  const [firstname, setFirstname] = useState(
+    user?.employee?.name ? user.employee.name.split(" ")[0] : ""
   );
-  const [cash, setCash] = useState(user.cash);
-  const profile = user.profile;
-  const accountnumber = user.banknumber;
-  const AccessLevel = user.accessLevel;
-  const banktransfer = user.banktransfer;
-  const single = user.single;
-  const nochildren = user.nochildren;
+  const [lastname, setLastname] = useState(
+    user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
+  );
 
-  const subtotal = banktransfer - (single + nochildren);
-  const netsalary = cash + subtotal;
+  const [otherName, setOtherName] = useState(user?.otherName || "");
+  const [phoneNumber, setPhoneNumber] = useState(
+    user?.employee?.phoneNumber || ""
+  );
+  const [dateOfBirth, setDateOfBirth] = useState(
+    formatDateForInput(user?.dateOfBirth) || ""
+  );
+  const [branch, setBranch] = useState(user?.employee?.branch || "");
+  const [department, setDepartment] = useState(
+    user?.employee?.department || ""
+  );
+  const [title, setTitle] = useState(user?.employee?.position || "");
+  const [startDate, setStartDate] = useState(
+    formatDateForInput(user?.startDate) || ""
+  );
+  const [nssfId, setNssfId] = useState(user?.nssfId || "N/A");
+  const [numberOfChildren, setNumberOfChildren] = useState(
+    user?.employee?.numberOfChildren || 0
+  );
+  const [spoused, setSpoused] = useState(user?.employee?.spoused || false);
+  const [bankProvider, setBankProvider] = useState(
+    user?.employee?.finance?.bankDetails?.bankProvider || ""
+  );
+  const [accountNumber, setAccountNumber] = useState(
+    user?.employee?.finance?.bankDetails?.accountNumber || ""
+  );
+  const [bankName, setBankName] = useState(
+    user?.employee?.finance?.bankDetails?.bankName || ""
+  );
+  const [cashPercentage, setCashPercentage] = useState(
+    user?.employee?.finance?.paymentMethod?.cashPercentage || 0
+  );
+  const [ibankingPercentage, setIbankingPercentage] = useState(
+    user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0
+  );
+  const [baseSalary, setBaseSalary] = useState(
+    user?.employee?.finance?.salaryInfo?.baseSalary || 0
+  );
+  const [currencyType, setCurrencyType] = useState(
+    user?.employee?.finance?.salaryInfo?.currencyType || ""
+  );
 
-  const firstInitial = firstname.charAt(0).toUpperCase();
-  const lastInitial = lastname.charAt(0).toUpperCase();
+  const [selectedGroup, setSelectedGroup] = useState(
+    user?.employee?.groups ? user.employee.groups.map((g) => g.name) : []
+  );
 
-  const [imageError, setImageError] = useState(false);
+  const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
+
+  const [loading, setLoading] = useState(false);
 
   // Dialog states - using refs to prevent re-render loops
   const [dialogStates, setDialogStates] = useState({
@@ -108,15 +179,9 @@ export default function UserProfile() {
     setFiles(files.filter((_, i) => i !== index));
   };
 
-  const [selectedPolicies, setSelectedPolicies] = useState([
-    "Leave Policy",
-    "Overtime Policy",
-  ]);
-
-  const [selectedWorkShift, setSelectedWorkShift] = useState([
-    "Morning",
-    "Afternoon",
-  ]);
+  const [selectedWorkShift, setSelectedWorkShift] = useState(
+    user.shiftType ? [user.shiftType.name] : []
+  );
 
   const toggleWorkShift = (shift) => {
     setSelectedWorkShift((prev) =>
@@ -124,24 +189,29 @@ export default function UserProfile() {
     );
   };
 
-  const [selectedGroup, setSelectedGroup] = useState(["Admin", "HR Manager"]);
-
   const toggleGroup = (value) => {
     setSelectedGroup((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
   };
 
-  const [selectedLocation, setSelectedLocation] = useState([
-    "Geo Fence",
-    "Flexible",
-    "GPS",
-  ]);
+  const [selectedLocation, setSelectedLocation] = useState(
+    user.allowedRemoteCheckIn ? "Flexible" : "Geofencing"
+  );
 
   const toggleLocation = (value) => {
     setSelectedLocation((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
+  };
+
+  const handleAddLeavePolicy = (policy) => {
+    // Check if already added
+    const exists = leaveSubPolicies.some((p) => p.id === policy.id);
+    if (exists) return;
+
+    setLeaveSubPolicies((prev) => [...prev, policy]);
+    setShowFirstMenu(false);
   };
 
   // Simplified dialog handlers - prevent multiple calls
@@ -195,30 +265,38 @@ export default function UserProfile() {
     items,
     selectedItems,
     toggleItem,
+    renderItem = (item) => item,
     dropdownWidth = "w-40",
-  }) => (
-    <>
-      <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
-      <div className="flex justify-between items-start flex-wrap gap-4">
-        <div className="flex flex-wrap gap-4">
+  }) => {
+    return (
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
+          {title}
+        </h2>
+
+        {/* Selected items display */}
+        <div className="flex flex-wrap gap-4 mb-2">
           {items.map(
             (item) =>
-              selectedItems.includes(item) && (
+              selectedItems.includes(String(item.id || item)) && (
                 <div
-                  key={item}
+                  key={item.id || item}
                   className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm w-auto max-w-full"
                 >
-                  <h2 className="text-sm font-custom text-blue">{item}</h2>
+                  <h2 className="text-sm font-custom text-blue">
+                    {renderItem(item)}
+                  </h2>
                 </div>
               )
           )}
         </div>
 
+        {/* Dropdown menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+              className="inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
             >
               <span className="relative w-3 h-3">
                 <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
@@ -226,30 +304,34 @@ export default function UserProfile() {
               </span>
             </button>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             align="end"
             className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
           >
-            <div className="space-y-1">
-              {items.map((item) => (
+            {items.map((item) => {
+              const itemId = String(item.id || item);
+              const isSelected = selectedItems.includes(itemId);
+
+              return (
                 <DropdownMenuItem
-                  key={item}
+                  key={itemId}
                   onSelect={() => toggleItem(item)}
                   className={
-                    selectedItems.includes(item)
+                    isSelected
                       ? "bg-blue-100 text-blue-700"
                       : "hover:bg-blue-50"
                   }
                 >
-                  {item}
+                  {renderItem(item)}
                 </DropdownMenuItem>
-              ))}
-            </div>
+              );
+            })}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-    </>
-  );
+    );
+  };
 
   const InfoRow = ({ label, value }) => (
     <div className="flex items-center justify-between">
@@ -260,50 +342,77 @@ export default function UserProfile() {
     </div>
   );
 
-  const [showFirstMenu, setShowFirstMenu] = useState(false);
-  const [openSecondLayerFor, setOpenSecondLayerFor] = useState("");
+  useEffect(() => {
+    if (leaveSettings && user?.leavePolicies) {
+      console.log("User leavePolicies:", user.leavePolicies);
+      console.log("Company leaveSettings:", leaveSettings);
 
-  const [leaveSubPolicies, setLeaveSubPolicies] = useState(["Annual Leave"]);
-  const [overtimeSubPolicies, setOvertimeSubPolicies] = useState([]);
+      const selectedIds = user.leavePolicies
+        .map((p) => String(p.id)) // convert to string
+        .filter((id) => leaveSettings.some((ls) => String(ls.id) === id));
 
-  const toggleLeaveSubPolicy = (opt) => {
-    setLeaveSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
-
-  const toggleOvertimeSubPolicy = (opt) => {
-    setOvertimeSubPolicies(
-      (prev) =>
-        prev.includes(opt)
-          ? prev.filter((item) => item !== opt) // Remove if already exists
-          : [...prev, opt] // Add if doesn't exist
-    );
-    // Close both menus after selection
-    setShowFirstMenu(false);
-    setOpenSecondLayerFor("");
-  };
+      console.log("Filtered leaveSubPolicies:", selectedIds);
+      setLeaveSubPolicies(selectedIds);
+    }
+  }, [leaveSettings, user?.leavePolicies]);
 
   const handleSave = () => {
     const updatedProfile = {
-      firstname,
-      lastname,
-      mobile,
-      birthday,
-      branch,
-      department,
-      title,
-      employmentstartdate,
+      // User collection fields
+      name: `${firstname} ${lastname}`,
+      phoneNumber: mobile?.startsWith("855") ? mobile : `855${mobile}`,
+
+      // Employee Info
+      dateOfBirth: birthday ? new Date(birthday).toISOString() : undefined,
+      branch: branch || undefined, // must be ObjectId
+      department: department || undefined,
+      position: title || undefined,
+      startDate: employmentStartDate
+        ? new Date(employmentStartDate).toISOString()
+        : undefined,
+      groups:
+        selectedGroup && Array.isArray(selectedGroup)
+          ? selectedGroup.map((g) => g.id || g)
+          : [],
+      allowedRemoteCheckIn: true,
+      leavePolicies:
+        leaveSubPolicies && Array.isArray(leaveSubPolicies)
+          ? leaveSubPolicies.map((p) => p.id || p)
+          : [],
+      numberOfChildren: Number(numberOfChildren) || 0,
+      spoused: Boolean(spoused),
+      nssfId,
+
+      // Employee Financial Info
+      bankDetails: {
+        bankProvider: bankProvider || null,
+        accountNumber: accountNumber || null,
+        bankName: bankName || null,
+      },
+      paymentMethod: {
+        cashPercentage: Number(cashPercentage) || 100,
+        ibankingPercentage: Number(ibankingPercentage) || 0,
+      },
+      salaryInfo: {
+        baseSalary: Number(baseSalary) || 0,
+        currencyType: currencyType || "USD",
+      },
     };
 
-    console.log("✅ Saving profile:", updatedProfile);
-    alert("Changes saved successfully!");
+    console.log("Body to send for update:", updatedProfile);
+
+    updateUserMutation.mutate(
+      { id: user.id, data: updatedProfile },
+      {
+        onSuccess: () => {
+          alert("Changes saved successfully!");
+        },
+        onError: (error) => {
+          console.error("Failed to update user:", error);
+          alert("Failed to save changes.");
+        },
+      }
+    );
   };
 
   return (
@@ -317,7 +426,7 @@ export default function UserProfile() {
 
       <div className="bg-gray-100 rounded-xl mb-3 shadow-md py-6 sm:px-6 md:px-6 lg:px-16">
         <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
-          Hello, {firstname}
+          Hello, {user?.employee?.name}
         </div>
         <p className="font-custom text-sm text-gray-400 px-6 mt-2">
           Good morning!
@@ -325,27 +434,30 @@ export default function UserProfile() {
 
         {/* Profile Holder Container with fallback initials */}
         <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          <div className="w-16 h-16 rounded-full bg-gray-300 flex items-center justify-center text-xl text-white font-semibold overflow-hidden">
-            {profile && !imageError ? (
+          <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
+            {user?.profileImg ? (
               <img
-                src={profile}
+                src={user.profileImg}
                 alt="Profile"
-                className="w-full h-full object-cover"
-                onError={() => setImageError(true)}
+                className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
               />
             ) : (
-              <span className="text-gray-700">
-                {firstInitial}
-                {lastInitial}
-              </span>
+              <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+                {user?.employee?.name
+                  ?.split(" ")
+                  .map((n) => n[0])
+                  .join("")
+                  .toUpperCase()}
+              </div>
             )}
-          </div>
-          <div>
-            <div className="text-2xl font-bold font-custom">
-              {firstname} {lastname}
-            </div>
-            <div className="text-sm font-custom text-gray-500">
-              {AccessLevel}
+
+            <div className="font-custom text-left">
+              <div className="font-semibold text-lg text-gray-900">
+                {user?.employee?.name}
+              </div>
+              <div className="text-sm text-gray-500">
+                {user?.job || "No Job Title"}
+              </div>
             </div>
           </div>
         </div>
@@ -379,12 +491,22 @@ export default function UserProfile() {
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
+              Other Name
+            </label>
+            <input
+              type="text"
+              value={otherName}
+              onChange={(e) => setOtherName(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
               Mobile Phone
             </label>
             <input
               type="text"
-              value={mobile}
-              onChange={(e) => setMobile(e.target.value)}
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
@@ -393,173 +515,129 @@ export default function UserProfile() {
             </label>
             <input
               type="date"
-              value={birthday}
-              onChange={(e) => setBirthday(e.target.value)}
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
 
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
-
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Branch
-            </label>
-            <input
-              type="text"
-              value={branch}
-              onChange={(e) => setBranch(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
-
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Department
-            </label>
-            <input
-              type="text"
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
-
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Title
-            </label>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
-
-            <label className="text-sm font-custom text-[#3F4648] w-full">
-              Employment Start Date
-            </label>
-            <input
-              type="date"
-              value={employmentstartdate}
-              onChange={(e) => setEmploymentStartDate(e.target.value)}
-              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
-            />
-
-            <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">
-              Policies
-            </h2>
-            <div className="relative flex justify-between items-start flex-wrap gap-4">
-              {/* Display Selected Tags */}
-              <div className="flex flex-wrap gap-4">
-                {leaveSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Leave - {item}
-                    </h2>
-                  </div>
-                ))}
-                {overtimeSubPolicies.map((item) => (
-                  <div
-                    key={item}
-                    className="bg-blue-100 rounded-xl border border-gray-200 p-3 shadow-sm"
-                  >
-                    <h2 className="text-sm font-custom text-blue">
-                      Overtime - {item}
-                    </h2>
-                  </div>
-                ))}
-              </div>
-
-              {/* + Button */}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowFirstMenu((prev) => !prev);
-                    setOpenSecondLayerFor(""); // Reset second layer when reopening first
-                  }}
-                  className="mt-2 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full hover:bg-[#d0e4ff] focus:outline-none focus:ring-2 focus:ring-blue-300 cursor-pointer transition"
+            <div className="font-custom flex flex-wrap gap-4 items-center justify-between w-full sm:w-5/6 md:w-5/6 lg:w-5/6 xl:w-3/4">
+              {/* Branch dropdown */}
+              <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">Branch</label>
+                <select
+                  value={branch}
+                  onChange={(e) => setBranch(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
                 >
-                  <span className="relative w-3 h-3">
-                    <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2" />
-                    <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2" />
-                  </span>
-                </button>
-
-                {/* First Menu */}
-                {showFirstMenu && (
-                  <div className="absolute top-10 left-0 z-50 font-custom text-sm w-40 bg-white shadow-md rounded-md">
-                    {["Leave Policy", "Overtime Policy"].map((item) => (
-                      <div
-                        key={item}
-                        onClick={() => setOpenSecondLayerFor(item)}
-                        className="px-4 py-2 cursor-pointer hover:bg-blue-50"
-                      >
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Second Menu */}
-                {openSecondLayerFor === "Leave Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Sick Leave", "Annual Leave"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleLeaveSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          leaveSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {openSecondLayerFor === "Overtime Policy" && showFirstMenu && (
-                  <div className="absolute top-10 left-[180px] z-50 font-custom text-sm w-48 bg-white shadow-md rounded-md">
-                    {["Morning", "Weekend"].map((opt) => (
-                      <div
-                        key={opt}
-                        onClick={() => toggleOvertimeSubPolicy(opt)}
-                        className={`px-4 py-2 cursor-pointer rounded ${
-                          overtimeSubPolicies.includes(opt)
-                            ? "bg-blue-100 text-blue-700"
-                            : "hover:bg-blue-50"
-                        }`}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  <option value="">Select branch</option>
+                  {branches?.results?.map((b) => (
+                    <option key={b.id} value={b.id}>
+                      {b.name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Department dropdown */}
+              <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">
+                  Department
+                </label>
+                <select
+                  value={department}
+                  onChange={(e) => setDepartment(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+                >
+                  <option value="">Select department</option>
+                  {departments?.results?.map((d) => (
+                    <option key={d.id} value={d.name}>
+                      {d.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Position dropdown */}
+              <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">
+                  Position
+                </label>
+                <select
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+                >
+                  <option value="">Select position</option>
+                  {positions?.results?.map((p) => (
+                    <option key={p.id} value={p.title}>
+                      {p.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="text-sm text-[#3F4648] w-full">
+                Employment Start Date
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              />
             </div>
+
+            {!leaveLoading && leaveSettings && leaveSettings.length > 0 && (
+              <DropdownSection
+                title="Leave Policies"
+                items={leaveSettings}
+                selectedItems={leaveSubPolicies}
+                toggleItem={(policy) => {
+                  setLeaveSubPolicies((prev) =>
+                    prev.includes(String(policy.id))
+                      ? prev.filter((id) => id !== String(policy.id))
+                      : [...prev, String(policy.id)]
+                  );
+                }}
+                renderItem={(policy) => policy.name}
+              />
+            )}
 
             <DropdownSection
               title="Work Shift"
-              items={["Morning", "Afternoon", "Full Day"]}
-              selectedItems={selectedWorkShift}
+              items={user.shiftType ? [user.shiftType.name] : []}
+              selectedItems={
+                selectedWorkShift.length
+                  ? selectedWorkShift
+                  : user.shiftType
+                  ? [user.shiftType.name]
+                  : []
+              }
               toggleItem={toggleWorkShift}
             />
 
             <DropdownSection
               title="Group"
-              items={["Admin", "HR Manager", "Employee"]}
-              selectedItems={selectedGroup}
+              items={user.groups.map((g) => g.name)}
+              selectedItems={
+                selectedGroup.length
+                  ? selectedGroup
+                  : user.groups.map((g) => g.name)
+              }
               toggleItem={toggleGroup}
               dropdownWidth="w-44"
             />
 
             <DropdownSection
               title="Location"
-              items={["Geo Fence", "Flexible", "GPS"]}
-              selectedItems={selectedLocation}
-              toggleItem={toggleLocation}
+              items={["Flexible", "Geofencing"]}
+              selectedItems={[selectedLocation]}
+              toggleItem={(value) => setSelectedLocation(value)}
+              renderItem={(item) => item}
+              dropdownWidth="w-44"
             />
           </div>
 
@@ -572,11 +650,11 @@ export default function UserProfile() {
 
               <InfoRow
                 label="Employee Name"
-                value={`${firstname} ${lastname}`}
+                value={user?.employee?.name || ""}
               />
-              <InfoRow label="Employee ID" value="#1234565" />
-              <InfoRow label="Bank Name" value="--------------" />
-              <InfoRow label="Account Number" value={accountnumber} />
+              <InfoRow label="NSSF ID" value={nssfId || ""} />
+              <InfoRow label="Bank Provider" value={bankProvider} />
+              <InfoRow label="Account Number" value={accountNumber} />
             </div>
 
             {/* Cash Section - SIMPLIFIED */}
@@ -614,7 +692,9 @@ export default function UserProfile() {
                   <p className="font-custom text-md font-semibold">Cash</p>
                 </div>
                 <p className="text-dark-blue font-custom text-md font-semibold">
-                  ${cash}
+                  $
+                  {user?.employee?.finance?.paymentMethod?.cashPercentage ||
+                    "N/A"}
                 </p>
               </div>
             </div>
@@ -657,7 +737,9 @@ export default function UserProfile() {
                     </p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${banktransfer}
+                    $
+                    {user?.employee?.finance?.paymentMethod
+                      ?.ibankingPercentage || "N/A"}
                   </p>
                 </div>
 
@@ -665,30 +747,30 @@ export default function UserProfile() {
                   <div className="flex items-center ml-10">
                     <Percent className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        Single
+                      <p className="font-custom text-md font-semibold">Tax</p>
+                      <p className="text-xs text-gray-500 font-custom">
+                        {spoused ? "Married" : "Single"} / Children{" "}
+                        <span className="text-blue">
+                          {user?.employee?.numberOfChildren}{" "}
+                        </span>
                       </p>
-                      <p className="text-xs text-gray-500 font-custom">Tax</p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${single}
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
                     <CreditCard className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        No Children
-                      </p>
-                      <p className="text-xs text-gray-500 font-custom">NSSF</p>
+                      <p className="font-custom text-md font-semibold">NSSF</p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${nochildren}
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="border-t border-blue-500 my-2"></div>
@@ -699,9 +781,9 @@ export default function UserProfile() {
                       Sub total Salary
                     </p>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${subtotal}
-                  </p>
+                  </p> */}
                 </div>
               </div>
 
@@ -710,10 +792,14 @@ export default function UserProfile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <p className="font-custom text-lg font-semibold">
-                      Estimated
+                      Estimated{" "}
+                      <span className="text-blue-600">
+                        {new Date().toLocaleString("en-US", { month: "long" })}
+                      </span>
                     </p>
                   </div>
                 </div>
+
                 <hr className="border-t border-blue-500" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
@@ -722,9 +808,9 @@ export default function UserProfile() {
                       <p className="font-custom text-md font-semibold">Cash</p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${cash}
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -736,9 +822,9 @@ export default function UserProfile() {
                       </p>
                     </div>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${subtotal}
-                  </p>
+                  </p> */}
                 </div>
 
                 <div className="border-t border-blue-500"></div>
@@ -748,9 +834,9 @@ export default function UserProfile() {
                       Net Salary
                     </p>
                   </div>
-                  <p className="text-dark-blue font-custom text-md font-semibold">
+                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
                     ${netsalary}
-                  </p>
+                  </p> */}
                 </div>
               </div>
 
@@ -848,9 +934,8 @@ export default function UserProfile() {
         <UpdateBankTransferDialog
           open={true}
           onOpenChange={() => closeDialog("bank")}
-          oldCash={cash}
+          oldBank={banktransfer}
           onSubmit={(data) => {
-            console.log("🧾 Updated bank transfer data:", data);
             closeDialog("bank");
           }}
         />

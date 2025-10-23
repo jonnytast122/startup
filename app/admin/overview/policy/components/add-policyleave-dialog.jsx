@@ -8,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createLeavePolicy, updateLeavePolicy } from "@/lib/api/policy";
 
@@ -26,6 +25,7 @@ const months = [
   "November",
   "December",
 ];
+
 const days = Array.from({ length: 31 }, (_, i) => i + 1);
 
 const getMonthByNumber = (monthNumber) => months[monthNumber - 1] || "January";
@@ -197,7 +197,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
       },
       employee: [],
     };
-    if (policy.id) {
+    if (policy?.id) {
       updatePolicyMutation.mutate({ id: policy.id, data: newPolicy });
     } else {
       createPolicyMutation.mutate(newPolicy);
@@ -205,20 +205,20 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     onClose();
   };
 
-  const isAllSelected =
-    selectedFirstLevels.length === firstLevelOptions.length &&
-    firstLevelOptions.length > 0;
+  // const isAllSelected =
+  // 	selectedFirstLevels.length === firstLevelOptions.length &&
+  // 	firstLevelOptions.length > 0;
 
-  const firstLevelLabel = isAllSelected
-    ? "All"
-    : selectedFirstLevels
-        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
-        .join(", ") || "Select...";
+  // const firstLevelLabel = isAllSelected
+  // 	? "All"
+  // 	: selectedFirstLevels
+  // 			.map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+  // 			.join(", ") || "Select...";
 
-  const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
-    const count = selectedItems[key]?.length || 0;
-    return acc + count;
-  }, 0);
+  // const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
+  // 	const count = selectedItems[key]?.length || 0;
+  // 	return acc + count;
+  // }, 0);
 
   return (
     <Dialog open={open} onOpenChange={onClose} className="font-custom">
@@ -282,7 +282,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
             <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
               Total
             </label>
-            <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
+            <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3 items-center">
               <p className="text-sm text-[#3F4648]">
                 The amount of hours that will be used
               </p>
@@ -362,7 +362,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
             <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
               Time Off Limitation
             </label>
-            <div className="flex flex-col md:flex-row gap-2 w-full md:w-2/3">
+            <div className="flex flex-col md:flex-row gap-2 items-center w-full md:w-2/3">
               <p className="text-sm text-[#3F4648]">
                 A leave can be requested no less than
               </p>
@@ -391,92 +391,92 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           </div>
 
           {/* Assignment */}
-          <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
-            <label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
-              Assignment
-            </label>
-            <div
-              className={`w-full md:w-2/3 relative flex items-center ${
-                isViewMode ? "pointer-events-none opacity-60" : ""
-              }`}
-            >
-              <button
-                onClick={handleToggleMenu}
-                className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
-              >
-                <span className="truncate">{firstLevelLabel}</span>
-                <ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
-              </button>
+          {/* <div className="flex flex-wrap md:flex-nowrap items-center justify-center">
+						<label className="w-full md:w-1/3 text-sm font-medium text-[#3F4648]">
+							Assignment
+						</label>
+						<div
+							className={`w-full md:w-2/3 relative flex items-center ${
+								isViewMode ? "pointer-events-none opacity-60" : ""
+							}`}
+						>
+							<button
+								onClick={handleToggleMenu}
+								className="flex items-center justify-between border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white hover:bg-gray-100 w-full md:w-64"
+							>
+								<span className="truncate">{firstLevelLabel}</span>
+								<ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
+							</button>
 
-              {totalSecondLevelSelected > 0 && (
-                <span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
-                  {totalSecondLevelSelected} selected
-                </span>
-              )}
+							{totalSecondLevelSelected > 0 && (
+								<span className="ml-4 text-sm text-gray-600 whitespace-nowrap">
+									{totalSecondLevelSelected} selected
+								</span>
+							)}
 
-              {!isViewMode && menuOpen && (
-                <>
-                  <div className="absolute top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-10">
-                    <label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={isAllSelected}
-                        onChange={() => handleFirstLevelChange("all")}
-                        className="mr-2"
-                      />
-                      All
-                    </label>
-                    {firstLevelOptions.map((item) => (
-                      <label
-                        key={item.key}
-                        className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                        onMouseEnter={() => setHoveredItem(item.key)}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedFirstLevels.includes(item.key)}
-                          onChange={() => handleFirstLevelChange(item.key)}
-                          className="mr-2"
-                        />
-                        {item.label}
-                      </label>
-                    ))}
-                  </div>
+							{!isViewMode && menuOpen && (
+								<>
+									<div className="absolute top-full left-0 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-10">
+										<label className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer">
+											<input
+												type="checkbox"
+												checked={isAllSelected}
+												onChange={() => handleFirstLevelChange("all")}
+												className="mr-2"
+											/>
+											All
+										</label>
+										{firstLevelOptions.map((item) => (
+											<label
+												key={item.key}
+												className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+												onMouseEnter={() => setHoveredItem(item.key)}
+											>
+												<input
+													type="checkbox"
+													checked={selectedFirstLevels.includes(item.key)}
+													onChange={() => handleFirstLevelChange(item.key)}
+													className="mr-2"
+												/>
+												{item.label}
+											</label>
+										))}
+									</div>
 
-                  {hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
-                    <div className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20">
-                      <div className="px-3 py-2 font-semibold border-b border-gray-200">
-                        {
-                          firstLevelOptions.find((o) => o.key === hoveredItem)
-                            ?.label
-                        }{" "}
-                        Options
-                      </div>
-                      {secondLevelData[hoveredItem].map((value) => (
-                        <label
-                          key={value}
-                          className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedItems[hoveredItem]?.includes(value) ||
-                              false
-                            }
-                            onChange={() =>
-                              handleSecondLevelChange(hoveredItem, value)
-                            }
-                            className="mr-2"
-                          />
-                          {value}
-                        </label>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
+									{hoveredItem && selectedFirstLevels.includes(hoveredItem) && (
+										<div className="absolute top-full left-52 mt-2 w-48 border border-gray-300 bg-white shadow-lg z-20">
+											<div className="px-3 py-2 font-semibold border-b border-gray-200">
+												{
+													firstLevelOptions.find((o) => o.key === hoveredItem)
+														?.label
+												}{" "}
+												Options
+											</div>
+											{secondLevelData[hoveredItem].map((value) => (
+												<label
+													key={value}
+													className="flex items-center px-3 py-2 hover:bg-gray-100 cursor-pointer"
+												>
+													<input
+														type="checkbox"
+														checked={
+															selectedItems[hoveredItem]?.includes(value) ||
+															false
+														}
+														onChange={() =>
+															handleSecondLevelChange(hoveredItem, value)
+														}
+														className="mr-2"
+													/>
+													{value}
+												</label>
+											))}
+										</div>
+									)}
+								</>
+							)}
+						</div>
+					</div> */}
 
           {/* Footer */}
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-10 font-custom" />

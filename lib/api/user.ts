@@ -31,6 +31,17 @@ export const getMyDetails = async (): Promise<User> => {
 };
 
 /**
+ * Fetch a specific user by ID.
+ * @param {string} id - User ID
+ */
+export const fetchUser = async (id: string): Promise<User> => {
+  const response = await api.get<User>(
+    ApiRoutes.user.getById.replace("{id}", id)
+  );
+  return response.data;
+};
+
+/**
  * Add a new user.
  * @param {User} data - New user data
  */

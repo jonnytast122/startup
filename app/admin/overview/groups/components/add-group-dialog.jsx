@@ -1,219 +1,214 @@
 "use client";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
+	Dialog,
+	DialogContent,
+	DialogHeader,
+	DialogTitle,
+	DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
 import { Filter } from "lucide-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { addGroup, fetchMembers } from "@/lib/api/group";
+import { fetchBranches } from "@/lib/api/branch";
+import { fetchCompanyDepartments } from "@/lib/api/department";
+import { fetchCompany } from "@/lib/api/company";
+import UserFilterTable from "../../components/user-filter-table";
+import { cn } from "@/lib/utils.ts";
 
 export default function AddGroupDialog({
-  isOpen,
-  onClose,
-  newGroup,
-  setNewGroup,
-  isViewMode = false,
-  isEdit = false,
-  onUpdate,
+	isOpen,
+	onClose,
+	newGroup,
+	setNewGroup,
+	isViewMode = false,
+	isEdit = false,
+	onUpdate,
 }) {
-  const queryClient = useQueryClient();
-  const [error, setError] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("Filter");
+	const queryClient = useQueryClient();
+	const [error, setError] = useState("");
+	const [selectedFilter, setSelectedFilter] = useState("Filter");
+	const [selectedBranches, setSelectedBranches] = useState([]);
+	const [selectedDepartments, setSelectedDepartments] = useState([]);
+	const [filteredMembers, setFilteredMembers] = useState([]);
+	const [isFiltering, setIsFiltering] = useState(false);
 
-  const { data } = useQuery({
-    queryKey: ["members"],
-    queryFn: fetchMembers,
-  });
+	const { data: company } = useQuery({
+		queryKey: ["company"],
+		queryFn: fetchCompany,
+	});
 
-  const addGroupMutation = useMutation({
-    mutationFn: addGroup,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["sections"]);
-      setNewGroup({ name: "", section: "", members: [] });
-      setError("");
-      onClose();
-    },
-    onError: (error) => {
-      console.log("Error adding group:", error);
-      setError("Something went wrong. Please try again.");
-    },
-  });
+	const { data: allMembers } = useQuery({
+		queryKey: ["members"],
+		queryFn: fetchMembers,
+	});
 
-  const handleFinish = () => {
-    if (!newGroup.name.trim()) {
-      setError("Group name is required.");
-      return;
-    }
+	const { data: departmentsData = [] } = useQuery({
+		queryKey: ["departments", company?.id],
+		queryFn: () => fetchCompanyDepartments(company?.id),
+		enabled: !!company?.id,
+	});
 
-    setError("");
-    addGroupMutation.mutate({
-      name: newGroup.name,
-      section: newGroup.section,
-      members: Array.isArray(newGroup.members) ? newGroup.members : [],
-    });
-  };
+	const { data: branchesData } = useQuery({
+		queryKey: ["branches"],
+		queryFn: fetchBranches,
+	});
 
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-semibold mb-4">
-            {isViewMode ? "View Group" : "Group Settings"}
-          </DialogTitle>
-        </DialogHeader>
+	const addGroupMutation = useMutation({
+		mutationFn: addGroup,
+		onSuccess: () => {
+			queryClient.invalidateQueries(["sections"]);
+			setNewGroup({ name: "", section: "", members: [] });
+			setError("");
+			onClose();
+		},
+		onError: (error) => {
+			console.error("Error adding group:", error);
+			setError("Something went wrong. Please try again.");
+		},
+	});
 
-        <div className="w-full flex flex-wrap sm:flex-nowrap sm:items-center gap-4 mb-4">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <label className="text-sm font-medium whitespace-nowrap">
-              Group's name:
-            </label>
-            <Input
-              placeholder="Group's name"
-              value={newGroup.name}
-              onChange={(e) =>
-                setNewGroup({ ...newGroup, name: e.target.value })
-              }
-              className="w-full"
-              disabled={isViewMode}
-            />
-          </div>
+	const fetchFilteredUsers = async (branches, departments) => {
+		return await fetchMembers({ branches, departments });
+	};
 
-          <div
-            className={`flex items-center gap-2 ${
-              isViewMode ? "pointer-events-none opacity-60" : ""
-            }`}
-          >
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2 h-10 text-blue"
-                >
-                  <Filter className="w-4 h-4" />
-                  {selectedFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="bg-white text-blue">
-                {["User", "Group", "Department", "Branch"].map((option) => (
-                  <DropdownMenuItem
-                    key={option}
-                    onClick={() => setSelectedFilter(option)}
-                  >
-                    {option}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <span className="text-sm text-gray-500 whitespace-nowrap">
-              {newGroup.members?.length ?? 0} selected
-            </span>
-          </div>
-        </div>
-        {error && <p className="text-red-500 text-sm -mt-3 mb-2">{error}</p>}
+	useEffect(() => {
+		const load = async () => {
+			if (!selectedBranches.length && !selectedDepartments.length) {
+				setFilteredMembers([]);
+				setIsFiltering(false);
+				return;
+			}
 
-        <div className="overflow-x-auto">
-          <div className="min-w-[600px] rounded-md overflow-hidden border border-gray-200">
-            <div className="grid grid-cols-5 bg-gray-100 text-sm font-semibold text-gray-700 px-5 py-2">
-              <div className="col-span-1">First name</div>
-              <div className="col-span-1">Last name</div>
-              <div className="col-span-1">Branch</div>
-              <div className="col-span-1">Department</div>
-              <div className="col-span-1">Job</div>
-            </div>
-            {(data?.results || [])?.map((member, i) => {
-              const lastName = `${member?.employee?.name.split(" ")[0]}` || "";
-              const firstName = `${member?.employee?.name.split(" ")[1]}` || "";
-              const fullName = `${lastName} ${firstName}`;
-              const id = member?.employee?.id || member?.id;
-              const checked = newGroup?.members?.includes(id) ?? false;
+			setIsFiltering(true);
+			try {
+				const data = await fetchFilteredUsers(
+					selectedBranches,
+					selectedDepartments
+				);
+				const results = Array.isArray(data) ? data : data.results || [];
+				setFilteredMembers(results);
+			} catch (err) {
+				console.error("Error fetching filtered users:", err);
+				setFilteredMembers([]);
+			} finally {
+				setIsFiltering(false);
+			}
+		};
+		load();
+	}, [selectedBranches, selectedDepartments]);
 
-              return (
-                <div
-                  key={member?.id}
-                  className="grid grid-cols-5 items-center px-5 py-2 border-t text-sm"
-                >
-                  <div className="col-span-1 flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      className="accent-blue-500"
-                      checked={checked}
-                      disabled={isViewMode}
-                      onChange={() => {
-                        if (checked) {
-                          setNewGroup({
-                            ...newGroup,
-                            members: newGroup?.members?.filter((a) => a !== id),
-                          });
-                        } else {
-                          setNewGroup({
-                            ...newGroup,
-                            members: [...newGroup?.members, id],
-                          });
-                        }
-                      }}
-                    />
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={
-                          "https://res.cloudinary.com/dt89p7jda/image/upload/v1755415319/image_65_kl6s4j.png"
-                        }
-                        alt={fullName}
-                        className="w-7 h-7 rounded-full"
-                      />
-                      <span>{firstName}</span>
-                    </div>
-                  </div>
-                  <div className="col-span-1">{lastName}</div>
-                  <div className="col-span-1">{member?.branch?.name || ""}</div>
-                  <div className="col-span-1">
-                    {member?.department?.name || ""}
-                  </div>
-                  <div className="col-span-1">
-                    {member?.job && (
-                      <span className="text-blue-500 border border-blue-500 px-3 py-1 rounded-md text-xs">
-                        {member?.job ?? ""}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+	const handleFinish = () => {
+		if (!newGroup.name?.trim()) {
+			setError("Group name is required.");
+			return;
+		}
 
-        {!isViewMode && (
-          <DialogFooter className="justify-end mt-6">
-            {isEdit ? (
-              <Button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-                onClick={onUpdate}
-              >
-                {"Update"}
-              </Button>
-            ) : (
-              <Button
-                className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-                onClick={handleFinish}
-              >
-                {addGroupMutation.isPending ? "Creating..." : "Finish"}
-              </Button>
-            )}
-          </DialogFooter>
-        )}
-      </DialogContent>
-    </Dialog>
-  );
+		setError("");
+
+		// Use newGroup.members which is updated via UsersScreen
+		const membersToSend = Array.isArray(newGroup.members)
+			? newGroup.members
+			: [];
+
+		addGroupMutation.mutate({
+			name: newGroup.name,
+			section: newGroup.section,
+			members: membersToSend,
+		});
+	};
+
+	const displayMembers =
+		selectedBranches.length || selectedDepartments.length
+			? filteredMembers
+			: allMembers?.results || [];
+
+	const toggleSelect = (list, setList, value) => {
+		setList((prev) =>
+			prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
+		);
+	};
+
+	return (
+		<Dialog open={isOpen} onOpenChange={onClose}>
+			<DialogContent className="max-w-4xl font-custom">
+				<DialogHeader>
+					<DialogTitle className="text-center text-2xl font-semibold mb-4">
+						{isViewMode ? "View Group" : "Group Settings"}
+					</DialogTitle>
+				</DialogHeader>
+
+				<div className="w-full flex flex-wrap sm:flex-nowrap sm:items-center gap-4 mb-4">
+					<div className="flex items-center gap-2 flex-1 min-w-0">
+						<label className="text-sm font-medium whitespace-nowrap">
+							Group's name:
+						</label>
+						<Input
+							placeholder="Group's name"
+							value={newGroup.name}
+							onChange={(e) =>
+								setNewGroup({ ...newGroup, name: e.target.value })
+							}
+							className={cn("font-custom placeholder:text-gray-400")}
+							disabled={isViewMode}
+						/>
+					</div>
+					<div
+						className={`flex items-center gap-2 ${
+							isViewMode ? "pointer-events-none opacity-60" : ""
+						}`}
+					>
+						<span className="text-sm text-gray-500 whitespace-nowrap">
+							{Array.isArray(newGroup.members) ? newGroup.members.length : 0}{" "}
+							selected
+						</span>
+					</div>
+				</div>
+
+				{error && <p className="text-red-500 text-sm -mt-3 mb-2">{error}</p>}
+
+				{/* ✅ Reusable Filter + User Table */}
+				<UserFilterTable
+					selectedUsers={newGroup.members.map((m) => m.id)}
+					setSelectedUsers={(ids) =>
+						setNewGroup({
+							...newGroup,
+							members: ids
+								.map(
+									(id) =>
+										(allMembers?.results || []).find(
+											(u) => u.id === id || u.employee?.id === id
+										) || null
+								)
+								.filter(Boolean),
+						})
+					}
+					isViewMode={isViewMode}
+				/>
+
+				{!isViewMode && (
+					<DialogFooter className="justify-end mt-6">
+						{isEdit ? (
+							<Button
+								className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+								onClick={onUpdate}
+							>
+								Update
+							</Button>
+						) : (
+							<Button
+								className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
+								onClick={handleFinish}
+							>
+								{addGroupMutation.isPending ? "Creating..." : "Finish"}
+							</Button>
+						)}
+					</DialogFooter>
+				)}
+			</DialogContent>
+		</Dialog>
+	);
 }

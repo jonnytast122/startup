@@ -27,6 +27,7 @@ export default function AddDepartmentDialog() {
   const [branchId, setBranchId] = useState("");
   const [departmentName, setDepartmentName] = useState("");
   const [managerId, setManagerId] = useState("");
+  const [departmentCode, setDepartmentCode] = useState("");
 
   const queryClient = useQueryClient();
 
@@ -52,6 +53,7 @@ export default function AddDepartmentDialog() {
       queryClient.invalidateQueries({ queryKey: ["departments", company?.id] });
       setOpen(false);
       setBranchId("");
+      setDepartmentCode("");
       setDepartmentName("");
       setManagerId("");
     },
@@ -64,10 +66,12 @@ export default function AddDepartmentDialog() {
         ? {
             name: departmentName,
             branch: branchId,
+            code: departmentCode,
           }
         : {
             name: departmentName,
             branch: branchId,
+            code: departmentCode,
             manager: managerId || undefined,
           }
     );
@@ -127,7 +131,20 @@ export default function AddDepartmentDialog() {
             value={departmentName}
             onChange={(e) => setDepartmentName(e.target.value)}
             placeholder="Department Name"
-            className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
+            className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4 placeholder:text-gray-400"
+          />
+        </div>
+
+        {/* Department code*/}
+        <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
+          <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
+            Department Code:
+          </label>
+          <Input
+            value={departmentCode}
+            onChange={(e) => setDepartmentCode(e.target.value)}
+            placeholder="Department Code"
+            className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4 placeholder:text-gray-400"
           />
         </div>
 

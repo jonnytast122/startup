@@ -73,11 +73,11 @@ export default function UserProfile() {
   const single = user.single;
   const nochildren = user.nochildren;
 
+  const maritalStatus = user_data?.spoused ? "Married" : "Single";
+  const childrenCount = `${user_data?.numberOfChildren || 0}`;
+
   const subtotal = banktransfer - (single + nochildren);
   const netsalary = cash + subtotal;
-
-  const firstInitial = firstname.charAt(0).toUpperCase();
-  const lastInitial = lastname.charAt(0).toUpperCase();
 
   const [imageError, setImageError] = useState(false);
   const [isLeaveDetailOpen, setIsLeaveDetailOpen] = useState(false);
@@ -270,6 +270,16 @@ export default function UserProfile() {
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
+              Other Name
+            </label>
+            <input
+              type="text"
+              value={user_data?.otherName || "N/A"}
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
               Mobile Phone
             </label>
             <input
@@ -284,7 +294,11 @@ export default function UserProfile() {
             </label>
             <input
               type="date"
-              value={user_data?.dateOfBirth || "N/A"}
+              value={
+                user_data?.dateOfBirth
+                  ? new Date(user_data?.dateOfBirth).toISOString().split("T")[0]
+                  : ""
+              }
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -328,35 +342,52 @@ export default function UserProfile() {
             </label>
             <input
               type="date"
-              value={user_data?.startDate || "N/A"}
+              value={
+                user_data?.startDate
+                  ? new Date(user_data?.startDate).toISOString().split("T")[0]
+                  : ""
+              }
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
 
             <DropdownSection
               title="Leave Policies"
-              items={user_data?.leavePolicies?.name || ["N/A"]}
-              onItemClick={(item) => {
-                setIsLeaveDetailOpen(true);
-              }}
+              items={
+                user_data?.leavePolicies?.length
+                  ? user_data.leavePolicies.map((p) => p.name)
+                  : ["N/A"]
+              }
+              onItemClick={() => setIsLeaveDetailOpen(true)}
             />
 
             <DropdownSection
               title="Shift Type"
-              items={[user_data?.shiftType?.name] || ["N/A"]}
+              items={
+                user_data?.shiftType?.name
+                  ? [user_data.shiftType.name]
+                  : ["N/A"]
+              }
               onItemClick={() => setIsShiftDialogOpen(true)}
             />
 
             <DropdownSection
               title="Groups"
-              items={user_data?.groups?.name || ["N/A"]}
+              items={
+                user_data?.groups?.length
+                  ? user_data.groups.map((g) => g.name)
+                  : ["N/A"]
+              }
               onItemClick={() => setIsAddUserOpen(true)}
             />
 
             <DropdownSection
               title="Location"
-              items={["Geo Fence", "Flexible", "GPS"]}
-              onItemClick={() => setIsBranchDetailOpen(true)}
+              items={[
+                <span key="location">
+                  {user_data?.allowedRemoteCheckIn ? "Flexible" : "Geofencing"}
+                </span>,
+              ]}
             />
           </div>
 
@@ -368,41 +399,53 @@ export default function UserProfile() {
               </h2>
               <InfoRow
                 label="Employee Name"
-                value={`${firstname} ${lastname}`}
+                value={user_data?.employee?.name}
               />
-              <InfoRow label="Employee ID" value="#1234565" />
-              <InfoRow label="Bank Name" value="--------------" />
-              <InfoRow label="Account Number" value={accountnumber} />
+              {/* <InfoRow label="Employee ID" value="#1234565" /> */}
+              <InfoRow
+                label="Bank Name"
+                value={
+                  user_data?.employee?.finance?.bankDetails?.bankProvider ||
+                  "N/A"
+                }
+              />
+              <InfoRow
+                label="Account Number"
+                value={
+                  user_data?.employee?.finance?.bankDetails?.accountNumber ||
+                  "N/A"
+                }
+              />
             </div>
 
             {/* Cash Section */}
             <div className="relative">
-              <div className="absolute -top-8 right-0 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none" type="button">
-                      <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-                  >
-                    <DropdownMenuItem onSelect={handleCashEdit}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleCashDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              {/* <div className="absolute -top-8 right-0 z-10">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button className="m-2 focus:outline-none" type="button">
+											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="end"
+										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+									>
+										<DropdownMenuItem onSelect={handleCashEdit}>
+											Edit
+										</DropdownMenuItem>
+										<DropdownMenuItem onSelect={handleArchive}>
+											Archive
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											onSelect={handleCashDelete}
+											className="text-red-500"
+										>
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div> */}
 
               <div className="flex items-center justify-between mt-8 bg-white shadow-md rounded-lg p-4">
                 <div className="flex items-center">
@@ -410,39 +453,41 @@ export default function UserProfile() {
                   <p className="font-custom text-md font-semibold">Cash</p>
                 </div>
                 <p className="text-dark-blue font-custom text-md font-semibold">
-                  ${cash}
+                  $
+                  {user_data?.employee?.finance?.paymentMethod
+                    ?.cashPercentage || "N/A"}
                 </p>
               </div>
             </div>
 
             {/* Bank Transfer Section */}
             <div className="relative">
-              <div className="absolute -top-8 right-0 z-10">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="m-2 focus:outline-none" type="button">
-                      <Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-                  >
-                    <DropdownMenuItem onSelect={handleBankEdit}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleBankDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+              {/* <div className="absolute -top-8 right-0 z-10">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<button className="m-2 focus:outline-none" type="button">
+											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
+										</button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent
+										align="end"
+										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
+									>
+										<DropdownMenuItem onSelect={handleBankEdit}>
+											Edit
+										</DropdownMenuItem>
+										<DropdownMenuItem onSelect={handleArchive}>
+											Archive
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											onSelect={handleBankDelete}
+											className="text-red-500"
+										>
+											Delete
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div> */}
 
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
@@ -453,7 +498,9 @@ export default function UserProfile() {
                     </p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${banktransfer}
+                    $
+                    {user_data?.employee?.finance?.paymentMethod
+                      ?.ibankingPercentage || "N/A"}
                   </p>
                 </div>
 
@@ -461,10 +508,11 @@ export default function UserProfile() {
                   <div className="flex items-center ml-10">
                     <Percent className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        Single
+                      <p className="font-custom text-md font-semibold">Tax</p>
+                      <p className="text-xs text-gray-500 font-custom">
+                        {maritalStatus} / Children{" "}
+                        <span className="text-blue">{childrenCount} </span>
                       </p>
-                      <p className="text-xs text-gray-500 font-custom">Tax</p>
                     </div>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
@@ -476,10 +524,7 @@ export default function UserProfile() {
                   <div className="flex items-center ml-10">
                     <CreditCard className="text-blue w-8 h-8 mr-6" />
                     <div>
-                      <p className="font-custom text-md font-semibold">
-                        No Children
-                      </p>
-                      <p className="text-xs text-gray-500 font-custom">NSSF</p>
+                      <p className="font-custom text-md font-semibold">NSSF</p>
                     </div>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
@@ -506,10 +551,14 @@ export default function UserProfile() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <p className="font-custom text-lg font-semibold">
-                      Estimated
+                      Estimated{" "}
+                      <span className="text-blue-600">
+                        {new Date().toLocaleString("en-US", { month: "long" })}
+                      </span>
                     </p>
                   </div>
                 </div>
+
                 <hr className="border-t border-blue-500" />
                 <div className="flex items-center justify-between">
                   <div className="flex items-center ml-10">
@@ -554,22 +603,6 @@ export default function UserProfile() {
               <div>
                 <h2 className="text-2xl font-semibold font-custom text-black mt-6 flex items-center">
                   Attachment
-                  <label
-                    htmlFor="pdf-upload"
-                    className="ml-4 inline-flex items-center justify-center w-7 h-7 bg-[#E6EFFF] rounded-full cursor-pointer transition"
-                  >
-                    <span className="relative w-3 h-3">
-                      <span className="absolute inset-0 w-[2px] h-full bg-blue-500 left-1/2 transform -translate-x-1/2"></span>
-                      <span className="absolute inset-0 h-[2px] w-full bg-blue-500 top-1/2 transform -translate-y-1/2"></span>
-                    </span>
-                    <input
-                      id="pdf-upload"
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      className="hidden"
-                      onChange={handleFileChange}
-                    />
-                  </label>
                 </h2>
 
                 <div className="mt-4 flex flex-col items-start gap-3">
@@ -604,10 +637,10 @@ export default function UserProfile() {
                         <a href={f.file} download={f.name}>
                           <Download className="w-5 h-5 text-blue-600 hover:text-blue-800 cursor-pointer" />
                         </a>
-                        <Trash2
-                          className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
-                          onClick={() => handleDelete(idx)}
-                        />
+                        {/* <Trash2
+													className="w-5 h-5 text-red-500 hover:text-red-700 cursor-pointer"
+													onClick={() => handleDelete(idx)}
+												/> */}
                       </div>
                     </div>
                   ))}

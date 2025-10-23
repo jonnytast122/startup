@@ -23,12 +23,14 @@ const ApiRoutes = {
   branch: {
     create: `${BASE_URL}/branches`,
     get: `${BASE_URL}/branches`,
+    getDepartmentsByBranch: `${BASE_URL}/branches/{id}/departments`,
     update: `${BASE_URL}/branches/{id}`,
     delete: `${BASE_URL}/branches/{id}`,
   },
   department: {
     create: `${BASE_URL}/departments`,
     get: `${BASE_URL}/departments/{id}/departments`,
+    getByBranch: `${BASE_URL}/branches/{id}/departments`,
     update: `${BASE_URL}/departments/{id}`,
     delete: `${BASE_URL}/departments/{id}`,
   },
@@ -81,10 +83,10 @@ const ApiRoutes = {
   user: {
     get: `${BASE_URL}/users/filter`,
     getMyDetails: `${BASE_URL}/users/my-detail`,
+    getById: `${BASE_URL}/users/details/{id}`,
     create: `${BASE_URL}/users`,
     update: `${BASE_URL}/users/{id}`,
     delete: `${BASE_URL}/users/{id}`,
-    getById: `${BASE_URL}/user/{id}`,
     search: `${BASE_URL}/users/search`,
   },
   calendar: {

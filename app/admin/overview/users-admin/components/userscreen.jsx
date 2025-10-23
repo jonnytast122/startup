@@ -51,8 +51,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { deleteUser } from "@/lib/api/user";
-import { type } from "os";
+import { deleteUser, fetchUser } from "@/lib/api/user";
 
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
@@ -116,27 +115,27 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       ),
     },
     {
-      accessorFn: (row) => row.employee?.name || "",
+      accessorFn: (row) => row.employee?.name || "N/A",
       id: "name",
       header: "Fullname",
     },
     {
-      accessorKey: "nameInKhmer",
-      header: "Name in Khmer",
+      accessorKey: "otherName",
+      header: "Other Name",
     },
 
     {
-      accessorFn: (row) => row.employee?.phoneNumber || "",
+      accessorFn: (row) => row.employee?.phoneNumber || "N/A",
       id: "phone",
       header: "Phone",
     },
     {
-      accessorFn: (row) => row.branch?.name || "",
+      accessorFn: (row) => row.branch?.name || "N/A",
       id: "branch",
       header: "Branch",
     },
     {
-      accessorFn: (row) => row.department?.name || "",
+      accessorFn: (row) => row.department?.name || "N/A",
       id: "department",
       header: "Department",
     },
@@ -145,7 +144,7 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       header: "Job",
     },
     {
-      accessorFn: (row) => row.position?.title || "",
+      accessorFn: (row) => row.position?.title || "N/A",
       id: "position",
       header: "Position",
     },
@@ -154,21 +153,26 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       header: "Groups",
       cell: ({ row }) => {
         const groups = row.original.groups || [];
-        if (groups.length === 0) return "-";
+        if (groups.length === 0) return "N/A";
         if (groups.length === 1) return groups[0].name;
         return `${groups.length} Groups`;
       },
     },
     {
-      accessorKey: "leavePolicies",
-      header: "Leave Policies",
-      cell: ({ row }) => {
-        const leaves = row.original.leavePolicies || [];
-        if (leaves.length === 0) return "-";
-        if (leaves.length === 1) return leaves[0].name;
-        return `${leaves.length} Policies`;
-      },
+      accessorFn: (row) => row.shiftType?.name || "",
+      id: "shiftType",
+      header: "Shift Type",
     },
+    // {
+    //   accessorKey: "leavePolicies",
+    //   header: "Leave Policies",
+    //   cell: ({ row }) => {
+    //     const leaves = row.original.leavePolicies || [];
+    //     if (leaves.length === 0) return "-";
+    //     if (leaves.length === 1) return leaves[0].name;
+    //     return `${leaves.length} Policies`;
+    //   },
+    // },
     {
       accessorKey: "startDate",
       header: "Employment Date",
@@ -268,7 +272,7 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       columnVisibility: {
         profile: true,
         Name: true,
-        nameInKhmer: true,
+        otherName: true,
         phone: true,
         branch: true,
         department: true,
@@ -347,7 +351,7 @@ const ActionsCell = ({ user }) => {
 
   return (
     <div className="flex items-center justify-end gap-2">
-      {role === "admin" || role === "owner" ? (
+      {/* {role === "admin" || role === "owner" ? (
         <UserMinus
           className="w-4 h-4 text-orange-500 cursor-pointer"
           title="Demote"
@@ -365,7 +369,7 @@ const ActionsCell = ({ user }) => {
             handleOpen("promote");
           }}
         />
-      )}
+      )} */}
       <Trash2
         className="w-4 h-4 text-red-500 cursor-pointer"
         title="Delete"
@@ -377,13 +381,13 @@ const ActionsCell = ({ user }) => {
           });
         }}
       />
-      <Archive
+      {/* <Archive
         className="w-4 h-4 text-gray-500 cursor-pointer"
         title="Archive"
         onClick={(e) => {
           e.stopPropagation();
         }}
-      />
+      /> */}
       <PromoteDemoteDialog
         open={dialogOpen}
         setOpen={setDialogOpen}
@@ -436,7 +440,7 @@ const ColumnVisibilityDropdown = ({ table }) => (
   </DropdownMenu>
 );
 
-const TopControls = ({ onAddUser, setShowAddDialog }) => {
+const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
@@ -563,9 +567,8 @@ const UsersTable = ({ table, router }) => (
                           align="start"
                           className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
                         >
-                          <p className="whitespace-pre-wrap font-custom font-custom">
-                            <h1 className="text-xl">Groups</h1>
-                            <br />
+                          <div className="whitespace-pre-wrap font-custom">
+                            <p className="text-xl mb-2">Groups</p>
                             {groups.map((g) => (
                               <span
                                 key={g.id || g.name}
@@ -574,7 +577,7 @@ const UsersTable = ({ table, router }) => (
                                 {g.name}
                               </span>
                             ))}
-                          </p>
+                          </div>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
@@ -642,9 +645,13 @@ const UsersTable = ({ table, router }) => (
                   className="whitespace-nowrap overflow-hidden text-ellipsis"
                   onClick={() => {
                     if (!isActions) {
-                      const { status, ...rest } = row.original;
-                      const query = new URLSearchParams(rest).toString();
-                      router.push(`/overview/users-admin/profile?${query}`);
+                      const user = row.original;
+                      const employeeId = user.employee?.id || user.id;
+
+                      if (!employeeId) return;
+                      router.push(
+                        `/admin/overview/users-admin/profile/${employeeId}`
+                      );
                     }
                   }}
                   style={{ cursor: isActions ? "default" : "pointer" }}

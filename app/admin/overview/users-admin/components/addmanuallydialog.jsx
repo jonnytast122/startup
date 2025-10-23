@@ -36,14 +36,14 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import { List, Plus, Trash2 } from "lucide-react";
-//import SuccessDialog from "./successdialog";
+import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchBranches } from "@/lib/api/branch";
+import { fetchBranches, fetchDepartmentsByBranch } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
-import { fetchCompanyDepartments } from "@/lib/api/department";
 import { fetchWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
 import { addUsers, fetchUsers } from "@/lib/api/user";
+import { getDepartmentsByBranch } from "@/lib/api/department";
 
 export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -58,22 +58,18 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     queryFn: fetchCompany,
   });
 
-  const { data: departments = [] } = useQuery({
-    queryKey: ["departments", company?.id],
-    queryFn: () => fetchCompanyDepartments(company?.id),
-    enabled: !!company?.id,
-  });
-
-  const { data: workshift } = useQuery({
+  const { data: workshift, isLoading: workshiftLoading } = useQuery({
     queryKey: ["workShift", company?.id],
     queryFn: () => fetchWorkShift(company?.id),
     enabled: !!company?.id,
   });
 
-  const { data: branches } = useQuery({
+  const { data: branches, isLoading: branchesLoading } = useQuery({
     queryKey: ["branches"],
     queryFn: fetchBranches,
   });
+
+  console.log("branches data: ", branches);
 
   const { data: positions } = useQuery({
     queryKey: ["positions"],
@@ -89,12 +85,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      job: "",
       baseSalary: "",
       cash: "",
       ibanking: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
     }))
   );
 
@@ -112,12 +113,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      job: "",
       baseSalary: "",
       cash: "",
       ibanking: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
     };
     setData((prev) => [...prev, newRow]);
     setAddedRowIds((prev) => [...prev, newId]);
@@ -126,12 +132,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const handleDeleteRow = useCallback((id) => {
     setData((prev) => prev.filter((row) => row.id !== id));
     setAddedRowIds((prev) => prev.filter((rowId) => rowId !== id));
-  }, []);
-
-  const handleInputChange = useCallback((id, field, value) => {
-    setData((prevData) =>
-      prevData.map((row) => (row.id === id ? { ...row, [field]: value } : row))
-    );
   }, []);
 
   // ✅ Mutation fixed here
@@ -148,12 +148,17 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           department: "",
           position: "",
           shiftType: "",
+          job: "",
           baseSalary: "",
           cash: "",
           ibanking: "",
           currencyType: "",
           bankProvider: "",
           bankAccount: "",
+          spoused: "",
+          numberOfChildren: "",
+          otherName: "",
+          nssfId: "",
         },
       ]);
       setAddedRowIds([]);
@@ -164,6 +169,53 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     },
   });
 
+  const countryCodes = [
+    { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
+  ];
+
+  const bankProviders = [
+    {
+      value: "aba",
+      label: "ABA Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtY2aqkYA54jTqgCQmP2Zl0W7BwjM_XQ7vjg&s",
+    },
+    {
+      value: "acleda",
+      label: "ACLEDA Bank",
+      icon: "https://www.acledasecurities.com.kh/as/assets/listed_company/ABC/logo.png",
+    },
+    {
+      value: "canadia",
+      label: "Canadia Bank",
+      icon: "https://play-lh.googleusercontent.com/hZhdx8AuJsmnZyy6rSLi3fZsWeOJ3qD5LRy2KmKOaXf8uWtsvrYScl_lxyhBsyan2-c",
+    },
+    {
+      value: "ftb",
+      label: "FTB Bank",
+      icon: "https://play-lh.googleusercontent.com/dBXpI2QOfWndhjQKboqdt6sOdSeeGk_pxeXqVC8hHD-xCDQIKoD_MLHhVH51gb25F1rY",
+    },
+    {
+      value: "wing",
+      label: "Wing Bank",
+      icon: "https://play-lh.googleusercontent.com/A8bangMCdTPS1Xa9hbuc4pcXxUspKpJhDHWW3QSw3OB-VMtUv6NCnqAd7pUv2C-2OnjJHn0Xmv1cs6c2hFUZMw",
+    },
+    {
+      value: "phillip",
+      label: "Phillip Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl5AQ8pKBWNSLy2jNDa3-4ie1RudZ81DUXgg&s",
+    },
+    {
+      value: "sathapana",
+      label: "Sathapana Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRttioRPdS1xu-MygwdD1Qb7wTmRAxAo4s0pg&s",
+    },
+    {
+      value: "chipmong",
+      label: "Chip Mong Bank",
+      icon: "https://play-lh.googleusercontent.com/IwZLaZnWhlINs7AoIg7m7qNR-JNLInrme1xtrXkYoNxWwdTlWZozZnIligkyjUhiO0Q5",
+    },
+  ];
+
   const isRowComplete = (row) => {
     return (
       row.fullName.trim() &&
@@ -172,16 +224,57 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       row.department.trim() &&
       row.position.trim() &&
       row.shiftType.trim() &&
+      row.job.trim() &&
       row.baseSalary.trim() &&
       row.cash.trim() &&
       row.ibanking.trim()
     );
   };
 
+  const validateRows = useCallback((dataToValidate) => {
+    const newErrors = {};
+
+    dataToValidate.forEach((row) => {
+      const rowErrors = {};
+
+      if (!row.fullName?.trim()) rowErrors.fullName = true;
+      if (!row.phone?.trim() || !/^\d{8,15}$/.test(row.phone.trim()))
+        rowErrors.phone = true;
+      // if (!row.branch?.trim()) rowErrors.branch = true;
+      // if (!row.shiftType?.trim()) rowErrors.shiftType = true;
+      if (!row.baseSalary || isNaN(Number(row.baseSalary)))
+        rowErrors.baseSalary = true;
+      if (!row.currencyType?.trim()) rowErrors.currencyType = true;
+
+      if (Object.keys(rowErrors).length > 0) {
+        newErrors[row.id] = rowErrors;
+      }
+    });
+
+    setErrorsMap(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, []);
+
+  const handleInputChange = useCallback(
+    (id, field, value) => {
+      setData((prevData) => {
+        const newData = prevData.map((row) =>
+          row.id === id ? { ...row, [field]: value } : row
+        );
+
+        console.log("Updated data: ", newData);
+
+        // Validate immediately with the updated data
+        validateRows(newData);
+
+        return newData;
+      });
+    },
+    [setData, validateRows]
+  );
+
   const handleAddUsers = () => {
-    const isValid = validateRows();
-    if (!isValid) {
-      console.warn("Validation failed. Please fill all required fields.");
+    if (!validateRows(data)) {
       return;
     }
 
@@ -190,25 +283,67 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       phoneNumber: row.phone.startsWith("855")
         ? row.phone
         : `855${row.phone.replace(/^0+/, "")}`,
-      branch: row.branch,
-      department: row.department,
-      position: row.position,
+      branch: row.branch || null,
+      department: row.department || null,
+      position: row.position || null,
+      job: row.job || null,
       shiftType: row.shiftType,
+      spoused: row.spoused === "true",
+      numberOfChildren: Number(row.numberOfChildren) || 0,
+      otherName: row.otherName || null,
+      nssfId: row.nssfId || null,
       paymentMethod: {
-        cashPercentage: Number(row.cash),
-        ibankingPercentage: Number(row.ibanking),
+        cashPercentage: Number(row.cash) || 0,
+        ibankingPercentage: Number(row.ibanking) || 0,
       },
       salaryInfo: {
         baseSalary: Number(row.baseSalary),
         currencyType: row.currencyType,
       },
       bankDetails: {
-        bankProvider: row.bankProvider,
-        accountNumber: row.bankAccount,
+        bankProvider: row.bankProvider || null,
+        accountNumber: row.bankAccount || null,
       },
     }));
 
-    addUserMutation.mutate(formattedUsers);
+    addUserMutation.mutate(formattedUsers, {
+      onSuccess: () => {
+        setSuccessOpen(true);
+      },
+
+      onError: (error) => {
+        const apiErrors = {};
+
+        const msg = error?.response?.data?.error;
+        if (msg) {
+          // Detect if it’s a phone number error
+          if (msg.toLowerCase().includes("phone")) {
+            // Highlight the phone field in the matching row
+            const phoneMatch = msg.match(/\d{8,15}/); // extract the number
+            if (phoneMatch) {
+              const phoneNumber = phoneMatch[0];
+              const row = data.find((r) => {
+                const formattedPhone = r.phone.startsWith("855")
+                  ? r.phone
+                  : `855${r.phone.replace(/^0+/, "")}`;
+                return formattedPhone === phoneNumber;
+              });
+
+              if (row) {
+                apiErrors[row.id] = {
+                  phone: true,
+                  message: msg,
+                };
+              }
+            }
+          } else {
+            // fallback for other messages
+            alert(msg);
+          }
+        }
+        setErrorsMap(apiErrors);
+      },
+    });
   };
 
   useEffect(() => {
@@ -254,44 +389,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     return count;
   };
 
-  const validateRows = useCallback(() => {
-    const newErrors = {};
-    let hasError = false;
-
-    data.forEach((row) => {
-      const rowErrors = {};
-
-      // Full name validation
-      if (!row.fullName?.trim()) {
-        rowErrors.fullName = "Full name is required";
-      }
-
-      // Phone validation
-      if (!row.phone?.trim()) {
-        rowErrors.phone = "Phone number is required";
-      } else if (!/^\d+$/.test(row.phone.trim())) {
-        rowErrors.phone = "Phone number must contain only digits";
-      }
-
-      if (Object.keys(rowErrors).length > 0) {
-        newErrors[row.id] = rowErrors;
-        hasError = true;
-      }
-    });
-
-    setErrorsMap(newErrors);
-    return !hasError;
-  }, [data]);
-
-  const countryCodes = [
-    { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
-  ];
-
   const columns = useMemo(
     () => [
       {
         accessorKey: "Name",
-        header: "Name",
+        header: "Name*",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <Input
@@ -304,18 +406,12 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 errorsMap[row.original.id]?.fullName ? "border-red-500" : ""
               }`}
             />
-            {errorsMap[row.original.id]?.fullName && (
-              <p className="text-xs text-red-500 mt-1">
-                {errorsMap[row.original.id]?.fullName}
-              </p>
-            )}
           </div>
         ),
       },
-
       {
         accessorKey: "Phone Number",
-        header: "Phone Number",
+        header: "Phone Number*",
         cell: ({ row }) => (
           <div className="flex gap-2 items-center">
             <Select
@@ -353,26 +449,26 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                   errorsMap[row.original.id]?.phone ? "border-red-500" : ""
                 }`}
               />
-              {errorsMap[row.original.id]?.fullName && (
-                <p className="text-xs text-red-500 mt-1">
-                  {errorsMap[row.original.id]?.phone}
-                </p>
-              )}
             </div>
           </div>
         ),
       },
       {
         accessorKey: "branch",
-        header: "Branch",
+        header: "Branch*",
         cell: ({ row }) => (
           <Select
-            value={row.original.branch}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "branch", value)
-            }
+            value={row.original.branch || ""}
+            onValueChange={(branchId) => {
+              handleInputChange(row.original.id, "branch", branchId);
+              handleInputChange(row.original.id, "department", ""); // reset department
+            }}
           >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+            <SelectTrigger
+              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.branch ? "border-red-500" : ""
+              }`}
+            >
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
             <SelectContent className="font-custom">
@@ -385,31 +481,154 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
+
+      {
+        accessorKey: "Shift Type",
+        header: "Shift Type*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.shiftType}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "shiftType", value)
+            }
+            disabled={workshiftLoading}
+          >
+            <SelectTrigger
+              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.shiftType ? "border-red-500" : ""
+              }`}
+            >
+              <SelectValue
+                placeholder={
+                  workshiftLoading ? "Loading..." : "Select Shift Type"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              {workshift?.results?.results?.map((shift) => (
+                <SelectItem key={shift.id} value={shift.id}>
+                  {shift.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "Base Salary",
+        header: "Base Salary*",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.baseSalary ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "baseSalary", value);
+              }
+            }}
+            placeholder="Base Salary"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                   errorsMap[row.original.id]?.baseSalary
+                     ? "border-red-500"
+                     : ""
+                 }`}
+          />
+        ),
+      },
+      {
+        accessorKey: "Currency Type",
+        header: "Currency*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.currencyType}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "currencyType", value)
+            }
+          >
+            <SelectTrigger
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.currencyType
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
+            >
+              <SelectValue placeholder="Currency" />
+            </SelectTrigger>
+            <SelectContent className="font-custom text-center">
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="KHR">KHR</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+
       {
         accessorKey: "department",
         header: "Department",
         cell: ({ row }) => {
+          const selectedBranchId = row.original.branch;
+          const selectedDepartmentId = row.original.department || "";
+          const { data: departmentsData = { results: [] }, isLoading } =
+            useQuery({
+              queryKey: ["departments", selectedBranchId],
+              queryFn: () => getDepartmentsByBranch(selectedBranchId),
+              enabled: !!selectedBranchId,
+            });
+
           return (
             <Select
-              value={row.original.department}
-              onValueChange={(value) =>
-                handleInputChange(row.original.id, "department", value)
+              value={selectedDepartmentId}
+              onValueChange={(deptId) =>
+                handleInputChange(row.original.id, "department", deptId)
               }
+              disabled={!selectedBranchId || isLoading}
             >
               <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
+
               <SelectContent className="font-custom">
-                {departments.results?.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
+                {isLoading ? (
+                  <SelectItem value="loading" disabled>
+                    Loading...
                   </SelectItem>
-                ))}
+                ) : departmentsData.results.length > 0 ? (
+                  departmentsData.results.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="no-dept" disabled>
+                    No departments
+                  </SelectItem>
+                )}
               </SelectContent>
             </Select>
           );
         },
       },
+      {
+        accessorKey: "otherName",
+        header: "Other Names",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.otherName}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "otherName", e.target.value)
+            }
+            placeholder="Other Names"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
       {
         accessorKey: "position",
         header: "Position",
@@ -433,57 +652,42 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
-      {
-        accessorKey: "Shift Type",
-        header: "Shift Type",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.shiftType}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "shiftType", value)
-            }
-          >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-              <SelectValue placeholder="Select Shift Type" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {workshift?.results?.results?.map((shift) => (
-                <SelectItem key={shift.id} value={shift.id}>
-                  {shift.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
-      },
 
       {
-        accessorKey: "Base Salary",
-        header: "Base Salary",
+        accessorKey: "Job Title",
+        header: "Job Title",
         cell: ({ row }) => (
           <Input
-            type="number"
-            value={row.original.baseSalary}
+            type="text"
+            value={row.original.job}
             onChange={(e) =>
-              handleInputChange(row.original.id, "baseSalary", e.target.value)
+              handleInputChange(row.original.id, "job", e.target.value)
             }
-            placeholder="Base Salary"
+            placeholder="Job Title"
             className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
           />
         ),
       },
+
       {
         accessorKey: "cash",
         header: "Cash",
         cell: ({ row }) => (
           <Input
             type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
             value={row.original.cash ?? ""}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "cash", e.target.value)
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "cash", value);
+              }
+            }}
             placeholder="Cash"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         ),
       },
@@ -493,55 +697,75 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         cell: ({ row }) => (
           <Input
             type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
             value={row.original.ibanking ?? ""}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "ibanking", e.target.value)
-            }
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "ibanking", value);
+              }
+            }}
             placeholder="iBanking"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
         ),
       },
-      {
-        accessorKey: "Currency Type",
-        header: "Currency",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.currencyType}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "currencyType", value)
-            }
-          >
-            <SelectTrigger className="h-9 w-28 font-custom">
-              <SelectValue placeholder="Currency" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              <SelectItem value="USD">USD</SelectItem>
-              <SelectItem value="KHR">KHR</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
+
       {
         accessorKey: "Bank Provider",
         header: "Bank Provider",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.bankProvider}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "bankProvider", value)
-            }
-          >
-            <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-              <SelectValue placeholder="Select Bank Provider" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              <SelectItem value="schedule">ABA</SelectItem>
-              <SelectItem value="flexible">Wings</SelectItem>
-              <SelectItem value="part-time">Aceleda</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
+        cell: ({ row }) => {
+          const selected = bankProviders.find(
+            (bank) => bank.value === row.original.bankProvider
+          );
+
+          return (
+            <Select
+              value={row.original.bankProvider}
+              onValueChange={(value) =>
+                handleInputChange(row.original.id, "bankProvider", value)
+              }
+            >
+              <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+                <SelectValue placeholder="Select Bank Provider">
+                  {selected ? (
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={selected.icon}
+                        alt={selected.label}
+                        width={20}
+                        height={20}
+                        className="object-contain rounded-sm"
+                      />
+                      <span>{selected.label}</span>
+                    </div>
+                  ) : (
+                    "Select Bank Provider"
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="font-custom">
+                {bankProviders.map((bank) => (
+                  <SelectItem key={bank.value} value={bank.value}>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={bank.icon}
+                        alt={bank.label}
+                        width={20}
+                        height={20}
+                        className="object-contain rounded-sm"
+                      />
+                      <span>{bank.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          );
+        },
       },
       {
         accessorKey: "Bank Account ",
@@ -557,6 +781,63 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
+      {
+        accessorKey: "spoused",
+        header: "Spoused",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.spoused}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "spoused", value)
+            }
+          >
+            <SelectTrigger className="h-9 w-28 font-custom text-black border-gray-300">
+              <SelectValue placeholder="Select" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "numberOfChildren",
+        header: "Children",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            min="0"
+            value={row.original.numberOfChildren}
+            onChange={(e) =>
+              handleInputChange(
+                row.original.id,
+                "numberOfChildren",
+                e.target.value
+              )
+            }
+            placeholder="0"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
+      {
+        accessorKey: "nssfId",
+        header: "NSSF ID",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.nssfId}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "nssfId", e.target.value)
+            }
+            placeholder="NSSF ID"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+
       {
         id: "actions",
         header: ({ table }) => (
@@ -646,15 +927,16 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             <div className="flex items-center justify-center space-x-3">
               <h1 className="text-2xl font-custom text-light-gray">Review</h1>
             </div>
+
             {(addedCount > 0 || duplicateCount > 0) && (
               <div className="flex justify-start gap-6 pt-2 pl-2">
                 {addedCount > 0 && (
-                  <p className="text-red-500 font-medium text-sm">
+                  <p className="text-blue-500 font-medium text-sm">
                     {addedCount} Added
                   </p>
                 )}
                 {duplicateCount > 0 && (
-                  <p className="text-blue-500 font-medium text-sm">
+                  <p className="text-red-500 font-medium text-sm">
                     {duplicateCount} Duplicated
                   </p>
                 )}
@@ -700,6 +982,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             </Table>
           </div>
 
+          {/*  Add Row Button      */}
           <div className="flex justify-center mt-4">
             <Button
               onClick={handleAddRow}
@@ -723,21 +1006,24 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               onClick={() => {
                 handleAddUsers();
               }}
-              className="rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9"
+              className={`rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9 ${
+                errorsMap && Object.keys(errorsMap).length > 0
+                  ? "bg-red-500 hover:bg-red-600 "
+                  : ""
+              }`}
             >
               Confirm
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      {/* <SuccessDialog
+      <SuccessDialog
         open={successOpen}
         onClose={() => {
           setSuccessOpen(false);
           onOpenChange();
         }}
-      /> */}
-      ;
+      />
     </>
   );
 }

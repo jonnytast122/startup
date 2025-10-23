@@ -59,7 +59,7 @@ export default function ViewEventDialog({ event, onClose }) {
         </div>
 
         {/* Assignment */}
-        <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-default">
+        {/* <div className="flex items-center justify-between px-3 py-2 border rounded-md cursor-default">
           <div className="flex items-center gap-2">
             <Users size={16} className="text-gray-500" />
             <span className="text-sm">Assigned To</span>
@@ -95,7 +95,7 @@ export default function ViewEventDialog({ event, onClose }) {
               <span className="text-xs text-gray-600">No assignees</span>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Clock-in toggle */}
         <div className="flex items-center justify-between">
