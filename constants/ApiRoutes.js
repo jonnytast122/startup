@@ -31,6 +31,7 @@ const ApiRoutes = {
   department: {
     create: `${BASE_URL}/departments`,
     get: `${BASE_URL}/departments/{id}/departments`,
+    getByBranch: `${BASE_URL}/branches/{id}/departments`,
     update: `${BASE_URL}/departments/{id}`,
     delete: `${BASE_URL}/departments/{id}`,
   },

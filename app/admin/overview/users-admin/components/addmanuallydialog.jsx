@@ -36,15 +36,14 @@ import {
   DropdownMenuContent,
 } from "@/components/ui/dropdown-menu";
 import { List, Plus, Trash2 } from "lucide-react";
-import Image from "next/image";
 import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchBranches } from "@/lib/api/branch";
+import { fetchBranches, fetchDepartmentsByBranch } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
-import { fetchCompanyDepartments } from "@/lib/api/department";
 import { fetchWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
 import { addUsers, fetchUsers } from "@/lib/api/user";
+import { getDepartmentsByBranch } from "@/lib/api/department";
 
 export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -59,12 +58,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     queryFn: fetchCompany,
   });
 
-  // const { data: departments = [] } = useQuery({
-  //   queryKey: ["departments", company?.id],
-  //   queryFn: () => fetchCompanyDepartments(company?.id),
-  //   enabled: !!company?.id,
-  // });
-
   const { data: workshift, isLoading: workshiftLoading } = useQuery({
     queryKey: ["workShift", company?.id],
     queryFn: () => fetchWorkShift(company?.id),
@@ -76,39 +69,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     queryFn: fetchBranches,
   });
 
-  // const DepartmentCell = ({ row }) => {
-  //   const selectedBranchId = row.original.branch; // branch selected in this row
-
-  //   console.log("selectedBranchId", selectedBranchId);
-
-  //   const { data: departmentsData = { results: [] } } = useQuery({
-  //     queryKey: ["departments", selectedBranchId],
-  //     queryFn: () => fetchDepartmentsByBranch(selectedBranchId),
-  //     enabled: !!selectedBranchId, // only fetch when branch is selected
-  //   });
-
-  //   console.log("departmentsData", departmentsData);
-
-  //   return (
-  //     <Select
-  //       value={row.original.department}
-  //       onValueChange={(value) =>
-  //         handleInputChange(row.original.id, "department", value)
-  //       }
-  //     >
-  //       <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
-  //         <SelectValue placeholder="Select Department" />
-  //       </SelectTrigger>
-  //       <SelectContent className="font-custom">
-  //         {departmentsData.results.map((dept) => (
-  //           <SelectItem key={dept.id} value={dept.id}>
-  //             {dept.name}
-  //           </SelectItem>
-  //         ))}
-  //       </SelectContent>
-  //     </Select>
-  //   );
-  // };
+  console.log("branches data: ", branches);
 
   const { data: positions } = useQuery({
     queryKey: ["positions"],
@@ -300,6 +261,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         const newData = prevData.map((row) =>
           row.id === id ? { ...row, [field]: value } : row
         );
+
+        console.log("Updated data: ", newData);
 
         // Validate immediately with the updated data
         validateRows(newData);
@@ -497,10 +460,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           <Select
             value={row.original.branch || ""}
             onValueChange={(branchId) => {
-              // Update branch
               handleInputChange(row.original.id, "branch", branchId);
-              // Reset department
-              handleInputChange(row.original.id, "department", "");
+              handleInputChange(row.original.id, "department", ""); // reset department
             }}
           >
             <SelectTrigger
@@ -611,16 +572,13 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         header: "Department",
         cell: ({ row }) => {
           const selectedBranchId = row.original.branch;
-
-          // Fetch departments for the selected branch
+          const selectedDepartmentId = row.original.department || "";
           const { data: departmentsData = { results: [] }, isLoading } =
             useQuery({
               queryKey: ["departments", selectedBranchId],
-              queryFn: () => fetchDepartmentsByBranch(selectedBranchId),
+              queryFn: () => getDepartmentsByBranch(selectedBranchId),
               enabled: !!selectedBranchId,
             });
-
-          const selectedDepartmentId = row.original.department || undefined; // undefined instead of ""
 
           return (
             <Select
@@ -633,6 +591,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
+
               <SelectContent className="font-custom">
                 {isLoading ? (
                   <SelectItem value="loading" disabled>

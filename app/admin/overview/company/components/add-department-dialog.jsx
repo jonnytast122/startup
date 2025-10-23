@@ -53,6 +53,7 @@ export default function AddDepartmentDialog() {
       queryClient.invalidateQueries({ queryKey: ["departments", company?.id] });
       setOpen(false);
       setBranchId("");
+      setDepartmentCode("");
       setDepartmentName("");
       setManagerId("");
     },

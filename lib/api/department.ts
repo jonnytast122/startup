@@ -17,6 +17,13 @@ export const fetchCompanyDepartments = async (
   return response.data;
 };
 
+export const getDepartmentsByBranch = async (branchId: string) => {
+  const response = await api.get(
+    ApiRoutes.department.getByBranch.replace("{id}", branchId)
+  );
+  return response.data;
+};
+
 /**
  * Add a new department.
  * @param {Object} data - The department data
