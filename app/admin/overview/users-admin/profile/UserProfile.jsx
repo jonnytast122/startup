@@ -102,9 +102,20 @@ export default function UserProfile({ user }) {
 		user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
 	);
 	const [otherName, setOtherName] = useState(user?.otherName || "");
+	const [idCardNumber, setIdCardNumber] = useState(user?.idCardNumber || "");
+	const [gender, setGender] = useState(user?.gender || "");
+	const [requiredAttendance, setRequiredAttendance] = useState(
+		user?.isRequiredToCheckIn ? "YES" : "NO"
+	);
+
+	const [salaryType, setSalaryType] = useState(
+		user?.employee?.finance?.salaryInfo || ""
+	);
+
 	const [phoneNumber, setPhoneNumber] = useState(
 		user?.employee?.phoneNumber || ""
 	);
+	const [job, setJob] = useState(user?.job || "");
 	const [dateOfBirth, setDateOfBirth] = useState(
 		formatDateForInput(user?.dateOfBirth) || ""
 	);
@@ -144,23 +155,50 @@ export default function UserProfile({ user }) {
 	const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
 	const [files, setFiles] = useState([]);
 
-	const [selectedWorkShift, setSelectedWorkShift] = useState(
-		user.shiftType ? user.shiftType.id : null
-	);
+	// const [selectedWorkShift, setSelectedWorkShift] = useState(
+	// 	user.shiftType ? user.shiftType.id : null
+	// );
 
-	const [selectedGroup, setSelectedGroup] = useState(
-		user.groups ? user.groups.map((g) => g.id) : []
-	);
+	// const [selectedGroup, setSelectedGroup] = useState(
+	// 	user.groups ? user.groups.map((g) => g.id) : []
+	// );
 
-	// Flatten all groups from all sections
-	const allGroups = sections.flatMap((section) => section.groups ?? []);
+	// Multi-select for work shifts
+	const [selectedWorkShift, setSelectedWorkShift] = useState([]);
 
-	const toggleWorkShift = (id) => {
-		setSelectedWorkShift(id);
+	// Multi-select for groups
+	const [selectedGroup, setSelectedGroup] = useState([]);
+
+	const [allGroups, setAllGroups] = useState([]);
+
+	useEffect(() => {
+		if (!sections || sections.length === 0) return;
+
+		// Flatten all groups and normalize ids to strings
+		const all = sections
+			.flatMap((s) => s.groups ?? [])
+			.map((g) => ({
+				...g,
+				id: String(g.id ?? g._id),
+			}));
+		setAllGroups(all);
+
+		// Initialize selected groups
+		if (user?.groups) {
+			const groupIds = user.groups.map((g) => String(g.id ?? g._id));
+			setSelectedGroup(groupIds);
+		}
+	}, [sections, JSON.stringify(user?.groups || [])]);
+
+	const toggleWorkShift = (shift) => {
+		const id = String(shift.id);
+		setSelectedWorkShift((prev) =>
+			prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+		);
 	};
 
 	const toggleGroup = (group) => {
-		const id = group.id || group;
+		const id = String(group.id);
 		setSelectedGroup((prev) =>
 			prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
 		);
@@ -237,6 +275,13 @@ export default function UserProfile({ user }) {
 	);
 	const handleArchive = useCallback(() => console.log("Archive clicked"), []);
 
+	useEffect(() => {
+		// Initialize selected work shifts
+		if (Array.isArray(user?.shiftType) && user.shiftType.length > 0) {
+			const shiftIds = user.shiftType.map((s) => String(s.id));
+			setSelectedWorkShift(shiftIds);
+		}
+	}, [user?.shiftType, user?.groups]);
 	const DropdownSection = ({
 		title,
 		items,
@@ -286,13 +331,14 @@ export default function UserProfile({ user }) {
 						align="end"
 						className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
 					>
-						{items.map((item) => {
+						{items.map((item, index) => {
+							const key = item?.id ? String(item.id) : `${title}-${index}`;
 							const itemId = String(item.id || item);
 							const isSelected = selectedItems.includes(itemId);
 
 							return (
 								<DropdownMenuItem
-									key={itemId}
+									key={key}
 									onSelect={() => toggleItem(item)}
 									className={
 										isSelected
@@ -353,6 +399,7 @@ export default function UserProfile({ user }) {
 				leaveSubPolicies && Array.isArray(leaveSubPolicies)
 					? leaveSubPolicies.map((p) => (typeof p === "object" ? p.id : p))
 					: [],
+			groups: selectedGroup,
 			shiftType: selectedWorkShift,
 
 			numberOfChildren: Number(numberOfChildren) || 0,
@@ -373,8 +420,8 @@ export default function UserProfile({ user }) {
 			},
 		};
 
-		// console.log("🚀 Updated profile to be sent:", updatedProfile);
-		// console.log("📦 Original user data:", user);
+		console.log("🚀 Updated profile to be sent:", updatedProfile);
+		console.log("📦 Original user data:", user);
 
 		updateUserMutation.mutate({
 			id: user?.employee?.id || "",
@@ -463,6 +510,23 @@ export default function UserProfile({ user }) {
 							onChange={(e) => setOtherName(e.target.value)}
 							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
 						/>
+						{/* Gender dropdown */}
+
+						<div className="text-sm font-custom flex flex-col rounded- w-full mt-2 mb-6 bg-white text-black">
+							<label className="text-sm font-custom text-[#3F4648] w-full">
+								Gender
+							</label>
+							<select
+								value={gender}
+								onChange={(e) => setGender(e.target.value)}
+								className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+							>
+								<option value="">Select Gender</option>
+								<option value="male">Male</option>
+								<option value="female">Female</option>
+							</select>
+						</div>
+
 						<label className="text-sm font-custom text-[#3F4648] w-full">
 							Mobile Phone
 						</label>
@@ -473,12 +537,30 @@ export default function UserProfile({ user }) {
 							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
 						/>
 						<label className="text-sm font-custom text-[#3F4648] w-full">
+							Job
+						</label>
+						<input
+							type="text"
+							value={job}
+							onChange={(e) => setJob(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
+						<label className="text-sm font-custom text-[#3F4648] w-full">
 							Birthday
 						</label>
 						<input
 							type="date"
 							value={dateOfBirth}
 							onChange={(e) => setDateOfBirth(e.target.value)}
+							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+						/>
+						<label className="text-sm font-custom text-[#3F4648] w-full">
+							ID Card Number
+						</label>
+						<input
+							type="text"
+							value={idCardNumber}
+							onChange={(e) => setIdCardNumber(e.target.value)}
 							className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
 						/>
 						<h2 className="text-2xl font-semibold font-custom mb-2">
@@ -569,8 +651,8 @@ export default function UserProfile({ user }) {
 						<DropdownSection
 							title="Work Shift"
 							items={workshift?.results?.results || []}
-							selectedItems={selectedWorkShift ? [selectedWorkShift] : []}
-							toggleItem={(shift) => toggleWorkShift(shift.id)}
+							selectedItems={selectedWorkShift}
+							toggleItem={toggleWorkShift}
 							renderItem={(shift) => shift.name}
 						/>
 
@@ -590,6 +672,15 @@ export default function UserProfile({ user }) {
 							renderItem={(item) => item}
 							dropdownWidth="w-44"
 						/>
+
+						<DropdownSection
+							title="Required Attendance"
+							items={["YES", "NO"]}
+							selectedItems={[requiredAttendance]}
+							toggleItem={(value) => setRequiredAttendance(value)}
+							renderItem={(item) => item}
+							dropdownWidth="w-44"
+						/>
 					</div>
 
 					{/* Right container with text aligned left */}
@@ -606,6 +697,22 @@ export default function UserProfile({ user }) {
 							<InfoRow label="NSSF ID" value={nssfId || ""} />
 							<InfoRow label="Bank Provider" value={bankProvider} />
 							<InfoRow label="Account Number" value={accountNumber} />
+							{/* Salary type dropdown */}
+							<div className="flex flex-row items-center space-x-2 w-full justify-between sm:w-auto">
+								<label className="text-md font-custom text-light-pearl">
+									Salary Type
+								</label>
+								<select
+									value={salaryType}
+									onChange={(e) => setSalaryType(e.target.value)}
+									className="border border-gray-300 rounded-lg  font-custom text-md text-dark-blue p-2 w-full sm:w-48"
+								>
+									<option value="">Select Salary Type</option>
+									<option value="hourly">Hourly</option>
+									<option value="daily">Daily</option>
+									<option value="monthly">Monthly</option>
+								</select>
+							</div>
 						</div>
 
 						{/* Cash Section - SIMPLIFIED */}

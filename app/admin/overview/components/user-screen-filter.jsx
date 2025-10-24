@@ -72,7 +72,7 @@ function UsersScreen({
 						id: "select",
 						header: "",
 						cell: ({ row }) => {
-							const id = row.original.employee?.id || row.original.id;
+							const id = String(row.original.employee?.id || row.original.id);
 							return (
 								<div className="flex justify-center items-center">
 									<input
