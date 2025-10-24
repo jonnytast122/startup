@@ -11,7 +11,6 @@ import { Settings, Trash2, Pen } from "lucide-react";
 import AddTitleDialog from "./components/add-title-dialog";
 import AddDepartmentDialog from "./components/add-department-dialog";
 import AddBranchDialog from "./components/add-branch-dialog";
-import EditBranchDialog from "./components/edit-branch-dialog";
 import DeleteDialog from "./components/delete-dialog";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -462,16 +461,21 @@ export default function SettingPage() {
                 {/* Branch Code Input */}
                 <div className="flex items-center space-x-1 min-w-0">
                   <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
                     value={
-                      selectedBranchesDefault[branch.id]?.code ?? branch.code
+                      selectedBranchesDefault[branch.id]?.code ??
+                      branch.code ??
+                      ""
                     }
-                    onChange={(e) =>
-                      handleBranchDefaultChange(
-                        branch.id,
-                        "code",
-                        e.target.value
-                      )
-                    }
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow only digits and limit to 6 characters
+                      if (/^\d{0,6}$/.test(value)) {
+                        handleBranchDefaultChange(branch.id, "code", value);
+                      }
+                    }}
                     placeholder={branch.code}
                     className="font-custom rounded-lg p-2 w-full xl:w-55 border-none focus:outline-none focus:ring-0"
                   />
@@ -557,11 +561,17 @@ export default function SettingPage() {
 
                 <div className="flex items-center space-x-1 min-w-0 flex-1">
                   <input
-                    value={selectedCodeDepartment[dept.id] || dept.code}
-                    onChange={(e) =>
-                      handleDepartmentCodeChange(dept.id, e.target.value)
-                    }
-                    onKeyUp={() => {}}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={selectedCodeDepartment[dept.id] || dept.code || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      // Allow only digits and limit to 6 characters
+                      if (/^\d{0,6}$/.test(value)) {
+                        handleDepartmentCodeChange(dept.id, value);
+                      }
+                    }}
                     placeholder={dept.name}
                     className="font-custom rounded-lg p-2 w-full xl:w-55 border-none focus:outline-none focus:ring-0"
                   />
@@ -611,7 +621,7 @@ export default function SettingPage() {
                     })}
                   </select>
                   <button
-                    className="text-gray-400 hover:text-red-700"
+                    className="text-grey-400 hover:text-red-700"
                     onClick={() =>
                       openDeleteDialog({ ...dept, type: "department" })
                     }
@@ -705,18 +715,12 @@ export default function SettingPage() {
         <div className="flex justify-end">
           <Button
             onClick={handleCompanyChange}
-            className="mt-4 px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+            className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
           >
             {updateCompanyMutation.isPending ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
-
-      {/* Edit Confirmation Dialog */}
-      <EditBranchDialog
-        open={editDialogOpen}
-        setOpen={() => setEditDialogOpen(false)}
-      />
 
       {/* Delete Confirmation Dialog */}
       <DeleteDialog

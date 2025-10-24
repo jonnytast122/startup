@@ -138,13 +138,23 @@ export default function AddDepartmentDialog() {
         {/* Department code*/}
         <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
           <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
-            Department Code:
+            Code
           </label>
-          <Input
-            value={departmentCode}
-            onChange={(e) => setDepartmentCode(e.target.value)}
-            placeholder="Department Code"
+          <input
+            type="text"
+            inputMode="numeric"
+            pattern="\d{6}"
+            maxLength={6}
             className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4 placeholder:text-gray-400"
+            placeholder="Enter 6-digit department code"
+            value={departmentCode}
+            onChange={(e) => {
+              const value = e.target.value;
+              // Allow only digits and limit to 6 characters
+              if (/^\d{0,6}$/.test(value)) {
+                setDepartmentCode(value);
+              }
+            }}
           />
         </div>
 

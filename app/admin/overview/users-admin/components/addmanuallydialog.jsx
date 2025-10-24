@@ -17,6 +17,11 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import {
   useReactTable,
@@ -44,6 +49,7 @@ import { fetchWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
 import { addUsers, fetchUsers } from "@/lib/api/user";
 import { getDepartmentsByBranch } from "@/lib/api/department";
+import { Title } from "@radix-ui/react-dialog";
 
 export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -69,8 +75,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     queryFn: fetchBranches,
   });
 
-  console.log("branches data: ", branches);
-
   const { data: positions } = useQuery({
     queryKey: ["positions"],
     queryFn: fetchPositions,
@@ -85,6 +89,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      dateOfBirth: "",
+      gender: "",
+      idCardNumber: "",
+      isRequiredToCheckIn: "",
+      salaryType: "",
       job: "",
       baseSalary: "",
       cash: "",
@@ -113,6 +122,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       department: "",
       position: "",
       shiftType: "",
+      dateOfBirth: "",
+      gender: "",
+      idCardNumber: "",
+      isRequiredToCheckIn: "",
+      salaryType: "",
       job: "",
       baseSalary: "",
       cash: "",
@@ -245,6 +259,9 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       if (!row.baseSalary || isNaN(Number(row.baseSalary)))
         rowErrors.baseSalary = true;
       if (!row.currencyType?.trim()) rowErrors.currencyType = true;
+      if (!row.salaryType?.trim()) rowErrors.salaryType = true;
+      if (!row.isRequiredToCheckIn?.trim())
+        rowErrors.isRequiredToCheckIn = true;
 
       if (Object.keys(rowErrors).length > 0) {
         newErrors[row.id] = rowErrors;
@@ -261,9 +278,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         const newData = prevData.map((row) =>
           row.id === id ? { ...row, [field]: value } : row
         );
-
-        console.log("Updated data: ", newData);
-
         // Validate immediately with the updated data
         validateRows(newData);
 
@@ -291,6 +305,10 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       spoused: row.spoused === "true",
       numberOfChildren: Number(row.numberOfChildren) || 0,
       otherName: row.otherName || null,
+      dateOfBirth: row.dateOfBirth || null,
+      gender: row.gender || null,
+      idCardNumber: row.idCardNumber || null,
+      isRequiredToCheckIn: row.isRequiredToCheckIn,
       nssfId: row.nssfId || null,
       paymentMethod: {
         cashPercentage: Number(row.cash) || 0,
@@ -299,6 +317,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       salaryInfo: {
         baseSalary: Number(row.baseSalary),
         currencyType: row.currencyType,
+        salaryType: row.salaryType,
       },
       bankDetails: {
         bankProvider: row.bankProvider || null,
@@ -337,8 +356,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               }
             }
           } else {
-            // fallback for other messages
-            alert(msg);
           }
         }
         setErrorsMap(apiErrors);
@@ -461,7 +478,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             value={row.original.branch || ""}
             onValueChange={(branchId) => {
               handleInputChange(row.original.id, "branch", branchId);
-              handleInputChange(row.original.id, "department", ""); // reset department
+              handleInputChange(row.original.id, "department", "");
             }}
           >
             <SelectTrigger
@@ -485,34 +502,62 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       {
         accessorKey: "Shift Type",
         header: "Shift Type*",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.shiftType}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "shiftType", value)
+        cell: ({ row }) => {
+          const selectedShiftIds = row.original.shiftType || [];
+
+          const handleToggleShift = (shiftId) => {
+            let updatedShifts;
+            if (selectedShiftIds.includes(shiftId)) {
+              updatedShifts = selectedShiftIds.filter((id) => id !== shiftId);
+            } else {
+              updatedShifts = [...selectedShiftIds, shiftId];
             }
-            disabled={workshiftLoading}
-          >
-            <SelectTrigger
-              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
-                errorsMap[row.original.id]?.shiftType ? "border-red-500" : ""
-              }`}
-            >
-              <SelectValue
-                placeholder={
-                  workshiftLoading ? "Loading..." : "Select Shift Type"
-                }
-              />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              {workshift?.results?.results?.map((shift) => (
-                <SelectItem key={shift.id} value={shift.id}>
-                  {shift.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
+            handleInputChange(row.original.id, "shiftType", updatedShifts);
+          };
+
+          return (
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={`w-full h-9 justify-between font-custom text-black border-gray-300 ${
+                    errorsMap[row.original.id]?.shiftType
+                      ? "border-red-500"
+                      : ""
+                  }`}
+                >
+                  {selectedShiftIds.length > 0
+                    ? `${selectedShiftIds.length} Selected`
+                    : workshiftLoading
+                    ? "Loading..."
+                    : "Select Shift Type"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[200px] max-h-[200px] overflow-y-auto p-2">
+                {workshiftLoading ? (
+                  <p className="text-gray-400">Loading...</p>
+                ) : (
+                  workshift?.results?.results?.map((shift) => (
+                    <div
+                      key={shift.id}
+                      className="flex items-center space-x-2 p-1 cursor-pointer hover:bg-gray-100 rounded-md"
+                      onClick={() => handleToggleShift(shift.id)}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedShiftIds.includes(shift.id)}
+                        readOnly
+                      />
+                      <label className="text-sm font-custom">
+                        {shift.name}
+                      </label>
+                    </div>
+                  ))
+                )}
+              </PopoverContent>
+            </Popover>
+          );
+        },
       },
       {
         accessorKey: "Base Salary",
@@ -568,6 +613,57 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
 
       {
+        accessorKey: "Salary Type",
+        id: "salaryType",
+        header: "Salary Type*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.salaryType}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "salaryType", value)
+            }
+          >
+            <SelectTrigger
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.salaryType
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
+            >
+              <SelectValue placeholder="Salary Type" />
+            </SelectTrigger>
+            <SelectContent className="font-custom text-center">
+              <SelectItem value="hourly">Hourly</SelectItem>
+              <SelectItem value="daily">Daily</SelectItem>
+              <SelectItem value="monthly">Monthly</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+
+      {
+        accessorKey: "Required Attendance",
+        id: "isRequiredToCheckIn",
+        header: "Required Attendance*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.isRequiredToCheckIn}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "isRequiredToCheckIn", value)
+            }
+          >
+            <SelectTrigger className="h-9 w-32 font-custom text-black border-gray-300">
+              <SelectValue placeholder="Required CheckIn" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+
+      {
         accessorKey: "department",
         header: "Department",
         cell: ({ row }) => {
@@ -586,7 +682,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               onValueChange={(deptId) =>
                 handleInputChange(row.original.id, "department", deptId)
               }
-              disabled={!selectedBranchId || isLoading}
+              //disabled={!selectedBranchId || isLoading}
             >
               <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
                 <SelectValue placeholder="Select Department" />
@@ -594,9 +690,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
               <SelectContent className="font-custom">
                 {isLoading ? (
-                  <SelectItem value="loading" disabled>
-                    Loading...
-                  </SelectItem>
+                  <SelectItem value="loading">Loading...</SelectItem>
                 ) : departmentsData.results.length > 0 ? (
                   departmentsData.results.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
@@ -604,14 +698,54 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="no-dept" disabled>
-                    No departments
-                  </SelectItem>
+                  <SelectItem value="no-dept">No departments</SelectItem>
                 )}
               </SelectContent>
             </Select>
           );
         },
+      },
+      {
+        accessorKey: "gender",
+        header: "Gender",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.gender}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "gender", value)
+            }
+          >
+            <SelectTrigger
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.gender
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
+            >
+              <SelectValue placeholder="Select Gender" />
+            </SelectTrigger>
+            <SelectContent className="font-custom text-center">
+              <SelectItem value="male">M</SelectItem>
+              <SelectItem value="female">F</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "ID Card",
+        id: "idCardNumber",
+        header: "ID Card",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.idCardNumber}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "idCardNumber", e.target.value)
+            }
+            placeholder="Other Names"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
       },
       {
         accessorKey: "otherName",
@@ -655,7 +789,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
       {
         accessorKey: "Job Title",
-        header: "Job Title",
+        id: "job",
+        header: "Job",
         cell: ({ row }) => (
           <Input
             type="text"
@@ -716,6 +851,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
       {
         accessorKey: "Bank Provider",
+        id: "bankProvider",
         header: "Bank Provider",
         cell: ({ row }) => {
           const selected = bankProviders.find(
@@ -769,6 +905,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
       {
         accessorKey: "Bank Account ",
+        id: "bankAccount",
         header: "Bank Account",
         cell: ({ row }) => (
           <Input
@@ -802,7 +939,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         ),
       },
       {
-        accessorKey: "numberOfChildren",
+        accessorKey: "Children",
+        id: "numberOfChildren",
         header: "Children",
         cell: ({ row }) => (
           <Input
@@ -823,7 +961,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
 
       {
-        accessorKey: "nssfId",
+        accessorKey: "NSSF ID",
+        id: "nssfId",
         header: "NSSF ID",
         cell: ({ row }) => (
           <Input
@@ -852,7 +991,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                   <List size={16} />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="bg-white shadow-md border p-2 font-custom">
+              <DropdownMenuContent className="bg-white shadow-md border p-2 font-custom max-h-60 overflow-y-auto">
                 {table
                   .getAllColumns()
                   .filter(
@@ -909,8 +1048,26 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         phone: true,
         branch: true,
         shiftType: true,
-        filter: true,
+        currencyType: true,
+        salaryType: true,
         baseSalary: true,
+        filter: true,
+
+        department: false,
+        job: false,
+        position: false,
+        otherName: false,
+        idCardNumber: false,
+        nssfId: false,
+        dateOfBirth: false,
+        gender: false,
+        spoused: false,
+        numberOfChildren: false,
+
+        ibanking: false,
+        bankProvider: false,
+        bankAccount: false,
+        cash: false,
       },
     },
   });
@@ -992,6 +1149,9 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               <span>Add Row</span>
             </Button>
           </div>
+          <p className="text-red-500 text-sm font-custom text-right">
+            Please fill all the require information*
+          </p>
 
           <DialogFooter className="flex justify-end gap-2 mt-6">
             <Button
@@ -1003,14 +1163,14 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             </Button>
 
             <Button
-              onClick={() => {
-                handleAddUsers();
-              }}
-              className={`rounded-full bg-blue-500 text-white hover:bg-blue-600 font-custom py-6 px-9 ${
-                errorsMap && Object.keys(errorsMap).length > 0
-                  ? "bg-red-500 hover:bg-red-600 "
-                  : ""
-              }`}
+              onClick={handleAddUsers}
+              disabled={errorsMap && Object.keys(errorsMap).length > 0}
+              className={`rounded-full font-custom py-6 px-9 text-white transition-colors
+    ${
+      errorsMap && Object.keys(errorsMap).length > 0
+        ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
+        : "bg-blue-500 hover:bg-blue-600"
+    }`}
             >
               Confirm
             </Button>
