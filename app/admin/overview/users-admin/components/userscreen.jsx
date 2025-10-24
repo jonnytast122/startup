@@ -115,36 +115,54 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       ),
     },
     {
-      accessorFn: (row) => row.employee?.name || "N/A",
+      accessorFn: (row) => row.employee?.name || "--",
       id: "name",
       header: "Fullname",
     },
     {
+      accessorFn: (row) => row.otherName || "--",
       accessorKey: "otherName",
       header: "Other Name",
     },
 
     {
-      accessorFn: (row) => row.employee?.phoneNumber || "N/A",
+      accessorFn: (row) => row.employee?.phoneNumber || "--",
       id: "phone",
       header: "Phone",
     },
+
     {
-      accessorFn: (row) => row.branch?.name || "N/A",
+      accessorFn: (row) => row.idCardNumber || "--",
+      id: "idCardNumber",
+      header: "ID Card Number",
+    },
+    {
+      accessorFn: (row) => row.gender || "--",
+      id: "gender",
+      header: "Gender",
+    },
+
+    {
+      accessorFn: (row) => row.branch?.name || "--",
       id: "branch",
       header: "Branch",
     },
     {
-      accessorFn: (row) => row.department?.name || "N/A",
+      accessorFn: (row) => row.department?.name || "--",
       id: "department",
       header: "Department",
     },
     {
       accessorKey: "job",
       header: "Job",
+      cell: ({ row }) => (
+        <span className="px-5 py-1 font-custom rounded-lg border border-[#5494DA] text-blue-600 ml-3 inline-flex items-center gap-1">
+          <span className="text-blue">{row.original.job || "--"}</span>
+        </span>
+      ),
     },
     {
-      accessorFn: (row) => row.position?.title || "N/A",
+      accessorFn: (row) => row.position?.title || "--",
       id: "position",
       header: "Position",
     },
@@ -153,106 +171,43 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       header: "Groups",
       cell: ({ row }) => {
         const groups = row.original.groups || [];
-        if (groups.length === 0) return "N/A";
+        if (groups.length === 0) return "--";
         if (groups.length === 1) return groups[0].name;
         return `${groups.length} Groups`;
       },
     },
+
     {
-      accessorFn: (row) => row.shiftType?.name || "",
-      id: "shiftType",
+      accessorKey: "shiftType",
       header: "Shift Type",
+      cell: ({ row }) => {
+        const shiftType = row.original.shiftType || [];
+        if (shiftType.length === 0) return "--";
+        if (shiftType.length === 1) return shiftType[0].name;
+        return `${shiftType.length} Shifts`;
+      },
     },
-    // {
-    //   accessorKey: "leavePolicies",
-    //   header: "Leave Policies",
-    //   cell: ({ row }) => {
-    //     const leaves = row.original.leavePolicies || [];
-    //     if (leaves.length === 0) return "-";
-    //     if (leaves.length === 1) return leaves[0].name;
-    //     return `${leaves.length} Policies`;
-    //   },
-    // },
+    {
+      accessorKey: "dateOfBirth",
+      header: "Date of Birth",
+      cell: ({ getValue }) => {
+        const value = getValue();
+        if (!value) return "--";
+        return format(new Date(value), "dd/MM/yyyy");
+      },
+    },
     {
       accessorKey: "startDate",
       header: "Employment Date",
       cell: ({ getValue }) => {
         const value = getValue();
-        if (!value) return "-";
+        if (!value) return "--";
         return format(new Date(value), "dd/MM/yyyy");
       },
     },
-    // {
-    //   accessorKey: "status",
-    //   filterFn: (row, columnId, filterValue) =>
-    //     row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase(),
-    //   header: ({ column }) => (
-    //     <div className="flex items-center gap-1">
-    //       <span>Status</span>
-    //       <Select
-    //         onValueChange={(value) => {
-    //           column.setFilterValue(value === "All" ? "" : value.toLowerCase());
-    //         }}
-    //       >
-    //         <SelectTrigger className="border-none p-0 w-6" />
-    //         <SelectContent>
-    //           <SelectItem value="All" className="font-custom">
-    //             All
-    //           </SelectItem>
-    //           {statusFilter.map((status) => (
-    //             <SelectItem
-    //               key={status}
-    //               value={status}
-    //               className="font-custom text-light-gray"
-    //             >
-    //               {status}
-    //             </SelectItem>
-    //           ))}
-    //         </SelectContent>
-    //       </Select>
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => {
-    //     const status =
-    //       row.original.isActive === true
-    //         ? "Active"
-    //         : row.original.isActive === false
-    //         ? "Inactive"
-    //         : "Pending";
-    //     const statusStyles = {
-    //       Active: "bg-[#05C16833] text-[#14CA74] border-[#14CA74]",
-    //       Inactive: "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]",
-    //       Pending: "bg-[#FFF6C4] text-[#F7D000] border-[#F7D000]",
-    //     };
-    //     const dotColor = {
-    //       Active: "#14CA74",
-    //       Inactive: "#AEB9E1",
-    //       Pending: "#F7D000",
-    //     };
-    //     return (
-    //       <span
-    //         className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
-    //           statusStyles[status] ||
-    //           "bg-gray-200 text-gray-700 border-gray-400"
-    //         }`}
-    //         style={{
-    //           borderWidth: "1px",
-    //           minWidth: "80px",
-    //           justifyContent: "center",
-    //         }}
-    //       >
-    //         <span
-    //           className="w-2 h-2 rounded-full inline-block"
-    //           style={{ backgroundColor: dotColor[status] || "#999" }}
-    //         />
-    //         {status}
-    //       </span>
-    //     );
-    //   },
-    // },
     {
       id: "actions",
-      header: "",
+      header: "Actions",
       cell: ({ row }) => <ActionsCell user={row.original} />,
     },
     {
@@ -281,6 +236,13 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
         shiftType: true,
         startDate: true,
         status: true,
+        actions: true,
+        role: true,
+
+        idCardNumber: false,
+        gender: false,
+        groups: false,
+        dateOfBirth: false,
         filter: true,
       },
     },
@@ -525,11 +487,14 @@ const UsersTable = ({ table, router }) => (
     <Table>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id} className="bg-gray-200 text-dark-blue">
+          <TableRow
+            key={headerGroup.id}
+            className="bg-gray-200 text-dark-blue text-center items-center"
+          >
             {headerGroup.headers.map((header) => (
               <TableHead
                 key={header.id}
-                className="whitespace-nowrap px-2 min-w-[50px] w-[50px]"
+                className="whitespace-nowrap px-2 text-center items-center min-w-[50px] w-[50px]"
               >
                 {flexRender(
                   header.column.columnDef.header,
@@ -551,7 +516,7 @@ const UsersTable = ({ table, router }) => (
               if (cell.column.id === "groups") {
                 const groups = row.original.groups || [];
                 let cellContent;
-                if (groups.length === 0) cellContent = "-";
+                if (groups.length === 0) cellContent = "--";
                 else if (groups.length === 1) cellContent = groups[0].name;
                 else
                   cellContent = (
@@ -593,10 +558,56 @@ const UsersTable = ({ table, router }) => (
                 );
               }
 
+              if (cell.column.id === "shiftType") {
+                const shiftType = row.original.shiftType || [];
+                let cellContent;
+                if (shiftType.length === 0) cellContent = "--";
+                else if (shiftType.length === 1)
+                  cellContent = shiftType[0].name;
+                else
+                  cellContent = (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                            {shiftType.length} Shift Type
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          align="start"
+                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                        >
+                          <div className="whitespace-pre-wrap font-custom">
+                            <p className="text-xl mb-2">Shift Type</p>
+                            {shiftType.map((g) => (
+                              <span
+                                key={g.id || g.name}
+                                className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                              >
+                                {g.name}
+                              </span>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
+                  >
+                    {cellContent}
+                  </TableCell>
+                );
+              }
+
               if (cell.column.id === "leavePolicies") {
                 const leaves = row.original.leavePolicies || [];
                 let cellContent;
-                if (leaves.length === 0) cellContent = "-";
+                if (leaves.length === 0) cellContent = "--";
                 else if (leaves.length === 1) cellContent = leaves[0].name;
                 else
                   cellContent = (
@@ -632,7 +643,7 @@ const UsersTable = ({ table, router }) => (
                 return (
                   <TableCell
                     key={cell.id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
                   >
                     {cellContent}
                   </TableCell>
@@ -642,7 +653,7 @@ const UsersTable = ({ table, router }) => (
               return (
                 <TableCell
                   key={cell.id}
-                  className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
                   onClick={() => {
                     if (!isActions) {
                       const user = row.original;
