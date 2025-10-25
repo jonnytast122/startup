@@ -48,20 +48,25 @@ function UsersScreen({
 	setSelectedUsers,
 	isViewMode = false,
 }) {
-	const [safeSelectedUsers, setSafeSelectedUsers] = useState([]);
-
-	// Sync local selected users with prop
-	useEffect(() => {
-		setSafeSelectedUsers(Array.isArray(selectedUsers) ? selectedUsers : []);
-	}, [selectedUsers]);
+	// Initialize with IDs of previously selected users
+	const [safeSelectedUsers, setSafeSelectedUsers] = useState(() => {
+		return Array.isArray(selectedUsers)
+			? selectedUsers.map((user) => String(user.employee?.id || user.id))
+			: [];
+	});
 
 	const toggleUserSelection = (id) => {
 		if (isViewMode) return;
+
 		const updated = safeSelectedUsers.includes(id)
 			? safeSelectedUsers.filter((u) => u !== id)
 			: [...safeSelectedUsers, id];
+
 		setSafeSelectedUsers(updated);
-		if (setSelectedUsers) setSelectedUsers(updated);
+
+		if (setSelectedUsers) {
+			setSelectedUsers(updated);
+		}
 	};
 
 	const columns = [
@@ -72,7 +77,7 @@ function UsersScreen({
 						id: "select",
 						header: "",
 						cell: ({ row }) => {
-							const id = String(row.original.employee?.id || row.original.id);
+							const id = String(row.original.employee?.id);
 							return (
 								<div className="flex justify-center items-center">
 									<input

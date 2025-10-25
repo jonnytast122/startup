@@ -25,34 +25,27 @@ export default function UserFilterTable({
 	const [selectedBranches, setSelectedBranches] = useState([]);
 	const [selectedDepartments, setSelectedDepartments] = useState([]);
 	const [filteredUsers, setFilteredUsers] = useState([]);
-	const [isFiltering, setIsFiltering] = useState(false);
 
-	// Fetch company data first
 	const { data: company } = useQuery({
 		queryKey: ["company"],
 		queryFn: fetchCompany,
 	});
-
 	const { data: branchesData } = useQuery({
 		queryKey: ["branches"],
 		queryFn: fetchBranches,
 	});
-
 	const { data: departmentsData = [] } = useQuery({
 		queryKey: ["departments", company?.id],
 		queryFn: () => fetchCompanyDepartments(company?.id),
 		enabled: !!company?.id,
 	});
-
 	const { data: allMembers } = useQuery({
 		queryKey: ["members"],
 		queryFn: fetchMembers,
 	});
 
-	// Filtering logic
-	const fetchFilteredUsers = async (branches, departments) => {
-		return await fetchMembers({ branches, departments });
-	};
+	const fetchFilteredUsers = async (branches, departments) =>
+		fetchMembers({ branches, departments });
 
 	useEffect(() => {
 		const load = async () => {
@@ -62,7 +55,6 @@ export default function UserFilterTable({
 				return;
 			}
 
-			setIsFiltering(true);
 			try {
 				const data = await fetchFilteredUsers(
 					selectedBranches,
@@ -71,13 +63,10 @@ export default function UserFilterTable({
 				const results = Array.isArray(data) ? data : data.results || [];
 				setFilteredUsers(results);
 			} catch (err) {
-				console.error("Error fetching filtered users:", err);
+				console.error(err);
 				setFilteredUsers([]);
-			} finally {
-				setIsFiltering(false);
 			}
 		};
-
 		load();
 	}, [selectedBranches, selectedDepartments]);
 
@@ -87,7 +76,7 @@ export default function UserFilterTable({
 		);
 	};
 
-	const displayUsers =
+	const filteredOrAllUsers =
 		selectedBranches.length || selectedDepartments.length
 			? filteredUsers
 			: allMembers?.results || [];
@@ -96,7 +85,7 @@ export default function UserFilterTable({
 		<div>
 			{!isViewMode && (
 				<div className="flex flex-wrap items-center gap-4 mb-4">
-					{/* Filter Dropdown */}
+					{/* Filter */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -119,7 +108,7 @@ export default function UserFilterTable({
 						</DropdownMenuContent>
 					</DropdownMenu>
 
-					{/* Branches Dropdown */}
+					{/* Branches */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -158,7 +147,7 @@ export default function UserFilterTable({
 						</DropdownMenuContent>
 					</DropdownMenu>
 
-					{/* Departments Dropdown */}
+					{/* Departments */}
 					<DropdownMenu>
 						<DropdownMenuTrigger asChild>
 							<Button
@@ -198,12 +187,12 @@ export default function UserFilterTable({
 					</DropdownMenu>
 				</div>
 			)}
-
-			{/* User Table */}
 			<UsersScreen
-				users={displayUsers}
+				users={filteredOrAllUsers}
 				selectedUsers={selectedUsers}
-				setSelectedUsers={setSelectedUsers}
+				setSelectedUsers={(updatedUsers) => {
+					setSelectedUsers(updatedUsers);
+				}}
 				isViewMode={isViewMode}
 			/>
 		</div>

@@ -94,6 +94,7 @@ export default function GroupPage() {
 	};
 
 	const openEditModal = (sectionId, group, view = false) => {
+		console.log("Opening Edit Dialog. Members:", group.members);
 		setEditDialogOpen(true);
 		setNewGroup({ ...group, section: sectionId });
 		setIsViewOnly(view);
@@ -233,13 +234,11 @@ export default function GroupPage() {
 											)}
 										</div>
 									</TableCell>
-
 									<TableCell>
 										<div className="flex items-center space-x-2">
 											<span>{group.createdBy?.name}</span>
 										</div>
 									</TableCell>
-
 									<TableCell className="text-right font-custom">
 										<DropdownMenu>
 											<DropdownMenuTrigger asChild>
@@ -323,7 +322,7 @@ export default function GroupPage() {
 				}}
 				newGroup={newGroup}
 				setNewGroup={setNewGroup}
-				members={[]}
+				members={newGroup.members}
 			/>
 
 			{/* Edit Group Dialog */}
@@ -336,7 +335,7 @@ export default function GroupPage() {
 				group={newGroup}
 				setNewGroup={setNewGroup}
 				onSave={handleSaveEditedGroup}
-				members={[]}
+				members={newGroup.members}
 				isViewMode={isViewOnly}
 			/>
 

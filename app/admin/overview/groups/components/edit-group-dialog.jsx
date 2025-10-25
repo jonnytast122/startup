@@ -1,82 +1,78 @@
 "use client";
 
 import AddGroupDialog from "./add-group-dialog";
-import { useState, useEffect } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchGroup, updateGroup } from "@/lib/api/group";
 
 export default function EditGroupDialog({
-  // isOpen,
-  // onClose,
-  // group,
-  // onSave,
-  // members,
-  // isViewMode = false,
-  isOpen,
-  onClose,
-  group,
-  setNewGroup,
-  isViewMode = false,
+	isOpen,
+	onClose,
+	group,
+	setNewGroup,
+	isViewMode = false,
 }) {
-  const queryClient = useQueryClient();
+	const queryClient = useQueryClient();
 
-  // const [editableGroup, setEditableGroup] = useState({
-  //   name: "",
-  //   members: [],
-  //   section: "",
-  // });
+	const { data } = useQuery({
+		queryKey: ["group", group?._id],
+		queryFn: () => fetchGroup(group?._id),
+		enabled: !!group?._id,
+	});
 
-  const { data } = useQuery({
-    queryKey: ["group", group?._id],
-    queryFn: () => fetchGroup(group?._id),
-    enabled: !!group?._id,
-  });
+	useEffect(() => {
+		if (data?.members) {
+			setNewGroup({
+				...group,
+				name: data.name,
+				members: data.members,
+				section: group.section,
+			});
+		}
+	}, [data]);
 
-  const editGroupMutation = useMutation({
-    mutationFn: updateGroup,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["sections"]);
-      setNewGroup({ name: "", section: "", members: [] });
-      setError("");
-      onClose();
-    },
-    onError: (error) => {
-      console.log("Error editing group:", error);
-      setError("Something went wrong. Please try again.");
-    },
-  });
+	const editGroupMutation = useMutation({
+		mutationFn: updateGroup,
+		onSuccess: () => {
+			queryClient.invalidateQueries(["sections"]);
+			setNewGroup({ name: "", section: "", members: [] });
+			onClose();
+		},
+		onError: (error) => {
+			console.error("Error editing group:", error);
+		},
+	});
 
-  // useEffect(() => {
-  //   if (group) {
-  //     setEditableGroup({
-  //       name: group.name || "",
-  //       members: group.members || [],
-  //       section: group.section || "",
-  //     });
-  //   }
-  // }, [group]);
+	const handleSave = (updatedGroup) => {
+		const body = {
+			name: updatedGroup.name,
+			members: updatedGroup.members.map((u) => u._id || u.id),
+		};
 
-  const handleSave = () => {
-    if (!group.name.trim()) return;
-    editGroupMutation.mutate({
-      id: group?._id,
-      data: { name: group.name },
-    });
-    onClose();
-  };
+		console.log("Request body to update group:", body);
 
-  return (
-    <AddGroupDialog
-      isOpen={isOpen}
-      onClose={onClose}
-      newGroup={{
-        ...group,
-        members: data?.members?.map((e) => e._id) || [],
-      }}
-      setNewGroup={setNewGroup}
-      isViewMode={isViewMode} // ✅ Pass down view mode
-      isEdit={true} // ✅ Indicate this is an edit dialog
-      onUpdate={handleSave}
-    />
-  );
+		editGroupMutation.mutate({
+			id: group._id,
+			data: body,
+		});
+	};
+
+	const members = data?.members || group?.members || [];
+
+	return (
+		<AddGroupDialog
+			isOpen={isOpen}
+			onClose={onClose}
+			newGroup={{
+				...group,
+				name: data?.name || group.name,
+				members,
+				section: group?.section || "",
+			}}
+			setNewGroup={setNewGroup}
+			isViewMode={isViewMode}
+			isEdit={true}
+			onUpdate={handleSave}
+		/>
+	);
 }
