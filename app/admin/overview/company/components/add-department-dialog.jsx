@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FaSpinner } from "react-icons/fa";
 import {
   Select,
   SelectTrigger,
@@ -190,7 +191,11 @@ export default function AddDepartmentDialog() {
             onClick={handleSubmit}
             disabled={!branchId || !departmentName || isPending}
           >
-            {isPending ? "Saving..." : "Save"}
+            {isPending ? (
+              <FaSpinner className="animate-spin text-white text-lg" />
+            ) : (
+              "Save"
+            )}
           </Button>
         </div>
       </DialogContent>

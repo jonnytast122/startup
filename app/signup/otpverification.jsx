@@ -260,10 +260,11 @@ export default function OTPVerification({
                 className="w-full sm:w-56 rounded-full text-base mt-5 flex items-center justify-center gap-2"
                 disabled={isLoading}
               >
-                {isLoading && (
-                  <FaSpinner className="animate-spin text-white text-sm" />
+                {isLoading ? (
+                  <FaSpinner className="animate-spin text-white text-lg" />
+                ) : (
+                  "Verify"
                 )}
-                {isLoading ? "Verifying..." : "Verify"}
               </Button>
 
               {/* Resend Link */}

@@ -3,13 +3,13 @@
 import { useState } from "react";
 import { Users, Plus, MoreHorizontal, Trash2 } from "lucide-react";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
-	TableFooter,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+  TableFooter,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import AddGroupDialog from "./components/add-group-dialog";
@@ -17,18 +17,18 @@ import EditGroupDialog from "./components/edit-group-dialog";
 import AddSectionDialog from "./components/add-section-dialog";
 import ConfirmDeleteDialog from "./components/confirm-delete-dialog";
 import {
-	DropdownMenu,
-	DropdownMenuTrigger,
-	DropdownMenuContent,
-	DropdownMenuItem,
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-	fetchSections,
-	deleteGroup,
-	addSection,
-	deleteSection,
-	updateSection,
+  fetchSections,
+  deleteGroup,
+  addSection,
+  deleteSection,
+  updateSection,
 } from "@/lib/api/group";
 
 export default function GroupPage() {
