@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   flexRender,
   getCoreRowModel,
@@ -56,6 +59,7 @@ import { deleteUser, fetchUser } from "@/lib/api/user";
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
+  { value: "as PDF", label: "as PDF" },
 ];
 
 // const statusFilter = ["Active", "Inactive", "Pending"];
@@ -86,7 +90,14 @@ const ProfileCell = ({ profileImg, employeeName }) => {
   );
 };
 
-const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
+const UsersScreen = ({
+  users = [],
+  setUsersCount,
+  onAddUser,
+  page,
+  setPage,
+  totalPages,
+}) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
@@ -216,8 +227,10 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
     },
   ];
 
+  // table header initialization
   const table = useReactTable({
     data: users,
+
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -248,6 +261,23 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
     },
   });
 
+  // export users
+  const [exportType, setExportType] = useState(null);
+  useEffect(() => {
+    if (!exportType) return;
+
+    if (exportType === "as CSV") {
+      exportTableToCSV(table, users, "users.csv");
+    }
+    if (exportType === "as XLS") {
+      exportTableToExcel(table, users, "users.xlsx");
+    } else if (exportType === "as PDF") {
+      exportTableToPDF(table, users, "users.pdf");
+    }
+
+    setExportType(null);
+  }, [exportType]);
+
   useEffect(() => {
     setUsersCount(users.length);
   }, [users]);
@@ -260,9 +290,16 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
         setShowUploadDialog={setShowUploadDialog}
         showAddDialog={showAddDialog}
         setShowAddDialog={setShowAddDialog}
+        setExportType={setExportType}
       />
 
-      <UsersTable table={table} router={router} />
+      <UsersTable
+        table={table}
+        router={router}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
+      />
 
       {/* dialogs */}
       <UploadDialog
@@ -284,7 +321,6 @@ const ActionsCell = ({ user }) => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
-  const role = user.employee?.role;
 
   const queryClient = useQueryClient();
   const deleteUserMutation = useMutation({
@@ -306,10 +342,10 @@ const ActionsCell = ({ user }) => {
     }
   };
 
-  const handleOpen = (type) => {
-    setActionType(type);
-    setDialogOpen(true);
-  };
+  // const handleOpen = (type) => {
+  //   setActionType(type);
+  //   setDialogOpen(true);
+  // };
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -402,7 +438,12 @@ const ColumnVisibilityDropdown = ({ table }) => (
   </DropdownMenu>
 );
 
-const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
+const TopControls = ({
+  onAddUser,
+  setShowAddDialog,
+  setShowUploadDialog,
+  setExportType,
+}) => {
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
@@ -465,14 +506,14 @@ const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Select>
-          <SelectTrigger className="w-24 font-custom rounded-full">
+        <Select onValueChange={(value) => setExportType(value)}>
+          <SelectTrigger className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
             <SelectValue placeholder="Export" />
           </SelectTrigger>
           <SelectContent className="font-custom">
-            {exportOptions.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
+            {exportOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -482,7 +523,7 @@ const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
   );
 };
 
-const UsersTable = ({ table, router }) => (
+const UsersTable = ({ table, router, page, setPage, totalPages }) => (
   <div className="rounded-md border mt-6">
     <Table>
       <TableHeader>
@@ -680,25 +721,174 @@ const UsersTable = ({ table, router }) => (
       <Button
         variant="outline"
         size="sm"
-        onClick={() => table.previousPage()}
-        disabled={!table.getCanPreviousPage()}
+        onClick={() => setPage(page - 1)}
+        disabled={page <= 1}
       >
         Previous
       </Button>
+
       <span className="font-custom text-gray-400">
-        Page {table.getState().pagination.pageIndex + 1} of{" "}
-        {table.getPageCount()}
+        Page {page} of {totalPages}
       </span>
+
       <Button
         variant="outline"
         size="sm"
-        onClick={() => table.nextPage()}
-        disabled={!table.getCanNextPage()}
+        onClick={() => setPage(page + 1)}
+        disabled={page >= totalPages}
       >
         Next
       </Button>
     </div>
   </div>
 );
+
+// XLSX Export
+export const exportTableToExcel = (table, data, fileName = "users.xlsx") => {
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      let value = accessorFn ? accessorFn(row) : row[col.id];
+
+      // 🕓 Format date fields
+      if (
+        value &&
+        (col.id.toLowerCase().includes("date") || value instanceof Date)
+      ) {
+        try {
+          value = format(new Date(value), "dd/MM/yyyy");
+        } catch {
+          // skip formatting invalid dates
+        }
+      }
+
+      // 🧩 Handle arrays
+      if (Array.isArray(value)) {
+        if (value.length === 0) return "--";
+        if (value[0]?.name) return value.map((v) => v.name).join(", ");
+        return value.join(", ");
+      }
+
+      // Default
+      return value ?? "--";
+    })
+  );
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  worksheet["!cols"] = headers.map(() => ({ wch: 20 }));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+  XLSX.writeFile(workbook, fileName);
+};
+
+// CSV Export
+export const exportTableToCSV = (table, data, fileName = "users.csv") => {
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      const value = accessorFn ? accessorFn(row) : row[col.id];
+      if (Array.isArray(value)) return value.map((v) => v.name ?? v).join("; ");
+      return value ?? "";
+    })
+  );
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
+    "\n"
+  );
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  a.remove();
+};
+
+export const exportTableToPDF = (table, data, fileName = "users.pdf") => {
+  const doc = new jsPDF("l", "pt", "a4"); // landscape, points, A4
+
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      let value = accessorFn ? accessorFn(row) : row[col.id];
+
+      // 🕓 Format date fields
+      if (
+        value &&
+        (col.id.toLowerCase().includes("date") || value instanceof Date)
+      ) {
+        try {
+          value = format(new Date(value), "dd/MM/yyyy");
+        } catch {
+          /* ignore invalid date */
+        }
+      }
+
+      // 🧩 Handle arrays
+      if (Array.isArray(value)) {
+        if (value.length === 0) return "--";
+        if (value[0]?.name) return value.map((v) => v.name).join(", ");
+        return value.join(", ");
+      }
+
+      return value ?? "--";
+    })
+  );
+
+  // 🧾 Add title
+  doc.setFontSize(16);
+  doc.text("User List", 40, 40);
+
+  // ✅ Use the imported autoTable helper
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 60,
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [66, 133, 244] },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
+
+  // 💾 Save
+  doc.save(fileName);
+};
 
 export default UsersScreen;

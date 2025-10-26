@@ -5,6 +5,7 @@ import axios from "axios";
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { ArrowLeft } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -247,7 +248,11 @@ function LoginForm({ className, ...props }) {
                   className="w-full sm:w-56 rounded-full text-base mt-5"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Verifying..." : "Verify"}
+                  {isLoading ? (
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  ) : (
+                    "Verify"
+                  )}
                 </Button>
 
                 <p className="text-xs text-center text-gray-500 mt-2">
@@ -296,7 +301,11 @@ function LoginForm({ className, ...props }) {
                   className="w-full sm:w-56 rounded-full text-base"
                   disabled={!phoneNumber || isLoading}
                 >
-                  {isLoading ? "Sending..." : "Get OTP"}
+                  {isLoading ? (
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  ) : (
+                    "Get OTP"
+                  )}
                 </Button>
 
                 <div className="text-center text-sm text-gray-500 mt-4">

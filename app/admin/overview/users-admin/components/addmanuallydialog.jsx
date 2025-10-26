@@ -9,6 +9,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { FaSpinner } from "react-icons/fa";
 import {
   Table,
   TableHeader,
@@ -49,7 +50,6 @@ import { fetchWorkShift } from "@/lib/api/work-shift";
 import { fetchCompany } from "@/lib/api/company";
 import { addUsers, fetchUsers } from "@/lib/api/user";
 import { getDepartmentsByBranch } from "@/lib/api/department";
-import { Title } from "@radix-ui/react-dialog";
 
 export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const queryClient = useQueryClient();
@@ -111,6 +111,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const [addedRowIds, setAddedRowIds] = useState([]);
   const [errorsMap, setErrorsMap] = useState({});
   const [successOpen, setSuccessOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
 
   const handleAddRow = useCallback(() => {
     const newId = Math.max(...data.map((d) => d.id), 0) + 1;
@@ -325,12 +326,16 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
     }));
 
+    console.log("formattedUsers", formattedUsers);
+
     addUserMutation.mutate(formattedUsers, {
       onSuccess: () => {
+        setIsPending(false);
         setSuccessOpen(true);
       },
 
       onError: (error) => {
+        setIsPending(false);
         const apiErrors = {};
 
         const msg = error?.response?.data?.error;
@@ -526,21 +531,23 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                       : ""
                   }`}
                 >
-                  {selectedShiftIds.length > 0
-                    ? `${selectedShiftIds.length} Selected`
-                    : workshiftLoading
-                    ? "Loading..."
-                    : "Select Shift Type"}
+                  {selectedShiftIds.length > 0 ? (
+                    `${selectedShiftIds.length} Selected`
+                  ) : workshiftLoading ? (
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  ) : (
+                    "Select Shift Type"
+                  )}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[200px] max-h-[200px] overflow-y-auto p-2">
                 {workshiftLoading ? (
-                  <p className="text-gray-400">Loading...</p>
+                  <FaSpinner className="animate-spin text-white text-lg" />
                 ) : (
                   workshift?.results?.results?.map((shift) => (
                     <div
                       key={shift.id}
-                      className="flex items-center space-x-2 p-1 cursor-pointer hover:bg-gray-100 rounded-md"
+                      className="flex items-center space-x-2 p-1 cursor-pointer hover:bg-gray-100 rounded-md bg-white"
                       onClick={() => handleToggleShift(shift.id)}
                     >
                       <input
@@ -690,7 +697,10 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
               <SelectContent className="font-custom">
                 {isLoading ? (
-                  <SelectItem value="loading">Loading...</SelectItem>
+                  <SelectItem value="loading">
+                    {" "}
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  </SelectItem>
                 ) : departmentsData.results.length > 0 ? (
                   departmentsData.results.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id}>
@@ -1063,7 +1073,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         gender: false,
         spoused: false,
         numberOfChildren: false,
-
         ibanking: false,
         bankProvider: false,
         bankAccount: false,
@@ -1164,15 +1173,23 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
             <Button
               onClick={handleAddUsers}
-              disabled={errorsMap && Object.keys(errorsMap).length > 0}
+              disabled={
+                isPending || (errorsMap && Object.keys(errorsMap).length > 0)
+              }
               className={`rounded-full font-custom py-6 px-9 text-white transition-colors
-    ${
-      errorsMap && Object.keys(errorsMap).length > 0
-        ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
-        : "bg-blue-500 hover:bg-blue-600"
-    }`}
-            >
-              Confirm
+                  ${
+                    isPending
+                      ? "bg-gray-400 cursor-wait"
+                      : errorsMap && Object.keys(errorsMap).length > 0
+                      ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600"
+                  }`}
+              >
+              {isPending ? (
+                <FaSpinner className="animate-spin text-white text-lg" />
+              ) : (
+                "Confirm"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

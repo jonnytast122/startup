@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -348,13 +349,17 @@ function AddBranchDialog({ isEdit, branch }) {
                   onClick={handleSave}
                   className="py-4 px-6 text-md font-custom rounded-full"
                 >
-                  {isEdit
-                    ? updateBranchMutation.isPending
-                      ? "Updating..."
-                      : "Update Branch"
-                    : createBranchMutation.isPending
-                    ? "Saving..."
-                    : "Save Branch"}
+                  {isEdit ? (
+                    updateBranchMutation.isPending ? (
+                      <FaSpinner className="animate-spin text-white text-lg" />
+                    ) : (
+                      "Update Branch"
+                    )
+                  ) : createBranchMutation.isPending ? (
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  ) : (
+                    "Save Branch"
+                  )}
                 </Button>
               </div>
             </div>
