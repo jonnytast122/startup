@@ -7,6 +7,7 @@ import { MdPeopleOutline } from "react-icons/md";
 import { GoPerson } from "react-icons/go";
 import { useDropzone } from "react-dropzone";
 import { Settings, Trash2, Pen } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 
 import AddTitleDialog from "./components/add-title-dialog";
 import AddDepartmentDialog from "./components/add-department-dialog";
@@ -57,6 +58,8 @@ export default function SettingPage() {
 
   const [progress, setProgress] = useState(0);
   const [imageUrl, setImageUrl] = useState("");
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -717,7 +720,11 @@ export default function SettingPage() {
             onClick={handleCompanyChange}
             className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
           >
-            {updateCompanyMutation.isPending ? "Saving..." : "Save Changes"}
+            {updateCompanyMutation.isPending ? (
+              <FaSpinner className="animate-spin text-white text-lg" />
+            ) : (
+              "Save Changes"
+            )}
           </Button>
         </div>
       </div>

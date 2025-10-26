@@ -6,6 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchPositions, addPosition } from "@/lib/api/position";
@@ -83,7 +84,11 @@ export default function AddTitleDialog({ onSaved }) {
             className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4"
           >
             <Button className="py-4 px-6 text-md font-custom rounded-full">
-              {addPositionMutation.isPending ? "Saving..." : "Save"}
+              {addPositionMutation.isPending ? (
+                <FaSpinner className="animate-spin text-white text-lg" />
+              ) : (
+                "Save"
+              )}
             </Button>
           </div>
         </div>

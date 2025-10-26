@@ -17,8 +17,8 @@ export interface User {
 /**
  * Fetch all users.
  */
-export const fetchUsers = async (): Promise<User[]> => {
-  const response = await api.get<User[]>(ApiRoutes.user.get);
+export const fetchUsers = async (page = 1): Promise<any> => {
+  const response = await api.get(`${ApiRoutes.user.get}?page=${page}`);
   return response.data;
 };
 
