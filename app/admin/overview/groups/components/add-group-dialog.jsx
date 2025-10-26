@@ -1,5 +1,4 @@
 "use client";
-
 import {
 	Dialog,
 	DialogContent,
@@ -170,22 +169,18 @@ export default function AddGroupDialog({
 
 				{error && <p className="text-red-500 text-sm -mt-3 mb-2">{error}</p>}
 
-				{/* ✅ Reusable Filter + User Table */}
 				<UserFilterTable
-					selectedUsers={newGroup.members.map((m) => m.id)}
-					setSelectedUsers={(ids) =>
+					users={newGroup.allUsers || []} // pass all available users
+					selectedUsers={(newGroup.members || []).map((u) => ({
+						...u,
+						id: u._id || u.info?._id,
+					}))}
+					setSelectedUsers={(updated) => {
 						setNewGroup({
 							...newGroup,
-							members: ids
-								.map(
-									(id) =>
-										(allMembers?.results || []).find(
-											(u) => u.id === id || u.employee?.id === id
-										) || null
-								)
-								.filter(Boolean),
-						})
-					}
+							members: updated.map((id) => ({ _id: id })),
+						});
+					}}
 					isViewMode={isViewMode}
 				/>
 
@@ -193,15 +188,15 @@ export default function AddGroupDialog({
 					<DialogFooter className="justify-end mt-6">
 						{isEdit ? (
 							<Button
+								onClick={() => onUpdate(newGroup)}
 								className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
-								onClick={onUpdate}
 							>
 								Update
 							</Button>
 						) : (
 							<Button
-								className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
 								onClick={handleFinish}
+								className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full"
 							>
 								{addGroupMutation.isPending ? "Creating..." : "Finish"}
 							</Button>
