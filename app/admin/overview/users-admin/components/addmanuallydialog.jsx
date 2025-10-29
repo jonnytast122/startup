@@ -238,7 +238,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       row.branch.trim() &&
       row.department.trim() &&
       row.position.trim() &&
-      row.shiftType.trim() &&
       row.job.trim() &&
       row.baseSalary.trim() &&
       row.cash.trim() &&
@@ -325,9 +324,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         accountNumber: row.bankAccount || null,
       },
     }));
-
-    console.log("formattedUsers", formattedUsers);
-
     addUserMutation.mutate(formattedUsers, {
       onSuccess: () => {
         setIsPending(false);
