@@ -87,7 +87,7 @@ export default function TimeClock() {
         {/* Tab Content */}
         <div className="p-6 font-custom">
           {activeTab === "TODAY" && <TodayScreen />}
-          {activeTab === "TIMESHEETS" && <TimesheetScreen />}
+          {/* {activeTab === "TIMESHEETS" && <TimesheetScreen />} */}
         </div>
       </div>
     </div>

@@ -36,13 +36,13 @@ export default function OverviewPage() {
           </a>
 
           {/* Asset Admins (Moved before badges) */}
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
               <br /> admins
             </p>
 
-            {/* Overlapping Circular Badges */}
+          
             <div className="flex items-center flex-wrap sm:flex-nowrap -space-x-4 sm:-space-x-4 min-w-0">
               {[
                 { text: "W", bg: "bg-gray-600" },
@@ -63,7 +63,7 @@ export default function OverviewPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

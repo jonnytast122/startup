@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { FaSpinner } from "react-icons/fa";
 import {
   ColumnDef,
   flexRender,
@@ -313,8 +314,8 @@ const Leaves = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg font-custom">Loading leave data...</div>
+      <div className="flex items-center justify-center w-full h-full py-10">
+        <FaSpinner className="animate-spin text-blue-500 text-4xl" />
       </div>
     );
   }
@@ -439,7 +440,11 @@ const Leaves = () => {
                     });
 
                     queryClient.invalidateQueries({
-                      queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
+                      queryKey: [
+                        "leave",
+                        selectedRange.startDate,
+                        selectedRange.endDate,
+                      ],
                     });
                   }}
                   className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"

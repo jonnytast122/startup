@@ -64,7 +64,7 @@ export default function SettingPage() {
   const queryClient = useQueryClient();
 
   // Fetch company data
-  const { data: company } = useQuery({
+  const { data: company, isLoading: isLoadingCompany } = useQuery({
     queryKey: ["company"],
     queryFn: fetchCompany,
   });
@@ -304,6 +304,14 @@ export default function SettingPage() {
       },
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-full py-10">
+        <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+      </div>
+    );
+  }
 
   return (
     <div>

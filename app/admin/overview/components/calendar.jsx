@@ -35,8 +35,6 @@ export default function Calendar() {
     enabled: !!company?.id,
   });
 
-  console.log(monthlyCalendar);
-
   const handlePrevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
   };
@@ -74,15 +72,17 @@ export default function Calendar() {
         const isTodayDate = isToday(day);
 
         const dateStr = format(day, "yyyy-MM-dd");
-        const events = monthlyCalendar?.data?.items?.filter((item) => {
-          const itemDate = item.startDate.split('T')[0]; // Extract date part from ISO string
-          return itemDate === dateStr;
-        }) || [];
+        const events =
+          monthlyCalendar?.data?.items?.filter((item) => {
+            const itemDate = item.startDate.split("T")[0]; // Extract date part from ISO string
+            return itemDate === dateStr;
+          }) || [];
 
         // Create tooltip content
-        const tooltipContent = events.length > 0 
-          ? events.map(event => event.title).join(', ')
-          : 'No events';
+        const tooltipContent =
+          events.length > 0
+            ? events.map((event) => event.title).join(", ")
+            : "No events";
 
         days.push(
           <div
@@ -90,9 +90,11 @@ export default function Calendar() {
             className="text-center text-base py-2 h-10 flex items-center justify-center"
           >
             {isCurrentMonth ? (
-              <div 
+              <div
                 className={`rounded-full px-2 relative group ${
-                  isTodayDate || events.length > 0 ? "text-blue-500 font-semibold" : "text-gray-800"
+                  isTodayDate || events.length > 0
+                    ? "text-blue-500 font-semibold"
+                    : "text-gray-800"
                 }`}
               >
                 {format(day, "d")}

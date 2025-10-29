@@ -39,8 +39,6 @@ export default function Layout({ children }) {
 		queryFn: getMyDetails,
 	});
 
-	console.log("my de: ", user_data);
-
 	const handleLogout = () => {
 		logout();
 		router.push("/signin");

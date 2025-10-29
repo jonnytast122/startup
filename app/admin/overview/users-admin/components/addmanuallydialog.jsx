@@ -534,7 +534,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                   {selectedShiftIds.length > 0 ? (
                     `${selectedShiftIds.length} Selected`
                   ) : workshiftLoading ? (
-                    <FaSpinner className="animate-spin text-white text-lg" />
+                    <FaSpinner className="animate-spin text-blue text-lg items-center text-center" />
                   ) : (
                     "Select Shift Type"
                   )}
@@ -1184,7 +1184,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                       ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
                       : "bg-blue-500 hover:bg-blue-600"
                   }`}
-              >
+            >
               {isPending ? (
                 <FaSpinner className="animate-spin text-white text-lg" />
               ) : (
