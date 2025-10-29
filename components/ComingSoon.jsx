@@ -16,7 +16,7 @@ const ComingSoon = () => {
   ];
 
   return (
-    <div className="font-Tw_Cen_Mt z-40 ">
+    <div className="font-custom z-40 ">
       <div className="isolate px-6 lg:px-8 py-16 z-30 bg-grey/10 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_60%,transparent_100%)] flex flex-col justify-center items-center h-1/2 lg:h-screen md:h-screen bg-fixed rounded-b-full">
         <div
           aria-hidden="true"
@@ -34,7 +34,7 @@ const ComingSoon = () => {
         <div className="mx-auto max-w-2xl pt-32 animate-fade-up animate-once ">
           <div className="text-center">
             <h1 className="text-6xl md:text-6xl lg:text-8xl font-semibold max-w-7xl mx-auto text-center mt-6 relative z-30 py-6 bg-clip-text text-transparent bg-gradient-to-b from-neutral-800 via-neutral-700 to-neutral-700 dark:from-neutral-800 dark:via-white dark:to-white">
-              <Cover>Coming Soon!</Cover>
+              <Cover>Internal Beta!</Cover>
             </h1>
             <p className="mt-6 text-lg md:text-xl lg:text-2xl text-gray-900 leading-6 md:leading-8 lg:leading-8 ">
               " A tech startup focused on innovation, driven by a passionate
@@ -53,10 +53,6 @@ const ComingSoon = () => {
             <FlipWords words={words} className="text-blue-400" /> <br />
           </h1>
         </div>
-      </section>
-
-      <section className="mt-10">
-        <ComingSoonTimeline />
       </section>
 
       <section className="mt-10">

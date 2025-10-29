@@ -22,7 +22,7 @@ const ComingSoonComment = () => {
           <figcaption className="mt-6 flex flex-col items-center space-y-3">
             <img
               alt=""
-              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3387.JPG?alt=media&token=04888c0b-c576-4266-9df3-e84f1887d970"
+              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3387.JPG?alt=media&token=0fb62074-f0c9-4d01-95ea-36ada6865c53"
               className="h-24 w-24 rounded-full"
             />
             <div className="text-base font-semibold text-gray-900">
@@ -37,12 +37,12 @@ const ComingSoonComment = () => {
 
         <figure>
           <blockquote className="text-xl font-semibold leading-8 text-gray-900 sm:text-2xl sm:leading-9">
-            <p>“Saving people time and money— that's our mission.”</p>
+            <p>“No Risk, No Ferrari”</p>
           </blockquote>
           <figcaption className="mt-6 flex flex-col items-center space-y-3">
             <img
               alt=""
-              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3385.JPG?alt=media&token=c66648f4-2455-4e83-aadb-41e817cf51a6"
+              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3385.JPG?alt=media&token=dafca77a-51ce-48f2-a8e1-60bd0fa11da0"
               className="h-24 w-24 rounded-full"
             />
             <div className="text-base font-semibold text-gray-900">
