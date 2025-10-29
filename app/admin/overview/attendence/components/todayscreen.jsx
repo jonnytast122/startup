@@ -268,8 +268,8 @@ const TodayScreen = () => {
   }, [selectedDate, searchQuery, statusFilter]);
 
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 4, 11),
-    endDate: new Date(2025, 10, 11),
+    startDate: new Date(),
+    endDate: new Date(),
     key: "selection",
   });
 

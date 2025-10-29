@@ -9,6 +9,7 @@ interface GeoLocation {
 
 interface ClockRequest {
   geoLocation: GeoLocation;
+  shiftId?: string;
 }
 
 // API functions
