@@ -96,9 +96,6 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
     enabled: !!company?.id,
   });
 
-  console.log("Employees data:", employees);
-  console.log("Policy data:", policy);
-
   useEffect(() => {
     if (policy) {
       setPolicyName(policy?.name || "");

@@ -91,7 +91,9 @@ export default function UserAdminPage() {
             (isLoading ? (
               <div className="text-center">
                 {" "}
-                <FaSpinner className="animate-spin text-blue text-lg" />
+                <div className="flex items-center justify-center w-full h-full py-10">
+                  <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+                </div>
               </div>
             ) : (
               <UsersScreen

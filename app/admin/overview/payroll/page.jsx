@@ -73,7 +73,7 @@ export default function PayrollPage() {
 
   const employeeData = [
     {
-      profile: "/avatar.png",
+      profile: "",
       firstName: "John",
       lastName: "Doe",
       department: "Operations",
@@ -89,7 +89,7 @@ export default function PayrollPage() {
       netSalary: 230,
     },
     {
-      profile: "/avatar.png",
+      profile: "",
       firstName: "Jane",
       lastName: "Smith",
       department: "Security",

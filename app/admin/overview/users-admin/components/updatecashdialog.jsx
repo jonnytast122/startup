@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,14 +9,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export default function UpdateCashDialog({ open, onOpenChange, oldCash, onSubmit }) {
+export default function UpdateCashDialog({
+  open,
+  onOpenChange,
+  oldCash,
+  onSubmit,
+}) {
   const [amount, setAmount] = useState(oldCash?.toString() || "");
+
+  // Sync amount when dialog opens or oldCash changes
+  useEffect(() => {
+    if (open) setAmount(oldCash?.toString() || "");
+  }, [open, oldCash]);
 
   const handleUpdate = () => {
     const numeric = parseFloat(amount);
     if (!isNaN(numeric)) {
-      onSubmit?.(numeric); // call parent's handler
-      onOpenChange(false); // close dialog
+      onSubmit?.(numeric);
+      onOpenChange(false);
     } else {
       alert("Please enter a valid number.");
     }
@@ -24,22 +34,24 @@ export default function UpdateCashDialog({ open, onOpenChange, oldCash, onSubmit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md font-custom">
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle />
           <h1 className="font-custom text-light-gray text-2xl sm:text-lg md:text-xl lg:text-3xl py-6">
             Update Cash
           </h1>
-          <div className="w-full h-[1px] bg-[#A6A6A6]"></div>
+          <div className="w-full h-[1px] bg-[#A6A6A6]" />
         </DialogHeader>
 
         <div>
-          <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center lg:justify-center">
+          <div className="flex flex-wrap md:flex-nowrap items-center mt-6 justify-center">
             <label className="font-custom text-[#3F4648] w-full md:w-1/3 lg:w-1/6 text-left mb-2 md:mb-0">
               Amount
             </label>
             <input
-              type="text"
+              type="number"
+              step="0.01"
+              min="0"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder={`$${oldCash}`}
@@ -47,7 +59,7 @@ export default function UpdateCashDialog({ open, onOpenChange, oldCash, onSubmit
             />
           </div>
 
-          <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
+          <div className="w-full h-[1px] bg-[#A6A6A6] mt-10" />
           <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
             <Button
               onClick={handleUpdate}

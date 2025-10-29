@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -8,44 +8,38 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { CirclePlus, CircleMinus } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export default function UpdateBankTransferDialog({
   open,
   onOpenChange,
-  oldCash,
+  ibanking,
+  spouse,
+  numberOfChildren,
   onSubmit,
 }) {
-  const [salary, setSalary] = useState(oldCash?.toString() || "");
-  const [relationship, setRelationship] = useState("Single");
-  const [childCount, setChildCount] = useState(0);
-  const [type, setType] = useState("");
-  const [amount, setAmount] = useState("");
+  // ✅ use local state with different variable names to avoid shadowing
+  const [localSpouse, setLocalSpouse] = useState(spouse);
+  const [localChildren, setLocalChildren] = useState(numberOfChildren);
+  const [localIbanking, setLocalIbanking] = useState(ibanking);
 
-  const increase = () => setChildCount((prev) => prev + 1);
-  const decrease = () => setChildCount((prev) => Math.max(0, prev - 1));
+  // ✅ Sync props to local state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setLocalSpouse(spouse);
+      setLocalChildren(numberOfChildren);
+      setLocalIbanking(ibanking);
+    }
+  }, [open, spouse, numberOfChildren, ibanking]);
+
+  const increase = () => setLocalChildren((prev) => prev + 1);
+  const decrease = () => setLocalChildren((prev) => Math.max(0, prev - 1));
 
   const handleSave = () => {
-    const result = {
-      salary: parseFloat(salary),
-      relationship,
-      childCount,
-      type,
-      amount: parseFloat(amount),
-    };
-
-    if (isNaN(result.salary) || isNaN(result.amount)) {
-      alert("Please enter valid numeric values for Salary and Amount.");
-      return;
-    }
-
-    onSubmit?.(result);
+    onSubmit?.({
+      ibanking: Number(localIbanking),
+      spouse: localSpouse,
+      children: localChildren,
+    });
     onOpenChange(false);
   };
 
@@ -57,106 +51,89 @@ export default function UpdateBankTransferDialog({
           <h1 className="font-custom text-light-gray text-2xl sm:text-lg md:text-xl lg:text-3xl py-6">
             Update Bank Transfer
           </h1>
-          <div className="w-full h-[1px] bg-[#A6A6A6]"></div>
+          <div className="w-full h-[1px] bg-[#A6A6A6]" />
         </DialogHeader>
 
-        <div>
-          {/* Tax Section */}
-          <div className="px-6 max-w-xl mx-auto">
-            <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
-              Tax
-            </h2>
+        <div className="px-6 max-w-xl mx-auto">
+          <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
+            Tax
+          </h2>
 
-            {/* Salary Input */}
-            <div className="mb-6">
-              <label className="font-custom text-[#3F4648] mb-2 block">Salary</label>
-              <input
-                type="text"
-                value={salary}
-                onChange={(e) => setSalary(e.target.value)}
-                placeholder={`$ ${oldCash}`}
-                className="font-custom border border-gray-300 rounded-lg p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+          {/* IBanking */}
+          <div className="mb-6">
+            <label className="font-custom text-[#3F4648] mb-2 block">
+              IBanking
+            </label>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={localIbanking}
+              onChange={(e) => setLocalIbanking(e.target.value)}
+              placeholder={`$${ibanking}`}
+              className="font-custom border border-gray-300 rounded-lg p-2 w-full md:w-2/3 lg:w-1/2 xl:w-2/4"
+            />
+          </div>
 
-            {/* Relationship Radio */}
-            <div className="mb-6">
-              <label className="font-custom text-[#3F4648] mb-2 block">Relationship</label>
-              <div className="flex gap-6">
-                {["Single", "Married"].map((opt) => (
-                  <label key={opt} className="flex items-center gap-2 font-custom text-md text-gray-700">
-                    <input
-                      type="radio"
-                      name="relationship"
-                      value={opt}
-                      checked={relationship === opt}
-                      onChange={() => setRelationship(opt)}
-                      className="accent-blue-500 w-4 h-4"
-                    />
-                    {opt}
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            {/* Child Counter */}
-            <div className="mb-2">
-              <label className="font-custom text-[#3F4648] mb-2 block">Child</label>
-              <div className="flex items-center gap-4">
-                <CircleMinus
-                  className="w-5 h-5 text-blue-400 cursor-pointer hover:text-blue-600 transition"
-                  onClick={decrease}
-                />
-                <input
-                  type="text"
-                  readOnly
-                  value={childCount}
-                  className="w-12 text-center font-custom border border-gray-300 rounded-md text-gray-800"
-                />
-                <CirclePlus
-                  className="w-5 h-5 text-blue-400 cursor-pointer hover:text-blue-600 transition"
-                  onClick={increase}
-                />
-              </div>
+          {/* Spoused */}
+          <div className="mb-6">
+            <label className="font-custom text-[#3F4648] mb-2 block">
+              Spoused
+            </label>
+            <div className="flex gap-6">
+              {[
+                { label: "Yes", value: true },
+                { label: "No", value: false },
+              ].map((opt) => (
+                <label
+                  key={opt.label}
+                  className="flex items-center gap-2 font-custom text-md text-gray-700"
+                >
+                  <input
+                    type="radio"
+                    name="spouse"
+                    value={String(opt.value)}
+                    checked={localSpouse === opt.value}
+                    onChange={() => setLocalSpouse(opt.value)}
+                    className="accent-blue-500 w-4 h-4"
+                  />
+                  {opt.label}
+                </label>
+              ))}
             </div>
           </div>
 
-          {/* Payment Info Section */}
-          <div className="px-6 py-4 max-w-xl mx-auto mt-6">
-            <h2 className="text-xl font-semibold font-custom mb-3 text-gray-800">
-              Nssf
-            </h2>
-
-            {/* Type Select */}
-            <div className="mb-6">
-              <label className="font-custom text-[#3F4648] mb-2 block">Type</label>
-              <Select onValueChange={setType}>
-                <SelectTrigger className="w-full font-custom text-md border rounded-lg px-3 py-2 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent className="font-custom text-md">
-                  <SelectItem value="one">One Children</SelectItem>
-                  <SelectItem value="two">Two Children</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Amount Input */}
-            <div className="mb-2">
-              <label className="font-custom text-[#3F4648] mb-2 block">Amount</label>
+          {/* Children Counter */}
+          <div className="mb-2">
+            <label className="font-custom text-[#3F4648] mb-2 block">
+              Children
+            </label>
+            <div className="flex items-center gap-4">
+              <CircleMinus
+                className="w-5 h-5 text-blue-400 cursor-pointer hover:text-blue-600 transition"
+                onClick={decrease}
+              />
               <input
                 type="text"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                placeholder="Bank Transfer"
-                className="font-custom border border-gray-300 rounded-lg p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                readOnly
+                value={localChildren}
+                className="w-12 text-center font-custom border border-gray-300 rounded-md text-gray-800"
+              />
+              <CirclePlus
+                className="w-5 h-5 text-blue-400 cursor-pointer hover:text-blue-600 transition"
+                onClick={increase}
               />
             </div>
           </div>
 
           <div className="w-full h-[1px] bg-[#A6A6A6] mt-4"></div>
+
+          {/* Save Button */}
           <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
-            <Button onClick={handleSave} className="py-4 px-6 text-lg font-custom rounded-full">
+            <Button
+              onClick={handleSave}
+              className="py-4 px-6 text-lg font-custom rounded-full"
+            >
               Save Changes
             </Button>
           </div>

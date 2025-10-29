@@ -79,7 +79,6 @@ export default function MobileNumber({
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       onNextStep();
     } catch (err) {
       setErrorMsg(
