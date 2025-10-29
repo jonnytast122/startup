@@ -74,7 +74,7 @@ function Map({ userData = [], selectedDate }) {
         position: { lat: user.lat, lng: user.lng },
         map,
         icon: {
-          url: user.profile || "/default-avatar.png",
+          url: user.profile || "",
           scaledSize: new google.maps.Size(40, 40),
           anchor: new google.maps.Point(20, 20),
         },

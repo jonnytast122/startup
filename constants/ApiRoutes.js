@@ -19,6 +19,7 @@ const ApiRoutes = {
     getMyCompany: `${BASE_URL}/companies/my-company`,
     update: `${BASE_URL}/companies/{id}`,
     delete: `${BASE_URL}/companies/{id}`,
+    getEmployee: `${BASE_URL}/companies/{id}/employees`,
   },
   branch: {
     create: `${BASE_URL}/branches`,
@@ -128,7 +129,7 @@ const ApiRoutes = {
 
   userReport: {
     getDailyAttendance: `${BASE_URL}/dashboard/me/daily-attendance`,
-    getMontlyCalendar: `${BASE_URL}/dashboard/me/calendar`,
+    getMontlyCalendar: `${BASE_URL}/dashboard/me/monthly-calendar`,
     getEstimatePayroll: `${BASE_URL}/dashboard/me/estimate-payroll`,
     getUpcomintEvent: `${BASE_URL}/dashboard/me/upcoming-event`,
     getLeaveRate: `${BASE_URL}/dashboard/me/leave-rate`,
@@ -136,14 +137,14 @@ const ApiRoutes = {
   },
 
   adminOverview: {
-    getDailyAttendance: `${BASE_URL}/dashboard/daily-attendance`,
-    getMontlyCalendar: `${BASE_URL}/dashboard/calendar`,
-    getDailyOvertime: `${BASE_URL}/dashbaord/leave-overview`,
-    getEstimatePayroll: `${BASE_URL}/dashboard/estimate-payroll`,
-    getUpcomintEvent: `${BASE_URL}/dashboard/upcoming-event`,
-    getLeaveRate: `${BASE_URL}/dashboard/leave-rate`,
-    getWorkShiffRate: `${BASE_URL}/dashboard/work-shift-rate`,
-    getCompanyOverview: `${BASE_URL}/dashboard/company-overview`,
+    getDailyAttendance: `${BASE_URL}/dashboard/company/{id}/daily-attendance`,
+    getMontlyCalendar: `${BASE_URL}/dashboard/company/{id}/monthly-calendar`,
+    getDailyOvertime: `${BASE_URL}/dashboard/company/{id}/leave-ot-summary`,
+    getEstimatePayroll: `${BASE_URL}/dashboard/company/{id}/estimate-payroll`,
+    getUpcomintEvent: `${BASE_URL}/dashboard/company/{id}/upcoming-events`,
+    getLeaveRate: `${BASE_URL}/dashboard/company/{id}/leave-rate`,
+    getWorkShiffRate: `${BASE_URL}/dashboard/company/{id}/workshift-rate`,
+    getCompanyOverview: `${BASE_URL}/dashboard/company/{id}/overview`,
   },
 
   adminAttendance: {

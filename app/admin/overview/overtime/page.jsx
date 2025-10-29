@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -216,7 +216,12 @@ const Overtime = () => {
   const company = queryClient.getQueryData(["company"]);
 
   const { data: overtime } = useQuery({
-    queryKey: ["overtime", company?.id, selectedRange],
+    queryKey: [
+      "overtime",
+      company?.id,
+      selectedRange.startDate.toISOString(),
+      selectedRange.endDate.toISOString(),
+    ],
     queryFn: () =>
       getOvertime({
         startDate: selectedRange.startDate.toISOString().split("T")[0],
@@ -229,9 +234,7 @@ const Overtime = () => {
 
   // Merge API data into state (optional, if you want live update)
   React.useEffect(() => {
-    if (transformedOvertimeData.length) {
-      setOtData(transformedOvertimeData);
-    }
+      setOtData(transformedOvertimeData || []);
   }, [transformedOvertimeData]);
 
   const filteredData = useMemo(() => {
@@ -240,7 +243,7 @@ const Overtime = () => {
         .toLowerCase()
         .includes(searchQuery.toLowerCase())
     );
-  }, [otData, searchQuery]);
+  }, [otData, searchQuery, selectedRange]);
 
   const table = useReactTable({
     data: filteredData,
@@ -249,6 +252,14 @@ const Overtime = () => {
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  useEffect(() => {
+    if (selectedRange.startDate && selectedRange.endDate) {
+      queryClient.invalidateQueries({
+        queryKey: ["overtime", company?.id, selectedRange],
+      });
+    }
+  }, [selectedRange, queryClient]);
 
   return (
     <div>

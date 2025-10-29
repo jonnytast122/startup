@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { FaSpinner } from "react-icons/fa";
 import {
   ColumnDef,
   flexRender,
@@ -33,7 +34,7 @@ import "react-date-range/dist/theme/default.css";
 import AddLeaveDialog from "./components/addleavedialog";
 import UserProfileSection from "./components/user-profile-section";
 import { DateRangePicker } from "react-date-range";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getLeave } from "@/lib/api/adminLeave";
 
 const ALL = [
@@ -224,6 +225,8 @@ const Leaves = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
 
+  const queryClient = useQueryClient();
+
   // Fetch leave data from API
   const {
     data: leaveResponse,
@@ -267,7 +270,7 @@ const Leaves = () => {
 
       return matchesSearch;
     });
-  }, [searchQuery, leaveData]);
+  }, [searchQuery, leaveData, selectedRange]);
 
   const table = useReactTable({
     data: filteredData,
@@ -301,10 +304,18 @@ const Leaves = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (selectedRange.startDate && selectedRange.endDate) {
+      queryClient.invalidateQueries({
+        queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
+      });
+    }
+  }, [selectedRange, queryClient]);
+
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-lg font-custom">Loading leave data...</div>
+      <div className="flex items-center justify-center w-full h-full py-10">
+        <FaSpinner className="animate-spin text-blue-500 text-4xl" />
       </div>
     );
   }
@@ -426,6 +437,14 @@ const Leaves = () => {
                       startDate: today,
                       endDate: today,
                       key: "selection",
+                    });
+
+                    queryClient.invalidateQueries({
+                      queryKey: [
+                        "leave",
+                        selectedRange.startDate,
+                        selectedRange.endDate,
+                      ],
                     });
                   }}
                   className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"

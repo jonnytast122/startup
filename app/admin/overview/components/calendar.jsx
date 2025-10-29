@@ -13,11 +13,27 @@ import {
   isToday,
 } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getMonthlyCalendar } from "@/lib/api/adminOverview";
 
 const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function Calendar() {
+  const queryClient = useQueryClient();
+  const company = queryClient.getQueryData(["company"]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const currentYear = new Date().getFullYear();
+
+  const { data: monthlyCalendar } = useQuery({
+    queryKey: ["admin-dashboard-monthly-calendar", company?.id],
+    queryFn: () =>
+      getMonthlyCalendar({
+        id: company.id,
+        month: currentMonth.getMonth() + 1,
+        year: currentYear,
+      }),
+    enabled: !!company?.id,
+  });
 
   const handlePrevMonth = () => {
     setCurrentMonth(subMonths(currentMonth, 1));
@@ -55,19 +71,41 @@ export default function Calendar() {
         const isCurrentMonth = isSameMonth(day, monthStart);
         const isTodayDate = isToday(day);
 
+        const dateStr = format(day, "yyyy-MM-dd");
+        const events =
+          monthlyCalendar?.data?.items?.filter((item) => {
+            const itemDate = item.startDate.split("T")[0]; // Extract date part from ISO string
+            return itemDate === dateStr;
+          }) || [];
+
+        // Create tooltip content
+        const tooltipContent =
+          events.length > 0
+            ? events.map((event) => event.title).join(", ")
+            : "No events";
+
         days.push(
           <div
             key={day.toString()}
             className="text-center text-base py-2 h-10 flex items-center justify-center"
           >
             {isCurrentMonth ? (
-              <span
-                className={`rounded-full px-2 ${
-                  isTodayDate ? "text-blue-500 font-semibold" : "text-gray-800"
+              <div
+                className={`rounded-full px-2 relative group ${
+                  isTodayDate || events.length > 0
+                    ? "text-blue-500 font-semibold"
+                    : "text-gray-800"
                 }`}
               >
                 {format(day, "d")}
-              </span>
+                {/* Tooltip */}
+                {events.length > 0 && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-10">
+                    {tooltipContent}
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                  </div>
+                )}
+              </div>
             ) : (
               <span className="text-gray-300"> </span>
             )}

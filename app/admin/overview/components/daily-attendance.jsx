@@ -1,6 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { MoreHorizontal, ListFilter } from "lucide-react";
+import { ListFilter } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import {
   Select,
@@ -9,32 +8,51 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-const attendanceData = [
-  { name: "On Time", value: 5 },
-  { name: "Running Late", value: 1 },
-];
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getDailyAttendance } from "@/lib/api/adminOverview";
 
-const absentData = [
-  { name: "No Active", value: 1 },
-  { name: "On Leave", value: 3 },
-];
-
-const COLORS_ATTEND = ["#22c55e", "#ef4444"];
-const COLORS_ABSENT = ["#3b82f6", "#facc15"];
-
-const totalAttend = attendanceData.reduce((acc, cur) => acc + cur.value, 0);
-const totalAbsent = absentData.reduce((acc, cur) => acc + cur.value, 0);
-const onTime = attendanceData.find(d => d.name === "On Time")?.value || 0;
-const runningLate = attendanceData.find(d => d.name === "Running Late")?.value || 0;
-const noActive = absentData.find(d => d.name === "No Active")?.value || 0;
-const onLeave = absentData.find(d => d.name === "On Leave")?.value || 0;
+const COLORS_ATTEND = ["#22c55e", "#ef4444"]; // green (on time), red (late)
+const COLORS_ABSENT = ["#3b82f6", "#facc15"]; // blue (absent), yellow (on leave)
 
 export default function DailyAttendance() {
+  const queryClient = useQueryClient();
+  const company = queryClient.getQueryData(["company"]);
+
+  const { data: dailyAttendance } = useQuery({
+    queryKey: ["admin-dashboard-daily-attendance", company?.id],
+    queryFn: () => getDailyAttendance(company.id),
+    enabled: !!company?.id,
+  });
+
+  // Extract API data safely
+  const stats = dailyAttendance?.data || {
+    onTime: 0,
+    late: 0,
+    onLeave: 0,
+    absent: 0,
+  };
+
+  // Compute totals
+  const totalAttend = stats.onTime + stats.late;
+  const totalAbsent = stats.absent + stats.onLeave;
+
+  // Chart data
+  const attendanceData = [
+    { name: "On Time", value: stats.onTime },
+    { name: "Late", value: stats.late },
+  ];
+
+  const absentData = [
+    { name: "Absent", value: stats.absent },
+    { name: "On Leave", value: stats.onLeave },
+  ];
+
   const Filter = [
     { value: "Select all", label: "Select all" },
     { value: "All users group", label: "All users group" },
     { value: "Assigned features", label: "Assigned features" },
   ];
+
   return (
     <div className="bg-white rounded-lg p-5 h-full font-custom">
       {/* Header */}
@@ -62,32 +80,38 @@ export default function DailyAttendance() {
         <div className="border rounded-lg p-4 w-[280px] ml-5">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-2xl text-black">Attend</h3>
-            <span className="px-2 py-0.5 rounded-md text-2xl text-blue-500 bg-blue-200">{totalAttend}</span>
+            <span className="px-2 py-0.5 rounded-md text-2xl text-blue-500 bg-blue-200">
+              {totalAttend}
+            </span>
           </div>
           <div className="flex justify-between text-base text-gray-700">
             <div className="flex flex-col items-center">
               <span className="text-base">On Time</span>
-              <span className="text-3xl font-bold text-green-500">{onTime}</span>
+              <span className="text-3xl font-bold text-green-500">
+                {stats.onTime}
+              </span>
             </div>
             <div className="flex flex-col items-center">
-              <span className="text-base">Running Late</span>
-              <span className="text-3xl font-bold text-red-500">{runningLate}</span>
+              <span className="text-base">Late</span>
+              <span className="text-3xl font-bold text-red-500">
+                {stats.late}
+              </span>
             </div>
           </div>
-          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+          <div className="mt-4 w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={attendanceData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={50}      // slightly larger inner radius
-                  outerRadius={80}      // increased outer radius
+                  innerRadius={50}
+                  outerRadius={80}
                   dataKey="value"
                 >
                   {attendanceData.map((entry, index) => (
                     <Cell
-                      key={`cell-${index}`}
+                      key={`cell-attend-${index}`}
                       fill={COLORS_ATTEND[index % COLORS_ATTEND.length]}
                     />
                   ))}
@@ -95,26 +119,31 @@ export default function DailyAttendance() {
               </PieChart>
             </ResponsiveContainer>
           </div>
-
         </div>
 
         {/* Right Box: Absent */}
         <div className="border rounded-lg p-4 w-[280px] mr-5">
           <div className="flex items-center justify-center gap-2 mb-2">
             <h3 className="text-2xl text-black">Absent</h3>
-            <span className="px-2 py-0.5 rounded-md text-2xl text-red-500 bg-red-200">{totalAbsent}</span>
+            <span className="px-2 py-0.5 rounded-md text-2xl text-red-500 bg-red-200">
+              {totalAbsent}
+            </span>
           </div>
           <div className="flex justify-between text-base text-gray-700">
             <div className="flex flex-col items-center">
-              <span className="text-base">No Active</span>
-              <span className="text-3xl font-bold text-blue-500">{noActive}</span>
+              <span className="text-base">Absent</span>
+              <span className="text-3xl font-bold text-blue-500">
+                {stats.absent}
+              </span>
             </div>
             <div className="flex flex-col items-center">
               <span className="text-base">On Leave</span>
-              <span className="text-3xl font-bold text-yellow-400">{onLeave}</span>
+              <span className="text-3xl font-bold text-yellow-400">
+                {stats.onLeave}
+              </span>
             </div>
           </div>
-          <div className="mt-4 w-full h-48"> {/* increased from h-40 to h-72 */}
+          <div className="mt-4 w-full h-48">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -126,7 +155,10 @@ export default function DailyAttendance() {
                   dataKey="value"
                 >
                   {absentData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS_ABSENT[index % COLORS_ABSENT.length]} />
+                    <Cell
+                      key={`cell-absent-${index}`}
+                      fill={COLORS_ABSENT[index % COLORS_ABSENT.length]}
+                    />
                   ))}
                 </Pie>
               </PieChart>

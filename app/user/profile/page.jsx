@@ -280,11 +280,36 @@ export default function UserProfile() {
             />
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
+              Gender
+            </label>
+            <input
+              type="text"
+              value={
+                user_data?.gender
+                  ? user_data.gender.charAt(0).toUpperCase() +
+                    user_data.gender.slice(1)
+                  : "N/A"
+              }
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
               Mobile Phone
             </label>
             <input
               type="text"
               value={user_data?.employee?.phoneNumber || "N/A"}
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Job
+            </label>
+            <input
+              type="text"
+              value={user_data?.job || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -299,6 +324,16 @@ export default function UserProfile() {
                   ? new Date(user_data?.dateOfBirth).toISOString().split("T")[0]
                   : ""
               }
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
+            />
+
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              ID Card Number
+            </label>
+            <input
+              type="text"
+              value={user_data?.idCardNumber || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
@@ -361,24 +396,28 @@ export default function UserProfile() {
               onItemClick={() => setIsLeaveDetailOpen(true)}
             />
 
+            {/* Shift Type */}
             <DropdownSection
               title="Shift Type"
               items={
-                user_data?.shiftType?.name
+                Array.isArray(user_data?.shiftType)
+                  ? user_data.shiftType.map((s) => s.name)
+                  : user_data?.shiftType?.name
                   ? [user_data.shiftType.name]
                   : ["N/A"]
               }
-              onItemClick={() => setIsShiftDialogOpen(true)}
             />
 
+            {/* Groups */}
             <DropdownSection
               title="Groups"
               items={
-                user_data?.groups?.length
+                Array.isArray(user_data?.groups)
                   ? user_data.groups.map((g) => g.name)
+                  : user_data?.groups?.name
+                  ? [user_data.groups.name]
                   : ["N/A"]
               }
-              onItemClick={() => setIsAddUserOpen(true)}
             />
 
             <DropdownSection
@@ -386,6 +425,15 @@ export default function UserProfile() {
               items={[
                 <span key="location">
                   {user_data?.allowedRemoteCheckIn ? "Flexible" : "Geofencing"}
+                </span>,
+              ]}
+            />
+
+            <DropdownSection
+              title="Required Attendance"
+              items={[
+                <span key="required-attendance">
+                  {user_data?.sRequiredToCheckIn ? "YES" : "NO"}
                 </span>,
               ]}
             />
@@ -414,6 +462,18 @@ export default function UserProfile() {
                 value={
                   user_data?.employee?.finance?.bankDetails?.accountNumber ||
                   "N/A"
+                }
+              />
+
+              <InfoRow
+                label="Salary Type"
+                value={
+                  user_data?.employee?.finance?.salaryInfo?.salaryType
+                    ? user_data.employee.finance.salaryInfo.salaryType
+                        .charAt(0)
+                        .toUpperCase() +
+                      user_data.employee.finance.salaryInfo.salaryType.slice(1)
+                    : "N/A"
                 }
               />
             </div>

@@ -13,13 +13,14 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
-const API_KEY = "pozBd6WMN3FF5ufGppIG8nLCnFGiOtRJ"; // Calendarific
+import { getMonthlyCalendar } from "@/lib/api/userReport";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [holidays, setHolidays] = useState([]);
 
+  // Static local events
   const staticEvents = useMemo(() => {
     const y = currentDate.getFullYear();
     const m = currentDate.getMonth();
@@ -29,6 +30,7 @@ export default function Calendar() {
     ];
   }, [currentDate]);
 
+  // Calendar grid
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -38,11 +40,12 @@ export default function Calendar() {
     [firstDayOffset, days]
   );
 
+  // Fetch public holidays
   useEffect(() => {
     const fetchHolidays = async () => {
       try {
         const res = await fetch(
-          `https://calendarific.com/api/v2/holidays?api_key=${API_KEY}&country=KH&year=${format(
+          `https://calendarific.com/api/v2/holidays?api_key=pozBd6WMN3FF5ufGppIG8nLCnFGiOtRJ&country=KH&year=${format(
             currentDate,
             "yyyy"
           )}`
@@ -51,7 +54,10 @@ export default function Calendar() {
         const allHolidays = json?.response?.holidays || [];
         setHolidays(
           allHolidays.map((h) => ({
-            id: `holiday-${h.date.iso.slice(0, 10)}-${h.name.replace(/\s+/g, "-")}`,
+            id: `holiday-${h.date.iso.slice(0, 10)}-${h.name.replace(
+              /\s+/g,
+              "-"
+            )}`,
             dateStr: h.date.iso.slice(0, 10),
             dateObj: new Date(h.date.iso),
             name: h.name,
@@ -65,35 +71,61 @@ export default function Calendar() {
     fetchHolidays();
   }, [currentDate]);
 
-  const upcomingEvents = useMemo(() => {
-    const y = currentDate.getFullYear();
-    const m = currentDate.getMonth();
-    const monthPrefix = format(currentDate, "yyyy-MM");
+  // API monthly calendar
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1; // API expects 1-12
 
-    const holidayThisMonth = holidays
-      .filter((h) => h.dateStr.startsWith(monthPrefix))
-      .map((h) => ({ date: h.dateObj, name: h.name, color: h.color }));
+  const { data: monthlyCalendar } = useQuery({
+    queryKey: ["user-report-monthly-calendar", currentYear, currentMonth],
+    queryFn: () =>
+      getMonthlyCalendar({
+        year: currentYear,
+        month: currentMonth,
+      }),
+  });
 
-    const staticThisMonth = staticEvents.filter(
-      (e) => e.date.getFullYear() === y && e.date.getMonth() === m
-    );
-
-    return [...staticThisMonth, ...holidayThisMonth].sort((a, b) => a.date - b.date);
-  }, [holidays, staticEvents, currentDate]);
-
+  // Combine all events (static + holidays + API)
   const eventsByDate = useMemo(() => {
     const map = {};
+
+    // Public holidays
     holidays.forEach((h) => {
       if (!map[h.dateStr]) map[h.dateStr] = [];
       map[h.dateStr].push({ name: h.name, color: h.color });
     });
+
+    // Static local events
     staticEvents.forEach((e) => {
       const ds = format(e.date, "yyyy-MM-dd");
       if (!map[ds]) map[ds] = [];
       map[ds].push({ name: e.name, color: e.color || "blue" });
     });
+
+    // API monthly events
+    monthlyCalendar?.data?.items?.forEach((e) => {
+      const ds = e.startDate.slice(0, 10);
+      if (!map[ds]) map[ds] = [];
+      map[ds].push({ name: e.title, color: e.color || "blue" });
+    });
+
     return map;
-  }, [holidays, staticEvents]);
+  }, [holidays, staticEvents, monthlyCalendar]);
+
+  // Flatten upcoming events for the right panel
+  const upcomingEvents = useMemo(() => {
+    const monthPrefix = format(currentDate, "yyyy-MM");
+    const events = [];
+
+    Object.entries(eventsByDate).forEach(([dateStr, evList]) => {
+      if (dateStr.startsWith(monthPrefix)) {
+        evList.forEach((ev) => {
+          events.push({ date: new Date(dateStr), name: ev.name, color: ev.color });
+        });
+      }
+    });
+
+    return events.sort((a, b) => a.date - b.date);
+  }, [eventsByDate, currentDate]);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch">
@@ -143,7 +175,7 @@ export default function Calendar() {
                   key={dateStr || `empty-${idx}`}
                   className={[
                     "relative border p-1 overflow-hidden",
-                    "h-[52px] sm:h-[60px]", // smaller bump
+                    "h-[52px] sm:h-[60px]",
                     today ? "bg-blue-200" : "",
                     day ? "cursor-default" : "bg-[#f7f9fb]",
                   ].join(" ")}
@@ -183,7 +215,7 @@ export default function Calendar() {
       <div className="bg-white rounded-xl border p-4 flex flex-col overflow-hidden h-[520px] min-h-[520px]">
         <div className="flex items-center justify-between shrink-0">
           <h2 className="text-lg text-black">
-            Up Coming Events this {format(currentDate, "MMMM yyyy")}
+            Upcoming Events this {format(currentDate, "MMMM yyyy")}
           </h2>
         </div>
         <Separator className="my-3 shrink-0" />
@@ -206,8 +238,8 @@ export default function Calendar() {
                 </span>
                 <span className="text-lg">{format(event.date, "d")}</span>
               </div>
-              <div className="flex-1 border border-red-500 rounded px-3 py-1.5 ml-2">
-                <span className="text-red-500 text-sm">{event.name}</span>
+              <div className={`flex-1 border rounded px-3 py-1.5 ml-2 ${event.color === "red" ? "border-red-500" : "border-blue-500"}`}>
+                <span className={event.color === "red" ? "text-red-500" : "text-blue-500"}>{event.name}</span>
               </div>
             </div>
           ))}

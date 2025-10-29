@@ -7,100 +7,108 @@ import AdminsScreen from "./components/adminscreen";
 import ArchivedScreen from "./components/archievedscreen";
 import AddUserDialog from "./components/adduserdialog";
 import AddAdminDialog from "./components/addadmindialog";
+import { FaSpinner } from "react-icons/fa";
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchUsers } from "@/lib/api/user";
 
 export default function UserAdminPage() {
-	const [activeTab, setActiveTab] = useState("Users");
-	const [usersCount, setUsersCount] = useState(0);
-	const [adminsCount, setAdminsCount] = useState(0);
-	const [searchQuery, setSearchQuery] = useState("");
-	const [dialogType, setDialogType] = useState(null);
+  const [activeTab, setActiveTab] = useState("Users");
+  const [usersCount, setUsersCount] = useState(0);
+  const [adminsCount, setAdminsCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dialogType, setDialogType] = useState(null);
+  const [page, setPage] = useState(1);
 
-	// ✅ Fetch users (paginated response)
-	const { data, isLoading } = useQuery({
-		queryKey: ["users", searchQuery],
-		queryFn: () => fetchUsers(searchQuery),
-		onSuccess: (data) => {
-			setUsersCount(data?.results?.length || 0);
+  const { data, isLoading } = useQuery({
+    queryKey: ["users", page],
+    queryFn: () => fetchUsers(page),
+    keepPreviousData: true,
+    onSuccess: (data) => {
+      setUsersCount(data?.totalResults || 0);
+    },
+  });
 
-			// derive admins count from same response
-			const admins = data?.results?.filter(
-				(u) => u.employee?.role === "admin" || u.employee?.role === "owner"
-			);
-			console.log(admins);
-			setAdminsCount(admins?.length || 0);
-		},
-	});
+  const users = data?.results || [];
+  const totalPages = data?.totalPages || 1;
 
-	const users = data?.results || [];
+  return (
+    <div>
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+        <div className="flex items-center space-x-3 p-5">
+          <UserRound className="text-[#2998FF]" width={40} height={40} />
+          <span className="font-custom text-3xl text-black">
+            Users & Admins
+          </span>
+        </div>
+      </div>
 
-	return (
-		<div>
-			<div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-				<div className="flex items-center space-x-3 p-5">
-					<UserRound className="text-[#2998FF]" width={40} height={40} />
-					<span className="font-custom text-3xl text-black">
-						Users & Admins
-					</span>
-				</div>
-			</div>
+      {/* Tabs */}
+      <div className="relative bg-white rounded-xl shadow-md">
+        <div className="flex">
+          {["Users", "Archived"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab);
+                setSearchQuery("");
+              }}
+              className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
+                activeTab === tab
+                  ? "bg-white text-blue-500 rounded-t-xl"
+                  : "bg-gray-100 text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {tab} {tab === "Users" && `(${usersCount})`}
+              {/* {tab === "Admins" && `(${adminsCount})`} */}
+            </button>
+          ))}
+        </div>
 
-			{/* Tabs */}
-			<div className="relative bg-white rounded-xl shadow-md">
-				<div className="flex">
-					{["Users", "Archived"].map((tab) => (
-						<button
-							key={tab}
-							onClick={() => {
-								setActiveTab(tab);
-								setSearchQuery("");
-							}}
-							className={`flex-1 py-3 font-custom sm:text-md md:text-md lg:text-2xl transition-all ${
-								activeTab === tab
-									? "bg-white text-blue-500 rounded-t-xl"
-									: "bg-gray-100 text-gray-500 hover:text-gray-700"
-							}`}
-						>
-							{tab} {tab === "Users" && `(${usersCount})`}
-							{/* {tab === "Admins" && `(${adminsCount})`} */}
-						</button>
-					))}
-				</div>
+        {/* Search Bar */}
+        <div className="flex items-center p-4 bg-white border-b">
+          <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+            <Search className="absolute left-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder={
+                activeTab === "Users"
+                  ? "Search users..."
+                  : activeTab === "Admins"
+                  ? "Search admins..."
+                  : "Search users..."
+              }
+              className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
 
-				{/* Search Bar */}
-				<div className="flex items-center p-4 bg-white border-b">
-					<div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
-						<Search className="absolute left-3 text-gray-400" size={20} />
-						<input
-							type="text"
-							value={searchQuery}
-							onChange={(e) => setSearchQuery(e.target.value)}
-							placeholder={
-								activeTab === "Users"
-									? "Search users..."
-									: activeTab === "Admins"
-									? "Search admins..."
-									: "Search users..."
-							}
-							className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-						/>
-					</div>
-				</div>
+        {/* Content */}
+        <div className="p-3 font-custom">
+          {activeTab === "Users" &&
+            (isLoading ? (
+              <div className="text-center">
+                {" "}
+                <div className="flex items-center justify-center w-full h-full py-10">
+                  <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+                </div>
+              </div>
+            ) : (
+              <UsersScreen
+                users={users}
+                setUsersCount={setUsersCount}
+                searchQuery={searchQuery}
+                onAddUser={() => setDialogType("user")}
+                isLoading={isLoading}
+                page={page}
+                setPage={setPage}
+                totalPages={totalPages}
+              />
+            ))}
 
-				{/* Content */}
-				<div className="p-3 font-custom">
-					{activeTab === "Users" && (
-						<UsersScreen
-							users={users}
-							setUsersCount={setUsersCount}
-							searchQuery={searchQuery}
-							onAddUser={() => setDialogType("user")}
-							isLoading={isLoading}
-						/>
-					)}
-					{/* {activeTab === "Admins" && (
+          {/* {activeTab === "Admins" && (
             <AdminsScreen
               admins={users.filter((user) => {
                 const role = user?.employee?.role?.toLowerCase();
@@ -112,19 +120,19 @@ export default function UserAdminPage() {
               isLoading={isLoading}
             />
           )} */}
-					{activeTab === "Archived" && (
+          {/* {activeTab === "Archived" && (
 						<ArchivedScreen searchQuery={searchQuery} />
-					)}
-				</div>
-			</div>
+					)} */}
+        </div>
+      </div>
 
-			{/* Dialogs */}
-			{dialogType === "user" && (
-				<AddUserDialog open={true} onClose={() => setDialogType(null)} />
-			)}
-			{/* {dialogType === "admin" && (
+      {/* Dialogs */}
+      {dialogType === "user" && (
+        <AddUserDialog open={true} onClose={() => setDialogType(null)} />
+      )}
+      {/* {dialogType === "admin" && (
         <AddAdminDialog open={true} onClose={() => setDialogType(null)} />
       )} */}
-		</div>
-	);
+    </div>
+  );
 }

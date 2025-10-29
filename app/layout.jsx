@@ -7,12 +7,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
-        <title>Anan</title>
-        <meta
-          name="description"
-          content="A tech startup focused on innovation..."
-        />
-        <link rel="icon" href="/anan_logo.png" type="image/png" />
+        <title>Anan App</title>
+        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/favicon.png" />
+        <meta name="theme-color" content="#8936FF" />
       </head>
       <body>
         <AuthProvider>

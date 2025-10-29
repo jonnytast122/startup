@@ -9,8 +9,15 @@ import UpcomingEvent from "./components/upcoming-event";
 import LeavePolicy from "./components/leave-policy";
 import WorkShift from "./components/work-shift";
 import CompanyOverview from "./components/company-overview";
+import { fetchCompany } from "@/lib/api/company";
+import { useQuery } from "@tanstack/react-query";
 
 export default function OverviewPage() {
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+  });
+
   return (
     <div className="space-y-2 scrollbar-hide font-custom">
       {/* Header */}
@@ -29,13 +36,13 @@ export default function OverviewPage() {
           </a>
 
           {/* Asset Admins (Moved before badges) */}
-          <div className="flex items-center space-x-4">
+          {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
               <br /> admins
             </p>
 
-            {/* Overlapping Circular Badges */}
+          
             <div className="flex items-center flex-wrap sm:flex-nowrap -space-x-4 sm:-space-x-4 min-w-0">
               {[
                 { text: "W", bg: "bg-gray-600" },
@@ -56,7 +63,7 @@ export default function OverviewPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 

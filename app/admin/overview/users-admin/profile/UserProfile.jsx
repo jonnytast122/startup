@@ -10,8 +10,11 @@ import {
   Download,
   User,
 } from "lucide-react";
+import { FaSpinner } from "react-icons/fa";
 import { useState, useCallback, useRef, useEffect } from "react";
-
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { storage } from "@/config/firebase";
+import { useDropzone } from "react-dropzone";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -29,9 +32,9 @@ import { updateUser } from "@/lib/api/user";
 import { fetchBranches } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
 import { fetchCompany } from "@/lib/api/company";
+import { fetchSections } from "@/lib/api/group";
 import { fetchCompanyDepartments } from "@/lib/api/department";
 import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
-import { ref } from "firebase/storage";
 
 export default function UserProfile({ user }) {
   const queryClient = useQueryClient();
@@ -58,6 +61,12 @@ export default function UserProfile({ user }) {
     queryFn: fetchBranches,
   });
 
+  // Fetch sections (with nested groups)
+  const { data: sections = [], isLoading } = useQuery({
+    queryKey: ["sections"],
+    queryFn: fetchSections,
+  });
+
   const { data: positions } = useQuery({
     queryKey: ["positions"],
     queryFn: fetchPositions,
@@ -68,15 +77,7 @@ export default function UserProfile({ user }) {
     queryFn: () => fetchCompanyLeavePolicy(company?.id),
     enabled: !!company?.id,
   });
-
-  const updateUserMutation = useMutation({
-    mutationFn: updateUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
-    },
-  });
-
-  // Helper function to format date to YYYY-MM-DD
+  const [isSaving, setIsSaving] = useState(false);
   const formatDateForInput = (date) => {
     if (!date) return "";
     const d = new Date(date);
@@ -85,6 +86,43 @@ export default function UserProfile({ user }) {
     const year = d.getFullYear();
     return `${year}-${month}-${day}`;
   };
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [progress, setProgress] = useState(0);
+
+  const onDrop = useCallback((acceptedFiles) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+
+    const storageRef = ref(storage, `uploads/${file.name}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
+
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        const percent = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
+        setProgress(percent);
+      },
+      (error) => {
+        console.error("Upload failed:", error);
+      },
+      () => {
+        getDownloadURL(uploadTask.snapshot.ref).then((url) => {
+          setSelectedFile(url);
+        });
+      }
+    );
+  }, []);
+
+  const { getRootProps, getInputProps, open } = useDropzone({
+    onDrop,
+    accept: { "image/*": [] },
+    multiple: false,
+    noClick: true,
+  });
+
+  const profileImage = selectedFile || user?.profileImg;
 
   const [firstname, setFirstname] = useState(
     user?.employee?.name ? user.employee.name.split(" ")[0] : ""
@@ -92,35 +130,43 @@ export default function UserProfile({ user }) {
   const [lastname, setLastname] = useState(
     user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
   );
-
   const [otherName, setOtherName] = useState(user?.otherName || "");
+  const [idCardNumber, setIdCardNumber] = useState(user?.idCardNumber || "");
+  const [gender, setGender] = useState(user?.gender || "");
+  const [requiredAttendance, setRequiredAttendance] = useState(
+    user?.isRequiredToCheckIn ?? false
+  );
+
+  const attendanceOptions = [
+    { label: "YES", value: true },
+    { label: "NO", value: false },
+  ];
+  const [salaryType, setSalaryType] = useState(
+    user?.employee?.finance?.salaryInfo?.salaryType || ""
+  );
   const [phoneNumber, setPhoneNumber] = useState(
     user?.employee?.phoneNumber || ""
   );
+  const [job, setJob] = useState(user?.job || "");
   const [dateOfBirth, setDateOfBirth] = useState(
     formatDateForInput(user?.dateOfBirth) || ""
   );
-  const [branch, setBranch] = useState(user?.employee?.branch || "");
-  const [department, setDepartment] = useState(
-    user?.employee?.department || ""
-  );
-  const [title, setTitle] = useState(user?.employee?.position || "");
+  const [branch, setBranch] = useState(user?.branch?.id || "");
+  const [department, setDepartment] = useState(user?.department?.id || "");
+  const [title, setTitle] = useState(user?.position?.id || "");
   const [startDate, setStartDate] = useState(
     formatDateForInput(user?.startDate) || ""
   );
   const [nssfId, setNssfId] = useState(user?.nssfId || "N/A");
   const [numberOfChildren, setNumberOfChildren] = useState(
-    user?.employee?.numberOfChildren || 0
+    user?.numberOfChildren || 0
   );
-  const [spoused, setSpoused] = useState(user?.employee?.spoused || false);
+  const [spoused, setSpoused] = useState(user?.spoused || false);
   const [bankProvider, setBankProvider] = useState(
     user?.employee?.finance?.bankDetails?.bankProvider || ""
   );
   const [accountNumber, setAccountNumber] = useState(
     user?.employee?.finance?.bankDetails?.accountNumber || ""
-  );
-  const [bankName, setBankName] = useState(
-    user?.employee?.finance?.bankDetails?.bankName || ""
   );
   const [cashPercentage, setCashPercentage] = useState(
     user?.employee?.finance?.paymentMethod?.cashPercentage || 0
@@ -135,15 +181,51 @@ export default function UserProfile({ user }) {
     user?.employee?.finance?.salaryInfo?.currencyType || ""
   );
 
-  const [selectedGroup, setSelectedGroup] = useState(
-    user?.employee?.groups ? user.employee.groups.map((g) => g.name) : []
-  );
-
   const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
+  const [files, setFiles] = useState([]);
 
-  const [loading, setLoading] = useState(false);
+  // Multi-select for work shifts
+  const [selectedWorkShift, setSelectedWorkShift] = useState([]);
 
-  // Dialog states - using refs to prevent re-render loops
+  // Multi-select for groups
+  const [selectedGroup, setSelectedGroup] = useState([]);
+
+  const [allGroups, setAllGroups] = useState([]);
+
+  useEffect(() => {
+    if (!sections || sections.length === 0) return;
+    // Flatten all groups and normalize ids to strings
+    const all = sections
+      .flatMap((s) => s.groups ?? [])
+      .map((g) => ({
+        ...g,
+        id: String(g.id ?? g._id),
+      }));
+    setAllGroups(all);
+    // Initialize selected groups
+    if (user?.groups) {
+      const groupIds = user.groups.map((g) => String(g.id ?? g._id));
+      setSelectedGroup(groupIds);
+    }
+  }, [sections, JSON.stringify(user?.groups || [])]);
+
+  const toggleWorkShift = (shift) => {
+    const id = String(shift.id);
+    setSelectedWorkShift((prev) =>
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+    );
+  };
+
+  const toggleGroup = (group) => {
+    const id = String(group.id);
+    setSelectedGroup((prev) =>
+      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
+    );
+  };
+
+  const [selectedLocation, setSelectedLocation] = useState(
+    user.allowedRemoteCheckIn ? "Flexible" : "Geofencing"
+  );
   const [dialogStates, setDialogStates] = useState({
     cash: false,
     bank: false,
@@ -151,10 +233,50 @@ export default function UserProfile({ user }) {
     deleteContext: null,
   });
 
-  // Use refs to track if we're already processing
-  const processingRef = useRef(false);
+  const bankProviders = [
+    {
+      value: "aba",
+      label: "ABA Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQtY2aqkYA54jTqgCQmP2Zl0W7BwjM_XQ7vjg&s",
+    },
+    {
+      value: "acleda",
+      label: "ACLEDA Bank",
+      icon: "https://www.acledasecurities.com.kh/as/assets/listed_company/ABC/logo.png",
+    },
+    {
+      value: "canadia",
+      label: "Canadia Bank",
+      icon: "https://play-lh.googleusercontent.com/hZhdx8AuJsmnZyy6rSLi3fZsWeOJ3qD5LRy2KmKOaXf8uWtsvrYScl_lxyhBsyan2-c",
+    },
+    {
+      value: "ftb",
+      label: "FTB Bank",
+      icon: "https://play-lh.googleusercontent.com/dBXpI2QOfWndhjQKboqdt6sOdSeeGk_pxeXqVC8hHD-xCDQIKoD_MLHhVH51gb25F1rY",
+    },
+    {
+      value: "wing",
+      label: "Wing Bank",
+      icon: "https://play-lh.googleusercontent.com/A8bangMCdTPS1Xa9hbuc4pcXxUspKpJhDHWW3QSw3OB-VMtUv6NCnqAd7pUv2C-2OnjJHn0Xmv1cs6c2hFUZMw",
+    },
+    {
+      value: "phillip",
+      label: "Phillip Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTl5AQ8pKBWNSLy2jNDa3-4ie1RudZ81DUXgg&s",
+    },
+    {
+      value: "sathapana",
+      label: "Sathapana Bank",
+      icon: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRttioRPdS1xu-MygwdD1Qb7wTmRAxAo4s0pg&s",
+    },
+    {
+      value: "chipmong",
+      label: "Chip Mong Bank",
+      icon: "https://play-lh.googleusercontent.com/IwZLaZnWhlINs7AoIg7m7qNR-JNLInrme1xtrXkYoNxWwdTlWZozZnIligkyjUhiO0Q5",
+    },
+  ];
 
-  const [files, setFiles] = useState([]);
+  const processingRef = useRef(false);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -175,50 +297,11 @@ export default function UserProfile({ user }) {
     }
   };
 
-  const handleDelete = (index) => {
-    setFiles(files.filter((_, i) => i !== index));
-  };
+  const handleDelete = (index) => setFiles(files.filter((_, i) => i !== index));
 
-  const [selectedWorkShift, setSelectedWorkShift] = useState(
-    user.shiftType ? [user.shiftType.name] : []
-  );
-
-  const toggleWorkShift = (shift) => {
-    setSelectedWorkShift((prev) =>
-      prev.includes(shift) ? prev.filter((s) => s !== shift) : [...prev, shift]
-    );
-  };
-
-  const toggleGroup = (value) => {
-    setSelectedGroup((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
-
-  const [selectedLocation, setSelectedLocation] = useState(
-    user.allowedRemoteCheckIn ? "Flexible" : "Geofencing"
-  );
-
-  const toggleLocation = (value) => {
-    setSelectedLocation((prev) =>
-      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
-    );
-  };
-
-  const handleAddLeavePolicy = (policy) => {
-    // Check if already added
-    const exists = leaveSubPolicies.some((p) => p.id === policy.id);
-    if (exists) return;
-
-    setLeaveSubPolicies((prev) => [...prev, policy]);
-    setShowFirstMenu(false);
-  };
-
-  // Simplified dialog handlers - prevent multiple calls
   const openDialog = useCallback((type, context = null) => {
     if (processingRef.current) return;
     processingRef.current = true;
-
     setTimeout(() => {
       setDialogStates((prev) => ({
         ...prev,
@@ -232,7 +315,6 @@ export default function UserProfile({ user }) {
   const closeDialog = useCallback((type) => {
     if (processingRef.current) return;
     processingRef.current = true;
-
     setTimeout(() => {
       setDialogStates((prev) => ({
         ...prev,
@@ -243,7 +325,6 @@ export default function UserProfile({ user }) {
     }, 0);
   }, []);
 
-  // Simplified menu handlers
   const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
   const handleCashDelete = useCallback(
     () => openDialog("delete", "cash"),
@@ -255,11 +336,13 @@ export default function UserProfile({ user }) {
     [openDialog]
   );
 
-  const handleArchive = useCallback(() => {
-    console.log("Archive clicked");
-    // Add your archive logic here
-  }, []);
-
+  useEffect(() => {
+    // Initialize selected work shifts
+    if (Array.isArray(user?.shiftType) && user.shiftType.length > 0) {
+      const shiftIds = user.shiftType.map((s) => String(s.id));
+      setSelectedWorkShift(shiftIds);
+    }
+  }, [user?.shiftType, user?.groups]);
   const DropdownSection = ({
     title,
     items,
@@ -309,13 +392,14 @@ export default function UserProfile({ user }) {
             align="end"
             className={`font-custom text-sm ${dropdownWidth} bg-white shadow-md rounded-md`}
           >
-            {items.map((item) => {
+            {items.map((item, index) => {
+              const key = item?.id ? String(item.id) : `${title}-${index}`;
               const itemId = String(item.id || item);
               const isSelected = selectedItems.includes(itemId);
 
               return (
                 <DropdownMenuItem
-                  key={itemId}
+                  key={key}
                   onSelect={() => toggleItem(item)}
                   className={
                     isSelected
@@ -333,83 +417,90 @@ export default function UserProfile({ user }) {
     );
   };
 
-  const InfoRow = ({ label, value }) => (
-    <div className="flex items-center justify-between">
-      <p className="text-md font-custom text-light-pearl">{label}</p>
-      <p className="font-custom text-md text-dark-blue font-semibold">
-        {value}
-      </p>
-    </div>
-  );
-
   useEffect(() => {
     if (leaveSettings && user?.leavePolicies) {
-      console.log("User leavePolicies:", user.leavePolicies);
-      console.log("Company leaveSettings:", leaveSettings);
-
       const selectedIds = user.leavePolicies
-        .map((p) => String(p.id)) // convert to string
+        .map((p) => String(p.id))
         .filter((id) => leaveSettings.some((ls) => String(ls.id) === id));
 
-      console.log("Filtered leaveSubPolicies:", selectedIds);
       setLeaveSubPolicies(selectedIds);
     }
   }, [leaveSettings, user?.leavePolicies]);
 
+  const updateUserMutation = useMutation({
+    mutationFn: ({ id, data }) => updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+      setIsSaving(false);
+    },
+    onError: (error, variables) => {
+      setIsSaving(false);
+      console.error(
+        "Error updating user:",
+        variables.id,
+        error,
+        variables.data
+      );
+    },
+  });
+
   const handleSave = () => {
     const updatedProfile = {
-      // User collection fields
       name: `${firstname} ${lastname}`,
-      phoneNumber: mobile?.startsWith("855") ? mobile : `855${mobile}`,
-
-      // Employee Info
-      dateOfBirth: birthday ? new Date(birthday).toISOString() : undefined,
-      branch: branch || undefined, // must be ObjectId
+      profileImg: profileImage,
+      otherName: otherName || "",
+      job: job || "",
+      phoneNumber: phoneNumber?.startsWith("855")
+        ? phoneNumber
+        : `855${phoneNumber}`,
+      dateOfBirth: dateOfBirth
+        ? new Date(dateOfBirth).toISOString()
+        : undefined,
+      branch: branch || undefined,
       department: department || undefined,
       position: title || undefined,
-      startDate: employmentStartDate
-        ? new Date(employmentStartDate).toISOString()
-        : undefined,
+      startDate: startDate ? new Date(startDate).toISOString() : undefined,
       groups:
         selectedGroup && Array.isArray(selectedGroup)
-          ? selectedGroup.map((g) => g.id || g)
+          ? selectedGroup.map((g) => (typeof g === "object" ? g._id : g))
           : [],
-      allowedRemoteCheckIn: true,
+      allowedRemoteCheckIn: selectedLocation === "Flexible",
       leavePolicies:
         leaveSubPolicies && Array.isArray(leaveSubPolicies)
-          ? leaveSubPolicies.map((p) => p.id || p)
+          ? leaveSubPolicies.map((p) => (typeof p === "object" ? p.id : p))
           : [],
+      shiftType: selectedWorkShift,
       numberOfChildren: Number(numberOfChildren) || 0,
       spoused: Boolean(spoused),
-      nssfId,
-
-      // Employee Financial Info
+      nssfId: nssfId,
+      isRequiredToCheckIn: requiredAttendance,
       bankDetails: {
         bankProvider: bankProvider || null,
         accountNumber: accountNumber || null,
-        bankName: bankName || null,
       },
       paymentMethod: {
-        cashPercentage: Number(cashPercentage) || 100,
+        cashPercentage: Number(cashPercentage) || 0,
         ibankingPercentage: Number(ibankingPercentage) || 0,
       },
       salaryInfo: {
         baseSalary: Number(baseSalary) || 0,
         currencyType: currencyType || "USD",
+        salaryType: salaryType || "Monthly",
       },
     };
 
-    console.log("Body to send for update:", updatedProfile);
-
     updateUserMutation.mutate(
-      { id: user.id, data: updatedProfile },
+      {
+        id: user.employee.id,
+        data: updatedProfile,
+      },
       {
         onSuccess: () => {
-          alert("Changes saved successfully!");
+          setIsSaving(false);
         },
-        onError: (error) => {
-          console.error("Failed to update user:", error);
-          alert("Failed to save changes.");
+        onError: (err) => {
+          setIsSaving(false);
+          console.error("❌ Update failed:", err);
         },
       }
     );
@@ -428,16 +519,22 @@ export default function UserProfile({ user }) {
         <div className="font-custom text-xl font-semibold px-6 text-[#3E435D]">
           Hello, {user?.employee?.name}
         </div>
-        <p className="font-custom text-sm text-gray-400 px-6 mt-2">
-          Good morning!
-        </p>
 
         {/* Profile Holder Container with fallback initials */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-            {user?.profileImg ? (
+        <div
+          {...getRootProps()}
+          className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6"
+        >
+          <input {...getInputProps()} />
+
+          {/* Clickable profile section */}
+          <div
+            className="cursor-pointer relative group"
+            onClick={open} // manually trigger file dialog
+          >
+            {profileImage ? (
               <img
-                src={user.profileImg}
+                src={profileImage}
                 alt="Profile"
                 className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
               />
@@ -451,15 +548,28 @@ export default function UserProfile({ user }) {
               </div>
             )}
 
-            <div className="font-custom text-left">
-              <div className="font-semibold text-lg text-gray-900">
-                {user?.employee?.name}
-              </div>
-              <div className="text-sm text-gray-500">
-                {user?.job || "No Job Title"}
-              </div>
+            {/* Hover overlay */}
+            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition">
+              <span className="text-white text-xs font-medium">Upload</span>
             </div>
           </div>
+
+          <div className="font-custom text-left">
+            <div className="font-semibold text-lg text-gray-900">
+              {user?.employee?.name}
+            </div>
+            <div className="text-sm text-gray-500">
+              {user?.job || "No Job Title"}
+            </div>
+          </div>
+
+          {progress > 0 && progress < 100 && (
+            <span className="text-sm text-gray-500 ml-auto">
+              {" "}
+              <FaSpinner className="animate-spin text-blue text-lg" />
+              {progress}%
+            </span>
+          )}
         </div>
 
         {/* Two-column layout: left has container, right has text */}
@@ -469,7 +579,6 @@ export default function UserProfile({ user }) {
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Personal details
             </h2>
-
             <label className="text-sm font-custom text-[#3F4648] w-full">
               First Name
             </label>
@@ -479,7 +588,6 @@ export default function UserProfile({ user }) {
               onChange={(e) => setFirstname(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Last Name
             </label>
@@ -489,7 +597,6 @@ export default function UserProfile({ user }) {
               onChange={(e) => setLastname(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Other Name
             </label>
@@ -499,6 +606,22 @@ export default function UserProfile({ user }) {
               onChange={(e) => setOtherName(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
+            {/* Gender dropdown */}
+
+            <div>
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                Gender
+              </label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              >
+                <option value="">Select Gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Mobile Phone
@@ -509,7 +632,17 @@ export default function UserProfile({ user }) {
               onChange={(e) => setPhoneNumber(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Job
+            </label>
+            <input
+              type="text"
+              value={job}
+              onChange={(e) => {
+                setJob(e.target.value);
+              }}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Birthday
             </label>
@@ -519,7 +652,15 @@ export default function UserProfile({ user }) {
               onChange={(e) => setDateOfBirth(e.target.value)}
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
             />
-
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              ID Card Number
+            </label>
+            <input
+              type="text"
+              value={idCardNumber}
+              onChange={(e) => setIdCardNumber(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Company details
             </h2>
@@ -553,7 +694,7 @@ export default function UserProfile({ user }) {
                 >
                   <option value="">Select department</option>
                   {departments?.results?.map((d) => (
-                    <option key={d.id} value={d.name}>
+                    <option key={d.id} value={d.id}>
                       {d.name}
                     </option>
                   ))}
@@ -572,7 +713,7 @@ export default function UserProfile({ user }) {
                 >
                   <option value="">Select position</option>
                   {positions?.results?.map((p) => (
-                    <option key={p.id} value={p.title}>
+                    <option key={p.id} value={p.id}>
                       {p.title}
                     </option>
                   ))}
@@ -589,7 +730,6 @@ export default function UserProfile({ user }) {
                 className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
               />
             </div>
-
             {!leaveLoading && leaveSettings && leaveSettings.length > 0 && (
               <DropdownSection
                 title="Leave Policies"
@@ -608,27 +748,18 @@ export default function UserProfile({ user }) {
 
             <DropdownSection
               title="Work Shift"
-              items={user.shiftType ? [user.shiftType.name] : []}
-              selectedItems={
-                selectedWorkShift.length
-                  ? selectedWorkShift
-                  : user.shiftType
-                  ? [user.shiftType.name]
-                  : []
-              }
+              items={workshift?.results?.results || []}
+              selectedItems={selectedWorkShift}
               toggleItem={toggleWorkShift}
+              renderItem={(shift) => shift.name}
             />
 
             <DropdownSection
               title="Group"
-              items={user.groups.map((g) => g.name)}
-              selectedItems={
-                selectedGroup.length
-                  ? selectedGroup
-                  : user.groups.map((g) => g.name)
-              }
+              items={allGroups}
+              selectedItems={selectedGroup}
               toggleItem={toggleGroup}
-              dropdownWidth="w-44"
+              renderItem={(g) => g.name}
             />
 
             <DropdownSection
@@ -636,6 +767,24 @@ export default function UserProfile({ user }) {
               items={["Flexible", "Geofencing"]}
               selectedItems={[selectedLocation]}
               toggleItem={(value) => setSelectedLocation(value)}
+              renderItem={(item) => item}
+              dropdownWidth="w-44"
+            />
+
+            <DropdownSection
+              title="Required Attendance"
+              items={attendanceOptions.map((opt) => opt.label)} // display YES / NO
+              selectedItems={[
+                attendanceOptions.find(
+                  (opt) => opt.value === requiredAttendance
+                )?.label,
+              ]}
+              toggleItem={(label) => {
+                const selected = attendanceOptions.find(
+                  (opt) => opt.label === label
+                );
+                setRequiredAttendance(selected?.value ?? false); // store boolean
+              }}
               renderItem={(item) => item}
               dropdownWidth="w-44"
             />
@@ -648,13 +797,82 @@ export default function UserProfile({ user }) {
                 Payroll Info
               </h2>
 
-              <InfoRow
-                label="Employee Name"
-                value={user?.employee?.name || ""}
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                NSSF ID
+              </label>
+              <input
+                type="string"
+                value={nssfId}
+                onChange={(e) => setNssfId(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
               />
-              <InfoRow label="NSSF ID" value={nssfId || ""} />
-              <InfoRow label="Bank Provider" value={bankProvider} />
-              <InfoRow label="Account Number" value={accountNumber} />
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                Account Number
+              </label>
+              <input
+                type="string"
+                value={accountNumber}
+                onChange={(e) => setAccountNumber(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              />
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                Base Salary
+              </label>
+              <input
+                type="string"
+                value={baseSalary}
+                onChange={(e) => setBaseSalary(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              />
+              <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">
+                  Bank Provider
+                </label>
+                <select
+                  value={bankProvider}
+                  onChange={(e) => setBankProvider(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+                >
+                  <option value="">Select Bank Provider</option>
+                  {bankProviders.map((bank) => (
+                    <option key={bank.value} value={bank.value}>
+                      {bank.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-row items-center space-x-2 w-full justify-between sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">
+                  Currency Type
+                </label>
+                <select
+                  value={currencyType}
+                  onChange={(e) => setCurrencyType(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+                >
+                  <option value="">Select Currency Type</option>
+                  <option value="USD">USD</option>
+                  <option value="KHR">KHR</option>
+                </select>
+              </div>
+
+              {/* Salary type dropdown */}
+              <div className="flex flex-row items-center space-x-2 w-full justify-between sm:w-auto">
+                <label className="text-sm text-[#3F4648] w-full">
+                  Salary Type
+                </label>
+                <select
+                  value={salaryType}
+                  onChange={(e) => setSalaryType(e.target.value)}
+                  className="border border-gray-300 rounded-lg p-2 w-full sm:w-48"
+                >
+                  <option value="">Select Salary Type</option>
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
             </div>
 
             {/* Cash Section - SIMPLIFIED */}
@@ -673,15 +891,6 @@ export default function UserProfile({ user }) {
                     <DropdownMenuItem onSelect={handleCashEdit}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleCashDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -692,9 +901,7 @@ export default function UserProfile({ user }) {
                   <p className="font-custom text-md font-semibold">Cash</p>
                 </div>
                 <p className="text-dark-blue font-custom text-md font-semibold">
-                  $
-                  {user?.employee?.finance?.paymentMethod?.cashPercentage ||
-                    "N/A"}
+                  ${cashPercentage || "N/A"}
                 </p>
               </div>
             </div>
@@ -715,15 +922,6 @@ export default function UserProfile({ user }) {
                     <DropdownMenuItem onSelect={handleBankEdit}>
                       Edit
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={handleArchive}>
-                      Archive
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={handleBankDelete}
-                      className="text-red-500"
-                    >
-                      Delete
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -737,9 +935,7 @@ export default function UserProfile({ user }) {
                     </p>
                   </div>
                   <p className="text-dark-blue font-custom text-md font-semibold">
-                    $
-                    {user?.employee?.finance?.paymentMethod
-                      ?.ibankingPercentage || "N/A"}
+                    ${ibankingPercentage || "N/A"}
                   </p>
                 </div>
 
@@ -751,14 +947,14 @@ export default function UserProfile({ user }) {
                       <p className="text-xs text-gray-500 font-custom">
                         {spoused ? "Married" : "Single"} / Children{" "}
                         <span className="text-blue">
-                          {user?.employee?.numberOfChildren}{" "}
+                          {numberOfChildren || "0"}{" "}
                         </span>
                       </p>
                     </div>
                   </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${single}
-                  </p> */}
+                  <p className="text-red font-custom text-md font-semibold">
+                    $7
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -768,9 +964,9 @@ export default function UserProfile({ user }) {
                       <p className="font-custom text-md font-semibold">NSSF</p>
                     </div>
                   </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${nochildren}
-                  </p> */}
+                  <p className="text-red font-custom text-md font-semibold">
+                    $7
+                  </p>
                 </div>
 
                 <div className="border-t border-blue-500 my-2"></div>
@@ -781,62 +977,9 @@ export default function UserProfile({ user }) {
                       Sub total Salary
                     </p>
                   </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${subtotal}
-                  </p> */}
-                </div>
-              </div>
-
-              {/* Estimated Section */}
-              <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Estimated{" "}
-                      <span className="text-blue-600">
-                        {new Date().toLocaleString("en-US", { month: "long" })}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <hr className="border-t border-blue-500" />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">Cash</p>
-                    </div>
-                  </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${cash}
-                  </p> */}
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center ml-10">
-                    <Banknote className="text-blue w-8 h-8 mr-6" />
-                    <div>
-                      <p className="font-custom text-md font-semibold">
-                        Bank Transfer
-                      </p>
-                    </div>
-                  </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${subtotal}
-                  </p> */}
-                </div>
-
-                <div className="border-t border-blue-500"></div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <p className="font-custom text-lg font-semibold">
-                      Net Salary
-                    </p>
-                  </div>
-                  {/* <p className="text-dark-blue font-custom text-md font-semibold">
-                    ${netsalary}
-                  </p> */}
+                  <p className="text-dark-blue font-custom text-md font-semibold">
+                    ${baseSalary || "N/A"}
+                  </p>
                 </div>
               </div>
 
@@ -911,9 +1054,14 @@ export default function UserProfile({ user }) {
       <div className="flex justify-center">
         <Button
           onClick={handleSave}
-          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition"
+          disabled={isSaving}
+          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-70"
         >
-          Save Changes
+          {isSaving ? (
+            <FaSpinner className="animate-spin text-white text-lg" />
+          ) : (
+            "Save Changes"
+          )}
         </Button>
       </div>
 
@@ -921,10 +1069,10 @@ export default function UserProfile({ user }) {
       {dialogStates.cash && (
         <UpdateCashDialog
           open={true}
+          oldCash={cashPercentage}
           onOpenChange={() => closeDialog("cash")}
-          oldCash={cash}
-          onSubmit={(newAmount) => {
-            setCash(newAmount);
+          onSubmit={(newCash) => {
+            setCashPercentage(newCash);
             closeDialog("cash");
           }}
         />
@@ -933,9 +1081,14 @@ export default function UserProfile({ user }) {
       {dialogStates.bank && (
         <UpdateBankTransferDialog
           open={true}
+          spouse={spoused}
+          numberOfChildren={numberOfChildren}
+          ibanking={ibankingPercentage}
           onOpenChange={() => closeDialog("bank")}
-          oldBank={banktransfer}
           onSubmit={(data) => {
+            setIbankingPercentage(data.ibanking);
+            setSpoused(data.spouse);
+            setNumberOfChildren(data.children);
             closeDialog("bank");
           }}
         />

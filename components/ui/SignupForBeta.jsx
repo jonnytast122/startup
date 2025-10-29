@@ -30,7 +30,7 @@ export default function SignupForBeta() {
           type="submit"
           className="w-80 md:w-full lg:w-full px-4 py-3 bg-gray-50 bg-opacity-30 backdrop-blur-sm hover:bg-gray-900 hover:text-white transition"
         >
-          Notify me
+          Request Beta
         </button>
       </form>
     </div>

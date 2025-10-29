@@ -66,57 +66,6 @@ const exportOptions = [
 
 const today = new Date().toISOString().split("T")[0]; // e.g. "2025-07-14"
 
-const data = [
-  {
-    profile: "/avatars/ralph.png",
-    firstname: "Lucy",
-    lastname: "Trevo",
-    department: "Marketing",
-    job: "Accountant",
-    shifttype: "Scheduled",
-    status: "On time",
-    Clockin: "08:11",
-    Clockout: "17:11",
-    regularhours: "",
-    overtime: "",
-    date: today,
-    lat: 11.56786,
-    lng: 104.89005,
-  },
-  {
-    profile: "/avatars/ralph.png",
-    firstname: "John",
-    lastname: "Mark",
-    department: "Marketing",
-    job: "Marketing",
-    shifttype: "Scheduled",
-    status: "Late",
-    Clockin: "08.31",
-    Clockout: "17:11",
-    regularhours: "",
-    overtime: "",
-    date: today,
-    lat: 11.568,
-    lng: 104.891,
-  },
-  {
-    profile: "/avatars/ralph.png",
-    firstname: "Doe",
-    lastname: "Ibrahim",
-    department: "Officer",
-    job: "HR",
-    shifttype: "Scheduled",
-    status: "Early",
-    Clockin: "08:09",
-    Clockout: "17:10",
-    regularhours: "8.01",
-    overtime: "8.01",
-    date: today,
-    lat: 11.569,
-    lng: 104.892,
-  },
-];
-
 const columns = [
   {
     accessorKey: "profile",
@@ -243,8 +192,7 @@ const TodayScreen = () => {
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [attendanceTables, setAttendanceTables] = useState([
     {
-      tableName: "Site A Attendance",
-      data: data,
+      tableName: "Today Attendance",
     },
   ]);
 
@@ -252,24 +200,9 @@ const TodayScreen = () => {
     return date.toISOString().split("T")[0]; // keeps only YYYY-MM-DD
   };
 
-  const filteredData = useMemo(() => {
-    const selected = selectedDate ? new Date(selectedDate).toDateString() : "";
-    return data.filter((item) => {
-      const itemDate = new Date(item.date).toDateString();
-      const matchesDate = itemDate === selected;
-      const matchesSearch = `${item.firstname} ${item.lastname}`
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      const matchesStatus =
-        !statusFilter ||
-        item.status.toLowerCase() === statusFilter.toLowerCase();
-      return matchesDate && matchesSearch && matchesStatus;
-    });
-  }, [selectedDate, searchQuery, statusFilter]);
-
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 4, 11),
-    endDate: new Date(2025, 10, 11),
+    startDate: new Date(),
+    endDate: new Date(),
     key: "selection",
   });
 
@@ -310,9 +243,7 @@ const TodayScreen = () => {
   });
 
   const transformedData = useMemo(() => {
-    console.log("Raw attendances:", attendances); // Debug log
     if (!attendances) return [];
-
     return attendances.map((record) => {
       // Get first checkIn
       const checkIns = record.transactions.filter((t) => t.type === "checkIn");
@@ -331,13 +262,17 @@ const TodayScreen = () => {
         profile: record.employee?.profile || null, // if you add profile later
         firstname: record.employee?.name?.split(" ")[0] || "",
         lastname: record.employee?.name?.split(" ")[1] || "",
-        department: record.company?.name || "",
-        job: record.jobTitle || "Unknown", // fallback if not in API
-        shifttype: record.shiftType || "Scheduled",
+        department: record.employee?.info?.department?.name || "--",
+        job: record.employee?.info?.job || "--", // fallback if not in API
+        shifttype: record.employee?.info?.shiftType?.name || "Scheduled",
         status: record.status || "",
         Clockin: firstCheckIn ? formatTime(firstCheckIn.time) : "",
         Clockout: lastCheckOut ? formatTime(lastCheckOut.time) : "",
-        regularhours: record.regularHours || "",
+        regularhours: record.employee?.info?.shiftType?.workDuration
+          ? `${record.employee.info.shiftType.workDuration.start || "--"} - ${
+              record.employee.info.shiftType.workDuration.end || "--"
+            }`
+          : "--",
         overtime: record.overtime || "",
         totalhours: formatWorkHours(record.workHours),
         date: record.date,
@@ -346,6 +281,14 @@ const TodayScreen = () => {
       };
     });
   }, [attendances]);
+
+  useEffect(() => {
+    if (company?.id && selectedRange.startDate && selectedRange.endDate) {
+      queryClient.invalidateQueries({
+        queryKey: ["attendances", company.id],
+      });
+    }
+  }, [selectedRange, company?.id, queryClient]);
 
   return (
     <>
@@ -398,6 +341,12 @@ const TodayScreen = () => {
                         if (start && end && start.getTime() !== end.getTime()) {
                           setShowDatePicker(false);
                         }
+                        //revalidate query
+                        queryClient.invalidateQueries({
+                          queryKey: ["attendances", company?.id],
+                        });
+
+                        console.log("Selected range:", newRange);
                       }}
                       rangeColors={["#3b82f6"]}
                     />
@@ -519,10 +468,10 @@ const TodayScreen = () => {
                   </span>
 
                   {/* Right side: Row count */}
-                  <span className="font-custom text-xl text-gray-600">
-                    <span className="text-blue-500">{table.data.length}</span>
+                  {/* <span className="font-custom text-xl text-gray-600">
+                    <span className="text-blue-500">{attendances.length}</span>
                     /5 employees clocked in today
-                  </span>
+                  </span> */}
                 </div>
               </div>
 
@@ -642,7 +591,7 @@ const TodayScreen = () => {
           </div>
 
           {/* Activity Section */}
-          <div className="p-4 bg-white rounded-lg mb-3 shadow-md border py-6 px-6">
+          {/* <div className="p-4 bg-white rounded-lg mb-3 shadow-md border py-6 px-6">
             <div className="flex flex-col items-start text-left">
               <h1 className="font-custom text-2xl sm:text-lg md:text-xl lg:text-3xl mb-3">
                 Activity
@@ -671,15 +620,12 @@ const TodayScreen = () => {
                           key={index}
                           className="flex items-center gap-3 font-custom text-md sm:text-sm md:text-md lg:text-lg"
                         >
-                          {/* Dot Indicator */}
                           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
 
-                          {/* Clock-in time */}
                           <span className="text-gray-400 text-xs sm:text-xs md:text-sm lg:text-sm">
                             {entry.Clockin}
                           </span>
 
-                          {/* User Avatar or Initials */}
                           <div className="w-8 h-8 rounded-full overflow-hidden flex justify-center items-center bg-gray-100">
                             {entry.profile ? (
                               <img
@@ -695,13 +641,11 @@ const TodayScreen = () => {
                             )}
                           </div>
 
-                          {/* Name and clock in label */}
                           <span className="text-dark-gray text-xs sm:text-sm md:text-md lg:text-md">
                             {entry.firstname} {entry.lastname}{" "}
                             <span>Clock In:</span>
                           </span>
 
-                          {/* Job title badge */}
                           <span className="px-5 py-1 text-md font-custom rounded-lg border border-[#5494DA] text-blue-600 ml-3 inline-flex items-center gap-1">
                             <span className="text-blue text-xs sm:text-sm md:text-md lg:text-md">
                               {entry.job}
@@ -719,7 +663,7 @@ const TodayScreen = () => {
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
         </>
       )}
     </>

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -171,6 +172,7 @@ function AddBranchDialog({ isEdit, branch }) {
     if (isEdit && branch) {
       setBranchName(branch?.name || "");
       setSiteAddress(branch?.location || "");
+      setBranchCode(branch?.code || "");
       const gf = branch?.geofence?.[0];
       if (gf) {
         setCenterCoords({
@@ -299,10 +301,19 @@ function AddBranchDialog({ isEdit, branch }) {
                 </label>
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="\d{6}"
+                  maxLength={6}
                   className="font-custom border text-dark-gray border-gray-300 rounded-lg p-2 w-full"
-                  placeholder="Enter branch code"
+                  placeholder="Enter 6-digit branch code"
                   value={branchCode}
-                  onChange={(e) => setBranchCode(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Allow only digits and limit to 6 characters
+                    if (/^\d{0,6}$/.test(value)) {
+                      setBranchCode(value);
+                    }
+                  }}
                 />
               </div>
 
@@ -338,13 +349,17 @@ function AddBranchDialog({ isEdit, branch }) {
                   onClick={handleSave}
                   className="py-4 px-6 text-md font-custom rounded-full"
                 >
-                  {isEdit
-                    ? updateBranchMutation.isPending
-                      ? "Updating..."
-                      : "Update Branch"
-                    : createBranchMutation.isPending
-                    ? "Saving..."
-                    : "Save Branch"}
+                  {isEdit ? (
+                    updateBranchMutation.isPending ? (
+                      <FaSpinner className="animate-spin text-white text-lg" />
+                    ) : (
+                      "Update Branch"
+                    )
+                  ) : createBranchMutation.isPending ? (
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  ) : (
+                    "Save Branch"
+                  )}
                 </Button>
               </div>
             </div>

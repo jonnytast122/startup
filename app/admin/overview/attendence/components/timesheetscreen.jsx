@@ -259,8 +259,8 @@ const TimesheetScreen = () => {
   const firstLevelLabel = isAllSelected
     ? "All"
     : selectedFirstLevels
-      .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
-      .join(", ") || "Select...";
+        .map((key) => firstLevelOptions.find((item) => item.key === key)?.label)
+        .join(", ") || "Select...";
 
   const totalSecondLevelSelected = selectedFirstLevels.reduce((acc, key) => {
     const count = selectedItems[key]?.length || 0;
@@ -387,7 +387,6 @@ const TimesheetScreen = () => {
               </div>
             </div>
             <div className="rounded-md border mt-2">
-
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -421,7 +420,10 @@ const TimesheetScreen = () => {
                           key={cell.id}
                           className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
                         >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
@@ -506,7 +508,9 @@ const TimesheetScreen = () => {
                             <TableRow
                               key={`${job}-${index}`}
                               className={
-                                index < members.length - 1 ? "border-b-0" : "border-b-0"
+                                index < members.length - 1
+                                  ? "border-b-0"
+                                  : "border-b-0"
                               }
                             >
                               {index === 0 && (

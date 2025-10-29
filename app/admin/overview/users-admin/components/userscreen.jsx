@@ -1,5 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
   flexRender,
   getCoreRowModel,
@@ -56,6 +59,7 @@ import { deleteUser, fetchUser } from "@/lib/api/user";
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
+  { value: "as PDF", label: "as PDF" },
 ];
 
 // const statusFilter = ["Active", "Inactive", "Pending"];
@@ -86,7 +90,14 @@ const ProfileCell = ({ profileImg, employeeName }) => {
   );
 };
 
-const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
+const UsersScreen = ({
+  users = [],
+  setUsersCount,
+  onAddUser,
+  page,
+  setPage,
+  totalPages,
+}) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
@@ -115,36 +126,54 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       ),
     },
     {
-      accessorFn: (row) => row.employee?.name || "N/A",
+      accessorFn: (row) => row.employee?.name || "--",
       id: "name",
       header: "Fullname",
     },
     {
+      accessorFn: (row) => row.otherName || "--",
       accessorKey: "otherName",
       header: "Other Name",
     },
 
     {
-      accessorFn: (row) => row.employee?.phoneNumber || "N/A",
+      accessorFn: (row) => row.employee?.phoneNumber || "--",
       id: "phone",
       header: "Phone",
     },
+
     {
-      accessorFn: (row) => row.branch?.name || "N/A",
+      accessorFn: (row) => row.idCardNumber || "--",
+      id: "idCardNumber",
+      header: "ID Card Number",
+    },
+    {
+      accessorFn: (row) => row.gender || "--",
+      id: "gender",
+      header: "Gender",
+    },
+
+    {
+      accessorFn: (row) => row.branch?.name || "--",
       id: "branch",
       header: "Branch",
     },
     {
-      accessorFn: (row) => row.department?.name || "N/A",
+      accessorFn: (row) => row.department?.name || "--",
       id: "department",
       header: "Department",
     },
     {
       accessorKey: "job",
       header: "Job",
+      cell: ({ row }) => (
+        <span className="px-5 py-1 font-custom rounded-lg border border-[#5494DA] text-blue-600 ml-3 inline-flex items-center gap-1">
+          <span className="text-blue">{row.original.job || "--"}</span>
+        </span>
+      ),
     },
     {
-      accessorFn: (row) => row.position?.title || "N/A",
+      accessorFn: (row) => row.position?.title || "--",
       id: "position",
       header: "Position",
     },
@@ -153,106 +182,43 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
       header: "Groups",
       cell: ({ row }) => {
         const groups = row.original.groups || [];
-        if (groups.length === 0) return "N/A";
+        if (groups.length === 0) return "--";
         if (groups.length === 1) return groups[0].name;
         return `${groups.length} Groups`;
       },
     },
+
     {
-      accessorFn: (row) => row.shiftType?.name || "",
-      id: "shiftType",
+      accessorKey: "shiftType",
       header: "Shift Type",
+      cell: ({ row }) => {
+        const shiftType = row.original.shiftType || [];
+        if (shiftType.length === 0) return "--";
+        if (shiftType.length === 1) return shiftType[0].name;
+        return `${shiftType.length} Shifts`;
+      },
     },
-    // {
-    //   accessorKey: "leavePolicies",
-    //   header: "Leave Policies",
-    //   cell: ({ row }) => {
-    //     const leaves = row.original.leavePolicies || [];
-    //     if (leaves.length === 0) return "-";
-    //     if (leaves.length === 1) return leaves[0].name;
-    //     return `${leaves.length} Policies`;
-    //   },
-    // },
+    {
+      accessorKey: "dateOfBirth",
+      header: "Date of Birth",
+      cell: ({ getValue }) => {
+        const value = getValue();
+        if (!value) return "--";
+        return format(new Date(value), "dd/MM/yyyy");
+      },
+    },
     {
       accessorKey: "startDate",
       header: "Employment Date",
       cell: ({ getValue }) => {
         const value = getValue();
-        if (!value) return "-";
+        if (!value) return "--";
         return format(new Date(value), "dd/MM/yyyy");
       },
     },
-    // {
-    //   accessorKey: "status",
-    //   filterFn: (row, columnId, filterValue) =>
-    //     row.getValue(columnId)?.toLowerCase() === filterValue?.toLowerCase(),
-    //   header: ({ column }) => (
-    //     <div className="flex items-center gap-1">
-    //       <span>Status</span>
-    //       <Select
-    //         onValueChange={(value) => {
-    //           column.setFilterValue(value === "All" ? "" : value.toLowerCase());
-    //         }}
-    //       >
-    //         <SelectTrigger className="border-none p-0 w-6" />
-    //         <SelectContent>
-    //           <SelectItem value="All" className="font-custom">
-    //             All
-    //           </SelectItem>
-    //           {statusFilter.map((status) => (
-    //             <SelectItem
-    //               key={status}
-    //               value={status}
-    //               className="font-custom text-light-gray"
-    //             >
-    //               {status}
-    //             </SelectItem>
-    //           ))}
-    //         </SelectContent>
-    //       </Select>
-    //     </div>
-    //   ),
-    //   cell: ({ row }) => {
-    //     const status =
-    //       row.original.isActive === true
-    //         ? "Active"
-    //         : row.original.isActive === false
-    //         ? "Inactive"
-    //         : "Pending";
-    //     const statusStyles = {
-    //       Active: "bg-[#05C16833] text-[#14CA74] border-[#14CA74]",
-    //       Inactive: "bg-[#AEB9E133] text-[#AEB9E1] border-[#AEB9E1]",
-    //       Pending: "bg-[#FFF6C4] text-[#F7D000] border-[#F7D000]",
-    //     };
-    //     const dotColor = {
-    //       Active: "#14CA74",
-    //       Inactive: "#AEB9E1",
-    //       Pending: "#F7D000",
-    //     };
-    //     return (
-    //       <span
-    //         className={`px-1.5 py-0.5 text-sm font-semibold rounded-md border inline-flex items-center gap-1 ${
-    //           statusStyles[status] ||
-    //           "bg-gray-200 text-gray-700 border-gray-400"
-    //         }`}
-    //         style={{
-    //           borderWidth: "1px",
-    //           minWidth: "80px",
-    //           justifyContent: "center",
-    //         }}
-    //       >
-    //         <span
-    //           className="w-2 h-2 rounded-full inline-block"
-    //           style={{ backgroundColor: dotColor[status] || "#999" }}
-    //         />
-    //         {status}
-    //       </span>
-    //     );
-    //   },
-    // },
     {
       id: "actions",
-      header: "",
+      header: "Actions",
       cell: ({ row }) => <ActionsCell user={row.original} />,
     },
     {
@@ -261,8 +227,10 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
     },
   ];
 
+  // table header initialization
   const table = useReactTable({
     data: users,
+
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -281,10 +249,34 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
         shiftType: true,
         startDate: true,
         status: true,
+        actions: true,
+        role: true,
+
+        idCardNumber: false,
+        gender: false,
+        groups: false,
+        dateOfBirth: false,
         filter: true,
       },
     },
   });
+
+  // export users
+  const [exportType, setExportType] = useState(null);
+  useEffect(() => {
+    if (!exportType) return;
+
+    if (exportType === "as CSV") {
+      exportTableToCSV(table, users, "users.csv");
+    }
+    if (exportType === "as XLS") {
+      exportTableToExcel(table, users, "users.xlsx");
+    } else if (exportType === "as PDF") {
+      exportTableToPDF(table, users, "users.pdf");
+    }
+
+    setExportType(null);
+  }, [exportType]);
 
   useEffect(() => {
     setUsersCount(users.length);
@@ -298,9 +290,16 @@ const UsersScreen = ({ users = [], setUsersCount, onAddUser }) => {
         setShowUploadDialog={setShowUploadDialog}
         showAddDialog={showAddDialog}
         setShowAddDialog={setShowAddDialog}
+        setExportType={setExportType}
       />
 
-      <UsersTable table={table} router={router} />
+      <UsersTable
+        table={table}
+        router={router}
+        page={page}
+        setPage={setPage}
+        totalPages={totalPages}
+      />
 
       {/* dialogs */}
       <UploadDialog
@@ -322,7 +321,6 @@ const ActionsCell = ({ user }) => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteItem, setDeleteItem] = useState(null);
-  const role = user.employee?.role;
 
   const queryClient = useQueryClient();
   const deleteUserMutation = useMutation({
@@ -344,10 +342,10 @@ const ActionsCell = ({ user }) => {
     }
   };
 
-  const handleOpen = (type) => {
-    setActionType(type);
-    setDialogOpen(true);
-  };
+  // const handleOpen = (type) => {
+  //   setActionType(type);
+  //   setDialogOpen(true);
+  // };
 
   return (
     <div className="flex items-center justify-end gap-2">
@@ -440,7 +438,12 @@ const ColumnVisibilityDropdown = ({ table }) => (
   </DropdownMenu>
 );
 
-const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
+const TopControls = ({
+  onAddUser,
+  setShowAddDialog,
+  setShowUploadDialog,
+  setExportType,
+}) => {
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
@@ -503,14 +506,14 @@ const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <Select>
-          <SelectTrigger className="w-24 font-custom rounded-full">
+        <Select onValueChange={(value) => setExportType(value)}>
+          <SelectTrigger className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
             <SelectValue placeholder="Export" />
           </SelectTrigger>
           <SelectContent className="font-custom">
-            {exportOptions.map((role) => (
-              <SelectItem key={role.value} value={role.value}>
-                {role.label}
+            {exportOptions.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
               </SelectItem>
             ))}
           </SelectContent>
@@ -520,16 +523,19 @@ const TopControls = ({ onAddUser, setShowAddDialog, setShowUploadDialog }) => {
   );
 };
 
-const UsersTable = ({ table, router }) => (
+const UsersTable = ({ table, router, page, setPage, totalPages }) => (
   <div className="rounded-md border mt-6">
     <Table>
       <TableHeader>
         {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id} className="bg-gray-200 text-dark-blue">
+          <TableRow
+            key={headerGroup.id}
+            className="bg-gray-200 text-dark-blue text-center items-center"
+          >
             {headerGroup.headers.map((header) => (
               <TableHead
                 key={header.id}
-                className="whitespace-nowrap px-2 min-w-[50px] w-[50px]"
+                className="whitespace-nowrap px-2 text-center items-center min-w-[50px] w-[50px]"
               >
                 {flexRender(
                   header.column.columnDef.header,
@@ -551,7 +557,7 @@ const UsersTable = ({ table, router }) => (
               if (cell.column.id === "groups") {
                 const groups = row.original.groups || [];
                 let cellContent;
-                if (groups.length === 0) cellContent = "-";
+                if (groups.length === 0) cellContent = "--";
                 else if (groups.length === 1) cellContent = groups[0].name;
                 else
                   cellContent = (
@@ -593,10 +599,56 @@ const UsersTable = ({ table, router }) => (
                 );
               }
 
+              if (cell.column.id === "shiftType") {
+                const shiftType = row.original.shiftType || [];
+                let cellContent;
+                if (shiftType.length === 0) cellContent = "--";
+                else if (shiftType.length === 1)
+                  cellContent = shiftType[0].name;
+                else
+                  cellContent = (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                            {shiftType.length} Shift Type
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="bottom"
+                          align="start"
+                          className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                        >
+                          <div className="whitespace-pre-wrap font-custom">
+                            <p className="text-xl mb-2">Shift Type</p>
+                            {shiftType.map((g) => (
+                              <span
+                                key={g.id || g.name}
+                                className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                              >
+                                {g.name}
+                              </span>
+                            ))}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  );
+
+                return (
+                  <TableCell
+                    key={cell.id}
+                    className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
+                  >
+                    {cellContent}
+                  </TableCell>
+                );
+              }
+
               if (cell.column.id === "leavePolicies") {
                 const leaves = row.original.leavePolicies || [];
                 let cellContent;
-                if (leaves.length === 0) cellContent = "-";
+                if (leaves.length === 0) cellContent = "--";
                 else if (leaves.length === 1) cellContent = leaves[0].name;
                 else
                   cellContent = (
@@ -632,7 +684,7 @@ const UsersTable = ({ table, router }) => (
                 return (
                   <TableCell
                     key={cell.id}
-                    className="whitespace-nowrap overflow-hidden text-ellipsis"
+                    className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
                   >
                     {cellContent}
                   </TableCell>
@@ -642,7 +694,7 @@ const UsersTable = ({ table, router }) => (
               return (
                 <TableCell
                   key={cell.id}
-                  className="whitespace-nowrap overflow-hidden text-ellipsis"
+                  className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
                   onClick={() => {
                     if (!isActions) {
                       const user = row.original;
@@ -669,25 +721,174 @@ const UsersTable = ({ table, router }) => (
       <Button
         variant="outline"
         size="sm"
-        onClick={() => table.previousPage()}
-        disabled={!table.getCanPreviousPage()}
+        onClick={() => setPage(page - 1)}
+        disabled={page <= 1}
       >
         Previous
       </Button>
+
       <span className="font-custom text-gray-400">
-        Page {table.getState().pagination.pageIndex + 1} of{" "}
-        {table.getPageCount()}
+        Page {page} of {totalPages}
       </span>
+
       <Button
         variant="outline"
         size="sm"
-        onClick={() => table.nextPage()}
-        disabled={!table.getCanNextPage()}
+        onClick={() => setPage(page + 1)}
+        disabled={page >= totalPages}
       >
         Next
       </Button>
     </div>
   </div>
 );
+
+// XLSX Export
+export const exportTableToExcel = (table, data, fileName = "users.xlsx") => {
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      let value = accessorFn ? accessorFn(row) : row[col.id];
+
+      // 🕓 Format date fields
+      if (
+        value &&
+        (col.id.toLowerCase().includes("date") || value instanceof Date)
+      ) {
+        try {
+          value = format(new Date(value), "dd/MM/yyyy");
+        } catch {
+          // skip formatting invalid dates
+        }
+      }
+
+      // 🧩 Handle arrays
+      if (Array.isArray(value)) {
+        if (value.length === 0) return "--";
+        if (value[0]?.name) return value.map((v) => v.name).join(", ");
+        return value.join(", ");
+      }
+
+      // Default
+      return value ?? "--";
+    })
+  );
+
+  const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  worksheet["!cols"] = headers.map(() => ({ wch: 20 }));
+
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+  XLSX.writeFile(workbook, fileName);
+};
+
+// CSV Export
+export const exportTableToCSV = (table, data, fileName = "users.csv") => {
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      const value = accessorFn ? accessorFn(row) : row[col.id];
+      if (Array.isArray(value)) return value.map((v) => v.name ?? v).join("; ");
+      return value ?? "";
+    })
+  );
+
+  const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
+    "\n"
+  );
+
+  const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName;
+  a.click();
+  a.remove();
+};
+
+export const exportTableToPDF = (table, data, fileName = "users.pdf") => {
+  const doc = new jsPDF("l", "pt", "a4"); // landscape, points, A4
+
+  const visibleColumns = table
+    .getAllColumns()
+    .filter(
+      (col) =>
+        col.getIsVisible() &&
+        !["actions", "filter", "profile", "role"].includes(col.id)
+    );
+
+  const headers = visibleColumns.map((col) =>
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+  );
+
+  const rows = data.map((row) =>
+    visibleColumns.map((col) => {
+      const accessorFn = col.columnDef.accessorFn;
+      let value = accessorFn ? accessorFn(row) : row[col.id];
+
+      // 🕓 Format date fields
+      if (
+        value &&
+        (col.id.toLowerCase().includes("date") || value instanceof Date)
+      ) {
+        try {
+          value = format(new Date(value), "dd/MM/yyyy");
+        } catch {
+          /* ignore invalid date */
+        }
+      }
+
+      // 🧩 Handle arrays
+      if (Array.isArray(value)) {
+        if (value.length === 0) return "--";
+        if (value[0]?.name) return value.map((v) => v.name).join(", ");
+        return value.join(", ");
+      }
+
+      return value ?? "--";
+    })
+  );
+
+  // 🧾 Add title
+  doc.setFontSize(16);
+  doc.text("User List", 40, 40);
+
+  // ✅ Use the imported autoTable helper
+  autoTable(doc, {
+    head: [headers],
+    body: rows,
+    startY: 60,
+    styles: { fontSize: 8, cellPadding: 4 },
+    headStyles: { fillColor: [66, 133, 244] },
+    alternateRowStyles: { fillColor: [245, 245, 245] },
+  });
+
+  // 💾 Save
+  doc.save(fileName);
+};
 
 export default UsersScreen;

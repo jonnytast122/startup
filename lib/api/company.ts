@@ -15,6 +15,11 @@ export const getMyCompany = async () => {
   return response.data;
 };
 
+export const getEmployee = async (id: string) => {
+  const response = await api.get(ApiRoutes.company.getEmployee.replace("{id}", id));
+  return response.data;
+};
+
 // Safe replacement for 'any'
 type CompanyPayload = Record<string, unknown>;
 
