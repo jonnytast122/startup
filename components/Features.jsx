@@ -1,183 +1,180 @@
 "use client";
 
-import { Check, CalendarDays, CalendarClock } from "lucide-react";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import React, { useRef, useEffect, useState } from "react";
+import Image from "next/image";
+import { motion, useAnimation, useInView } from "framer-motion";
+import { CheckCircle } from "lucide-react";
 
-function FeaturesComparison() {
-  const plans = ["Standard", "Free Trial"];
+const cardData = [
+  {
+    icon: "👥",
+    title: "Easy Onboarding",
+    description:
+      "Get your team up and running in minutes with our intuitive setup process.",
+    points: [
+      "Quick company setup",
+      "Bulk employee import",
+      "Simple, no training needed",
+    ],
+  },
+  {
+    icon: "🕒",
+    title: "Seamless Tracking",
+    description:
+      "Real-time attendance tracking with automated reports and insights.",
+    points: ["Live attendance monitoring", "Automated time logs", "Customizable reports"],
+  },
+  {
+    icon: "💰",
+    title: "Accurate Payroll",
+    description: "Automated payroll processing with zero errors and full compliance.",
+    points: ["Auto-calculated salaries", "Built-in tax & NSSF", "One-click approval"],
+  },
+  {
+    icon: "🤖",
+    title: "Smart System",
+    description: "Automation to optimize your workforce management.",
+    points: ["Performance insights", "Automated reports", "Future AI automation"],
+  },
+];
 
-  const schedule = [
-    { name: "Customize Payroll", availability: [true, true] },
-    { name: "Limit Shift", availability: [true, true] },
-    { name: "Time Limitation", availability: [true, true] },
-    { name: "Limitation of Work Hours", availability: ["Up to 6", "Single"] },
-    { name: "Number of Sub Jobs", availability: ["Unlimited", "Unlimited"] },
-    { name: "In Shift Clock In/Out Ability", availability: [true, true] },
-    { name: "Claiming Open Shift", availability: ["Up to 6", "Single"] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "In Shift Status Tracking", availability: ["Comprehensive Tracking with automation", "Unlimited"] },
-    { name: "Dedicated In Shifts Tasks", availability: ["Unlimited", "Unlimited"] },
-    { name: "Search Schedule", availability: [true, true] },
-    { name: "Export Schedule Filter", availability: [true, true] },
-    { name: "Basic Schedule Filter", availability: [true, true] },
-    { name: "Decide if Users Can See Each Other’s Schedules", availability: [true, true] },
-    { name: "Shift Replacements", availability: [true, true] },
-    { name: "Import Shifts from CSV", availability: [true, true] },
-    { name: "Repeating Shitfs", availability: [true, true] },
-    { name: "Push Notification Customization", availability: [true, true] },
-    { name: "Share Live Scheduled Link", availability: [true, true] },
-    { name: "Add Shortcut to a Shift", availability: [true, true] },
-    { name: "Add More Date Layout", availability: [true, true] },
-    { name: "Create Smart Crop", availability: ["Up to 5", "Single"] },
-  ];
+const Features = () => {
+  const [accuracy, setAccuracy] = useState(0);
+  const [setupTime, setSetupTime] = useState(0);
+  const [timeSaved, setTimeSaved] = useState(0);
+  const [supportFirst, setSupportFirst] = useState(0);
+  const [supportSecond, setSupportSecond] = useState(0);
+  const controls = useAnimation();
+  const statsRef = useRef(null);
+  const isInView = useInView(statsRef, { once: false, amount: 0.4 });
 
-  const time_clock = [
-    { name: "Claiming Open Shift", availability: ["Unlimited", "Unlimited"] },
-    { name: "Claiming Open Shift", availability: ["Up to 5", "Unlimited"] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Claiming Open Shift", availability: ["Up to 5", "Single"] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "Open Shifts Approval", availability: [true, true] },
-    { name: "In Shift Status Tracking", availability: ["Available with live tracking + history", "Single"] },
-    { name: "Dedicated In Shifts Tasks", availability: ["Unlimited", "Unlimited"] },
-    { name: "Search Schedule", availability: [true, true] },
-    { name: "Export Schedule Filter", availability: [true, true] },
-    { name: "Dedicated In Shifts Tasks", availability: ["Up to 5", "Single"] },
-    { name: "Export Schedule Filter", availability: [true, true] },
-    { name: "Dedicated In Shifts Tasks", availability: ["Up to 5", "Up to 3"] },
-  ];
+  useEffect(() => {
+    if (!isInView) return;
+
+    const duration = 2000; // 2 seconds for all counters
+    const targetAccuracy = 99;
+    const targetSetup = 5;
+    const targetSaved = 50;
+    const targetSupportFirst = 24;
+    const targetSupportSecond = 7;
+
+    let start = null;
+
+    const animate = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = timestamp - start;
+      const fraction = Math.min(progress / duration, 1);
+
+      setAccuracy(Math.floor(fraction * targetAccuracy));
+      setSetupTime(Math.floor(fraction * targetSetup));
+      setTimeSaved(Math.floor(fraction * targetSaved));
+      setSupportFirst(Math.floor(fraction * targetSupportFirst));
+      setSupportSecond(Math.floor(fraction * targetSupportSecond));
+
+      controls.start({
+        y: [10, 0, -5, 0],
+        opacity: [0, 1, 1, 1],
+        transition: { duration: 0.25, ease: "easeOut" },
+      });
+
+      if (progress < duration) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }, [isInView, controls]);
+
+  const statVariant = {
+    hidden: { opacity: 0, y: 20 },
+    visible: (i) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.15, duration: 0.6, ease: "easeOut" },
+    }),
+  };
 
   return (
-    <div id="feature" className="max-container mx-auto px-6 py-10">
-      {/* Title */}
-      <h2 className="text-center text-3xl sm:text-4xl md:text-5xl font-bold text-[#0B3858]">
-        Compare All Features
-      </h2>
+    <section className="bg-white text-center py-20">
+      <div className="max-w-6xl mx-auto px-6">
+        {/* Header */}
+        <h2 className="text-3xl md:text-4xl font-bold text-blue-800 mb-3">Features</h2>
+        <p className="text-gray-700 mb-14">
+          Everything you need to manage your workforce efficiently and effectively
+        </p>
 
-      {/* First Table Card */}
-      <div className="mt-10 overflow-x-auto rounded-xl shadow-xl mx-auto max-container border-2 border-gray p-4">
-        <Table className="w-full rounded-lg overflow-hidden">
-          {/* Table Header */}
-          <TableHeader className="bg-[#ffffff] text-[#0B3858]">
-            <TableRow className="first:rounded-t-lg">
-              <TableHead className="p-6 text-left text-md">
-                <CalendarDays className="w-4 h-4 inline-block mr-2 mb-1" />
-                Employee Scheduling
-              </TableHead>
-              {plans.map((plan, index) => (
-                <TableHead
-                  key={index}
-                  className="p-4 text-center text-md text-[#0B3858]"
-                >
-                  {plan}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-
-          {/* Table Body */}
-          <TableBody>
-            {schedule.map((feature, index) => (
-              <TableRow
-                key={index}
-                className={`text-center transition ${
-                  index % 2 === 0
-                    ? "bg-[#F9F9F9] hover:bg-gray-300"
-                    : "bg-[#EBF6FF] hover:bg-blue-200"
-                }`}
-              >
-                <TableCell className="p-4 font-custom text-md text-left">
-                  {feature.name}
-                </TableCell>
-                {feature.availability.map((available, i) => (
-                  <TableCell key={i} className="p-4 font-custom">
-                    {typeof available === "boolean" ? (
-                      available ? (
-                        <div className="w-5 h-5 flex items-center justify-center mx-auto bg-[#0B3858] rounded-full">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      ) : (
-                        "-"
-                      )
-                    ) : (
-                      available
-                    )}
-                  </TableCell>
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-20">
+          {cardData.map((card, index) => (
+            <motion.div
+              key={index}
+              className="bg-white rounded-2xl shadow-md p-6 text-left border hover:shadow-lg transition-all"
+              whileHover={{ scale: 1.05 }}
+            >
+              <div className="flex items-center justify-center w-12 h-12 bg-blue-600 text-white rounded-lg mb-4 text-2xl">
+                {card.icon}
+              </div>
+              <h3 className="text-xl font-semibold text-blue-800 mb-2">{card.title}</h3>
+              <p className="text-gray-600 text-sm mb-4">{card.description}</p>
+              <ul className="space-y-2">
+                {card.points.map((point, i) => (
+                  <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
+                    <CheckCircle className="text-blue-600 w-4 h-4 mt-0.5" />
+                    {point}
+                  </li>
                 ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+              </ul>
+            </motion.div>
+          ))}
+        </div>
 
-      {/* Second Table Card */}
-      <div className="mt-10 overflow-x-auto rounded-lg shadow-xl border-2 border-gray p-4">
-        <Table className="w-full rounded-lg overflow-hidden">
-          {/* Table Header */}
-          <TableHeader className="bg-[#ffffff] text-[#0B3858]">
-            <TableRow className="first:rounded-t-lg">
-              <TableHead className="p-6 text-left text-md">
-                <CalendarClock className="w-4 h-4 inline-block mr-2 mb-1" />
-                Advanced Scheduling
-              </TableHead>
-              {plans.map((plan, index) => (
-                <TableHead
-                  key={index}
-                  className="p-4 text-center text-md text-[#0B3858]"
-                >
-                  {plan}
-                </TableHead>
+        {/* Stats Section */}
+        <div
+          ref={statsRef}
+          className="bg-blue-800 text-white rounded-2xl py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 text-center items-center justify-center mb-20"
+        >
+          {[
+            { value: `${accuracy}%`, label: "Accuracy Rate" },
+            { value: `${setupTime}min`, label: "Minutes Setup" },
+            { value: `${timeSaved}%`, label: "Time Saved" },
+            { value: `${String(supportFirst).padStart(2, "0")}/${supportSecond}`, label: "Support Available" },
+          ].map((stat, i) => (
+            <motion.div
+              key={i}
+              custom={i}
+              variants={statVariant}
+              initial="hidden"
+              animate={isInView ? "visible" : "hidden"}
+              className="flex flex-col items-center justify-center"
+            >
+              <h3 className="text-3xl font-bold">{stat.value}</h3>
+              <p className="text-sm opacity-80">{stat.label}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Our Customers */}
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-blue-800 mb-3">Our Customers</h2>
+          <p className="text-gray-700 mb-10">We have been working with some clients</p>
+          <div className="flex flex-wrap justify-center items-center gap-10 opacity-80">
+            {Array(5)
+              .fill("/logos/client1.png")
+              .map((src, i) => (
+                <Image
+                  key={i}
+                  src={src}
+                  alt={`Client ${i + 1}`}
+                  width={100}
+                  height={50}
+                  className="grayscale hover:grayscale-0 transition-all duration-300"
+                />
               ))}
-            </TableRow>
-          </TableHeader>
-
-          {/* Table Body */}
-          <TableBody>
-            {time_clock.map((feature, index) => (
-              <TableRow
-                key={index}
-                className={`text-center transition ${
-                  index % 2 === 0
-                    ? "bg-[#F9F9F9] hover:bg-gray-300"
-                    : "bg-[#EBF6FF] hover:bg-blue-200"
-                }`}
-              >
-                <TableCell className="p-4 font-custom text-md text-left">
-                  {feature.name}
-                </TableCell>
-                {feature.availability.map((available, i) => (
-                  <TableCell key={i} className="p-4 font-custom">
-                    {typeof available === "boolean" ? (
-                      available ? (
-                        <div className="w-5 h-5 flex items-center justify-center mx-auto bg-[#0B3858] rounded-full">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
-                      ) : (
-                        "-"
-                      )
-                    ) : (
-                      available
-                    )}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
-}
+};
 
-export default FeaturesComparison;
+export default Features;

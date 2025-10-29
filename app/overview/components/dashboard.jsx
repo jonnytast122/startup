@@ -79,7 +79,7 @@ const columns = [
     accessorKey: "job",
     header: "Job",
     cell: ({ row }) => (
-      <div className="px-5 py-1 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
+      <div className="px-5 py-1 text-md font-custom rounded-full inline-flex items-center gap-1 text-blue">
         {row.original.job}
       </div>
     ),
@@ -129,7 +129,7 @@ function Dashboard() {
     // <-- Add "return" here
     <div>
       <h2 className="text-2xl font-custom font-medium mb-4 text-black">Dashboard</h2>
-      <div className="rounded-md border mt-2">
+      <div className="rounded-md mt-2">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (

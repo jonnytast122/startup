@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { NAV_LINKS } from "@/constants";
 import { Button } from "@/components/ui/button";
-import { User, Menu, Globe } from "lucide-react";
+import { User, Globe } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -18,6 +18,18 @@ import {
 } from "@/components/ui/select";
 
 function Navbar() {
+  // Reorder NAV_LINKS to insert "Features" and "Customers" before "Pricing"
+  const updatedLinks = [];
+  NAV_LINKS.forEach((link) => {
+    if (link.label.toLowerCase() === "pricing") {
+      updatedLinks.push(
+        { key: "features", label: "Features", href: "/features" },
+        { key: "customers", label: "Customers", href: "/customers" }
+      );
+    }
+    updatedLinks.push(link);
+  });
+
   return (
     <div className="bg-primary-blue w-full pt-1">
       <div className="px-4 sm:px-6 md:px-6 lg:px-12 xl:px-12">
@@ -40,7 +52,7 @@ function Navbar() {
 
           {/* Desktop Navigation */}
           <ul className="hidden xl:flex h-full gap-12">
-            {NAV_LINKS.map((link) => (
+            {updatedLinks.map((link) => (
               <li key={link.key}>
                 <Link
                   href={link.href}
@@ -97,7 +109,7 @@ function Navbar() {
               align="end"
               className="bg-white shadow-md rounded-md w-48"
             >
-              {NAV_LINKS.map((link) => (
+              {updatedLinks.map((link) => (
                 <DropdownMenuItem key={link.key}>
                   <Link href={link.href}>{link.label}</Link>
                 </DropdownMenuItem>
