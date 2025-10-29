@@ -18,38 +18,26 @@ const people = [
     name: "Mr. Bon Chandaravon",
     role: "Founder / Business Advisor",
     imageUrl:
-      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3467.JPG?alt=media&token=4d9ad79e-19f4-4583-a3d9-e0822c73dd9b",
+      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3467.JPG?alt=media&token=717e8bcc-b8fc-48f6-b49c-9c7ac1aca60b",
   },
   {
     name: "Ms. Hay Lyna",
     role: "Co-Founder / Data Analytics",
     imageUrl:
-      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3387.JPG?alt=media&token=04888c0b-c576-4266-9df3-e84f1887d970",
+      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3387.JPG?alt=media&token=0fb62074-f0c9-4d01-95ea-36ada6865c53",
   },
   {
     name: "Mr. Veiy Sokheng",
     role: "Co-Founder / IT Lead",
     imageUrl:
-      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3385.JPG?alt=media&token=c66648f4-2455-4e83-aadb-41e817cf51a6",
+      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3385.JPG?alt=media&token=dafca77a-51ce-48f2-a8e1-60bd0fa11da0",
   },
-  //   {
-  //     name: "Ms. Ro ChanNyka",
-  //     role: "Marketing Executive",
-  //     imageUrl:
-  //       "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3397.JPG?alt=media&token=69f211fd-1115-4b77-b1a4-40aca7936b60",
-  //   },
-  //   {
-  //     name: "Mr. Teu Chomrong",
-  //     role: "Junior Marketing Executive",
-  //     imageUrl:
-  //       "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3389.JPG?alt=media&token=2c0c7b54-6cb8-4d86-ae5e-87003308a064",
-  //   },
-  //   {
-  //     name: "Ms. Sareth Pechmoleka",
-  //     role: "Administration",
-  //     imageUrl:
-  //       "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/IMG_3395.JPG?alt=media&token=ffb7107e-9274-4e8c-bb57-528a2e9bca35",
-  //   },
+  {
+    name: "Ms. Sareth Pechmoleka",
+    role: "Administration",
+    imageUrl:
+      "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FIMG_3395.JPG?alt=media&token=80be6ce2-cf32-4888-bd5a-148dee0d0aef",
+  },
   // More people...
 ];
 
