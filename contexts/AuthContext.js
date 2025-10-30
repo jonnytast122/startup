@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-
+import apiRoutes from "@/constants/ApiRoutes";
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -41,7 +41,7 @@ export function AuthProvider({ children }) {
 
   // Register (does not log in immediately)
   const register = async (formData) => {
-    const res = await fetch("/v1/auth/register", {
+    const res = await fetch(apiRoutes.auth.register, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -59,11 +59,11 @@ export function AuthProvider({ children }) {
 
   // Verify phone (logs in after OTP is correct)
   const verifyPhone = async ({ id, otp }) => {
-    const res = await fetch("/v1/auth/verify-phone", {
+    const res = await fetch(apiRoutes.auth.verifyPhone, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`, // use token from register
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({ id, otp }),
     });

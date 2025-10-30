@@ -2,7 +2,8 @@ import { approveLeave } from "@/lib/api/adminLeave";
 import { getSummary } from "@/lib/api/userAttendance";
 import { rejects } from "assert";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001/v1";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://128.199.80.7/v1";
 
 const ApiRoutes = {
   auth: {
