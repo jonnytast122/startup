@@ -33,6 +33,7 @@ export function AuthProvider({ children }) {
     Cookies.set("token", tokens.access.token, {
       expires: 1,
       sameSite: "lax",
+      secure: false,
     });
 
     setToken(tokens.access.token);
