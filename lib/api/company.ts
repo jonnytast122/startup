@@ -6,7 +6,10 @@ import ApiRoutes from "@/constants/ApiRoutes";
  * @returns {Promise} Axios response with company data
  */
 export const fetchCompany = async () => {
-  const response = await api.get(ApiRoutes.company.get);
+  const token = localStorage.getItem("token");
+  const response = await api.get(ApiRoutes.company.get, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   return response.data;
 };
 
@@ -16,7 +19,9 @@ export const getMyCompany = async () => {
 };
 
 export const getEmployee = async (id: string) => {
-  const response = await api.get(ApiRoutes.company.getEmployee.replace("{id}", id));
+  const response = await api.get(
+    ApiRoutes.company.getEmployee.replace("{id}", id)
+  );
   return response.data;
 };
 

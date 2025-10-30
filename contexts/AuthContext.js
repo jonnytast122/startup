@@ -31,6 +31,7 @@ export function AuthProvider({ children }) {
     localStorage.setItem("user", JSON.stringify(user));
 
     Cookies.set("token", tokens.access.token, {
+      httpOnly: true,
       expires: 1,
       sameSite: "lax",
       secure: false,
