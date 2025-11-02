@@ -6,10 +6,7 @@ import ApiRoutes from "@/constants/ApiRoutes";
  * @returns {Promise} Axios response with company data
  */
 export const fetchCompany = async () => {
-  const token = localStorage.getItem("token");
-  const response = await api.get(ApiRoutes.company.get, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await api.get(ApiRoutes.company.get);
   return response.data;
 };
 

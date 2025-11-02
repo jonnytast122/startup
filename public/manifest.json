@@ -1,7 +1,7 @@
 {
   "name": "Anan",
-  "short_name": "anan_app",
-  "start_url": "/",
+  "short_name": "Anan",
+  "start_url": "/signin",
   "display": "standalone",
   "theme_color": "#8936FF",
   "background_color": "#2EC6FE",

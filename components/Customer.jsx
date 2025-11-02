@@ -56,7 +56,9 @@ const CustomerFeedback = () => {
             <Button className="bg-blue-600 text-white px-6 py-3 rounded-lg">
               Contact Us
             </Button>
-            <a href="#" className="text-blue-600 font-medium">See All &gt;</a>
+            <a href="#" className="text-blue-600 font-medium">
+              See All &gt;
+            </a>
           </div>
         </div>
 
@@ -76,7 +78,9 @@ const CustomerFeedback = () => {
               {/* Stars */}
               <div className="flex mb-3">
                 {"★★★★★".split("").map((star, i) => (
-                  <span key={i} className="text-orange-400 text-xl">★</span>
+                  <span key={i} className="text-orange-400 text-xl">
+                    ★
+                  </span>
                 ))}
               </div>
 
@@ -105,7 +109,9 @@ const CustomerFeedback = () => {
                   className="rounded-full"
                 />
                 <div className="ml-3">
-                  <h3 className="font-bold text-gray-900">{testimonial.name}</h3>
+                  <h3 className="font-bold text-gray-900">
+                    {testimonial.name}
+                  </h3>
                   <p className="text-xs sm:text-xs md:text-xs lg:text-xs text-gray-500">
                     {testimonial.role}
                   </p>

@@ -3,6 +3,7 @@
 import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
+import Dashboard from "./Dashboard"; // Import your Dashboard component
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 50 },
@@ -76,11 +77,23 @@ function Hero() {
         </motion.div>
       </section>
 
+      {/* Dashboard Section */}
+      <section className="w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-24">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={fadeInWithScale}
+          className="-mt-8 sm:-mt-12 md:-mt-16" // smaller negative margin for gentle overlap
+        >
+          <div className="bg-gray-100 rounded-2xl shadow-xl p-6 md:p-8">
+            <Dashboard />
+          </div>
+        </motion.div>
+      </section>
+
       {/* Image Section with Overlap */}
       <div className="relative w-full flex flex-col items-center">
-        {/* Blue background at the top (shrinks more on small screens) */}
-        <div className="bg-primary-blue w-full h-[5vh] sm:h-[5vh] md:h-[8vh]"></div>
-
         {/* Image Overlapping Blue and White */}
         <motion.div
           className="relative -mt-[10vh] sm:-mt-[8vh] md:-mt-[12vh] z-10 flex justify-center w-full"
@@ -88,18 +101,7 @@ function Hero() {
           whileInView="visible"
           viewport={{ once: true }}
           variants={fadeInWithScale}
-        >
-          <Image
-            src="/images/dashboard.png"
-            alt="Dashboard Preview"
-            width={1600}
-            height={900}
-            className="w-full max-w-[95vw] sm:max-w-[90vw] md:max-w-[80vw]"
-          />
-        </motion.div>
-
-        {/* White background below */}
-        <div className="bg-white w-full h-[6vh] sm:h-[6vh] md:h-[6vh]"></div>
+        ></motion.div>
       </div>
     </>
   );
