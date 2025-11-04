@@ -97,23 +97,63 @@ function Navbar() {
           {/* Mobile Dropdown Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Image
-                src="/menu.svg"
-                alt="menu"
-                width={30}
-                height={30}
-                className="xl:hidden cursor-pointer"
-              />
+              <button className="xl:hidden flex items-center justify-center rounded-md p-2 hover:bg-gray-100 transition">
+                <Image
+                  src="/menu.svg"
+                  alt="menu"
+                  width={28}
+                  height={28}
+                  className="cursor-pointer"
+                />
+              </button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent
               align="end"
-              className="bg-white shadow-md rounded-md w-48"
+              className="bg-white shadow-lg rounded-xl w-56 p-2 space-y-2"
             >
               {updatedLinks.map((link) => (
-                <DropdownMenuItem key={link.key}>
-                  <Link href={link.href}>{link.label}</Link>
+                <DropdownMenuItem
+                  key={link.key}
+                  className="p-3 rounded-lg hover:bg-blue-50 text-dark-blue text-lg font-custom"
+                >
+                  <Link href={link.href} className="block w-full">
+                    {link.label}
+                  </Link>
                 </DropdownMenuItem>
               ))}
+
+              <div className="border-t border-gray-200 my-2"></div>
+
+              <DropdownMenuItem className="p-3">
+                <Link
+                  href="/signin"
+                  className="text-dark-blue text-lg font-custom hover:font-semibold"
+                >
+                  Log In
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem className="p-3">
+                <Link href="/signup">
+                  <Button className="w-full bg-blue-500 text-white font-custom text-lg py-2">
+                    Get Started
+                  </Button>
+                </Link>
+              </DropdownMenuItem>
+
+              <DropdownMenuItem className="p-3">
+                <Select>
+                  <SelectTrigger className="w-full border rounded-md font-custom">
+                    <Globe className="w-4 h-4 text-dark-blue mr-2" />
+                    <SelectValue placeholder="EN" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="en">EN</SelectItem>
+                    <SelectItem value="kh">KH</SelectItem>
+                  </SelectContent>
+                </Select>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </nav>
