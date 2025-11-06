@@ -3,15 +3,11 @@
     {
       "name": "anan-client",
       "cwd": "/root/anan-client",
-      "script": "npx",
-      "args": "serve -s dist -l 3000",
+      "script": "serve",
+      "args": "-s dist -l 3000",
       "interpreter": "none",
-      "watch": false,
-      "autorestart": true,
-      "time": true,
       "env": {
-        "NODE_ENV": "production",
-        "PORT": 3000
+        "NODE_ENV": "production"
       }
     }
   ]
