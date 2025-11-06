@@ -29,9 +29,9 @@ export default function PricingPlan() {
 
           {/* Model image */}
           <img
-            src="/images/anan-model.png" // your image path
+            src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FGemini_Generated_Image_rv36xyrv36xyrv36.png?alt=media&token=11bb15b1-fc61-4d5e-9c4c-5f87ae08591a" // your image path
             alt="Anan model"
-            className="absolute bottom-0 right-4 w-[340px] object-contain z-10"
+            className="absolute bottom-0 right-4 w-[340px] object-contain z-10 rounded-3xl"
           />
         </div>
 

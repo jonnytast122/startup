@@ -79,12 +79,12 @@ export function AppSidebar(props) {
         <img
           src={
             company?.logo ||
-            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN-text.png?alt=media&token=f696243c-b9fe-42a4-9292-09823548fedc"
+            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN%20logo%20FA-05.png?alt=media&token=5f602bd2-1068-40a4-a35b-740cd896a22c"
           }
           defaultValue={
-            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN-text.png?alt=media&token=f696243c-b9fe-42a4-9292-09823548fedc"
+            "https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN%20logo%20FA-05.png?alt=media&token=5f602bd2-1068-40a4-a35b-740cd896a22c"
           }
-          alt="Logo"
+          alt="sub Logo"
           className="w-28 h-auto"
         />
       </SidebarHeader>

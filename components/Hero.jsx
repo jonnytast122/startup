@@ -54,15 +54,16 @@ function Hero() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <motion.button
+            <motion.a
+              href="/signup"
               whileHover={{
                 scale: 1.05,
                 boxShadow: "0px 4px 12px rgba(255, 255, 255, 0.3)",
               }}
-              className="bg-white text-purple font-custom text-sm sm:text-sm md:text-md lg:text-lg py-2 sm:py-3 md:py-4 px-4 sm:px-6 md:px-8 lg:px-9 rounded-lg shadow-md hover:bg-[#e6e0ff] hover:text-[#5a3ec8] transition w-full sm:w-auto"
+              className="bg-white text-purple font-custom text-sm sm:text-sm md:text-md lg:text-lg py-2 sm:py-3 md:py-4 px-4 sm:px-6 md:px-8 lg:px-9 rounded-lg shadow-md hover:bg-[#e6e0ff] hover:text-[#5a3ec8] transition w-full sm:w-auto text-center"
             >
               Try for free
-            </motion.button>
+            </motion.a>
 
             <motion.button
               whileHover={{

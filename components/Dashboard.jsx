@@ -2,22 +2,10 @@ import React, { useEffect, useState, useRef } from "react";
 
 function Dashboard() {
   const statsData = [
-    {
-      label: "Total Staff",
-      value: 156,
-      change: "↑ 12%",
-      color: "green",
-      icon: "👥",
-    },
-    {
-      label: "Present",
-      value: 142,
-      change: "↑ 8%",
-      color: "green",
-      icon: "✅",
-    },
-    { label: "On Leave", value: 8, change: "↓ 3%", color: "red", icon: "🏖️" },
-    { label: "Late", value: 6, change: "↓ 15%", color: "red", icon: "⏰" },
+    { label: "Total Staff", value: 156, change: "↑ 12%", color: "green" },
+    { label: "Present", value: 142, change: "↑ 8%", color: "green" },
+    { label: "On Leave", value: 8, change: "↓ 3%", color: "red" },
+    { label: "Late", value: 6, change: "↓ 15%", color: "red" },
   ];
 
   const departmentsData = [

@@ -2,7 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { FaFacebook, FaTiktok, FaInstagram, FaYoutube } from "react-icons/fa";
+import {
+  FaFacebook,
+  FaTiktok,
+  FaInstagram,
+  FaYoutube,
+  FaTelegram,
+} from "react-icons/fa";
 
 function Footer() {
   return (
@@ -24,7 +30,7 @@ function Footer() {
 
         {/* Button */}
         <Button className="mt-6 px-10 py-6 text-sm font-semibold rounded-lg">
-          Try for free
+          <a href="/signup"> Try for free</a>
         </Button>
         <p className="text-custom mt-6 text-sm sm:text-sm md:text-md lg:text-lg max-w-md">
           On a big team? Contact Sales
@@ -36,13 +42,11 @@ function Footer() {
         {/* Left Side (40%) */}
         <div className="flex flex-col items-center md:items-start w-full md:w-[40%]">
           <div className="flex items-center space-x-4">
-            <Image
-              src="/images/white_logo.png"
-              alt="ANAN Logo"
-              width={90}
-              height={90}
+            <img
+              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN%20logo%20FA-05.png?alt=media&token=5f602bd2-1068-40a4-a35b-740cd896a22c"
+              alt="sub Logo"
+              className="w-16"
             />
-            <h2 className="text-xl">ANAN</h2>
           </div>
           <p className="font-custom mt-4 text-lg text-center md:text-left">
             Effortlessly track employee attendance with real-time monitoring,
@@ -90,25 +94,6 @@ function Footer() {
             </div>
           ))}
         </div> */}
-
-        <div className="w-full md:w-[40%] text-sm mt-10 md:mt-0 flex justify-end">
-          <div>
-            <h4 className="font-custom font-semibold text-lg mb-4">
-              Talk with sales
-            </h4>
-            <ul className="font-custom space-y-4">
-              {["+855 123456789", "Available Date", "Available Time"].map(
-                (feature, i) => (
-                  <li key={i} className="mt-2">
-                    <a href="#" className="hover:underline">
-                      {feature}
-                    </a>
-                  </li>
-                )
-              )}
-            </ul>
-          </div>
-        </div>
       </div>
 
       {/* Bottom Section */}
@@ -123,17 +108,32 @@ function Footer() {
 
         {/* Right: Social Icons */}
         <div className="flex space-x-6 mt-4 md:mt-0">
-          <a href="#" aria-label="Facebook">
+          <a
+            href="https://www.facebook.com/profile.php?id=61562347383962"
+            aria-label="Facebook"
+          >
             <FaFacebook className="text-xl hover:text-gray-300" />
           </a>
-          <a href="#" aria-label="TikTok">
+          <a
+            href="https://www.tiktok.com/@ananapp.official"
+            aria-label="TikTok"
+          >
             <FaTiktok className="text-xl hover:text-gray-300" />
           </a>
-          <a href="#" aria-label="Instagram">
+          <a
+            href="https://www.instagram.com/ananapp.official/"
+            aria-label="Instagram"
+          >
             <FaInstagram className="text-xl hover:text-gray-300" />
           </a>
-          <a href="#" aria-label="YouTube">
+          <a
+            href="https://www.youtube.com/@ananapp_channel"
+            aria-label="YouTube"
+          >
             <FaYoutube className="text-xl hover:text-gray-300" />
+          </a>
+          <a href="https://t.me/ananapp_co" aria-label="Twitter">
+            <FaTelegram className="text-xl hover:text-gray-300" />
           </a>
         </div>
       </div>
