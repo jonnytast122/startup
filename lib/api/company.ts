@@ -16,7 +16,9 @@ export const getMyCompany = async () => {
 };
 
 export const getEmployee = async (id: string) => {
-  const response = await api.get(ApiRoutes.company.getEmployee.replace("{id}", id));
+  const response = await api.get(
+    ApiRoutes.company.getEmployee.replace("{id}", id)
+  );
   return response.data;
 };
 

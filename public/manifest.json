@@ -1,13 +1,13 @@
 {
   "name": "Anan",
-  "short_name": "anan_app",
-  "start_url": "/",
+  "short_name": "Anan",
+  "start_url": "/user",
   "display": "standalone",
-  "theme_color": "#8936FF",
-  "background_color": "#2EC6FE",
+  "theme_color": "#FFFFFF",
+  "background_color": "#FFFFFF",
   "orientation": "any",
   "dir": "auto",
-  "lang": "eng",
+  "lang": "en",
   "icons": [
     {
       "purpose": "maskable",
@@ -18,7 +18,7 @@
     {
       "purpose": "any",
       "sizes": "512x512",
-      "src": "/icon512_rounded.png",
+      "src": "/icon512_maskable.png",
       "type": "image/png"
     }
   ]

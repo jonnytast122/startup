@@ -321,8 +321,8 @@ function LoginForm({ className, ...props }) {
           {/* Right side logo image */}
           <div className="hidden md:flex items-center justify-center bg-blue-100">
             <img
-              src="/images/logo.png"
-              alt="Logo"
+              src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN%20logo%20FA-01.png?alt=media&token=fde70984-d50d-429a-96f7-ba2161de06e5"
+              alt="Main Logo"
               className="w-60 h-60 object-contain"
             />
           </div>
