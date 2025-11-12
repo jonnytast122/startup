@@ -1,39 +1,69 @@
 // src/api/axiosClient.js
-
-import axios from 'axios';
+import axios from "axios";
+import Cookies from "js-cookie";
+import apiRoutes from "@/constants/ApiRoutes";
 
 const api = axios.create({
-  // no baseURL, so you must use full or relative URLs in requests
-  withCredentials: true, // always send cookies
+  // baseURL can be set here if you have a common API URL
+  // baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
+  withCredentials: true, // send cookies automatically
   headers: {
-    'Content-Type': 'application/json',
-    // 'Bearer': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ODY2MjQwY2ExMGE2YTIwNmY5NGI4ZmQiLCJpYXQiOjE3NTU0MDYyNDQsImV4cCI6MTc3MzQwNjI0NCwidHlwZSI6ImFjY2VzcyJ9.SGNGFL7rLqMRK4TwsgbfehZn6MBYLpf2MLaNHzgW6QI'
+    "Content-Type": "application/json",
   },
 });
 
-// Global request interceptor
+// Request interceptor: attach access token automatically
 api.interceptors.request.use(
   (config) => {
-    console.log(`config ${config.headers}`);
-    // You can add auth tokens here, logging, etc.
-    // Example: console.log('Request:', config);
+    // Try to get token from localStorage or cookie
+    const token = localStorage.getItem("token") || Cookies.get("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Global response interceptor
+// Response interceptor: handle 401 globally
 api.interceptors.response.use(
-  (response) => {
-    // Optionally handle global responses (e.g., logging)
-    return response;
-  },
-  (error) => {
-    // Handle global errors (e.g., logout on 401)
-    // Example:
-    // if (error.response?.status === 401) {
-    //   // logout logic here
-    // }
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem("refreshToken");
+        if (!refreshToken) throw new Error("No refresh token");
+
+        // Refresh access token
+        const res = await axios.post(
+          apiRoutes.auth.refreshTokens,
+          { refreshToken },
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        // ✅ Fix: your API returns the tokens directly, not inside res.data.tokens
+        const { access, refresh } = res.data;
+
+        // Save new tokens
+        localStorage.setItem("token", access.token);
+        localStorage.setItem("refreshToken", refresh.token);
+
+        // Retry the original request with the new access token
+        originalRequest.headers.Authorization = `Bearer ${access.token}`;
+        return api(originalRequest);
+      } catch (err) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("user");
+        window.location.href = "/signin";
+        return Promise.reject(err);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

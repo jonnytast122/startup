@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import apiRoutes from "@/constants/ApiRoutes";
+
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
@@ -12,7 +13,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Restore from storage
+  // Restore session on reload
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
@@ -24,24 +25,25 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // Login helper
+  // 🟢 LOGIN HANDLER
   const login = ({ tokens, user }) => {
+    // Save tokens & user persistently
     localStorage.setItem("token", tokens.access.token);
     localStorage.setItem("refreshToken", tokens.refresh.token);
     localStorage.setItem("user", JSON.stringify(user));
 
+    // ✅ Cookie lasts 30 days (matches backend refresh token)
     Cookies.set("token", tokens.access.token, {
-      httpOnly: true,
-      expires: 1,
+      expires: 30, // 30 days
       sameSite: "lax",
-      secure: false,
+      secure: process.env.NODE_ENV === "production",
     });
 
     setToken(tokens.access.token);
     setUser(user);
   };
 
-  // Register (does not log in immediately)
+  // 🟢 REGISTER (auto-login support if backend sends tokens)
   const register = async (formData) => {
     const res = await fetch(apiRoutes.auth.register, {
       method: "POST",
@@ -52,14 +54,16 @@ export function AuthProvider({ children }) {
     if (!res.ok) throw new Error("Registration failed");
     const data = await res.json();
 
-    // Save token + user temporarily so we can verify phone
-    setToken(data.tokens.access.token);
-    setUser(data.user);
+    // If backend response is { user, tokens, company, message }
+    const { user, tokens } = data;
 
-    return data; // return so UI can trigger send-verification-phone
+    // Save session immediately (same as login)
+    login({ tokens, user });
+
+    return data;
   };
 
-  // Verify phone (logs in after OTP is correct)
+  // 🟢 VERIFY PHONE (for OTP flow)
   const verifyPhone = async ({ id, otp }) => {
     const res = await fetch(apiRoutes.auth.verifyPhone, {
       method: "POST",
@@ -73,11 +77,12 @@ export function AuthProvider({ children }) {
     if (!res.ok) throw new Error("Phone verification failed");
     const data = await res.json();
 
-    // Now log user in fully
+    // Fully login the verified user
     login({ tokens: data.tokens, user: data.user });
     return data;
   };
 
+  // 🟢 LOGOUT
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("refreshToken");

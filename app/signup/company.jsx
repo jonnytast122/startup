@@ -1,6 +1,6 @@
 "use client";
 
-import { FaAngleLeft, FaCheck, FaDownload } from "react-icons/fa";
+import { FaAngleLeft, FaCheck, FaDownload, FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { useState, useCallback } from "react";
 import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { storage } from "@/config/firebase";
 import LinearProgress from "@mui/material/LinearProgress";
+
 import Box from "@mui/material/Box";
 
 export default function Company({
@@ -233,7 +234,11 @@ export default function Company({
                     className="w-56 rounded-full mt-4 text-2sm"
                     disabled={isUploading}
                   >
-                    {isUploading ? "Uploading..." : "Next step"}
+                    {isUploading ? (
+                      <FaSpinner className="animate-spin text-white text-lg" />
+                    ) : (
+                      "Next step"
+                    )}
                   </Button>
                 </div>
               </div>
