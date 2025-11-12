@@ -1,15 +1,12 @@
-import { approveLeave } from "@/lib/api/adminLeave";
-import { getSummary } from "@/lib/api/userAttendance";
-import { rejects } from "assert";
-
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/v1";
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001/api/v1";
 
 const ApiRoutes = {
   auth: {
     register: `${BASE_URL}/auth/register`,
     sendPhoneVerification: `${BASE_URL}/auth/send-verification-phone`,
     verifyPhone: `${BASE_URL}/auth/verify-phone`,
+    refreshTokens: `${BASE_URL}/auth/refresh-tokens`,
     sendOTP: `${BASE_URL}/auth/send-login-verification-phone`,
     login: `${BASE_URL}/auth/login`,
     logout: `${BASE_URL}/auth/logout`,
