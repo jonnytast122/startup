@@ -61,12 +61,15 @@ export default function MobileNumber({
         },
       });
 
-      if (!res.data?.tokens?.access?.token || !res.data?.owner?.id) {
-        throw new Error("Registration failed");
+      console.log("REGISTER RESPONSE:", res.data);
+
+      // ✅ Match your backend’s structure
+      if (!res.data?.tokens?.access?.token || !res.data?.user?.id) {
+        throw new Error("Registration failed xxx");
       }
 
       const token = res.data.tokens.access.token;
-      const userId = res.data.owner.id;
+      const userId = res.data.user.id;
 
       setFormData((prev) => ({
         ...prev,
@@ -74,11 +77,14 @@ export default function MobileNumber({
         registerToken: token,
       }));
 
+      // ✅ Send OTP to user’s phone
       await axios.post(
         apiRoutes.auth.sendPhoneVerification,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
+      // Proceed to next step (OTP verification page)
       onNextStep();
     } catch (err) {
       setErrorMsg(
