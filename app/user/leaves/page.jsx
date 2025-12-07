@@ -66,7 +66,7 @@ export default function Leaves() {
         </div>
       </div>
 
-      <div>
+      <div className="w-full overflow-x-auto">
         <HistoryTable />
       </div>
     </div>

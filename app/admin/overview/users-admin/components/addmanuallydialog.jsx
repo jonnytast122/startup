@@ -83,6 +83,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const [data, setData] = useState(
     Array.from({ length: 1 }, (_, i) => ({
       id: i + 1,
+      companyId: "",
       fullName: "",
       phone: "",
       branch: "",
@@ -96,8 +97,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       salaryType: "",
       job: "",
       baseSalary: "",
+      baseSalaryKHR: "",
       cash: "",
+      cashKHR: "",
       ibanking: "",
+      ibankingKHR: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
@@ -105,6 +109,10 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       numberOfChildren: "",
       otherName: "",
       nssfId: "",
+      groups: "",
+      geofencing: "",
+      regularHourDailyRate: "",
+      hourlyRate: "",
     }))
   );
 
@@ -117,6 +125,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     const newId = Math.max(...data.map((d) => d.id), 0) + 1;
     const newRow = {
       id: newId,
+      companyId: "",
       fullName: "",
       phone: "",
       branch: "",
@@ -130,8 +139,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       salaryType: "",
       job: "",
       baseSalary: "",
+      baseSalaryKHR: "",
       cash: "",
+      cashKHR: "",
       ibanking: "",
+      ibankingKHR: "",
       currencyType: "",
       bankProvider: "",
       bankAccount: "",
@@ -139,6 +151,10 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       numberOfChildren: "",
       otherName: "",
       nssfId: "",
+      groups: "",
+      geofencing: "",
+      regularHourDailyRate: "",
+      hourlyRate: "",
     };
     setData((prev) => [...prev, newRow]);
     setAddedRowIds((prev) => [...prev, newId]);
@@ -157,16 +173,25 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       setData([
         {
           id: 1,
+          companyId: "",
           fullName: "",
           phone: "",
           branch: "",
           department: "",
           position: "",
           shiftType: "",
+          dateOfBirth: "",
+          gender: "",
+          idCardNumber: "",
+          isRequiredToCheckIn: "",
+          salaryType: "",
           job: "",
           baseSalary: "",
+          baseSalaryKHR: "",
           cash: "",
+          cashKHR: "",
           ibanking: "",
+          ibankingKHR: "",
           currencyType: "",
           bankProvider: "",
           bankAccount: "",
@@ -174,6 +199,10 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           numberOfChildren: "",
           otherName: "",
           nssfId: "",
+          groups: "",
+          geofencing: "",
+          regularHourDailyRate: "",
+          hourlyRate: "",
         },
       ]);
       setAddedRowIds([]);
@@ -251,17 +280,29 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     dataToValidate.forEach((row) => {
       const rowErrors = {};
 
+      // Required fields validation
+      if (!row.companyId?.trim()) rowErrors.companyId = true;
       if (!row.fullName?.trim()) rowErrors.fullName = true;
       if (!row.phone?.trim() || !/^\d{8,15}$/.test(row.phone.trim()))
         rowErrors.phone = true;
-      // if (!row.branch?.trim()) rowErrors.branch = true;
-      // if (!row.shiftType?.trim()) rowErrors.shiftType = true;
-      if (!row.baseSalary || isNaN(Number(row.baseSalary)))
-        rowErrors.baseSalary = true;
-      if (!row.currencyType?.trim()) rowErrors.currencyType = true;
-      if (!row.salaryType?.trim()) rowErrors.salaryType = true;
+      if (!row.gender?.trim()) rowErrors.gender = true;
+      if (!row.dateOfBirth?.trim()) rowErrors.dateOfBirth = true;
+      if (!row.branch?.trim()) rowErrors.branch = true;
+      if (!row.department?.trim()) rowErrors.department = true;
+      if (!row.shiftType || row.shiftType.length === 0) rowErrors.shiftType = true;
+      if (!row.geofencing?.trim()) rowErrors.geofencing = true;
       if (!row.isRequiredToCheckIn?.trim())
         rowErrors.isRequiredToCheckIn = true;
+      if (!row.baseSalary || isNaN(Number(row.baseSalary)))
+        rowErrors.baseSalary = true;
+      if (!row.regularHourDailyRate || isNaN(Number(row.regularHourDailyRate)))
+        rowErrors.regularHourDailyRate = true;
+      if (!row.hourlyRate || isNaN(Number(row.hourlyRate)))
+        rowErrors.hourlyRate = true;
+      if (!row.salaryType?.trim()) rowErrors.salaryType = true;
+      if (!row.bankProvider?.trim()) rowErrors.bankProvider = true;
+      if (!row.nssfId?.trim()) rowErrors.nssfId = true;
+      if (!row.bankAccount?.trim()) rowErrors.bankAccount = true;
 
       if (Object.keys(rowErrors).length > 0) {
         newErrors[row.id] = rowErrors;
@@ -293,6 +334,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     }
 
     const formattedUsers = data.map((row) => ({
+      companyId: row.companyId,
       name: row.fullName,
       phoneNumber: row.phone.startsWith("855")
         ? row.phone
@@ -302,6 +344,8 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       position: row.position || null,
       job: row.job || null,
       shiftType: row.shiftType,
+      groups: row.groups || null,
+      geofencing: row.geofencing,
       spoused: row.spoused === "true",
       numberOfChildren: Number(row.numberOfChildren) || 0,
       otherName: row.otherName || null,
@@ -309,19 +353,24 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       gender: row.gender || null,
       idCardNumber: row.idCardNumber || null,
       isRequiredToCheckIn: row.isRequiredToCheckIn,
-      nssfId: row.nssfId || null,
+      nssfId: row.nssfId,
       paymentMethod: {
         cashPercentage: Number(row.cash) || 0,
+        cashKHR: Number(row.cashKHR) || 0,
         ibankingPercentage: Number(row.ibanking) || 0,
+        ibankingKHR: Number(row.ibankingKHR) || 0,
       },
       salaryInfo: {
         baseSalary: Number(row.baseSalary),
+        baseSalaryKHR: Number(row.baseSalaryKHR) || 0,
         currencyType: row.currencyType,
         salaryType: row.salaryType,
+        regularHourDailyRate: Number(row.regularHourDailyRate),
+        hourlyRate: Number(row.hourlyRate),
       },
       bankDetails: {
-        bankProvider: row.bankProvider || null,
-        accountNumber: row.bankAccount || null,
+        bankProvider: row.bankProvider,
+        accountNumber: row.bankAccount,
       },
     }));
     addUserMutation.mutate(formattedUsers, {
@@ -368,7 +417,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     if (successOpen) {
       const timer = setTimeout(() => {
         setSuccessOpen(false);
-        onOpenChange();
+        onOpenChange(false);
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -409,6 +458,22 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
   const columns = useMemo(
     () => [
+      {
+        accessorKey: "companyId",
+        header: "Company ID*",
+        cell: ({ row }) => (
+          <Input
+            value={row.original.companyId}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "companyId", e.target.value)
+            }
+            placeholder="Company ID"
+            className={`font-custom h-9 text-black placeholder:text-gray-400 rounded-md border-gray-300 ${
+              errorsMap[row.original.id]?.companyId ? "border-red-500" : ""
+            }`}
+          />
+        ),
+      },
       {
         accessorKey: "Name",
         header: "Name*",
@@ -469,6 +534,79 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               />
             </div>
           </div>
+        ),
+      },
+      {
+        accessorKey: "otherName",
+        header: "Other Name",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.otherName}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "otherName", e.target.value)
+            }
+            placeholder="Other Names"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        accessorKey: "gender",
+        header: "Gender*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.gender}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "gender", value)
+            }
+          >
+            <SelectTrigger
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.gender
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
+            >
+              <SelectValue placeholder="Select Gender" />
+            </SelectTrigger>
+            <SelectContent className="font-custom text-center">
+              <SelectItem value="male">M</SelectItem>
+              <SelectItem value="female">F</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "dateOfBirth",
+        header: "Birthday*",
+        cell: ({ row }) => (
+          <Input
+            type="date"
+            value={row.original.dateOfBirth}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "dateOfBirth", e.target.value)
+            }
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md ${
+              errorsMap[row.original.id]?.dateOfBirth ? "border-red-500" : ""
+            }`}
+          />
+        ),
+      },
+      {
+        accessorKey: "ID Card",
+        id: "idCardNumber",
+        header: "ID Card",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.idCardNumber}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "idCardNumber", e.target.value)
+            }
+            placeholder="ID Card Number"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
         ),
       },
       {
@@ -563,8 +701,40 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         },
       },
       {
+        accessorKey: "groups",
+        header: "Groups",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.groups}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "groups", e.target.value)
+            }
+            placeholder="Groups"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+          />
+        ),
+      },
+      {
+        accessorKey: "geofencing",
+        header: "Geofencing*",
+        cell: ({ row }) => (
+          <Input
+            type="text"
+            value={row.original.geofencing}
+            onChange={(e) =>
+              handleInputChange(row.original.id, "geofencing", e.target.value)
+            }
+            placeholder="Geofencing"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md ${
+              errorsMap[row.original.id]?.geofencing ? "border-red-500" : ""
+            }`}
+          />
+        ),
+      },
+      {
         accessorKey: "Base Salary",
-        header: "Base Salary*",
+        header: "Base Salary USD*",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -589,8 +759,30 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         ),
       },
       {
+        accessorKey: "baseSalaryKHR",
+        header: "Base Salary KHR",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.baseSalaryKHR ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "baseSalaryKHR", value);
+              }
+            }}
+            placeholder="Base Salary KHR"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        ),
+      },
+      {
         accessorKey: "Currency Type",
-        header: "Currency*",
+        header: "Currency Type",
         cell: ({ row }) => (
           <Select
             value={row.original.currencyType}
@@ -668,7 +860,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
       {
         accessorKey: "department",
-        header: "Department",
+        header: "Department*",
         cell: ({ row }) => {
           const selectedBranchId = row.original.branch;
           const selectedDepartmentId = row.original.department || "";
@@ -685,9 +877,12 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               onValueChange={(deptId) =>
                 handleInputChange(row.original.id, "department", deptId)
               }
-              //disabled={!selectedBranchId || isLoading}
             >
-              <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+              <SelectTrigger className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.department
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}>
                 <SelectValue placeholder="Select Department" />
               </SelectTrigger>
 
@@ -711,64 +906,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           );
         },
       },
-      {
-        accessorKey: "gender",
-        header: "Gender",
-        cell: ({ row }) => (
-          <Select
-            value={row.original.gender}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "gender", value)
-            }
-          >
-            <SelectTrigger
-              className={`h-9 w-28 font-custom ${
-                errorsMap[row.original.id]?.gender
-                  ? "border-red-500"
-                  : "border-gray-300"
-              } text-black`}
-            >
-              <SelectValue placeholder="Select Gender" />
-            </SelectTrigger>
-            <SelectContent className="font-custom text-center">
-              <SelectItem value="male">M</SelectItem>
-              <SelectItem value="female">F</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
-      {
-        accessorKey: "ID Card",
-        id: "idCardNumber",
-        header: "ID Card",
-        cell: ({ row }) => (
-          <Input
-            type="text"
-            value={row.original.idCardNumber}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "idCardNumber", e.target.value)
-            }
-            placeholder="Other Names"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
-          />
-        ),
-      },
-      {
-        accessorKey: "otherName",
-        header: "Other Names",
-        cell: ({ row }) => (
-          <Input
-            type="text"
-            value={row.original.otherName}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "otherName", e.target.value)
-            }
-            placeholder="Other Names"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
-          />
-        ),
-      },
-
       {
         accessorKey: "position",
         header: "Position",
@@ -812,7 +949,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
 
       {
         accessorKey: "cash",
-        header: "Cash",
+        header: "Cash USD",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -826,7 +963,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 handleInputChange(row.original.id, "cash", value);
               }
             }}
-            placeholder="Cash"
+            placeholder="Cash USD"
             className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
                  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
@@ -834,7 +971,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
       {
         accessorKey: "ibanking",
-        header: "iBanking",
+        header: "IBanking USD",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -854,11 +991,85 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
+      {
+        accessorKey: "ibankingKHR",
+        header: "IBanking KHR",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.ibankingKHR ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "ibankingKHR", value);
+              }
+            }}
+            placeholder="iBanking KHR"
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+          />
+        ),
+      },
+      {
+        accessorKey: "regularHourDailyRate",
+        header: "Regular Hour Daily Rate USD*",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.regularHourDailyRate ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "regularHourDailyRate", value);
+              }
+            }}
+            placeholder="Regular Hour Daily Rate USD"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                   errorsMap[row.original.id]?.regularHourDailyRate
+                     ? "border-red-500"
+                     : ""
+                 }`}
+          />
+        ),
+      },
+      {
+        accessorKey: "hourlyRate",
+        header: "Hourly Rate USD*",
+        cell: ({ row }) => (
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.hourlyRate ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "hourlyRate", value);
+              }
+            }}
+            placeholder="Hourly Rate USD"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                   errorsMap[row.original.id]?.hourlyRate
+                     ? "border-red-500"
+                     : ""
+                 }`}
+          />
+        ),
+      },
 
       {
         accessorKey: "Bank Provider",
         id: "bankProvider",
-        header: "Bank Provider",
+        header: "Bank Provider*",
         cell: ({ row }) => {
           const selected = bankProviders.find(
             (bank) => bank.value === row.original.bankProvider
@@ -871,7 +1082,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 handleInputChange(row.original.id, "bankProvider", value)
               }
             >
-              <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400">
+              <SelectTrigger className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
+                errorsMap[row.original.id]?.bankProvider
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}>
                 <SelectValue placeholder="Select Bank Provider">
                   {selected ? (
                     <div className="flex items-center gap-2">
@@ -912,15 +1127,19 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       {
         accessorKey: "Bank Account ",
         id: "bankAccount",
-        header: "Bank Account",
+        header: "Account Number*",
         cell: ({ row }) => (
           <Input
             value={row.original.bankAccount}
             onChange={(e) =>
               handleInputChange(row.original.id, "bankAccount", e.target.value)
             }
-            placeholder="Bank Account"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            placeholder="Account Number"
+            className={`font-custom h-9 text-black placeholder:text-gray-400 rounded-md ${
+              errorsMap[row.original.id]?.bankAccount
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
           />
         ),
       },
@@ -969,7 +1188,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       {
         accessorKey: "NSSF ID",
         id: "nssfId",
-        header: "NSSF ID",
+        header: "NSSF ID*",
         cell: ({ row }) => (
           <Input
             type="text"
@@ -978,7 +1197,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               handleInputChange(row.original.id, "nssfId", e.target.value)
             }
             placeholder="NSSF ID"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
+            className={`font-custom h-9 text-black placeholder:text-gray-400 rounded-md ${
+              errorsMap[row.original.id]?.nssfId
+                ? "border-red-500"
+                : "border-gray-300"
+            }`}
           />
         ),
       },
@@ -1050,29 +1273,38 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     initialState: {
       pagination: { pageSize: 25 },
       columnVisibility: {
+        // Required fields - visible by default
+        companyId: true,
         fullName: true,
         phone: true,
+        gender: true,
+        dateOfBirth: true,
         branch: true,
+        department: true,
         shiftType: true,
-        currencyType: true,
-        salaryType: true,
+        geofencing: true,
         baseSalary: true,
+        regularHourDailyRate: true,
+        hourlyRate: true,
+        salaryType: true,
+        bankProvider: true,
+        nssfId: true,
+        bankAccount: true,
         filter: true,
 
-        department: false,
-        job: false,
-        position: false,
+        // Optional fields - hidden by default
         otherName: false,
         idCardNumber: false,
-        nssfId: false,
-        dateOfBirth: false,
-        gender: false,
+        position: false,
+        job: false,
+        groups: false,
+        baseSalaryKHR: false,
+        currencyType: false,
+        cash: false,
+        ibanking: false,
+        ibankingKHR: false,
         spoused: false,
         numberOfChildren: false,
-        ibanking: false,
-        bankProvider: false,
-        bankAccount: false,
-        cash: false,
       },
     },
   });
@@ -1161,7 +1393,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           <DialogFooter className="flex justify-end gap-2 mt-6">
             <Button
               variant="outline"
-              onClick={() => onOpenChange()}
+              onClick={() => onOpenChange(false)}
               className="rounded-full border border-gray-300 text-blue-500 hover:bg-gray-100 font-custom py-6 px-9"
             >
               Cancel
@@ -1194,7 +1426,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         open={successOpen}
         onClose={() => {
           setSuccessOpen(false);
-          onOpenChange();
+          onOpenChange(false);
         }}
       />
     </>

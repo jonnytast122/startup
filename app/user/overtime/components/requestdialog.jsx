@@ -256,7 +256,7 @@ export default function RequestDialog() {
                   <Switch
                     checked={allDay}
                     onCheckedChange={(v) => {
-                      // setAllDay(v);
+                      setAllDay(v);
                       closeAllCalendars();
                     }}
                     className="data-[state=checked]:bg-green-500"

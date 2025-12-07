@@ -9,7 +9,7 @@ import { FaRegEye, FaStar, FaHeart } from "react-icons/fa";
 export default function SupportPage() {
 
     const openTelegram = () => {
-        window.open("https://t.me/example", "_blank");
+        window.open("https://t.me/ananapp_co", "_blank");
     };
 
     const videos = [
