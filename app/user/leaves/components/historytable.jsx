@@ -138,6 +138,8 @@ export default function TimesheetTable() {
     key: "selection",
   });
   const datePickerRef = useRef(null);
+  const buttonRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   const { data: requests = [] } = useQuery({
     queryKey: ["user-leave-requests"],
@@ -169,17 +171,32 @@ export default function TimesheetTable() {
       document.removeEventListener("mousedown", handleClickOutside, true);
   }, []);
 
+  useEffect(() => {
+    if (showDatePicker && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth < 640; // sm breakpoint
+
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: isMobile
+          ? window.innerWidth / 2
+          : rect.left + window.scrollX + rect.width / 2,
+      });
+    }
+  }, [showDatePicker]);
+
   return (
     <div className="w-full overflow-x-auto">
-      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[980px]">
+      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[800px]">
         <div className="mb-3">
           <div className="flex items-center gap-3 w-full flex-nowrap">
             <div className="ml-2 font-custom text-xl font-semibold whitespace-nowrap">
               Request History
             </div>
 
-            <div className="relative min-w-0" ref={datePickerRef}>
+            <div className="relative min-w-0">
               <button
+                ref={buttonRef}
                 onClick={() => setShowDatePicker((v) => !v)}
                 className="flex items-center font-custom justify-between px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm w-auto max-w-[60vw] truncate text-left"
                 title={`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
@@ -193,7 +210,14 @@ export default function TimesheetTable() {
               </button>
 
               {showDatePicker && (
-                <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-lg border p-2 rounded-md z-50">
+                <div
+                  ref={datePickerRef}
+                  className="fixed -translate-x-1/2 bg-white shadow-2xl border p-2 rounded-md z-[9999]"
+                  style={{
+                    top: `${position.top}px`,
+                    left: `${position.left}px`,
+                  }}
+                >
                   <DateRange
                     ranges={[selectedRange]}
                     onChange={(ranges) => {
@@ -235,8 +259,8 @@ export default function TimesheetTable() {
           </span>
         </div>
 
-        <div className="w-full overflow-x-auto ml-2">
-          <Table className="min-w-[980px] w-full">
+        <div className="w-full ml-2">
+          <Table className="min-w-[750px] w-full">
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (
                 <TableRow

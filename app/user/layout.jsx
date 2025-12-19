@@ -97,24 +97,6 @@ export default function Layout({ children }) {
               </form>
             </div>
 
-            {(user?.role === "owner" || user?.role === "admin") && (
-              <div className="flex-1 justify-end hidden xl:flex mr-4">
-                <div className="px-4 py-1 rounded-lg bg-blue-100 font-medium text-sm font-custom">
-                  <Eye className="inline-block mr-1 h-4 w-4" />
-                  You are in User's View
-                </div>
-                <button
-                  className="ml-4 px-3 py-1 bg-gray-100 text-blue-400 font-custom rounded-lg hover:bg-gray-200 transition-colors"
-                  onClick={() => {
-                    router.push("/admin/overview");
-                  }}
-                >
-                  <ArrowLeftRight className="inline-block mr-2 h-4 w-4" />
-                  Switch to Admin Dashboard
-                </button>
-              </div>
-            )}
-
             {/* Right section */}
             <div className="flex items-center gap-2">
               {/* Notification Bell - Hidden on mobile */}
@@ -188,6 +170,19 @@ export default function Layout({ children }) {
                     <div className="border-b my-2"></div>
 
                     {/* Actions */}
+                    {(user?.role === "owner" || user?.role === "admin") && (
+                      <button
+                        className="w-full px-4 py-2 font-custom text-sm text-left text-blue-600 hover:bg-gray-100"
+                        onClick={() => {
+                          router.push("/admin/overview");
+                          setIsDropdownOpen(false);
+                        }}
+                        role="menuitem"
+                      >
+                        <ArrowLeftRight className="inline-block mr-2 h-4 w-4" />
+                        Switch to Admin Dashboard
+                      </button>
+                    )}
 
                     <button
                       className="w-full px-4 py-2 font-custom text-sm text-left text-red-600 hover:bg-gray-100"
@@ -216,7 +211,7 @@ export default function Layout({ children }) {
           </header>
 
           {/* Scrollable content - Add bottom padding on mobile for bottom nav */}
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-100 pb-20 lg:pb-4">
+          <div className="flex-1 overflow-auto p-4 bg-gray-100 pb-20 lg:pb-4">
             {children}
           </div>
         </SidebarInset>

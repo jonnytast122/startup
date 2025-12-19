@@ -444,6 +444,13 @@ const TopControls = ({
   setShowUploadDialog,
   setExportType,
 }) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const handleAddManually = () => {
+    setShowAddDialog(true);
+    setDropdownOpen(false);
+  };
+
   return (
     <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
       <div className="flex w-full sm:w-auto gap-4">
@@ -474,7 +481,7 @@ const TopControls = ({
       </div>
 
       <div className="flex w-full sm:w-auto gap-4">
-        <DropdownMenu>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
           <DropdownMenuTrigger asChild>
             <Button
               className="rounded-full font-custom px-4 py-2 flex items-center gap-2"
@@ -486,7 +493,7 @@ const TopControls = ({
 
           <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
             <DropdownMenuItem
-              onClick={() => setShowAddDialog(true)}
+              onClick={handleAddManually}
               className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
             >
               <Plus className="w-4 h-4 mr-2" /> Add Manually

@@ -42,7 +42,7 @@ function Navbar() {
         </div>
 
         {/* Desktop Navigation */}
-        <ul className="hidden xl:flex h-full gap-12">
+        <ul className="hidden lg:flex h-full gap-12">
           {updatedLinks.map((link) => (
             <li key={link.key}>
               <Link
@@ -56,7 +56,7 @@ function Navbar() {
         </ul>
 
         {/* Right Side: Login & Button */}
-        <div className="hidden xl:flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-6">
           <Link
             href="/signin"
             className="flex items-center gap-2 cursor-pointer group"

@@ -30,7 +30,7 @@ export default function Overtime() {
       </div>
 
       {/* Body */}
-      <div>
+      <div className="w-full overflow-x-auto">
         <HistoryTable />
       </div>
     </div>

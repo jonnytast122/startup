@@ -124,6 +124,7 @@ export default function UserProfile({ user }) {
 
   const profileImage = selectedFile || user?.profileImg;
 
+  const [companyId, setCompanyId] = useState(user?.companyId || "");
   const [firstname, setFirstname] = useState(
     user?.employee?.name ? user.employee.name.split(" ")[0] : ""
   );
@@ -446,6 +447,7 @@ export default function UserProfile({ user }) {
 
   const handleSave = () => {
     const updatedProfile = {
+      companyId: companyId || "",
       name: `${firstname} ${lastname}`,
       profileImg: profileImage,
       otherName: otherName || "",
@@ -576,6 +578,15 @@ export default function UserProfile({ user }) {
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left container */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Company ID
+            </label>
+            <input
+              type="text"
+              value={companyId}
+              onChange={(e) => setCompanyId(e.target.value)}
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+            />
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Personal details
             </h2>

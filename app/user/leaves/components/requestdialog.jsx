@@ -153,6 +153,16 @@ export default function RequestDialog() {
 
   const handleSubmit = async () => {
     // Validation
+    if (!policies || policies.length === 0) {
+      alert("No leave policies available. Please contact your administrator.");
+      return;
+    }
+
+    if (!selectedPolicy?._id) {
+      alert("Please select a leave policy.");
+      return;
+    }
+
     if (!allDay && toMin(endTime) <= toMin(startTime)) {
       alert("End time must be after start time.");
       return;
@@ -186,7 +196,7 @@ export default function RequestDialog() {
 
     // Build payload
     const payload = {
-      company: policies[0].company, // replace with actual company ID
+      company: policies[0]?.company || selectedPolicy?.company, // replace with actual company ID
       type: selectedPolicy?._id,
       dateTime: dateTimes,
       startDate: dateTimes[0]?.start_time,
@@ -194,7 +204,21 @@ export default function RequestDialog() {
       note,
     };
 
-    requestLeaveMutation.mutate(payload);
+    requestLeaveMutation.mutate(payload, {
+      onSuccess: () => {
+        setDrawerOpen(false);
+        setTimeout(() => {
+          setSuccessOpen(true);
+          setTimeout(() => {
+            setSuccessOpen(false);
+          }, 600);
+        }, 220);
+      },
+      onError: (err) => {
+        console.error(err);
+        alert(err?.message || "Failed to request leave");
+      },
+    });
   };
 
   return (
@@ -237,10 +261,10 @@ export default function RequestDialog() {
 
             {/* Body */}
             <div className="flex-1 min-h-0 overflow-y-auto space-y-4 px-5 pb-2">
-              {/* Overtime type */}
+              {/* Leave type */}
               <section className="bg-white rounded-md p-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Leave Policies</span>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-medium whitespace-nowrap">Leave Policies</span>
                   <Select
                     value={selectedPolicy?._id || ""}
                     onValueChange={(id) => {
@@ -248,19 +272,25 @@ export default function RequestDialog() {
                       setSeletedPolicy(policy);
                     }}
                   >
-                    <SelectTrigger className="h-9 w-44 rounded-full text-sm">
+                    <SelectTrigger className="h-9 min-w-[120px] max-w-[180px] rounded-full text-sm">
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {policies?.map((policy) => (
-                        <SelectItem
-                          key={policy._id}
-                          value={policy._id}
-                          className="text-sm"
-                        >
-                          {policy.name}
-                        </SelectItem>
-                      ))}
+                    <SelectContent className="max-w-[250px] z-[100]" position="popper" sideOffset={5}>
+                      {policies && policies.length > 0 ? (
+                        policies.map((policy) => (
+                          <SelectItem
+                            key={policy._id}
+                            value={policy._id}
+                            className="text-sm capitalize"
+                          >
+                            {policy.name}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-gray-500">
+                          No leave policies available
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

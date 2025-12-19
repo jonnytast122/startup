@@ -245,6 +245,16 @@ export default function UserProfile() {
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
+            <label className="text-sm font-custom text-[#3F4648] w-full">
+              Company ID
+            </label>
+            <input
+              type="text"
+              value={user_data?.companyId || "N/A"}
+              disabled
+              className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
+            />
+
             <h2 className="text-2xl font-semibold font-custom mb-2">
               Personal details
             </h2>
@@ -449,9 +459,13 @@ export default function UserProfile() {
                 label="Employee Name"
                 value={user_data?.employee?.name}
               />
+              <InfoRow
+                label="NSSF ID"
+                value={user_data?.nssfId || "N/A"}
+              />
               {/* <InfoRow label="Employee ID" value="#1234565" /> */}
               <InfoRow
-                label="Bank Name"
+                label="Bank Provider"
                 value={
                   user_data?.employee?.finance?.bankDetails?.bankProvider ||
                   "N/A"
@@ -461,6 +475,23 @@ export default function UserProfile() {
                 label="Account Number"
                 value={
                   user_data?.employee?.finance?.bankDetails?.accountNumber ||
+                  "N/A"
+                }
+              />
+
+              <InfoRow
+                label="Base Salary"
+                value={
+                  user_data?.employee?.finance?.salaryInfo?.baseSalary
+                    ? `$${user_data.employee.finance.salaryInfo.baseSalary}`
+                    : "N/A"
+                }
+              />
+
+              <InfoRow
+                label="Currency Type"
+                value={
+                  user_data?.employee?.finance?.salaryInfo?.currencyType ||
                   "N/A"
                 }
               />

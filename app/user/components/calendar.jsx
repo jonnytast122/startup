@@ -15,10 +15,21 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { getMonthlyCalendar } from "@/lib/api/userReport";
 import { useQuery } from "@tanstack/react-query";
+import ViewEventDialog from "./view-event-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [holidays, setHolidays] = useState([]);
+  const [viewEvent, setViewEvent] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
+  const [selectedDateEvents, setSelectedDateEvents] = useState([]);
+  const [openMore, setOpenMore] = useState(false);
 
   // Static local events
   const staticEvents = useMemo(() => {
@@ -189,8 +200,12 @@ export default function Calendar() {
                     {dayEvents.slice(0, 2).map((ev, i) => (
                       <div
                         key={`${dateStr}-ev-${i}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setViewEvent(ev);
+                        }}
                         className={[
-                          "px-1 py-[1px] rounded-sm text-white truncate w-fit",
+                          "px-1 py-[1px] rounded-sm text-white truncate w-fit cursor-pointer hover:opacity-80",
                           "max-w-[95%] text-[9px]",
                           ev.color === "red" ? "bg-red-500" : "bg-blue-500",
                         ].join(" ")}
@@ -199,7 +214,15 @@ export default function Calendar() {
                       </div>
                     ))}
                     {dayEvents.length > 2 && (
-                      <div className="text-[9px] text-white w-fit rounded-sm bg-gray-500 px-1">
+                      <div
+                        className="text-[9px] text-white w-fit rounded-sm bg-gray-500 px-1 cursor-pointer hover:opacity-80"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedDate(dateStr);
+                          setSelectedDateEvents(dayEvents);
+                          setOpenMore(true);
+                        }}
+                      >
                         +{dayEvents.length - 2} more
                       </div>
                     )}
@@ -245,6 +268,43 @@ export default function Calendar() {
           ))}
         </div>
       </div>
+
+      {/* View Event Dialog */}
+      {viewEvent && (
+        <ViewEventDialog
+          event={viewEvent}
+          onClose={() => setViewEvent(null)}
+        />
+      )}
+
+      {/* More Events Dialog */}
+      {selectedDateEvents.length > 0 && (
+        <Dialog open={openMore} onOpenChange={setOpenMore}>
+          <DialogContent className="bg-white w-fit">
+            <DialogHeader>
+              <DialogTitle>Events on {selectedDate}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-2 mt-4">
+              {selectedDateEvents.map((ev, idx) => (
+                <div
+                  key={`${selectedDate}-dialog-${idx}`}
+                  className="px-3 py-2 rounded-sm text-white cursor-pointer hover:opacity-80 text-sm"
+                  style={{
+                    backgroundColor: ev.color === "red" ? "#ef4444" : "#3b82f6"
+                  }}
+                  onClick={() => {
+                    setOpenMore(false);
+                    setViewEvent(ev);
+                  }}
+                >
+                  {ev.name}
+                </div>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

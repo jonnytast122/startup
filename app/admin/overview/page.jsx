@@ -70,14 +70,14 @@ export default function OverviewPage() {
       {/* Responsive Grid Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <DailyAttendance />
-        <Calendar />
+        <EstimatePayroll />
 
         {/* Full width Leave & OT box */}
         <div className="md:col-span-2">
           <LeaveOT />
         </div>
 
-        <EstimatePayroll />
+        <Calendar />
         <UpcomingEvent />
 
         <LeavePolicy />

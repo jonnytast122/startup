@@ -202,6 +202,8 @@ const columns = [
 function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
+  const buttonRef = useRef(null);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -213,10 +215,25 @@ function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (showDatePicker && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth < 640; // sm breakpoint
+
+      setPosition({
+        top: rect.bottom + window.scrollY + 8,
+        left: isMobile
+          ? window.innerWidth / 2
+          : rect.left + window.scrollX + rect.width / 2,
+      });
+    }
+  }, [showDatePicker]);
+
   return (
     <div className="relative flex items-center gap-2">
       {/* Date Button */}
       <button
+        ref={buttonRef}
         onClick={() => setShowDatePicker((v) => !v)}
         className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
       >
@@ -227,11 +244,14 @@ function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
       </button>
 
       {/* Date Picker Popover */}
-      {/* Date Picker Popover */}
       {showDatePicker && (
         <div
           ref={datePickerRef}
-          className="absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white shadow-lg border p-2 rounded-md z-50"
+          className="fixed -translate-x-1/2 bg-white shadow-2xl border p-2 rounded-md z-[9999]"
+          style={{
+            top: `${position.top}px`,
+            left: `${position.left}px`,
+          }}
         >
           <DateRange
             ranges={[selectedRange]}
@@ -315,7 +335,7 @@ export default function TimesheetTable() {
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[980px]">
+      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[800px]">
         {/* Top Bar (unchanged layout; just swapped calendar UI) */}
         <div className="mb-3">
           <div className="flex items-center gap-3 w-full flex-nowrap">
@@ -357,8 +377,8 @@ export default function TimesheetTable() {
         </div>
 
         {/* Table (unchanged) */}
-        <div className="w-full overflow-x-auto ml-2">
-          <Table className="min-w-[980px] w-full">
+        <div className="w-full ml-2">
+          <Table className="min-w-[750px] w-full">
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (
                 <TableRow
