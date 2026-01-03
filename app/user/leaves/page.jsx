@@ -6,6 +6,7 @@ import HistoryTable from "./components/historytable";
 import { getMyBalance } from "@/lib/api/userLeave";
 import { getMyDetails } from "@/lib/api/user";
 import { useQuery } from "@tanstack/react-query";
+import { FaSpinner } from "react-icons/fa";
 
 export default function Leaves() {
   // Fetch my details
@@ -22,7 +23,11 @@ export default function Leaves() {
   });
 
   if (detailsLoading || balanceLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center w-full h-full py-10">
+        <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+      </div>
+    );
   }
 
   console.log(balance);
@@ -46,7 +51,9 @@ export default function Leaves() {
 
       {/* Leave Balance */}
       <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
-        <h2 className="text-2xl font-custom font-semibold mb-6">Leave Balance</h2>
+        <h2 className="text-2xl font-custom font-semibold mb-6">
+          Leave Balance
+        </h2>
 
         <div className="flex justify-center gap-6 flex-wrap">
           {balance?.map((policy, index) => (
@@ -54,7 +61,9 @@ export default function Leaves() {
               key={index}
               className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4"
             >
-              <span className="text-sm font-custom">{policy.leavePolicy.name}</span>
+              <span className="text-sm font-custom">
+                {policy.leavePolicy.name}
+              </span>
               <div className="w-2/3 h-px bg-gray-500 my-2"></div>
               <span className="text-base font-custom">
                 {policy.balance.remainingBalance !== 0

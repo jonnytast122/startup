@@ -29,8 +29,10 @@ export const getOvertimeByEmployee = async () => {
   return response.data;
 };
 
-export const createOvertime = async () => {
-  const response = await api.post(ApiRoutes.adminOvertime.createOvertime);
+export const createOvertimeForEmployee = async ({employeeList, data}) => {
+  const response = await api.post(ApiRoutes.adminOvertime.createOvertimeForEmployee,{
+    employeeList, data
+  });
   return response.data;
 };
 

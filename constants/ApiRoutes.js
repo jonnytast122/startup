@@ -161,7 +161,7 @@ const ApiRoutes = {
   adminLeave: {
     getLeave: `${BASE_URL}/leaves/company`,
     getLeaveRequest: `${BASE_URL}/leaves/requests`,
-    createLeave: `${BASE_URL}/leaves/request`,
+    createLeaveForEmployee: `${BASE_URL}/leaves/add-for-employees`,
     approveLeave: `${BASE_URL}/leaves/{id}/approve`,
     rejectLeave: `${BASE_URL}/leaves/{id}/reject`,
     getLeaveByEmployee: `${BASE_URL}/leaves/employee/{id}`,
@@ -172,7 +172,7 @@ const ApiRoutes = {
     approveOvertime: `${BASE_URL}/overtime-requests/{id}/approve`,
     rejectOvertime: `${BASE_URL}/overtime-requests/{id}/reject`,
     getOvertimeByEmployee: `${BASE_URL}/overtime-requests/employee/{id}`,
-    createOvertime: `${BASE_URL}/overtime-requests`,
+    createOvertimeForEmployee: `${BASE_URL}/overtime-requests/add-for-employees`,
     getOvertimeRequests: `${BASE_URL}/overtime-requests/requests`,
   },
 

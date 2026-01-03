@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import {
   Dialog,
@@ -25,22 +27,74 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMemo } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { createOvertimeForEmployee } from "@/lib/api/adminOvertime";
+import { fetchCompanyOverTimeSetting } from "@/lib/api/policy";
+import { getEmployee } from "@/lib/api/company";
 
-const users = [
-  { id: 1, name: "Doe Ibrahim" },
-  { id: 2, name: "Lucy Trevo" },
-  { id: 3, name: "John Mark" },
-];
 
 const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
+  const queryClient = useQueryClient();
+  const company = queryClient.getQueryData(["company"]);
+
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedOvertimeType, setSelectedOvertimeType] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [date, setDate] = useState(new Date());
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
+  const [openSingleDatePop, setOpenSingleDatePop] = useState(false);
+  const [openStartDatePop, setOpenStartDatePop] = useState(false);
+  const [openEndDatePop, setOpenEndDatePop] = useState(false);
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
   const [note, setNote] = useState("");
+
+  const { data: overtimeSettings } = useQuery({
+    queryKey: ["overtimeSettings", company?.id],
+    queryFn: () => fetchCompanyOverTimeSetting(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: employees } = useQuery({
+    queryKey: ["company-employees", company?.id],
+    queryFn: () => getEmployee(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const employeeOptions = useMemo(() => {
+    const raw = employees?.data ?? employees ?? [];
+    console.log(raw)
+    return Array.isArray(raw)
+      ? raw.map((e) => ({
+          id: e.id ?? e.userId ?? e._id,
+          name:
+            e.name||
+            e.username ||
+            e.email ||
+            String(e.id ?? e.userId ?? e._id),
+        }))
+      : [];
+  }, [employees]);
+
+  const addOvertimeMutation = useMutation({
+    mutationFn: createOvertimeForEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["overtime"] });
+      onOpenChange(false);
+    },
+    onError: (err) => {
+      console.error(err);
+      alert(err?.message || "Failed to add overtime");
+    },
+  });
+
+  const closeAllCalendars = () => {
+    setOpenStartDatePop(false);
+    setOpenEndDatePop(false);
+    setOpenSingleDatePop(false);
+  };
 
   const handleToggleUser = (user) => {
     setSelectedUsers((prev) =>
@@ -60,21 +114,37 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
   };
 
   const handleDone = () => {
-    const payload = {
-      users: selectedUsers,
-      allDay,
-      date,
-      startTime,
-      endTime,
-      hours: calculateHours(),
-      note,
+    if (!selectedOvertimeType) {
+      alert("Please select an overtime policy.");
+      return;
+    }
+    if (selectedUsers.length === 0) {
+      alert("Please select at least one employee.");
+      return;
+    }
+    if (!allDay) {
+      const [sh, sm] = startTime.split(":").map(Number);
+      const [eh, em] = endTime.split(":").map(Number);
+      if (eh * 60 + em <= sh * 60 + sm) {
+        alert("End time must be after start time.");
+        return;
+      }
+    }
+
+    const payloadDate = format(date, "yyyy-MM-dd");
+    const data = {
+      overtimeType: selectedOvertimeType,
+      date: payloadDate,
+      startTime: allDay ? "00:00" : startTime,
+      endTime: allDay ? "23:59" : endTime,
+      description: note,
     };
-    onConfirm(payload);
-    onOpenChange(false);
+    const employeeList = selectedUsers.map((u) => u.id);
+
+    addOvertimeMutation.mutate({ employeeList, data });
   };
 
   const handleSaveDraft = () => {
-    // your save draft logic here
   };
 
   return (
@@ -103,15 +173,16 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
               </label>
 
               <div className="resize-none w-2/3">
-                <Select>
+                <Select value={selectedOvertimeType} onValueChange={setSelectedOvertimeType}>
                   <SelectTrigger className="w-48 text-gray-500">
-                    <SelectValue placeholder="Select OT type" />
+                    <SelectValue placeholder="Select OT policy" />
                   </SelectTrigger>
                   <SelectContent className="font-custom">
-                    <SelectItem value="compensatory">Compensatory</SelectItem>
-                    <SelectItem value="holiday">Holiday</SelectItem>
-                    <SelectItem value="sick">Sick</SelectItem>
-                    <SelectItem value="vacation">Vacation</SelectItem>
+                    {overtimeSettings?.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -142,16 +213,16 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                 ))}
                 <Select
                   onValueChange={(val) => {
-                    const found = users.find((u) => u.name === val);
+                    const found = employeeOptions.find((u) => String(u.id) === String(val));
                     if (found) handleToggleUser(found);
                   }}
                 >
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select user" />
+                    <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
                   <SelectContent className="font-custom">
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.name}>
+                    {employeeOptions.map((user) => (
+                      <SelectItem key={user.id} value={String(user.id)}>
                         {user.name}
                       </SelectItem>
                     ))}
@@ -172,63 +243,52 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
 
             {/* Conditional Date and Time Display */}
             {allDay ? (
-              // ALL DAY = ON → Start/End Date only
+              // ALL DAY = ON → Single Date only
               <div className="flex items-start gap-4">
                 <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                   Date:
                 </label>
-                <div className="flex items-center gap-6 flex-wrap">
-                  {/* Start Date */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-[#3F4648]">Start:</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
-                          {format(startDate, "dd/MM/yyyy")}
-                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
+                <div className="w-2/3">
+                  <Popover
+                    modal={false}
+                    open={openSingleDatePop}
+                    onOpenChange={(o) => {
+                      setOpenSingleDatePop(o);
+                      if (o) {
+                        setOpenStartDatePop(false);
+                        setOpenEndDatePop(false);
+                      }
+                    }}
+                  >
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
                       >
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
-
-                  {/* End Date */}
-                  <div className="flex items-center gap-2">
-                    <label className="text-sm text-[#3F4648]">End:</label>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
-                          {format(endDate, "dd/MM/yyyy")}
-                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </div>
+                        {format(date, "dd/MM/yyyy")}
+                        <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      side="bottom"
+                      align="center"
+                      sideOffset={8}
+                      className="w-auto p-0 bg-white pointer-events-auto z-[80]"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={date}
+                        defaultMonth={date}
+                        initialFocus
+                        onSelect={(d) => {
+                          if (d) {
+                            setDate(d);
+                            setOpenSingleDatePop(false);
+                          }
+                        }}
+                      />
+                    </PopoverContent>
+                  </Popover>
                 </div>
               </div>
             ) : (
@@ -240,7 +300,17 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                     Date:
                   </label>
                   <div className="w-2/3">
-                    <Popover>
+                    <Popover
+                      modal={false}
+                      open={openSingleDatePop}
+                      onOpenChange={(o) => {
+                        setOpenSingleDatePop(o);
+                        if (o) {
+                          setOpenStartDatePop(false);
+                          setOpenEndDatePop(false);
+                        }
+                      }}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -251,13 +321,22 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
+                        side="bottom"
+                        align="center"
+                        sideOffset={8}
+                        className="w-auto p-0 bg-white pointer-events-auto z-[80]"
                       >
                         <Calendar
                           mode="single"
                           selected={date}
-                          onSelect={setDate}
+                          defaultMonth={date}
+                          initialFocus
+                          onSelect={(d) => {
+                            if (d) {
+                              setDate(d);
+                              setOpenSingleDatePop(false);
+                            }
+                          }}
                         />
                       </PopoverContent>
                     </Popover>
@@ -324,8 +403,9 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
           <Button
             className="py-4 px-6 text-md font-custom rounded-full"
             onClick={handleDone}
+            disabled={addOvertimeMutation.isPending}
           >
-            Publish
+            {addOvertimeMutation.isPending ? "Submitting..." : "Publish"}
           </Button>
         </div>
       </DialogContent>
