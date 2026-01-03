@@ -206,10 +206,14 @@ const columns = [
 const PendingDialog = ({ onClose }) => {
   const [open, setOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 4, 1),
-    endDate: new Date(2025, 10, 25),
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    return {
+      startDate: new Date(year, 0, 1), // Jan 1 of current year
+      endDate: new Date(year, 11, 31), // Dec 31 of current year
+      key: "selection",
+    };
   });
 
   const {

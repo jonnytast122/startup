@@ -158,7 +158,7 @@ const calculateHours = (start, end) => {
   const [endH, endM] = end.split(":").map(Number);
   let hours = endH - startH + (endM - startM) / 60;
   if (hours < 0) hours += 24;
-  return hours;
+  return Number(hours.toFixed(2));
 };
 
 const formatDate = (dateStr) => {

@@ -198,7 +198,7 @@ const useTransformedOvertimeData = (apiData) => {
           : "";
 
       return {
-        id: item.id,
+        id: item._id,
         employee: item.employee,
         startTime: item.startTime,
         endTime: item.endTime,
@@ -223,10 +223,14 @@ const useTransformedOvertimeData = (apiData) => {
 const PendingDialog = ({ onClose }) => {
   const [open, isOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 10, 30),
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    return {
+      startDate: new Date(year, 0, 1), // Jan 1 of current year
+      endDate: new Date(year, 11, 31), // Dec 31 of current year
+      key: "selection",
+    };
   });
 
   const { data: overtimeRespone , isLoading: overtimeLoading , error: overtimeError } = useQuery({
@@ -516,6 +520,7 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
   });
 
   const handleApprove = () => {
+    console.log("overtime",overTime,comment)
     approveMutation.mutate({id: overTime.id, message: comment});
     setOpen(false);
     setComment("");
