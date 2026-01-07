@@ -294,14 +294,39 @@ export default function SettingPage() {
   });
 
   const handleCompanyChange = () => {
+    const payload = {};
+
+    // logo
+    if (selectedFile && selectedFile !== company.logo) {
+      payload.logo = selectedFile;
+    }
+
+    // name
+    if (companyName && companyName !== company.name) {
+      payload.name = companyName.trim();
+    }
+
+    // number of employees
+    if (numberOfEmployees && numberOfEmployees !== company.numberOfEmployees) {
+      payload.numberOfEmployees = numberOfEmployees;
+    }
+
+    // industries (array-safe compare)
+    const currentIndustries = company.industries || [];
+    const nextIndustries = industry ? [industry] : [];
+
+    if (JSON.stringify(currentIndustries) !== JSON.stringify(nextIndustries)) {
+      payload.industries = nextIndustries;
+    }
+
+    // 🚨 nothing changed → do nothing
+    if (Object.keys(payload).length === 0) {
+      return;
+    }
+
     updateCompanyMutation.mutate({
       id: company.id,
-      data: {
-        logo: selectedFile,
-        name: companyName,
-        numberOfEmployees,
-        industries: [industry],
-      },
+      data: payload,
     });
   };
 

@@ -37,6 +37,7 @@ import { fetchCompanyDepartments } from "@/lib/api/department";
 import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
 
 export default function UserProfile({ user }) {
+  console.log("User profile data:", user);
   const queryClient = useQueryClient();
 
   const { data: company } = useQuery({
@@ -124,15 +125,17 @@ export default function UserProfile({ user }) {
 
   const profileImage = selectedFile || user?.profileImg;
 
-  const [companyId, setCompanyId] = useState(user?.companyId || "");
+  const [companyId, setCompanyId] = useState(
+    user?.employee?.companyIdentifier || ""
+  );
   const [firstname, setFirstname] = useState(
     user?.employee?.name ? user.employee.name.split(" ")[0] : ""
   );
   const [lastname, setLastname] = useState(
     user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
   );
-  const [otherName, setOtherName] = useState(user?.otherName || "");
-  const [idCardNumber, setIdCardNumber] = useState(user?.idCardNumber || "");
+  const [otherName, setOtherName] = useState(user?.otherName || "N/A");
+  const [idCardNumber, setIdCardNumber] = useState(user?.idCardNumber || "N/A");
   const [gender, setGender] = useState(user?.gender || "");
   const [requiredAttendance, setRequiredAttendance] = useState(
     user?.isRequiredToCheckIn ?? false
@@ -164,10 +167,10 @@ export default function UserProfile({ user }) {
   );
   const [spoused, setSpoused] = useState(user?.spoused || false);
   const [bankProvider, setBankProvider] = useState(
-    user?.employee?.finance?.bankDetails?.bankProvider || ""
+    user?.employee?.finance?.bankDetails?.bankProvider || "N/A"
   );
   const [accountNumber, setAccountNumber] = useState(
-    user?.employee?.finance?.bankDetails?.accountNumber || ""
+    user?.employee?.finance?.bankDetails?.accountNumber || "N/A"
   );
   const [cashPercentage, setCashPercentage] = useState(
     user?.employee?.finance?.paymentMethod?.cashPercentage || 0
@@ -177,6 +180,13 @@ export default function UserProfile({ user }) {
   );
   const [baseSalary, setBaseSalary] = useState(
     user?.employee?.finance?.salaryInfo?.baseSalary || 0
+  );
+  const [dailyRate, setDailyRate] = useState(
+    user?.employee?.finance?.salaryInfo?.dailyRate || 0
+  );
+
+  const [hourlyRate, setHourlyRate] = useState(
+    user?.employee?.finance?.salaryInfo?.hourlyRate || 0
   );
   const [currencyType, setCurrencyType] = useState(
     user?.employee?.finance?.salaryInfo?.currencyType || ""
@@ -225,8 +235,13 @@ export default function UserProfile({ user }) {
   };
 
   const [selectedLocation, setSelectedLocation] = useState(
-    user.allowedRemoteCheckIn ? "Flexible" : "Geofencing"
+    user?.allowedRemoteCheckIn ?? false
   );
+
+  const checkInOptions = [
+    { label: "Flexible", value: true },
+    { label: "Geofencing", value: false },
+  ];
   const [dialogStates, setDialogStates] = useState({
     cash: false,
     bank: false,
@@ -445,65 +460,197 @@ export default function UserProfile({ user }) {
     },
   });
 
+  const pickChangedFields = (original, updated) => {
+    const diff = {};
+
+    Object.keys(updated).forEach((key) => {
+      const originalValue = original?.[key];
+      const updatedValue = updated[key];
+
+      // Deep compare arrays
+      if (Array.isArray(updatedValue)) {
+        if (
+          !Array.isArray(originalValue) ||
+          JSON.stringify(originalValue) !== JSON.stringify(updatedValue)
+        ) {
+          diff[key] = updatedValue;
+        }
+        return;
+      }
+
+      // Deep compare objects
+      if (
+        typeof updatedValue === "object" &&
+        updatedValue !== null &&
+        !Array.isArray(updatedValue)
+      ) {
+        const nestedDiff = pickChangedFields(originalValue || {}, updatedValue);
+        if (Object.keys(nestedDiff).length > 0) {
+          diff[key] = nestedDiff;
+        }
+        return;
+      }
+
+      // Primitive comparison
+      if (updatedValue !== originalValue) {
+        diff[key] = updatedValue;
+      }
+    });
+
+    return diff;
+  };
+
   const handleSave = () => {
-    const updatedProfile = {
-      companyId: companyId || "",
-      name: `${firstname} ${lastname}`,
-      profileImg: profileImage,
-      otherName: otherName || "",
-      job: job || "",
-      phoneNumber: phoneNumber?.startsWith("855")
-        ? phoneNumber
-        : `855${phoneNumber}`,
-      dateOfBirth: dateOfBirth
-        ? new Date(dateOfBirth).toISOString()
-        : undefined,
-      branch: branch || undefined,
-      department: department || undefined,
-      position: title || undefined,
-      startDate: startDate ? new Date(startDate).toISOString() : undefined,
-      groups:
-        selectedGroup && Array.isArray(selectedGroup)
-          ? selectedGroup.map((g) => (typeof g === "object" ? g._id : g))
-          : [],
-      allowedRemoteCheckIn: selectedLocation === "Flexible",
-      leavePolicies:
-        leaveSubPolicies && Array.isArray(leaveSubPolicies)
-          ? leaveSubPolicies.map((p) => (typeof p === "object" ? p.id : p))
-          : [],
-      shiftType: selectedWorkShift,
-      numberOfChildren: Number(numberOfChildren) || 0,
-      spoused: Boolean(spoused),
-      nssfId: nssfId,
-      isRequiredToCheckIn: requiredAttendance,
-      bankDetails: {
+    setIsSaving(true);
+
+    const payload = {};
+
+    /* ================= USER ================= */
+    const fullName = `${firstname} ${lastname}`.trim();
+    if (fullName !== user.employee.name) {
+      payload.name = fullName;
+    }
+
+    const normalizedPhone = phoneNumber.startsWith("855")
+      ? phoneNumber
+      : `855${phoneNumber}`;
+
+    if (normalizedPhone !== user.employee.phoneNumber) {
+      payload.phoneNumber = normalizedPhone;
+    }
+
+    if (companyId !== user.employee.companyIdentifier) {
+      payload.companyIdentifier = companyId;
+    }
+
+    /* ============== EMPLOYEE INFO ============== */
+    if (profileImage !== user.profileImg) {
+      payload.profileImg = profileImage;
+    }
+
+    if (otherName !== user.otherName) {
+      payload.otherName = otherName || null;
+    }
+
+    if (job !== user.job) {
+      payload.job = job || null;
+    }
+
+    if (
+      dateOfBirth &&
+      new Date(dateOfBirth).toISOString() !== user.dateOfBirth
+    ) {
+      payload.dateOfBirth = new Date(dateOfBirth).toISOString();
+    }
+
+    if (startDate && new Date(startDate).toISOString() !== user.startDate) {
+      payload.startDate = new Date(startDate).toISOString();
+    }
+
+    if (branch && branch !== user.branch?.id) {
+      payload.branch = branch;
+    }
+
+    if (department !== (user.department?.id || null)) {
+      payload.department = department || null;
+    }
+
+    if (title !== (user.position?.id || null)) {
+      payload.position = title || null;
+    }
+
+    if (
+      JSON.stringify(selectedWorkShift) !==
+      JSON.stringify(user.shiftType?.map((s) => String(s.id)) || [])
+    ) {
+      payload.shiftType = selectedWorkShift;
+    }
+
+    if (
+      JSON.stringify(selectedGroup) !==
+      JSON.stringify(user.groups?.map((g) => String(g.id)) || [])
+    ) {
+      payload.groups = selectedGroup;
+    }
+
+    if (
+      JSON.stringify(leaveSubPolicies) !==
+      JSON.stringify(user.leavePolicies?.map((p) => String(p.id)) || [])
+    ) {
+      payload.leavePolicies = leaveSubPolicies;
+    }
+
+    if (spoused !== user.spoused) {
+      payload.spoused = spoused;
+    }
+
+    if (Number(numberOfChildren) !== user.numberOfChildren) {
+      payload.numberOfChildren = Number(numberOfChildren);
+    }
+
+    if (nssfId !== user.nssfId) {
+      payload.nssfId = nssfId || null;
+    }
+
+    if (selectedLocation !== user.allowedRemoteCheckIn) {
+      payload.allowedRemoteCheckIn = selectedLocation;
+    }
+
+    if (requiredAttendance !== user.isRequiredToCheckIn) {
+      payload.isRequiredToCheckIn = requiredAttendance;
+    }
+
+    /* ============== FINANCIAL INFO ============== */
+    if (
+      bankProvider !== user.employee.finance?.bankDetails?.bankProvider ||
+      accountNumber !== user.employee.finance?.bankDetails?.accountNumber
+    ) {
+      payload.bankDetails = {
         bankProvider: bankProvider || null,
         accountNumber: accountNumber || null,
-      },
-      paymentMethod: {
-        cashPercentage: Number(cashPercentage) || 0,
-        ibankingPercentage: Number(ibankingPercentage) || 0,
-      },
-      salaryInfo: {
-        baseSalary: Number(baseSalary) || 0,
-        currencyType: currencyType || "USD",
-        salaryType: salaryType || "Monthly",
-      },
-    };
+      };
+    }
+
+    if (
+      cashPercentage !== user.employee.finance?.paymentMethod?.cashPercentage ||
+      ibankingPercentage !==
+        user.employee.finance?.paymentMethod?.ibankingPercentage
+    ) {
+      payload.paymentMethod = {
+        cashPercentage: Number(cashPercentage),
+        ibankingPercentage: Number(ibankingPercentage),
+      };
+    }
+
+    if (
+      baseSalary !== user.employee.finance?.salaryInfo?.baseSalary ||
+      salaryType !== user.employee.finance?.salaryInfo?.salaryType ||
+      dailyRate !== user.employee.finance?.salaryInfo?.dailyRate ||
+      hourlyRate !== user.employee.finance?.salaryInfo?.hourlyRate ||
+      currencyType !== user.employee.finance?.salaryInfo?.currencyType
+    ) {
+      payload.salaryInfo = {
+        baseSalary: Number(baseSalary),
+        salaryType,
+        dailyRate: Number(dailyRate),
+        hourlyRate: Number(hourlyRate),
+        currencyType,
+      };
+    }
+
+    /* ============== SEND ONLY IF CHANGED ============== */
+    if (Object.keys(payload).length === 0) {
+      setIsSaving(false);
+      return;
+    }
 
     updateUserMutation.mutate(
       {
         id: user.employee.id,
-        data: updatedProfile,
+        data: payload,
       },
       {
-        onSuccess: () => {
-          setIsSaving(false);
-        },
-        onError: (err) => {
-          setIsSaving(false);
-          console.error("❌ Update failed:", err);
-        },
+        onSettled: () => setIsSaving(false),
       }
     );
   };
@@ -775,9 +922,17 @@ export default function UserProfile({ user }) {
 
             <DropdownSection
               title="Location"
-              items={["Flexible", "Geofencing"]}
-              selectedItems={[selectedLocation]}
-              toggleItem={(value) => setSelectedLocation(value)}
+              items={checkInOptions.map((opt) => opt.label)} // display YES / NO
+              selectedItems={[
+                checkInOptions.find((opt) => opt.value === selectedLocation)
+                  ?.label,
+              ]}
+              toggleItem={(label) => {
+                const selected = checkInOptions.find(
+                  (opt) => opt.label === label
+                );
+                setSelectedLocation(selected?.value ?? false); // store boolean
+              }}
               renderItem={(item) => item}
               dropdownWidth="w-44"
             />
@@ -833,6 +988,24 @@ export default function UserProfile({ user }) {
                 type="string"
                 value={baseSalary}
                 onChange={(e) => setBaseSalary(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              />
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                Daily Rate
+              </label>
+              <input
+                type="string"
+                value={dailyRate}
+                onChange={(e) => setDailyRate(e.target.value)}
+                className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
+              />
+              <label className="text-sm font-custom text-[#3F4648] w-full">
+                Hourly Rate
+              </label>
+              <input
+                type="string"
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
                 className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-white border border-gray-300 text-black"
               />
               <div className="flex flex-row items-center space-x-2 w-full sm:w-auto">
