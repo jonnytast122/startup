@@ -56,12 +56,16 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteUser, fetchUser } from "@/lib/api/user";
 
+import { fetchBranches } from "@/lib/api/branch";
+import { fetchPositions } from "@/lib/api/position";
+import { fetchWorkShift } from "@/lib/api/work-shift";
+import { fetchCompany } from "@/lib/api/company";
+
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
   { value: "as PDF", label: "as PDF" },
 ];
-
 // const statusFilter = ["Active", "Inactive", "Pending"];
 
 // Component to handle profile rendering safely
@@ -227,6 +231,32 @@ const UsersScreen = ({
     },
   ];
 
+  // fetch data
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: fetchPositions,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: workshift, isLoading: workshiftLoading } = useQuery({
+    queryKey: ["workShift", company?.id],
+    queryFn: () => fetchWorkShift(company.id),
+    enabled: !!company?.id,
+    staleTime: 30 * 60 * 1000,
+  });
+
   // table header initialization
   const table = useReactTable({
     data: users,
@@ -309,6 +339,10 @@ const UsersScreen = ({
       <AddUserManuallyDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        branches={branches}
+        positions={positions}
+        workshift={workshift}
+        workshiftLoading={workshiftLoading}
       />
     </div>
   );

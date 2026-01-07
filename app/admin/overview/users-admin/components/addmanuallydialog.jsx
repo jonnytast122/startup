@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -10,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FaSpinner } from "react-icons/fa";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableHeader,
@@ -18,11 +25,6 @@ import {
   TableHead,
   TableCell,
 } from "@/components/ui/table";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import {
   useReactTable,
@@ -37,6 +39,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import {
+  DropdownMenuItem,
   DropdownMenu,
   DropdownMenuTrigger,
   DropdownMenuContent,
@@ -44,177 +47,29 @@ import {
 import { List, Plus, Trash2 } from "lucide-react";
 import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchBranches, fetchDepartmentsByBranch } from "@/lib/api/branch";
-import { fetchPositions } from "@/lib/api/position";
-import { fetchWorkShift } from "@/lib/api/work-shift";
-import { fetchCompany } from "@/lib/api/company";
 import { addUsers, fetchUsers } from "@/lib/api/user";
 import { getDepartmentsByBranch } from "@/lib/api/department";
 
-export default function AddUserManuallyDialog({ open, onOpenChange }) {
+export default function AddUserManuallyDialog({
+  open,
+  onOpenChange,
+  branches,
+  positions,
+  workshift,
+  workshiftLoading,
+}) {
   const queryClient = useQueryClient();
-
   const { data: usersData } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
   });
 
-  const { data: company } = useQuery({
-    queryKey: ["company"],
-    queryFn: fetchCompany,
-  });
-
-  const { data: workshift, isLoading: workshiftLoading } = useQuery({
-    queryKey: ["workShift", company?.id],
-    queryFn: () => fetchWorkShift(company?.id),
-    enabled: !!company?.id,
-  });
-
-  const { data: branches, isLoading: branchesLoading } = useQuery({
-    queryKey: ["branches"],
-    queryFn: fetchBranches,
-  });
-
-  const { data: positions } = useQuery({
-    queryKey: ["positions"],
-    queryFn: fetchPositions,
-  });
-
-  const [data, setData] = useState(
-    Array.from({ length: 1 }, (_, i) => ({
-      id: i + 1,
-      companyId: "",
-      fullName: "",
-      phone: "",
-      branch: "",
-      department: "",
-      position: "",
-      shiftType: "",
-      dateOfBirth: "",
-      gender: "",
-      idCardNumber: "",
-      isRequiredToCheckIn: "",
-      salaryType: "",
-      job: "",
-      baseSalary: "",
-      baseSalaryKHR: "",
-      cash: "",
-      cashKHR: "",
-      ibanking: "",
-      ibankingKHR: "",
-      currencyType: "",
-      bankProvider: "",
-      bankAccount: "",
-      spoused: "",
-      numberOfChildren: "",
-      otherName: "",
-      nssfId: "",
-      groups: "",
-      geofencing: "",
-      regularHourDailyRate: "",
-      hourlyRate: "",
-    }))
-  );
-
-  const [addedRowIds, setAddedRowIds] = useState([]);
-  const [errorsMap, setErrorsMap] = useState({});
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [isPending, setIsPending] = useState(false);
-
-  const handleAddRow = useCallback(() => {
-    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
-    const newRow = {
-      id: newId,
-      companyId: "",
-      fullName: "",
-      phone: "",
-      branch: "",
-      department: "",
-      position: "",
-      shiftType: "",
-      dateOfBirth: "",
-      gender: "",
-      idCardNumber: "",
-      isRequiredToCheckIn: "",
-      salaryType: "",
-      job: "",
-      baseSalary: "",
-      baseSalaryKHR: "",
-      cash: "",
-      cashKHR: "",
-      ibanking: "",
-      ibankingKHR: "",
-      currencyType: "",
-      bankProvider: "",
-      bankAccount: "",
-      spoused: "",
-      numberOfChildren: "",
-      otherName: "",
-      nssfId: "",
-      groups: "",
-      geofencing: "",
-      regularHourDailyRate: "",
-      hourlyRate: "",
-    };
-    setData((prev) => [...prev, newRow]);
-    setAddedRowIds((prev) => [...prev, newId]);
-  }, [data]);
-
-  const handleDeleteRow = useCallback((id) => {
-    setData((prev) => prev.filter((row) => row.id !== id));
-    setAddedRowIds((prev) => prev.filter((rowId) => rowId !== id));
-  }, []);
-
-  // ✅ Mutation fixed here
-  const addUserMutation = useMutation({
-    mutationFn: (users) => addUsers(users),
-    onSuccess: () => {
-      queryClient.invalidateQueries(["users"]);
-      setData([
-        {
-          id: 1,
-          companyId: "",
-          fullName: "",
-          phone: "",
-          branch: "",
-          department: "",
-          position: "",
-          shiftType: "",
-          dateOfBirth: "",
-          gender: "",
-          idCardNumber: "",
-          isRequiredToCheckIn: "",
-          salaryType: "",
-          job: "",
-          baseSalary: "",
-          baseSalaryKHR: "",
-          cash: "",
-          cashKHR: "",
-          ibanking: "",
-          ibankingKHR: "",
-          currencyType: "",
-          bankProvider: "",
-          bankAccount: "",
-          spoused: "",
-          numberOfChildren: "",
-          otherName: "",
-          nssfId: "",
-          groups: "",
-          geofencing: "",
-          regularHourDailyRate: "",
-          hourlyRate: "",
-        },
-      ]);
-      setAddedRowIds([]);
-      setSuccessOpen(true);
-    },
-    onError: (error) => {
-      console.error("Failed to add users:", error);
-    },
-  });
-
   const countryCodes = [
-    { code: "+855", flag: "https://flagcdn.com/w40/kh.png", name: "Cambodia" },
+    {
+      code: "+855",
+      flag: "https://flagcdn.com/w40/kh.png",
+      name: "Cambodia",
+    },
   ];
 
   const bankProviders = [
@@ -260,6 +115,225 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     },
   ];
 
+  const [serverError, setServerError] = useState("");
+
+  const [data, setData] = useState(
+    Array.from({ length: 1 }, (_, i) => ({
+      id: i + 1,
+      companyIdentifier: "",
+      fullName: "",
+      phone: "",
+      branch: "",
+      department: "",
+      position: "",
+      shiftType: "",
+      dateOfBirth: "",
+      gender: "",
+      idCardNumber: "",
+      isRequiredToCheckIn: "",
+      salaryType: "",
+      job: "",
+      baseSalary: "",
+      cash: "",
+      ibanking: "",
+      currencyType: "",
+      bankProvider: "",
+      bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
+      groups: "",
+      allowedRemoteCheckIn: "",
+      dailyRate: "",
+      hourlyRate: "",
+    }))
+  );
+
+  const [addedRowIds, setAddedRowIds] = useState([]);
+  const [errorsMap, setErrorsMap] = useState({});
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  const handleAddRow = useCallback(() => {
+    const newId = Math.max(...data.map((d) => d.id), 0) + 1;
+    const newRow = {
+      id: newId,
+      companyIdentifier: "",
+      fullName: "",
+      phone: "",
+      branch: "",
+      department: "",
+      position: "",
+      shiftType: "",
+      dateOfBirth: "",
+      gender: "",
+      idCardNumber: "",
+      isRequiredToCheckIn: "",
+      salaryType: "",
+      job: "",
+      baseSalary: "",
+      cash: "",
+      ibanking: "",
+      currencyType: "",
+      bankProvider: "",
+      bankAccount: "",
+      spoused: "",
+      numberOfChildren: "",
+      otherName: "",
+      nssfId: "",
+      groups: "",
+      allowedRemoteCheckIn: "",
+      dailyRate: "",
+      hourlyRate: "",
+    };
+    setData((prev) => [...prev, newRow]);
+    setAddedRowIds((prev) => [...prev, newId]);
+  }, [data]);
+
+  const handleDeleteRow = useCallback((id) => {
+    setData((prev) => prev.filter((row) => row.id !== id));
+    setAddedRowIds((prev) => prev.filter((rowId) => rowId !== id));
+  }, []);
+
+  // Mutation fixed here
+  const addUserMutation = useMutation({
+    mutationFn: (users) => addUsers(users),
+    onSuccess: () => {
+      queryClient.invalidateQueries(["users"]);
+      setData([
+        {
+          id: 1,
+          companyIdentifier: "",
+          fullName: "",
+          phone: "",
+          branch: "",
+          department: "",
+          position: "",
+          shiftType: "",
+          dateOfBirth: "",
+          gender: "",
+          idCardNumber: "",
+          isRequiredToCheckIn: "",
+          salaryType: "",
+          job: "",
+          baseSalary: "",
+          cash: "",
+          ibanking: "",
+          currencyType: "",
+          bankProvider: "",
+          bankAccount: "",
+          spoused: "",
+          numberOfChildren: "",
+          otherName: "",
+          nssfId: "",
+          groups: "",
+          allowedRemoteCheckIn: "",
+          dailyRate: "",
+          hourlyRate: "",
+        },
+      ]);
+      setAddedRowIds([]);
+      setSuccessOpen(true);
+    },
+    onError: (error) => {
+      setServerError(
+        error?.response?.data?.error ?? "Failed to add users. Please try again."
+      );
+    },
+  });
+
+  // handle select shift REUSABLE COMPONENT
+  function ShiftMultiSelect({ value = [], onChange, options = [] }) {
+    const shifts = Array.isArray(options) ? options : options?.results ?? [];
+    const selected = Array.isArray(value) ? value.map(String) : [];
+
+    const [open, setOpen] = React.useState(false);
+
+    const toggle = (id) => {
+      onChange(
+        selected.includes(id)
+          ? selected.filter((v) => v !== id)
+          : [...selected, id]
+      );
+    };
+
+    const dialogContainer =
+      typeof document !== "undefined"
+        ? document.querySelector("[data-radix-dialog-content]")
+        : null;
+
+    return (
+      <Select open={open} onOpenChange={setOpen}>
+        <SelectTrigger className="w-full font-custom h-9 text-black">
+          <SelectValue
+            placeholder={
+              selected.length ? `${selected.length} Selected` : "Select Shift"
+            }
+          />
+        </SelectTrigger>
+
+        <SelectContent
+          container={dialogContainer}
+          side="bottom"
+          align="start"
+          className="w-[var(--radix-select-trigger-width)] max-h-60 overflow-y-auto p-1 bg-white"
+          onPointerDown={(e) => e.preventDefault()} // 🔑 prevent auto-close
+        >
+          {shifts.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-400">
+              No shifts available
+            </div>
+          ) : (
+            shifts.map((shift) => {
+              const id = String(shift.id);
+              const checked = selected.includes(id);
+
+              return (
+                <div
+                  key={id}
+                  onClick={() => toggle(id)}
+                  className="flex w-full font-custom items-center gap-2 py-2 cursor-pointer rounded-sm hover:bg-gray-200"
+                >
+                  <Checkbox
+                    className="rounded-none"
+                    checked={checked}
+                    onCheckedChange={() => toggle(id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="text-sm">{shift.name}</span>
+                </div>
+              );
+            })
+          )}
+        </SelectContent>
+      </Select>
+    );
+  }
+
+  // cell reusable component
+  function EditableInputCell({ row, field, value, onChange, error, ...props }) {
+    const [localValue, setLocalValue] = React.useState(value ?? "");
+
+    // Sync when row updates (row add/delete/reset)
+    React.useEffect(() => {
+      setLocalValue(value ?? "");
+    }, [value]);
+
+    return (
+      <Input
+        {...props}
+        value={localValue}
+        onChange={(e) => {
+          const val = e.target.value;
+          setLocalValue(val); // keep focus
+          onChange(row.original.id, field, val); // update table state
+        }}
+        className={`${props.className} ${error ? "border-red-500" : ""}`}
+      />
+    );
+  }
+
   const isRowComplete = (row) => {
     return (
       row.fullName.trim() &&
@@ -281,7 +355,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       const rowErrors = {};
 
       // Required fields validation
-      if (!row.companyId?.trim()) rowErrors.companyId = true;
+      if (!row.companyIdentifier?.trim()) rowErrors.companyIdentifier = true;
       if (!row.fullName?.trim()) rowErrors.fullName = true;
       if (!row.phone?.trim() || !/^\d{8,15}$/.test(row.phone.trim()))
         rowErrors.phone = true;
@@ -289,14 +363,16 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       if (!row.dateOfBirth?.trim()) rowErrors.dateOfBirth = true;
       if (!row.branch?.trim()) rowErrors.branch = true;
       if (!row.department?.trim()) rowErrors.department = true;
-      if (!row.shiftType || row.shiftType.length === 0) rowErrors.shiftType = true;
-      if (!row.geofencing?.trim()) rowErrors.geofencing = true;
+      if (!row.shiftType || row.shiftType.length === 0)
+        rowErrors.shiftType = true;
+      if (!row.allowedRemoteCheckIn?.trim())
+        rowErrors.allowedRemoteCheckIn = true;
       if (!row.isRequiredToCheckIn?.trim())
         rowErrors.isRequiredToCheckIn = true;
       if (!row.baseSalary || isNaN(Number(row.baseSalary)))
         rowErrors.baseSalary = true;
-      if (!row.regularHourDailyRate || isNaN(Number(row.regularHourDailyRate)))
-        rowErrors.regularHourDailyRate = true;
+      if (!row.dailyRate || isNaN(Number(row.dailyRate)))
+        rowErrors.dailyRate = true;
       if (!row.hourlyRate || isNaN(Number(row.hourlyRate)))
         rowErrors.hourlyRate = true;
       if (!row.salaryType?.trim()) rowErrors.salaryType = true;
@@ -328,89 +404,88 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
     [setData, validateRows]
   );
 
+  // helper to format and submit data
+  const isValidValue = (v) =>
+    v !== undefined &&
+    v !== null &&
+    v !== "" &&
+    !(Array.isArray(v) && v.length === 0);
+
+  const cleanObject = (obj) =>
+    Object.fromEntries(
+      Object.entries(obj)
+        .filter(([, v]) => isValidValue(v))
+        .map(([k, v]) => [
+          k,
+          typeof v === "object" && !Array.isArray(v) ? cleanObject(v) : v,
+        ])
+        .filter(([, v]) =>
+          typeof v === "object" ? Object.keys(v).length > 0 : true
+        )
+    );
+
+  // handle submit users
   const handleAddUsers = () => {
-    if (!validateRows(data)) {
-      return;
-    }
+    if (!validateRows(data)) return;
+    const formattedUsers = data.map((row) => {
+      const user = {
+        companyIdentifier: row.companyIdentifier,
+        name: row.fullName,
+        phoneNumber: row.phone.startsWith("855")
+          ? row.phone
+          : `855${row.phone.replace(/^0+/, "")}`,
 
-    const formattedUsers = data.map((row) => ({
-      companyId: row.companyId,
-      name: row.fullName,
-      phoneNumber: row.phone.startsWith("855")
-        ? row.phone
-        : `855${row.phone.replace(/^0+/, "")}`,
-      branch: row.branch || null,
-      department: row.department || null,
-      position: row.position || null,
-      job: row.job || null,
-      shiftType: row.shiftType,
-      groups: row.groups || null,
-      geofencing: row.geofencing,
-      spoused: row.spoused === "true",
-      numberOfChildren: Number(row.numberOfChildren) || 0,
-      otherName: row.otherName || null,
-      dateOfBirth: row.dateOfBirth || null,
-      gender: row.gender || null,
-      idCardNumber: row.idCardNumber || null,
-      isRequiredToCheckIn: row.isRequiredToCheckIn,
-      nssfId: row.nssfId,
-      paymentMethod: {
-        cashPercentage: Number(row.cash) || 0,
-        cashKHR: Number(row.cashKHR) || 0,
-        ibankingPercentage: Number(row.ibanking) || 0,
-        ibankingKHR: Number(row.ibankingKHR) || 0,
-      },
-      salaryInfo: {
-        baseSalary: Number(row.baseSalary),
-        baseSalaryKHR: Number(row.baseSalaryKHR) || 0,
-        currencyType: row.currencyType,
-        salaryType: row.salaryType,
-        regularHourDailyRate: Number(row.regularHourDailyRate),
-        hourlyRate: Number(row.hourlyRate),
-      },
-      bankDetails: {
-        bankProvider: row.bankProvider,
-        accountNumber: row.bankAccount,
-      },
-    }));
-    addUserMutation.mutate(formattedUsers, {
-      onSuccess: () => {
-        setIsPending(false);
-        setSuccessOpen(true);
-      },
+        branch: row.branch,
+        department: row.department,
+        position: row.position,
+        job: row.job,
 
-      onError: (error) => {
-        setIsPending(false);
-        const apiErrors = {};
+        shiftType: Array.isArray(row.shiftType) ? row.shiftType : [],
 
-        const msg = error?.response?.data?.error;
-        if (msg) {
-          // Detect if it’s a phone number error
-          if (msg.toLowerCase().includes("phone")) {
-            // Highlight the phone field in the matching row
-            const phoneMatch = msg.match(/\d{8,15}/); // extract the number
-            if (phoneMatch) {
-              const phoneNumber = phoneMatch[0];
-              const row = data.find((r) => {
-                const formattedPhone = r.phone.startsWith("855")
-                  ? r.phone
-                  : `855${r.phone.replace(/^0+/, "")}`;
-                return formattedPhone === phoneNumber;
-              });
+        groups: row.groups,
+        allowedRemoteCheckIn: row.allowedRemoteCheckIn,
+        isRequiredToCheckIn: row.isRequiredToCheckIn,
 
-              if (row) {
-                apiErrors[row.id] = {
-                  phone: true,
-                  message: msg,
-                };
-              }
-            }
-          } else {
-          }
-        }
-        setErrorsMap(apiErrors);
-      },
+        spoused: row.spoused === "true",
+        numberOfChildren:
+          row.numberOfChildren !== ""
+            ? Number(row.numberOfChildren)
+            : undefined,
+
+        otherName: row.otherName,
+        dateOfBirth: row.dateOfBirth,
+        gender: row.gender,
+        idCardNumber: row.idCardNumber,
+        nssfId: row.nssfId,
+
+        paymentMethod: {
+          cashPercentage: row.cash !== "" ? Number(row.cash) : undefined,
+          ibankingPercentage:
+            row.ibanking !== "" ? Number(row.ibanking) : undefined,
+        },
+
+        salaryInfo: {
+          baseSalary:
+            row.baseSalary !== "" ? Number(row.baseSalary) : undefined,
+          currencyType: row.currencyType,
+          salaryType: row.salaryType,
+          dailyRate: row.dailyRate !== "" ? Number(row.dailyRate) : undefined,
+          hourlyRate:
+            row.hourlyRate !== "" ? Number(row.hourlyRate) : undefined,
+        },
+
+        bankDetails: {
+          bankProvider: row.bankProvider,
+          accountNumber: row.bankAccount,
+        },
+      };
+
+      return cleanObject(user);
     });
+
+    console.log("Formatted Users to be added:", formattedUsers);
+
+    addUserMutation.mutate(formattedUsers);
   };
 
   useEffect(() => {
@@ -459,18 +534,18 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
   const columns = useMemo(
     () => [
       {
-        accessorKey: "companyId",
+        // will change ro this style later
+        accessorKey: "companyIdentifier",
         header: "Company ID*",
         cell: ({ row }) => (
-          <Input
-            value={row.original.companyId}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "companyId", e.target.value)
-            }
+          <EditableInputCell
+            row={row}
+            field="companyIdentifier"
+            value={row.original.companyIdentifier}
+            error={errorsMap[row.original.id]?.companyIdentifier}
+            onChange={handleInputChange}
             placeholder="Company ID"
-            className={`font-custom h-9 text-black placeholder:text-gray-400 rounded-md border-gray-300 ${
-              errorsMap[row.original.id]?.companyId ? "border-red-500" : ""
-            }`}
+            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400"
           />
         ),
       },
@@ -621,9 +696,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             }}
           >
             <SelectTrigger
-              className={`w-full font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 ${
-                errorsMap[row.original.id]?.branch ? "border-red-500" : ""
-              }`}
+              className={`h-9 w-28 font-custom ${
+                errorsMap[row.original.id]?.gender
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } text-black`}
             >
               <SelectValue placeholder="Select Branch" />
             </SelectTrigger>
@@ -637,68 +714,74 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
-
       {
-        accessorKey: "Shift Type",
-        header: "Shift Type*",
+        accessorKey: "department",
+        header: "Department*",
         cell: ({ row }) => {
-          const selectedShiftIds = row.original.shiftType || [];
-
-          const handleToggleShift = (shiftId) => {
-            let updatedShifts;
-            if (selectedShiftIds.includes(shiftId)) {
-              updatedShifts = selectedShiftIds.filter((id) => id !== shiftId);
-            } else {
-              updatedShifts = [...selectedShiftIds, shiftId];
-            }
-            handleInputChange(row.original.id, "shiftType", updatedShifts);
-          };
+          const selectedBranchId = row.original.branch;
+          const selectedDepartmentId = row.original.department || "";
+          const { data: departmentsData = { results: [] }, isLoading } =
+            useQuery({
+              queryKey: ["departments", selectedBranchId],
+              queryFn: () => getDepartmentsByBranch(selectedBranchId),
+              enabled: !!selectedBranchId,
+            });
 
           return (
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={`w-full h-9 justify-between font-custom text-black border-gray-300 ${
-                    errorsMap[row.original.id]?.shiftType
-                      ? "border-red-500"
-                      : ""
-                  }`}
-                >
-                  {selectedShiftIds.length > 0 ? (
-                    `${selectedShiftIds.length} Selected`
-                  ) : workshiftLoading ? (
-                    <FaSpinner className="animate-spin text-blue text-lg items-center text-center" />
-                  ) : (
-                    "Select Shift Type"
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[200px] max-h-[200px] overflow-y-auto p-2">
-                {workshiftLoading ? (
-                  <FaSpinner className="animate-spin text-white text-lg" />
-                ) : (
-                  workshift?.results?.results?.map((shift) => (
-                    <div
-                      key={shift.id}
-                      className="flex items-center space-x-2 p-1 cursor-pointer hover:bg-gray-100 rounded-md bg-white"
-                      onClick={() => handleToggleShift(shift.id)}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={selectedShiftIds.includes(shift.id)}
-                        readOnly
-                      />
-                      <label className="text-sm font-custom">
-                        {shift.name}
-                      </label>
-                    </div>
+            <Select
+              value={selectedDepartmentId}
+              onValueChange={(deptId) =>
+                handleInputChange(row.original.id, "department", deptId)
+              }
+            >
+              <SelectTrigger
+                className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
+                  errorsMap[row.original.id]?.department
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+              >
+                <SelectValue placeholder="Select Department" />
+              </SelectTrigger>
+
+              <SelectContent className="font-custom">
+                {isLoading ? (
+                  <SelectItem value="loading">
+                    {" "}
+                    <FaSpinner className="animate-spin text-white text-lg" />
+                  </SelectItem>
+                ) : departmentsData.results.length > 0 ? (
+                  departmentsData.results.map((dept) => (
+                    <SelectItem key={dept.id} value={dept.id}>
+                      {dept.name}
+                    </SelectItem>
                   ))
+                ) : (
+                  <SelectItem
+                    value="no-dept"
+                    className="text-red-300 text-center"
+                  >
+                    Please select branch first
+                  </SelectItem>
                 )}
-              </PopoverContent>
-            </Popover>
+              </SelectContent>
+            </Select>
           );
         },
+      },
+
+      {
+        accessorKey: "shiftType",
+        header: "Shift Type*",
+        cell: ({ row }) => (
+          <ShiftMultiSelect
+            value={row.original.shiftType || []}
+            options={workshift?.results || []}
+            onChange={(val) =>
+              handleInputChange(row.original.id, "shiftType", val)
+            }
+          />
+        ),
       },
       {
         accessorKey: "groups",
@@ -715,71 +798,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
-      {
-        accessorKey: "geofencing",
-        header: "Geofencing*",
-        cell: ({ row }) => (
-          <Input
-            type="text"
-            value={row.original.geofencing}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "geofencing", e.target.value)
-            }
-            placeholder="Geofencing"
-            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md ${
-              errorsMap[row.original.id]?.geofencing ? "border-red-500" : ""
-            }`}
-          />
-        ),
-      },
-      {
-        accessorKey: "Base Salary",
-        header: "Base Salary USD*",
-        cell: ({ row }) => (
-          <Input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="any"
-            value={row.original.baseSalary ?? ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "" || Number(value) >= 0) {
-                handleInputChange(row.original.id, "baseSalary", value);
-              }
-            }}
-            placeholder="Base Salary"
-            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
-                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                   errorsMap[row.original.id]?.baseSalary
-                     ? "border-red-500"
-                     : ""
-                 }`}
-          />
-        ),
-      },
-      {
-        accessorKey: "baseSalaryKHR",
-        header: "Base Salary KHR",
-        cell: ({ row }) => (
-          <Input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="any"
-            value={row.original.baseSalaryKHR ?? ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "" || Number(value) >= 0) {
-                handleInputChange(row.original.id, "baseSalaryKHR", value);
-              }
-            }}
-            placeholder="Base Salary KHR"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
-                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-        ),
-      },
+
       {
         accessorKey: "Currency Type",
         header: "Currency Type",
@@ -835,76 +854,31 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
-
       {
-        accessorKey: "Required Attendance",
-        id: "isRequiredToCheckIn",
-        header: "Required Attendance*",
+        accessorKey: "Base Salary",
+        header: "Base Salary*",
         cell: ({ row }) => (
-          <Select
-            value={row.original.isRequiredToCheckIn}
-            onValueChange={(value) =>
-              handleInputChange(row.original.id, "isRequiredToCheckIn", value)
-            }
-          >
-            <SelectTrigger className="h-9 w-32 font-custom text-black border-gray-300">
-              <SelectValue placeholder="Required CheckIn" />
-            </SelectTrigger>
-            <SelectContent className="font-custom">
-              <SelectItem value="true">Yes</SelectItem>
-              <SelectItem value="false">No</SelectItem>
-            </SelectContent>
-          </Select>
-        ),
-      },
-
-      {
-        accessorKey: "department",
-        header: "Department*",
-        cell: ({ row }) => {
-          const selectedBranchId = row.original.branch;
-          const selectedDepartmentId = row.original.department || "";
-          const { data: departmentsData = { results: [] }, isLoading } =
-            useQuery({
-              queryKey: ["departments", selectedBranchId],
-              queryFn: () => getDepartmentsByBranch(selectedBranchId),
-              enabled: !!selectedBranchId,
-            });
-
-          return (
-            <Select
-              value={selectedDepartmentId}
-              onValueChange={(deptId) =>
-                handleInputChange(row.original.id, "department", deptId)
+          <Input
+            type="number"
+            inputMode="numeric"
+            min="0"
+            step="any"
+            value={row.original.baseSalary ?? ""}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "" || Number(value) >= 0) {
+                handleInputChange(row.original.id, "baseSalary", value);
               }
-            >
-              <SelectTrigger className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
-                errorsMap[row.original.id]?.department
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}>
-                <SelectValue placeholder="Select Department" />
-              </SelectTrigger>
-
-              <SelectContent className="font-custom">
-                {isLoading ? (
-                  <SelectItem value="loading">
-                    {" "}
-                    <FaSpinner className="animate-spin text-white text-lg" />
-                  </SelectItem>
-                ) : departmentsData.results.length > 0 ? (
-                  departmentsData.results.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
-                    </SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="no-dept">No departments</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          );
-        },
+            }}
+            placeholder="Base Salary"
+            className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
+                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+                   errorsMap[row.original.id]?.baseSalary
+                     ? "border-red-500"
+                     : ""
+                 }`}
+          />
+        ),
       },
       {
         accessorKey: "position",
@@ -929,7 +903,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           </Select>
         ),
       },
-
       {
         accessorKey: "Job Title",
         id: "job",
@@ -946,10 +919,9 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
-
       {
         accessorKey: "cash",
-        header: "Cash USD",
+        header: "Cash*",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -963,7 +935,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 handleInputChange(row.original.id, "cash", value);
               }
             }}
-            placeholder="Cash USD"
+            placeholder="Cash"
             className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
                  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
           />
@@ -971,7 +943,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       },
       {
         accessorKey: "ibanking",
-        header: "IBanking USD",
+        header: "IBanking*",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -992,56 +964,32 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         ),
       },
       {
-        accessorKey: "ibankingKHR",
-        header: "IBanking KHR",
+        accessorKey: "dailyRate",
+        header: "Daily Rate*",
         cell: ({ row }) => (
           <Input
             type="number"
             inputMode="numeric"
             min="0"
             step="any"
-            value={row.original.ibankingKHR ?? ""}
+            value={row.original.dailyRate ?? ""}
             onChange={(e) => {
               const value = e.target.value;
               if (value === "" || Number(value) >= 0) {
-                handleInputChange(row.original.id, "ibankingKHR", value);
+                handleInputChange(row.original.id, "dailyRate", value);
               }
             }}
-            placeholder="iBanking KHR"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
-                 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-          />
-        ),
-      },
-      {
-        accessorKey: "regularHourDailyRate",
-        header: "Regular Hour Daily Rate USD*",
-        cell: ({ row }) => (
-          <Input
-            type="number"
-            inputMode="numeric"
-            min="0"
-            step="any"
-            value={row.original.regularHourDailyRate ?? ""}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "" || Number(value) >= 0) {
-                handleInputChange(row.original.id, "regularHourDailyRate", value);
-              }
-            }}
-            placeholder="Regular Hour Daily Rate USD"
+            placeholder="Daily Rate"
             className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
                  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
-                   errorsMap[row.original.id]?.regularHourDailyRate
-                     ? "border-red-500"
-                     : ""
+                   errorsMap[row.original.id]?.dailyRate ? "border-red-500" : ""
                  }`}
           />
         ),
       },
       {
         accessorKey: "hourlyRate",
-        header: "Hourly Rate USD*",
+        header: "Hourly Rate*",
         cell: ({ row }) => (
           <Input
             type="number"
@@ -1055,7 +1003,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 handleInputChange(row.original.id, "hourlyRate", value);
               }
             }}
-            placeholder="Hourly Rate USD"
+            placeholder="Hourly Rate"
             className={`font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md
                  [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
                    errorsMap[row.original.id]?.hourlyRate
@@ -1065,7 +1013,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
-
       {
         accessorKey: "Bank Provider",
         id: "bankProvider",
@@ -1082,11 +1029,13 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 handleInputChange(row.original.id, "bankProvider", value)
               }
             >
-              <SelectTrigger className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
-                errorsMap[row.original.id]?.bankProvider
-                  ? "border-red-500"
-                  : "border-gray-300"
-              }`}>
+              <SelectTrigger
+                className={`w-full font-custom h-9 text-black placeholder:text-gray-400 ${
+                  errorsMap[row.original.id]?.bankProvider
+                    ? "border-red-500"
+                    : "border-gray-300"
+                }`}
+              >
                 <SelectValue placeholder="Select Bank Provider">
                   {selected ? (
                     <div className="flex items-center gap-2">
@@ -1184,7 +1133,6 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
           />
         ),
       },
-
       {
         accessorKey: "NSSF ID",
         id: "nssfId",
@@ -1203,6 +1151,48 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
                 : "border-gray-300"
             }`}
           />
+        ),
+      },
+      {
+        accessorKey: "location",
+        id: "allowedRemoteCheckIn",
+        header: "Location*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.allowedRemoteCheckIn}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "allowedRemoteCheckIn", value)
+            }
+          >
+            <SelectTrigger className="h-9 w-32 font-custom text-black border-gray-300">
+              <SelectValue placeholder="Required CheckIn" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="true">Flexible</SelectItem>
+              <SelectItem value="false">Geofencing</SelectItem>
+            </SelectContent>
+          </Select>
+        ),
+      },
+      {
+        accessorKey: "Required Attendance",
+        id: "isRequiredToCheckIn",
+        header: "Required Attendance*",
+        cell: ({ row }) => (
+          <Select
+            value={row.original.isRequiredToCheckIn}
+            onValueChange={(value) =>
+              handleInputChange(row.original.id, "isRequiredToCheckIn", value)
+            }
+          >
+            <SelectTrigger className="h-9 w-32 font-custom text-black border-gray-300">
+              <SelectValue placeholder="Required CheckIn" />
+            </SelectTrigger>
+            <SelectContent className="font-custom">
+              <SelectItem value="true">Yes</SelectItem>
+              <SelectItem value="false">No</SelectItem>
+            </SelectContent>
+          </Select>
         ),
       },
 
@@ -1259,7 +1249,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         ),
       },
     ],
-    [handleInputChange, handleDeleteRow]
+    [handleInputChange, handleDeleteRow, branches, workshift, workshiftLoading]
   );
 
   const table = useReactTable({
@@ -1274,7 +1264,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
       pagination: { pageSize: 25 },
       columnVisibility: {
         // Required fields - visible by default
-        companyId: true,
+        companyIdentifier: true,
         fullName: true,
         phone: true,
         gender: true,
@@ -1282,9 +1272,11 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         branch: true,
         department: true,
         shiftType: true,
-        geofencing: true,
+        allowedRemoteCheckIn: true,
         baseSalary: true,
-        regularHourDailyRate: true,
+        cash: true,
+        ibanking: true,
+        dailyRate: true,
         hourlyRate: true,
         salaryType: true,
         bankProvider: true,
@@ -1298,11 +1290,7 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
         position: false,
         job: false,
         groups: false,
-        baseSalaryKHR: false,
         currencyType: false,
-        cash: false,
-        ibanking: false,
-        ibankingKHR: false,
         spoused: false,
         numberOfChildren: false,
       },
@@ -1386,6 +1374,12 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
               <span>Add Row</span>
             </Button>
           </div>
+          {serverError && (
+            <p className="text-red-500 text-sm font-custom mb-2">
+              {serverError}
+            </p>
+          )}
+
           <p className="text-red-500 text-sm font-custom text-right">
             Please fill all the require information*
           </p>
@@ -1402,18 +1396,19 @@ export default function AddUserManuallyDialog({ open, onOpenChange }) {
             <Button
               onClick={handleAddUsers}
               disabled={
-                isPending || (errorsMap && Object.keys(errorsMap).length > 0)
+                addUserMutation.isPending ||
+                (errorsMap && Object.keys(errorsMap).length > 0)
               }
               className={`rounded-full font-custom py-6 px-9 text-white transition-colors
-                  ${
-                    isPending
-                      ? "bg-gray-400 cursor-wait"
-                      : errorsMap && Object.keys(errorsMap).length > 0
-                      ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
-                      : "bg-blue-500 hover:bg-blue-600"
-                  }`}
+              ${
+                addUserMutation.isPending
+                  ? "bg-gray-400 cursor-wait"
+                  : errorsMap && Object.keys(errorsMap).length > 0
+                  ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
+                  : "bg-blue-500 hover:bg-blue-600"
+              }`}
             >
-              {isPending ? (
+              {addUserMutation.isPending ? (
                 <FaSpinner className="animate-spin text-white text-lg" />
               ) : (
                 "Confirm"
