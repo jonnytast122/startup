@@ -9,8 +9,12 @@ import {
   Trash2,
   Download,
   User,
+  ChevronDown,
+  LogOut,
+  ArrowLeftRight,
+  Globe,
 } from "lucide-react";
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
 import {
   DropdownMenu,
@@ -18,6 +22,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import UpdateCashDialog from "./components/updatecashdialog";
 import UpdateBankTransferDialog from "./components/updatebanktransferdialog";
 import DeleteDialog from "./components/deletedialog";
@@ -29,6 +40,8 @@ import AddUserDialog from "./components/groupsettingdialog";
 
 import { useQuery } from "@tanstack/react-query";
 import { getMyDetails } from "@/lib/api/user";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 
 const user = {
   firstname: "John",
@@ -51,10 +64,30 @@ const user = {
 };
 
 export default function UserProfile() {
+  const router = useRouter();
+  const { user: authUser, logout } = useAuth();
+  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState("en");
+  const mobileDropdownRef = useRef(null);
+
   const { data: user_data } = useQuery({
     queryKey: ["my-details"],
     queryFn: getMyDetails,
   });
+
+  // Load language from localStorage on mount
+  useEffect(() => {
+    const savedLanguage = localStorage.getItem("selectedLanguage");
+    if (savedLanguage) {
+      setSelectedLanguage(savedLanguage);
+    }
+  }, []);
+
+  // Handler to update language and save to localStorage
+  const handleLanguageChange = (language) => {
+    setSelectedLanguage(language);
+    localStorage.setItem("selectedLanguage", language);
+  };
 
   const [firstname] = useState(user.firstname);
   const [lastname] = useState(user.lastname);
@@ -172,6 +205,31 @@ export default function UserProfile() {
     console.log("Archive clicked");
   }, []);
 
+  const handleLogout = () => {
+    logout();
+    router.push("/signin");
+  };
+
+  // Close mobile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (
+        mobileDropdownRef.current &&
+        !mobileDropdownRef.current.contains(event.target)
+      ) {
+        setIsMobileDropdownOpen(false);
+      }
+    }
+    if (isMobileDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isMobileDropdownOpen]);
+
   const DropdownSection = ({ title, items, onItemClick }) => (
     <>
       <h2 className="text-2xl font-semibold font-custom mb-2 mt-6">{title}</h2>
@@ -214,31 +272,72 @@ export default function UserProfile() {
           Hello, {user_data?.employee?.name}!
         </div>
         {/* Profile Holder */}
-        <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center space-x-4 px-6">
-          {user_data?.profileImg ? (
-            <img
-              src={user_data.profileImg}
-              alt="Profile"
-              className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
-            />
-          ) : (
-            <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
-              {user_data?.employee?.name
-                ?.split(" ")
-                .map((n) => n[0])
-                .join("")
-                .toUpperCase()}
+        <div className="relative" ref={mobileDropdownRef}>
+          <div
+            onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
+            className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center justify-between px-6 cursor-pointer hover:bg-gray-50 transition-colors lg:cursor-default lg:hover:bg-white"
+          >
+            <div className="flex items-center space-x-4">
+              {user_data?.profileImg ? (
+                <img
+                  src={user_data.profileImg}
+                  alt="Profile"
+                  className="w-12 h-12 rounded-full border-2 border-gray-200 object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 flex items-center justify-center rounded-full border-2 border-gray-200 bg-gray-300 text-gray-700 font-semibold text-lg">
+                  {user_data?.employee?.name
+                    ?.split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .toUpperCase()}
+                </div>
+              )}
+
+              <div className="font-custom text-left">
+                <div className="font-semibold text-lg text-gray-900">
+                  {user_data?.employee?.name}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {user_data?.job || "No Job Title"}
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Mobile Dropdown - Only visible on mobile */}
+          {isMobileDropdownOpen && (
+            <div className="absolute left-0 right-0 z-50 mt-2 mx-6 rounded-xl border bg-white py-2 shadow-lg lg:hidden">
+              {/* Language Selector */}
+              <div className="px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-gray-600" />
+                  <span className="text-sm font-custom text-gray-700">Language:</span>
+                  <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
+                    <SelectTrigger className="w-[80px] h-8 font-custom border-gray-300 shadow-none focus:ring-1 focus:ring-blue-500">
+                      <SelectValue placeholder="EN" />
+                    </SelectTrigger>
+                    <SelectContent className="font-custom">
+                      <SelectItem value="en">EN</SelectItem>
+                      <SelectItem value="kh">KH</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="border-b my-2"></div>
+
+              <button
+                className="w-full px-4 py-2 font-custom text-sm text-left text-red-600 hover:bg-gray-100"
+                onClick={handleLogout}
+                role="menuitem"
+              >
+                <LogOut className="inline-block mr-2 h-4 w-4" />
+                Sign Out
+              </button>
             </div>
           )}
-
-          <div className="font-custom text-left">
-            <div className="font-semibold text-lg text-gray-900">
-              {user_data?.employee?.name}
-            </div>
-            <div className="text-sm text-gray-500">
-              {user_data?.job || "No Job Title"}
-            </div>
-          </div>
         </div>
 
         {/* Two-column layout */}
