@@ -67,7 +67,7 @@ export default function DailyAttendance() {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-xl text-black">Monthly Attendance</h2>
-        <Select>
+        {/* <Select>
           <SelectTrigger className="w-28 rounded-full flex items-center gap-2 text-[#5494DA]">
             <ListFilter size={18} />
             <SelectValue placeholder="Filter" />
@@ -79,7 +79,7 @@ export default function DailyAttendance() {
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       <Separator className="mb-4" />
