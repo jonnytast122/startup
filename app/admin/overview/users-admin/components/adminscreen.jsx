@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   ColumnDef,
   flexRender,
@@ -43,6 +44,37 @@ import {
 import PromoteDemoteDialog from "./promotedemotedialog";
 import UploadDialog from "./uploaddialog";
 import DeleteDialog from "./deletedialog";
+
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 const roleOptions = [
   { value: "Select all", label: "Select all" },
@@ -467,6 +499,7 @@ const columns = [
 const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const router = useRouter();
+  const { showSuccess, ToastPortal } = useLocalToast();
   const table = useReactTable({
     data: users.filter((a) =>
       ["owner", "admin"].includes((a.accessLevel || "admin").toLowerCase())
@@ -508,6 +541,7 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
 
   return (
     <div className="p-4">
+      {ToastPortal}
       <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
         {/* Left Side Dropdowns */}
         <div className="flex w-full sm:w-auto gap-4">
@@ -551,7 +585,7 @@ const AdminsScreen = ({ setAdminsCount, onAddAdmin }) => {
                 </DropdownMenuItem>
 
                 <DropdownMenuItem
-                  onClick={() => alert("Importing...")}
+                  onClick={() => showSuccess("Importing...")}
                   className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
                 >
                   <PanelTopOpen className="w-4 h-4 mr-2" />

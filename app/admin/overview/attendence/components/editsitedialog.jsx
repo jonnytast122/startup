@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Loader } from "@googlemaps/js-api-loader";
 import {
   Dialog,
@@ -11,6 +12,37 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Button } from "@/components/ui/button";
+
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 function EditSiteDialog() {
   const mapRef = useRef(null);
@@ -24,6 +56,7 @@ function EditSiteDialog() {
   });
   const [siteAddress, setSiteAddress] = useState("");
   const [fenceSize, setFenceSize] = useState(300); // in meters
+  const { showError, ToastPortal } = useLocalToast();
 
   // Get current location on open
   useEffect(() => {
@@ -108,13 +141,14 @@ function EditSiteDialog() {
         if (map) map.setCenter(newCoords);
         if (circle) circle.setCenter(newCoords);
       } else {
-        alert("Geocoding failed: " + status);
+        showError("Geocoding failed: " + status);
       }
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <button className="font-custom border border-gray text-blue px-4 py-2 rounded-lg text-sm whitespace-nowrap hover:bg-blue-400 hover:text-white transition-colors">
           Edit site

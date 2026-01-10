@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -68,6 +69,37 @@ const exportOptions = [
 ];
 // const statusFilter = ["Active", "Inactive", "Pending"];
 
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
+
 // Component to handle profile rendering safely
 const ProfileCell = ({ profileImg, employeeName }) => {
   const [imageError, setImageError] = useState(false);
@@ -105,6 +137,7 @@ const UsersScreen = ({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const columns = [
     {
       id: "role",
@@ -223,7 +256,13 @@ const UsersScreen = ({
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => <ActionsCell user={row.original} />,
+      cell: ({ row }) => (
+        <ActionsCell
+          user={row.original}
+          showSuccess={showSuccess}
+          showError={showError}
+        />
+      ),
     },
     {
       id: "filter",
@@ -314,6 +353,7 @@ const UsersScreen = ({
 
   return (
     <div className="p-4">
+      {ToastPortal}
       <TopControls
         onAddUser={onAddUser}
         showUploadDialog={showUploadDialog}
@@ -349,7 +389,7 @@ const UsersScreen = ({
 };
 
 // Sub-components for better readability
-const ActionsCell = ({ user }) => {
+const ActionsCell = ({ user, showSuccess, showError }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
 
@@ -361,6 +401,12 @@ const ActionsCell = ({ user }) => {
     mutationFn: (userId) => deleteUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
+      const name = user?.employee?.name || "User";
+      showSuccess?.(`Deleted ${name} successfully`);
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to delete user";
+      showError?.(msg);
     },
   });
   const openDeleteDialog = (item) => {
