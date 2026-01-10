@@ -29,7 +29,7 @@ export default function PricingPlan() {
 
           {/* Model image */}
           <img
-            src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FGemini_Generated_Image_rv36xyrv36xyrv36.png?alt=media&token=11bb15b1-fc61-4d5e-9c4c-5f87ae08591a" // your image path
+            src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/avatar%2FGemini_Generated_Image_rv36xyrv36xyrv36__1_-removebg-preview.png?alt=media&token=639f6696-9e69-4d34-a2a8-53d525c84119" // your image path
             alt="Anan model"
             className="absolute bottom-0 right-4 w-[340px] object-contain z-10 rounded-3xl"
           />
@@ -68,8 +68,17 @@ export default function PricingPlan() {
             </p>
           </div>
 
-          <Button className="w-full bg-[#1e3a8a] hover:bg-[#172c75] text-white text-lg py-6 rounded-xl">
-            Choose
+          <Button
+            asChild
+            className="w-full bg-[#1e3a8a] hover:bg-[#172c75] text-white text-lg py-6 rounded-xl"
+          >
+            <a
+              href="https://t.me/@ananapp_co"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Contact Us
+            </a>
           </Button>
         </div>
       </div>
