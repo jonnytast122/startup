@@ -26,18 +26,23 @@ function Navbar() {
 
   return (
     <div className="bg-primary-blue w-full pt-1">
-      <nav className="bg-white border-2 border-gray-100 shadow-lg rounded-full flex items-center justify-between w-full max-w-full px-4 z-30">
+      <nav className="bg-white border-2 border-gray-100 shadow-lg rounded-full flex items-center justify-between w-full max-w-full px-4 z-30 min-h-[64px]">
         {/* Logo */}
         <div className="flex items-center gap-3">
           <Link
             href="/"
-            className="flex items-center text-2xl font-semibold text-gray-900"
+            className="flex items-center gap-2 text-2xl font-semibold text-gray-900"
           >
             <img
               src="https://firebasestorage.googleapis.com/v0/b/anan-image.appspot.com/o/ANAN%20logo%20FA-05.png?alt=media&token=5f602bd2-1068-40a4-a35b-740cd896a22c"
               alt="sub logo"
-              className="w-16 md:w-20 lg:w-20"
+              className="h-9 w-auto md:h-10"
             />
+
+            {/* Beta badge */}
+            <span className="rounded bg-yellow-400 px-2 py-0.5 text-xs font-bold text-gray-900">
+              BETA
+            </span>
           </Link>
         </div>
 
