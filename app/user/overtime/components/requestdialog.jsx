@@ -9,7 +9,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Smile, Clock } from "lucide-react";
+import { ChevronLeft, Smile, Clock, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -90,6 +90,8 @@ const overtimeTypes = ["Weekend", "Night", "Holiday", "Special"];
 export default function RequestDialog() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
   const [selectedOvertimeType, setSelectedOvertimeType] = useState("");
@@ -181,7 +183,12 @@ export default function RequestDialog() {
       },
       onError: (err) => {
         console.error(err);
-        alert(err?.message || "Failed to request overtime");
+        const serverMsg =
+          err?.response?.data?.message ||
+          err?.message ||
+          "Failed to request overtime";
+        setErrorMessage(serverMsg);
+        setErrorOpen(true);
       },
     });
   };
@@ -476,6 +483,19 @@ export default function RequestDialog() {
           <Smile className="w-16 h-16 mx-auto text-green-500 mb-2" />
           <div className="text-lg text-gray-700">
             Please wait for the approvals.
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error dialog */}
+      <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+        <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+          <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
+          <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
+            Request Failed
+          </DialogTitle>
+          <div className="text-base text-red-700">
+            {errorMessage}
           </div>
         </DialogContent>
       </Dialog>

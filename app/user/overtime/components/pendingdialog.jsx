@@ -19,6 +19,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { getMyRequests } from "@/lib/api/userOvertime";
+import { useAuth } from "@/contexts/AuthContext";
 
 const user = {
   firstname: "John",
@@ -31,6 +32,7 @@ export default function PendingRequest() {
   const [confirmDialog, setConfirmDialog] = useState(false);
   const [rejectDialog, setRejectDialog] = useState(false);
   const [activeRequest, setActiveRequest] = useState(null);
+  const { user } = useAuth();
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["user-overtime-requests"],
@@ -109,6 +111,16 @@ export default function PendingRequest() {
                   }-${req.endTime}`;
                   const overtimeType = req.overtimeType.name;
                   const workingHoursTotal = calculateOverTimeHour(req);
+                  const requesterId = req?.createdBy?._id || req?.createdBy?.id;
+                  const currentUserId = user?._id || user?.id;
+                  const isSelf = requesterId && currentUserId && String(requesterId) === String(currentUserId);
+                  const statusText = (req.status || "pending").toString();
+                  const statusLower = statusText.toLowerCase();
+                  const statusColor = statusLower === "approved"
+                    ? "text-blue-500"
+                    : statusLower === "declined"
+                    ? "text-red-500"
+                    : "text-gray-500";
 
                   return (
                     <div key={req.id} className="bg-white rounded-md p-4">
@@ -117,13 +129,17 @@ export default function PendingRequest() {
                         <Info label="Overtime type" value={overtimeType} />
                         <Info label="Working hours" value={workingHoursTotal} />
                         <Info label="Attachments" value={req.reason || "-"} />
+                        <Info
+                          label="Status"
+                          value={<span className={`${statusColor} capitalize`}>{statusText}</span>}
+                        />
                       </div>
 
                       <div className="h-px bg-gray-200 my-4" />
 
                       <div className="flex items-center gap-3">
                         <img
-                          src={user.avatar}
+                          src={user?.avatar}
                           className="w-10 h-10 rounded-full"
                         />
                         <div className="font-semibold text-blue-400">
@@ -131,27 +147,29 @@ export default function PendingRequest() {
                         </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-3 mt-4">
-                        <Button
-                          variant="destructive"
-                          className="rounded-full"
-                          onClick={() => {
-                            setActiveRequest(req);
-                            setRejectDialog(true);
-                          }}
-                        >
-                          Reject
-                        </Button>
-                        <Button
-                          className="rounded-full"
-                          onClick={() => {
-                            setActiveRequest(req);
-                            setConfirmDialog(true);
-                          }}
-                        >
-                          Confirm
-                        </Button>
-                      </div>
+                      {!isSelf && (
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                          <Button
+                            variant="destructive"
+                            className="rounded-full"
+                            onClick={() => {
+                              setActiveRequest(req);
+                              setRejectDialog(true);
+                            }}
+                          >
+                            Reject
+                          </Button>
+                          <Button
+                            className="rounded-full"
+                            onClick={() => {
+                              setActiveRequest(req);
+                              setConfirmDialog(true);
+                            }}
+                          >
+                            Confirm
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   );
                 })

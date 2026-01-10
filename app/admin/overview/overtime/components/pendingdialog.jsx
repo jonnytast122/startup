@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Smile, Search } from "lucide-react";
+import { Smile, Search, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -441,19 +441,39 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
   console.log(overTime);
 
   const queryClient = useQueryClient();
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const declineMutation = useMutation({
     mutationFn: rejectOvertime,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      alert("Decline successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      setSuccessMessage(
+        "Declined successfully for " + employee.name + " on " + startdate.split("T")[0]
+      );
+      setSuccessOpen(true);
+      // close note dialog shortly after so success can paint first
+      setTimeout(() => {
+        setOpen(false);
+        setComment("");
+      }, 120);
+      // defer invalidation so the success dialog can render before this row unmounts
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+        queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      }, 600);
     },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to decline request";
+      setErrorMessage(msg);
+      setErrorOpen(true);
+      // close note dialog a tick later so error dialog can mount cleanly
+      setTimeout(() => setOpen(false), 120);
+    }
   });
 
   const handleDecline = () => {
     declineMutation.mutate({id: overTime.id, message: comment});
-    setOpen(false);
-    setComment("");
   };
 
   return (
@@ -501,6 +521,25 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
             Decline
           </Button>
         </div>
+        {/* Success dialog */}
+        <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+          <DialogContent className="w-[500px] h-[300px] text-center flex flex-col justify-center gap-3 bg-gray-100">
+            <DialogTitle className="text-2xl font-custom text-black mb-1">
+              Success
+            </DialogTitle>
+            <div className="text-base text-gray-700">{successMessage}</div>
+          </DialogContent>
+        </Dialog>
+        {/* Error dialog */}
+        <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+          <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+            <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
+            <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
+              Decline Failed
+            </DialogTitle>
+            <div className="text-base text-red-700">{errorMessage}</div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
@@ -510,20 +549,40 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
   const [comment, setComment] = useState("");
 
   const queryClient = useQueryClient();
+  const [errorOpen, setErrorOpen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successOpen, setSuccessOpen] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
   const approveMutation = useMutation({
     mutationFn: approveOvertime,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
-      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      alert("Aprove successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      setSuccessMessage(
+        "Approve successfully for " + employee.name + " on " + startdate.split("T")[0]
+      );
+      setSuccessOpen(true);
+      // close note dialog shortly after so success can paint first
+      setTimeout(() => {
+        setOpen(false);
+        setComment("");
+      }, 120);
+      // defer invalidation so the success dialog can render before this row unmounts
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+        queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      }, 600);
     },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to approve request";
+      setErrorMessage(msg);
+      setErrorOpen(true);
+      // close note dialog a tick later so error dialog can mount cleanly
+      setTimeout(() => setOpen(false), 120);
+    }
   });
 
   const handleApprove = () => {
     console.log("overtime",overTime,comment)
     approveMutation.mutate({id: overTime.id, message: comment});
-    setOpen(false);
-    setComment("");
   };
 
   return (
@@ -570,6 +629,25 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
             Approve
           </Button>
         </div>
+        {/* Success dialog */}
+        <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
+          <DialogContent className="w-[500px] h-[300px] text-center flex flex-col justify-center gap-3 bg-gray-100">
+            <DialogTitle className="text-2xl font-custom text-black mb-1">
+              Success
+            </DialogTitle>
+            <div className="text-base text-gray-700">{successMessage}</div>
+          </DialogContent>
+        </Dialog>
+        {/* Error dialog */}
+        <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+          <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+            <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
+            <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
+              Approve Failed
+            </DialogTitle>
+            <div className="text-base text-red-700">{errorMessage}</div>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );

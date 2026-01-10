@@ -1,15 +1,18 @@
-import { MapPin, Edit2 } from "lucide-react";
+import { MapPin, Edit2, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
 import { clockOut } from "@/lib/api/userAttendance";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 export default function ShiftDetailDialog({ open, detail, onClose, onRequestLeave }) {
   const [note, setNote] = useState("");
   const [cordinate,setCordinate] = useState({ latitude: null, longitude: null });
   const queryClient = useQueryClient();
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorOpen, setErrorOpen] = useState(false);
 
   // Get current location
   useEffect(() => {
@@ -29,13 +32,18 @@ export default function ShiftDetailDialog({ open, detail, onClose, onRequestLeav
     onSuccess: () => {
       queryClient.invalidateQueries(["attendances"]);
       queryClient.invalidateQueries(["my-total-worked-hours"]);
+      onClose && onClose();
     },
+    onError: (error) => {
+      const message = error?.response?.data?.message || "Clock out failed. Please try again.";
+      setErrorMessage(message);
+      setErrorOpen(true);
+    }
   });
 
   //when submit clock out
   const onSubmit = () => {
     clockOutMutation.mutate({ geoLocation: { latitude: cordinate.latitude, longitude: cordinate.longitude } });
-    onClose();
   };
 
 
@@ -167,6 +175,16 @@ export default function ShiftDetailDialog({ open, detail, onClose, onRequestLeav
           </Button>
         </div>
       </div>
+      {/* Error dialog for failed clock-out */}
+      <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+        <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+          <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
+          <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
+            Clock Out Failed
+          </DialogTitle>
+          <div className="text-base text-red-700">{errorMessage}</div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

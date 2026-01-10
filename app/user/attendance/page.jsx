@@ -24,6 +24,8 @@ import {
   clockIn,
 } from "@/lib/api/userAttendance";
 import { convertToSeconds } from "@/lib/helper/dateTimeConveter";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyDetails } from "@/lib/api/user";
@@ -145,6 +147,7 @@ function TimerButton({
     "bg-blue-500 hover:bg-blue-600"
   );
   const [errorMessage, setErrorMessage] = useState("");
+  const [errorOpen, setErrorOpen] = useState(false);
 
   // Clock in mutation function
   const clockInMutation = useMutation({
@@ -163,6 +166,7 @@ function TimerButton({
       setErrorMessage(message);
       setButtonColor("bg-red-500 hover:bg-red-600");
       setIsRunning(false); // ✅ stay not running on error
+      setErrorOpen(true);
     },
   });
 
@@ -318,11 +322,18 @@ function TimerButton({
             <Timer className="w-10 h-10 mb-2" />
             Clock In
           </Button>
-          {errorMessage && (
-            <p className="text-red-500 text-sm font-custom mt-3 text-center">
-              {errorMessage}
-            </p>
-          )}
+          {/* Error dialog for failed clock-in */}
+          <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
+            <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+              <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
+              <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
+                Clock In Failed
+              </DialogTitle>
+              <div className="text-base text-red-700">
+                {errorMessage}
+              </div>
+            </DialogContent>
+          </Dialog>
           <SelectShiftDialog
             open={showSelectShift}
             onOpenChange={setShowSelectShift}

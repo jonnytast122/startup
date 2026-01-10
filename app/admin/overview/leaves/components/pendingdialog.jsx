@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Smile, CircleX, Circle } from "lucide-react";
 import {
@@ -51,6 +52,40 @@ const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
 ];
+
+// Lightweight local toast hook (no external deps)
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 const columns = [
   {
@@ -438,6 +473,7 @@ const PendingDialog = ({ onClose }) => {
 const ApproveDialog = ({ employee, startdate, leave }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
 
   const queryClient = useQueryClient();
   const approveMutation = useMutation({
@@ -445,7 +481,23 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
-      alert("Aprove successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      showSuccess(
+        "Approved successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0]
+      );
+    },
+    onError: (error) => {
+      const message = error?.message || "Unknown error";
+      showError(
+        "Approve failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          message
+      );
     },
   });
 
@@ -458,6 +510,7 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-5 rounded-full hover:bg-[#4376B0] transition"
@@ -508,6 +561,7 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
 const DeclineDialog = ({ employee, startdate, leave }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
 
   const queryClient = useQueryClient();
   const approveMutation = useMutation({
@@ -515,7 +569,23 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
-      alert("Decline successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      showSuccess(
+        "Declined successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0]
+      );
+    },
+    onError: (error) => {
+      const message = error?.message || "Unknown error";
+      showError(
+        "Decline failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          message
+      );
     },
   });
 
@@ -527,6 +597,7 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-5 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -577,9 +648,11 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
 const ApproveAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition"
@@ -616,7 +689,7 @@ const ApproveAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Approved all requests!\nComment: ${comment}`);
+              showSuccess(`Approved all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#5494DA] text-white rounded-full"
