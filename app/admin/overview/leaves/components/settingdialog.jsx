@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,13 +18,47 @@ import { Settings, Ellipsis } from "lucide-react";
 import EditPolicydialog from "./editpolicydialog";
 import EditPolicyAssignmentDialog from "./editpolicyassignmentdialog";
 
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
+
 const SettingDialog = () => {
   const [isEditPolicyOpen, setEditPolicyOpen] = useState(false);
   const [isEditPolicyAssignmentOpen, setEditPolicyAssignmentOpen] =
     useState(false);
 
+  const { showSuccess, ToastPortal } = useLocalToast();
+
   return (
     <>
+      {ToastPortal}
       <Dialog>
         <DialogTrigger asChild>
           <Button className="text-blue font-custom w-42 h-12 border border-gray-400 bg-transparent rounded-full flex items-center px-6 hover:bg-blue-500 hover:text-white transition-colors duration-200">
@@ -169,7 +204,7 @@ const BorderedBox = ({ title, titleBg, titleText, setEditPolicyOpen, setEditPoli
               Edit policy assignment
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => alert("Delete Policy")}
+              onClick={() => showSuccess("Delete Policy")}
               className="text-red-500"
             >
               Delete policy

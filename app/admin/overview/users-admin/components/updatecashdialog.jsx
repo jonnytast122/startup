@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,37 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
+
 export default function UpdateCashDialog({
   open,
   onOpenChange,
@@ -16,6 +48,7 @@ export default function UpdateCashDialog({
   onSubmit,
 }) {
   const [amount, setAmount] = useState(oldCash?.toString() || "");
+  const { showError, ToastPortal } = useLocalToast();
 
   // Sync amount when dialog opens or oldCash changes
   useEffect(() => {
@@ -28,12 +61,13 @@ export default function UpdateCashDialog({
       onSubmit?.(numeric);
       onOpenChange(false);
     } else {
-      alert("Please enter a valid number.");
+      showError("Please enter a valid number.");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {ToastPortal}
       <DialogContent className="sm:max-w-md font-custom">
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle />

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +33,42 @@ import { getEmployee } from "@/lib/api/company";
 import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
 import { createLeaveForEmployee } from "@/lib/api/adminLeave";
 
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
+
 const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
   const queryClient = useQueryClient();
   const company = queryClient.getQueryData(["company"]);
+
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
 
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedLeavePolicy, setSelectedLeavePolicy] = useState("");
@@ -76,11 +110,13 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     mutationFn: createLeaveForEmployee,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leave"] });
+      showSuccess("Leave created successfully");
       onOpenChange(false);
     },
     onError: (err) => {
       console.error(err);
-      alert(err?.message || "Failed to add leave");
+      const msg = err?.response?.data?.message || err?.message || "Failed to add leave";
+      showError(msg);
     },
   });
 
@@ -103,18 +139,18 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
 
   const handleDone = () => {
     if (!selectedLeavePolicy) {
-      alert("Please select a leave policy.");
+      showError("Please select a leave policy.");
       return;
     }
     if (selectedUsers.length === 0) {
-      alert("Please select at least one employee.");
+      showError("Please select at least one employee.");
       return;
     }
     if (!allDay) {
       const [sh, sm] = startTime.split(":").map(Number);
       const [eh, em] = endTime.split(":").map(Number);
       if (eh * 60 + em <= sh * 60 + sm) {
-        alert("End time must be after start time.");
+        showError("End time must be after start time.");
         return;
       }
     }
@@ -123,7 +159,7 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     const start = allDay ? startDate : startDate;
     const end = allDay ? endDate : endDate;
     if (end < start) {
-      alert("End date must be on or after start date.");
+      showError("End date must be on or after start date.");
       return;
     }
 
@@ -159,6 +195,7 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {ToastPortal}
       <DialogContent className="max-w-xl font-custom">
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle></DialogTitle>

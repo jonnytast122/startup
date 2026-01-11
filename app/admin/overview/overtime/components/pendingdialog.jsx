@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Smile, Search, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -44,6 +45,38 @@ const ALL = [
   { value: "All users group", label: "All users group" },
   { value: "Assigned features", label: "Assigned features" },
 ];
+
+// Lightweight local toast hook (no external deps)
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 const data = [
   {
@@ -102,7 +135,7 @@ const columns = [
   },
   {
     accessorKey: "date",
-    header: "OT Date",
+    header: "Date",
     cell: ({ row }) => (
       <div className="font-custom">
         {format(parseISO(row.original.date), "yyyy-MM-dd")}
@@ -441,34 +474,29 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
   console.log(overTime);
 
   const queryClient = useQueryClient();
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const declineMutation = useMutation({
     mutationFn: rejectOvertime,
     onSuccess: () => {
-      setSuccessMessage(
+      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      showSuccess(
         "Declined successfully for " + employee.name + " on " + startdate.split("T")[0]
       );
-      setSuccessOpen(true);
-      // close note dialog shortly after so success can paint first
-      setTimeout(() => {
-        setOpen(false);
-        setComment("");
-      }, 120);
-      // defer invalidation so the success dialog can render before this row unmounts
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
-        queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      }, 600);
+      setOpen(false);
+      setComment("");
     },
     onError: (err) => {
       const msg = err?.response?.data?.message || err?.message || "Failed to decline request";
-      setErrorMessage(msg);
-      setErrorOpen(true);
-      // close note dialog a tick later so error dialog can mount cleanly
-      setTimeout(() => setOpen(false), 120);
+      showError(
+        "Decline failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          msg
+      );
+      setOpen(false);
     }
   });
 
@@ -478,6 +506,7 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-5 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -521,25 +550,6 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
             Decline
           </Button>
         </div>
-        {/* Success dialog */}
-        <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-          <DialogContent className="w-[500px] h-[300px] text-center flex flex-col justify-center gap-3 bg-gray-100">
-            <DialogTitle className="text-2xl font-custom text-black mb-1">
-              Success
-            </DialogTitle>
-            <div className="text-base text-gray-700">{successMessage}</div>
-          </DialogContent>
-        </Dialog>
-        {/* Error dialog */}
-        <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
-          <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
-            <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
-            <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
-              Decline Failed
-            </DialogTitle>
-            <div className="text-base text-red-700">{errorMessage}</div>
-          </DialogContent>
-        </Dialog>
       </DialogContent>
     </Dialog>
   );
@@ -549,34 +559,29 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
   const [comment, setComment] = useState("");
 
   const queryClient = useQueryClient();
-  const [errorOpen, setErrorOpen] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successOpen, setSuccessOpen] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const approveMutation = useMutation({
     mutationFn: approveOvertime,
     onSuccess: () => {
-      setSuccessMessage(
-        "Approve successfully for " + employee.name + " on " + startdate.split("T")[0]
+      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
+      showSuccess(
+        "Approved successfully for " + employee.name + " on " + startdate.split("T")[0]
       );
-      setSuccessOpen(true);
-      // close note dialog shortly after so success can paint first
-      setTimeout(() => {
-        setOpen(false);
-        setComment("");
-      }, 120);
-      // defer invalidation so the success dialog can render before this row unmounts
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
-        queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      }, 600);
+      setOpen(false);
+      setComment("");
     },
     onError: (err) => {
       const msg = err?.response?.data?.message || err?.message || "Failed to approve request";
-      setErrorMessage(msg);
-      setErrorOpen(true);
-      // close note dialog a tick later so error dialog can mount cleanly
-      setTimeout(() => setOpen(false), 120);
+      showError(
+        "Approve failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          msg
+      );
+      setOpen(false);
     }
   });
 
@@ -587,6 +592,7 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-5 rounded-full hover:bg-[#4376B0] transition"
@@ -629,25 +635,6 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
             Approve
           </Button>
         </div>
-        {/* Success dialog */}
-        <Dialog open={successOpen} onOpenChange={setSuccessOpen}>
-          <DialogContent className="w-[500px] h-[300px] text-center flex flex-col justify-center gap-3 bg-gray-100">
-            <DialogTitle className="text-2xl font-custom text-black mb-1">
-              Success
-            </DialogTitle>
-            <div className="text-base text-gray-700">{successMessage}</div>
-          </DialogContent>
-        </Dialog>
-        {/* Error dialog */}
-        <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
-          <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
-            <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
-            <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
-              Approve Failed
-            </DialogTitle>
-            <div className="text-base text-red-700">{errorMessage}</div>
-          </DialogContent>
-        </Dialog>
       </DialogContent>
     </Dialog>
   );
@@ -655,9 +642,11 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
 const ApproveAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition"
@@ -693,7 +682,7 @@ const ApproveAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Approved all requests!\nComment: ${comment}`);
+              showSuccess(`Approved all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#5494DA] text-white rounded-full"
@@ -709,9 +698,11 @@ const ApproveAllDialog = () => {
 const DeclineAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -747,7 +738,7 @@ const DeclineAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Declined all requests!\nComment: ${comment}`);
+              showSuccess(`Declined all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full"

@@ -705,9 +705,11 @@ const ApproveAllDialog = () => {
 const DeclineAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -744,7 +746,7 @@ const DeclineAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Declined all requests!\nComment: ${comment}`);
+              showSuccess(`Declined all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full"
