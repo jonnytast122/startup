@@ -36,6 +36,8 @@ export default function WorkShiftDialog({
   viewOnly = false,
 }) {
   const [shiftName, setShiftName] = useState("New Shift");
+  const [workingDays, setWorkingDays] = useState(22);
+  const [workingDayType, setWorkingDayType] = useState("Standard");
   const [shiftDays, setShiftDays] = useState([]);
   const [reminderDays, setReminderDays] = useState([]);
   const [startTime, setStartTime] = useState("09:00");
@@ -46,24 +48,46 @@ export default function WorkShiftDialog({
   const [clockOutReminder, setClockOutReminder] = useState("14:40");
   const [activeReminder, setActiveReminder] = useState(true);
 
+  // Flexible schedule - individual times for each day
+  const [flexibleSchedule, setFlexibleSchedule] = useState({
+    Mon: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Tue: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Wed: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Thu: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Fri: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Sat: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+    Sun: { startTime: "09:00", endTime: "17:00", breakStart: "12:00", breakEnd: "13:00" },
+  });
+
   const queryClient = useQueryClient();
+
 
   useEffect(() => {
     if (shift) {
       setShiftName(shift.name || "New Shift");
+      setWorkingDays(shift.workingDays || 22);
+      setWorkingDayType(shift.workingDayType || "Standard");
       setShiftDays(shift.workDays || []);
       setReminderDays(shift.reminderDays || []);
-      setStartTime(removeAmPm(shift.workDuration.start) || "09:00");
-      setEndTime(removeAmPm(shift.workDuration.end) || "17:00");
-      setBreakStart(removeAmPm(shift.break.start) || "12:00");
-      setBreakEnd(removeAmPm(shift.break.end) || "13:00");
+
+      if (shift.workingDayType === "Standard") {
+        setStartTime(removeAmPm(shift.workDuration?.start) || "09:00");
+        setEndTime(removeAmPm(shift.workDuration?.end) || "17:00");
+        setBreakStart(removeAmPm(shift.break?.start) || "12:00");
+        setBreakEnd(removeAmPm(shift.break?.end) || "13:00");
+      } else if (shift.flexibleSchedule) {
+        setFlexibleSchedule(shift.flexibleSchedule);
+      }
+
       setClockInReminder(shift.clockInReminder || "08:40");
       setClockOutReminder(shift.clockOutReminder || "14:40");
       setActiveReminder(shift.activeReminder ?? true);
     } else {
       setShiftName("New Shift");
-      setShiftDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
-      setReminderDays(["Mon", "Tue", "Wed", "Thu", "Fri"]);
+      setWorkingDays(22);
+      setWorkingDayType("Standard");
+      setShiftDays([]);
+      setReminderDays([]);
       setStartTime("09:00");
       setEndTime("17:00");
       setBreakStart("12:00");
@@ -79,6 +103,16 @@ export default function WorkShiftDialog({
     setter(
       state.includes(day) ? state.filter((d) => d !== day) : [...state, day]
     );
+  };
+
+  const updateFlexibleTime = (day, field, value) => {
+    setFlexibleSchedule((prev) => ({
+      ...prev,
+      [day]: {
+        ...prev[day],
+        [field]: value,
+      },
+    }));
   };
 
   const renderDays = (selectedDays, setter) => (
@@ -144,26 +178,16 @@ export default function WorkShiftDialog({
   });
 
   const onCreate = () => {
-    uploadWorkShift.mutate({
+    const baseData = {
       name: shiftName,
+      workingDays: workingDays,
+      workingDayType: workingDayType,
       workDays: shiftDays,
-      workDuration: {
-        start: toAmPm(startTime),
-        end: toAmPm(endTime),
-      },
-      break: {
-        start: toAmPm(breakStart),
-        end: toAmPm(breakEnd),
-      },
-    });
-  };
+    };
 
-  const onUpdate = () => {
-    updateShift.mutate({
-      id: shift.id,
-      data: {
-        name: shiftName,
-        workDays: shiftDays,
+    if (workingDayType === "Standard") {
+      uploadWorkShift.mutate({
+        ...baseData,
         workDuration: {
           start: toAmPm(startTime),
           end: toAmPm(endTime),
@@ -172,8 +196,49 @@ export default function WorkShiftDialog({
           start: toAmPm(breakStart),
           end: toAmPm(breakEnd),
         },
-      },
-    });
+      });
+    } else {
+      // Flexible type - send individual schedules for each day
+      uploadWorkShift.mutate({
+        ...baseData,
+        flexibleSchedule: flexibleSchedule,
+      });
+    }
+  };
+
+  const onUpdate = () => {
+    const baseData = {
+      name: shiftName,
+      workingDays: workingDays,
+      workingDayType: workingDayType,
+      workDays: shiftDays,
+    };
+
+    if (workingDayType === "Standard") {
+      updateShift.mutate({
+        id: shift.id,
+        data: {
+          ...baseData,
+          workDuration: {
+            start: toAmPm(startTime),
+            end: toAmPm(endTime),
+          },
+          break: {
+            start: toAmPm(breakStart),
+            end: toAmPm(breakEnd),
+          },
+        },
+      });
+    } else {
+      // Flexible type - send individual schedules for each day
+      updateShift.mutate({
+        id: shift.id,
+        data: {
+          ...baseData,
+          flexibleSchedule: flexibleSchedule,
+        },
+      });
+    }
   };
 
   return (
@@ -207,53 +272,163 @@ export default function WorkShiftDialog({
             </div>
 
             <div className="flex gap-4 items-start">
+              <div className="w-1/3 font-medium">Working period:</div>
+              <div className="w-2/3 flex items-center gap-2">
+                <span className="text-sm">The amount of working day that will be used</span>
+                <input
+                  type="number"
+                  value={workingDays}
+                  disabled={viewOnly}
+                  onChange={(e) => setWorkingDays(e.target.value)}
+                  className="w-16 px-3 py-2 border rounded-md text-sm text-center"
+                />
+                <span className="text-sm">days in a month</span>
+              </div>
+            </div>
+
+            <div className="flex gap-4 items-start">
+              <div className="w-1/3 font-medium">Working day type:</div>
+              <div className="w-2/3 flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="workingDayType"
+                    value="Standard"
+                    checked={workingDayType === "Standard"}
+                    disabled={viewOnly}
+                    onChange={(e) => setWorkingDayType(e.target.value)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm">Standard</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="workingDayType"
+                    value="Flexible"
+                    checked={workingDayType === "Flexible"}
+                    disabled={viewOnly}
+                    onChange={(e) => setWorkingDayType(e.target.value)}
+                    className="w-4 h-4 text-blue-600"
+                  />
+                  <span className="text-sm">Flexible</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex gap-4 items-start">
               <div className="w-1/3 font-medium">Work days:</div>
               <div className="w-2/3">{renderDays(shiftDays, setShiftDays)}</div>
             </div>
 
-            <div className="flex gap-4 items-start">
-              <div className="w-1/3 font-medium">Work duration:</div>
-              <div className="w-2/3 flex items-center gap-4 flex-wrap">
-                <span>Start at:</span>
-                <input
-                  type="time"
-                  value={startTime}
-                  disabled={viewOnly}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  className="border rounded px-2 py-1"
-                />
-                <span>End at:</span>
-                <input
-                  type="time"
-                  value={endTime}
-                  disabled={viewOnly}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  className="border rounded px-2 py-1"
-                />
-              </div>
-            </div>
+            {/* Standard Type - Single work duration and break for all days */}
+            {workingDayType === "Standard" && (
+              <>
+                <div className="flex gap-4 items-start">
+                  <div className="w-1/3 font-medium">Work duration:</div>
+                  <div className="w-2/3 flex items-center gap-4 flex-wrap">
+                    <span>Start at:</span>
+                    <input
+                      type="time"
+                      value={startTime}
+                      disabled={viewOnly}
+                      onChange={(e) => setStartTime(e.target.value)}
+                      className="border rounded px-2 py-1"
+                    />
+                    <span>End at:</span>
+                    <input
+                      type="time"
+                      value={endTime}
+                      disabled={viewOnly}
+                      onChange={(e) => setEndTime(e.target.value)}
+                      className="border rounded px-2 py-1"
+                    />
+                  </div>
+                </div>
 
-            <div className="flex gap-4 items-start">
-              <div className="w-1/3 font-medium">Break:</div>
-              <div className="w-2/3 flex items-center gap-4 flex-wrap">
-                <span>Start at:</span>
-                <input
-                  type="time"
-                  value={breakStart}
-                  disabled={viewOnly}
-                  onChange={(e) => setBreakStart(e.target.value)}
-                  className="border rounded px-2 py-1"
-                />
-                <span>End at:</span>
-                <input
-                  type="time"
-                  value={breakEnd}
-                  disabled={viewOnly}
-                  onChange={(e) => setBreakEnd(e.target.value)}
-                  className="border rounded px-2 py-1"
-                />
+                <div className="flex gap-4 items-start">
+                  <div className="w-1/3 font-medium">Break:</div>
+                  <div className="w-2/3 flex items-center gap-4 flex-wrap">
+                    <span>Start at:</span>
+                    <input
+                      type="time"
+                      value={breakStart}
+                      disabled={viewOnly}
+                      onChange={(e) => setBreakStart(e.target.value)}
+                      className="border rounded px-2 py-1"
+                    />
+                    <span>End at:</span>
+                    <input
+                      type="time"
+                      value={breakEnd}
+                      disabled={viewOnly}
+                      onChange={(e) => setBreakEnd(e.target.value)}
+                      className="border rounded px-2 py-1"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Flexible Type - Individual work duration and break for each selected day */}
+            {workingDayType === "Flexible" && (
+              <div className="space-y-4">
+                {shiftDays.map((day) => (
+                  <div key={day} className="space-y-3">
+                    {/* Day header */}
+                    <div className="bg-blue-100 py-2 text-center font-semibold text-blue-600 rounded">
+                      {day.toUpperCase()}
+                    </div>
+
+                    {/* Work duration for this day */}
+                    <div className="flex gap-4 items-start">
+                      <div className="w-1/3 font-medium">Work duration:</div>
+                      <div className="w-2/3 flex items-center gap-4 flex-wrap">
+                        <span>Start at:</span>
+                        <input
+                          type="time"
+                          value={flexibleSchedule[day].startTime}
+                          disabled={viewOnly}
+                          onChange={(e) => updateFlexibleTime(day, "startTime", e.target.value)}
+                          className="border rounded px-2 py-1"
+                        />
+                        <span>End at:</span>
+                        <input
+                          type="time"
+                          value={flexibleSchedule[day].endTime}
+                          disabled={viewOnly}
+                          onChange={(e) => updateFlexibleTime(day, "endTime", e.target.value)}
+                          className="border rounded px-2 py-1"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Break for this day */}
+                    <div className="flex gap-4 items-start">
+                      <div className="w-1/3 font-medium">Break:</div>
+                      <div className="w-2/3 flex items-center gap-4 flex-wrap">
+                        <span>Start at:</span>
+                        <input
+                          type="time"
+                          value={flexibleSchedule[day].breakStart}
+                          disabled={viewOnly}
+                          onChange={(e) => updateFlexibleTime(day, "breakStart", e.target.value)}
+                          className="border rounded px-2 py-1"
+                        />
+                        <span>End at:</span>
+                        <input
+                          type="time"
+                          value={flexibleSchedule[day].breakEnd}
+                          disabled={viewOnly}
+                          onChange={(e) => updateFlexibleTime(day, "breakEnd", e.target.value)}
+                          className="border rounded px-2 py-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
+            )}
 
             {/* <div className="w-full border-t pt-4">
               <div className="flex gap-4 items-start">
