@@ -217,10 +217,15 @@ const columns = [
 const Leaves = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddLeaveDialog, setOpenAddLeaveDialog] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 4, 1), // July 1, 2025
-    endDate: new Date(2025, 10, 20), // July 31, 2025
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return {
+      startDate: new Date(year, month, 1), // Start of current month
+      endDate: new Date(year, month + 1, 0), // End of current month
+      key: "selection",
+    };
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);

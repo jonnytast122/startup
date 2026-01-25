@@ -26,6 +26,8 @@ import {
   clockIn,
 } from "@/lib/api/userAttendance";
 import { convertToSeconds } from "@/lib/helper/dateTimeConveter";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { AlertTriangle } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { getMyDetails } from "@/lib/api/user";
@@ -179,6 +181,7 @@ function TimerButton({
       setErrorMessage(message);
       setButtonColor("bg-red-500 hover:bg-red-600");
       setIsRunning(false); // ✅ stay not running on error
+      setErrorOpen(true);
     },
   });
 

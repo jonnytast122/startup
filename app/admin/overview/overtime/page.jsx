@@ -87,6 +87,15 @@ const columns = [
   },
   { accessorKey: "shifttype", header: "Shift Type" },
   {
+    accessorKey: "date",
+    header: "Date",
+    cell: ({ row }) => (
+      <span className="text-sm text-gray-600">
+        {row.original.date || ""}
+      </span>
+    ),
+  },
+  {
     accessorKey: "otrequest",
     header: "OT Request",
     cell: ({ row }) => (
@@ -158,7 +167,7 @@ const calculateHours = (start, end) => {
   const [endH, endM] = end.split(":").map(Number);
   let hours = endH - startH + (endM - startM) / 60;
   if (hours < 0) hours += 24;
-  return hours;
+  return Number(hours.toFixed(2));
 };
 
 const formatDate = (dateStr) => {
@@ -206,10 +215,15 @@ const Overtime = () => {
   const [openAddOTDialog, setOpenAddOTDialog] = useState(false);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 4, 1),
-    endDate: new Date(2025, 10, 25),
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    return {
+      startDate: new Date(year, month, 1), // Start of current month
+      endDate: new Date(year, month + 1, 0), // End of current month
+      key: "selection",
+    };
   });
 
   const queryClient = useQueryClient();

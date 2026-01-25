@@ -36,3 +36,8 @@ export const getLeaveByEmployee = async () => {
   const response = await api.get(ApiRoutes.adminLeave.getLeaveByEmployee);
   return response.data;
 };
+
+export const createLeaveForEmployee = async ({employeeList,data}) => {
+  const response = await api.post(ApiRoutes.adminLeave.createLeaveForEmployee,{employeeList,data})
+  return response.data;
+}

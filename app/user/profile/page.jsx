@@ -16,19 +16,7 @@ import {
 } from "lucide-react";
 import { useState, useCallback, useRef, useEffect } from "react";
 import "react-credit-cards-2/dist/es/styles-compiled.css";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+
 import UpdateCashDialog from "./components/updatecashdialog";
 import UpdateBankTransferDialog from "./components/updatebanktransferdialog";
 import DeleteDialog from "./components/deletedialog";
@@ -37,11 +25,10 @@ import AddOTDialog from "./components/otdetaildialog";
 import WorkShiftDialog from "./components/shiftdialog";
 import BranchDetail from "./components/branchdetail";
 import AddUserDialog from "./components/groupsettingdialog";
+import LogoutDialog from "./components/logoutdialog";
 
 import { useQuery } from "@tanstack/react-query";
 import { getMyDetails } from "@/lib/api/user";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
 
 const user = {
   firstname: "John",
@@ -64,30 +51,10 @@ const user = {
 };
 
 export default function UserProfile() {
-  const router = useRouter();
-  const { user: authUser, logout } = useAuth();
-  const [isMobileDropdownOpen, setIsMobileDropdownOpen] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState("en");
-  const mobileDropdownRef = useRef(null);
-
   const { data: user_data } = useQuery({
     queryKey: ["my-details"],
     queryFn: getMyDetails,
   });
-
-  // Load language from localStorage on mount
-  useEffect(() => {
-    const savedLanguage = localStorage.getItem("selectedLanguage");
-    if (savedLanguage) {
-      setSelectedLanguage(savedLanguage);
-    }
-  }, []);
-
-  // Handler to update language and save to localStorage
-  const handleLanguageChange = (language) => {
-    setSelectedLanguage(language);
-    localStorage.setItem("selectedLanguage", language);
-  };
 
   const [firstname] = useState(user.firstname);
   const [lastname] = useState(user.lastname);
@@ -164,19 +131,6 @@ export default function UserProfile() {
     "GPS",
   ]);
 
-  const openDialog = useCallback((type, context = null) => {
-    if (processingRef.current) return;
-    processingRef.current = true;
-    setTimeout(() => {
-      setDialogStates((prev) => ({
-        ...prev,
-        [type]: true,
-        deleteContext: context,
-      }));
-      processingRef.current = false;
-    }, 0);
-  }, []);
-
   const closeDialog = useCallback((type) => {
     if (processingRef.current) return;
     processingRef.current = true;
@@ -190,45 +144,7 @@ export default function UserProfile() {
     }, 0);
   }, []);
 
-  const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
-  const handleCashDelete = useCallback(
-    () => openDialog("delete", "cash"),
-    [openDialog]
-  );
-  const handleBankEdit = useCallback(() => openDialog("bank"), [openDialog]);
-  const handleBankDelete = useCallback(
-    () => openDialog("delete", "bank"),
-    [openDialog]
-  );
-
-  const handleArchive = useCallback(() => {
-    console.log("Archive clicked");
-  }, []);
-
-  const handleLogout = () => {
-    logout();
-    router.push("/signin");
-  };
-
-  // Close mobile dropdown when clicking outside
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (
-        mobileDropdownRef.current &&
-        !mobileDropdownRef.current.contains(event.target)
-      ) {
-        setIsMobileDropdownOpen(false);
-      }
-    }
-    if (isMobileDropdownOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutside);
-    }
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isMobileDropdownOpen]);
+  const [openLogoutDialog, setOpenLogoutDialog] = useState(false);
 
   const DropdownSection = ({ title, items, onItemClick }) => (
     <>
@@ -272,11 +188,8 @@ export default function UserProfile() {
           Hello, {user_data?.employee?.name}!
         </div>
         {/* Profile Holder */}
-        <div className="relative" ref={mobileDropdownRef}>
-          <div
-            onClick={() => setIsMobileDropdownOpen(!isMobileDropdownOpen)}
-            className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center justify-between px-6 cursor-pointer hover:bg-gray-50 transition-colors lg:cursor-default lg:hover:bg-white"
-          >
+        <div className="relative">
+          <div className="bg-white rounded-2xl p-4 shadow-sm mt-6 flex items-center justify-between px-6 cursor-pointer transition-colors lg:cursor-default lg:hover:bg-white">
             <div className="flex items-center space-x-4">
               {user_data?.profileImg ? (
                 <img
@@ -304,59 +217,32 @@ export default function UserProfile() {
               </div>
             </div>
 
-          </div>
-
-          {/* Mobile Dropdown - Only visible on mobile */}
-          {isMobileDropdownOpen && (
-            <div className="absolute left-0 right-0 z-50 mt-2 mx-6 rounded-xl border bg-white py-2 shadow-lg lg:hidden">
-              {/* Language Selector */}
-              <div className="px-4 py-2">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-gray-600" />
-                  <span className="text-sm font-custom text-gray-700">Language:</span>
-                  <Select value={selectedLanguage} onValueChange={handleLanguageChange}>
-                    <SelectTrigger className="w-[80px] h-8 font-custom border-gray-300 shadow-none focus:ring-1 focus:ring-blue-500">
-                      <SelectValue placeholder="EN" />
-                    </SelectTrigger>
-                    <SelectContent className="font-custom">
-                      <SelectItem value="en">EN</SelectItem>
-                      <SelectItem value="kh">KH</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="border-b my-2"></div>
-
-              <button
-                className="w-full px-4 py-2 font-custom text-sm text-left text-red-600 hover:bg-gray-100"
-                onClick={handleLogout}
-                role="menuitem"
-              >
-                <LogOut className="inline-block mr-2 h-4 w-4" />
-                Sign Out
-              </button>
+            <div className="flex items-center justify-center w-8 h-8 bg-red-200 rounded-full lg:hidden">
+              <LogOut
+                onClick={() => setOpenLogoutDialog(true)}
+                className="w-4 h-4 text-red-500 hover:text-red-600 transition-colors text-right"
+              />
             </div>
-          )}
+          </div>
         </div>
 
         {/* Two-column layout */}
         <div className="mt-4 flex flex-col md:flex-row gap-4">
           {/* Left */}
           <div className="w-full md:w-[40%] bg-white rounded-2xl p-6 shadow-sm">
+            <h2 className="text-2xl font-semibold font-custom mb-2">
+              Personal details
+            </h2>
+
             <label className="text-sm font-custom text-[#3F4648] w-full">
               Company ID
             </label>
             <input
               type="text"
-              value={user_data?.companyId || "N/A"}
+              value={user_data?.employee?.companyIdentifier || "N/A"}
               disabled
               className="text-sm font-custom rounded-lg p-3 w-full mt-2 mb-6 bg-gray-100 border border-gray-300 text-black"
             />
-
-            <h2 className="text-2xl font-semibold font-custom mb-2">
-              Personal details
-            </h2>
 
             <label className="text-sm font-custom text-[#3F4648] w-full">
               First Name
@@ -554,22 +440,7 @@ export default function UserProfile() {
               <h2 className="text-xl font-semibold font-custom text-[#0F3F62] mb-2">
                 Payroll Info
               </h2>
-              <InfoRow
-                label="Employee Name"
-                value={user_data?.employee?.name}
-              />
-              <InfoRow
-                label="NSSF ID"
-                value={user_data?.nssfId || "N/A"}
-              />
-              {/* <InfoRow label="Employee ID" value="#1234565" /> */}
-              <InfoRow
-                label="Bank Provider"
-                value={
-                  user_data?.employee?.finance?.bankDetails?.bankProvider ||
-                  "N/A"
-                }
-              />
+              <InfoRow label="NSSF ID" value={user_data?.nssfId || "N/A"} />
               <InfoRow
                 label="Account Number"
                 value={
@@ -577,13 +448,35 @@ export default function UserProfile() {
                   "N/A"
                 }
               />
-
               <InfoRow
                 label="Base Salary"
                 value={
                   user_data?.employee?.finance?.salaryInfo?.baseSalary
                     ? `$${user_data.employee.finance.salaryInfo.baseSalary}`
                     : "N/A"
+                }
+              />
+              <InfoRow
+                label="Daily Rate"
+                value={
+                  user_data?.employee?.finance?.salaryInfo?.dailyRate
+                    ? `$${user_data.employee.finance.salaryInfo.dailyRate}`
+                    : "N/A"
+                }
+              />
+              <InfoRow
+                label="Hourly Rate"
+                value={
+                  user_data?.employee?.finance?.salaryInfo?.hourlyRate
+                    ? `$${user_data.employee.finance.salaryInfo.hourlyRate}`
+                    : "N/A"
+                }
+              />
+              <InfoRow
+                label="Bank Provider"
+                value={
+                  user_data?.employee?.finance?.bankDetails?.bankProvider ||
+                  "N/A"
                 }
               />
 
@@ -610,33 +503,6 @@ export default function UserProfile() {
 
             {/* Cash Section */}
             <div className="relative">
-              {/* <div className="absolute -top-8 right-0 z-10">
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button className="m-2 focus:outline-none" type="button">
-											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="end"
-										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-									>
-										<DropdownMenuItem onSelect={handleCashEdit}>
-											Edit
-										</DropdownMenuItem>
-										<DropdownMenuItem onSelect={handleArchive}>
-											Archive
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onSelect={handleCashDelete}
-											className="text-red-500"
-										>
-											Delete
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div> */}
-
               <div className="flex items-center justify-between mt-8 bg-white shadow-md rounded-lg p-4">
                 <div className="flex items-center">
                   <Banknote className="text-blue w-12 h-12 mr-6" />
@@ -652,33 +518,6 @@ export default function UserProfile() {
 
             {/* Bank Transfer Section */}
             <div className="relative">
-              {/* <div className="absolute -top-8 right-0 z-10">
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<button className="m-2 focus:outline-none" type="button">
-											<Ellipsis className="text-gray-600 w-6 h-6 cursor-pointer hover:text-gray-900 transition-colors" />
-										</button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent
-										align="end"
-										className="font-custom text-sm w-48 bg-white shadow-md rounded-md"
-									>
-										<DropdownMenuItem onSelect={handleBankEdit}>
-											Edit
-										</DropdownMenuItem>
-										<DropdownMenuItem onSelect={handleArchive}>
-											Archive
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											onSelect={handleBankDelete}
-											className="text-red-500"
-										>
-											Delete
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div> */}
-
               <div className="mt-8 bg-white shadow-md rounded-lg p-4 flex flex-col gap-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
@@ -700,8 +539,10 @@ export default function UserProfile() {
                     <div>
                       <p className="font-custom text-md font-semibold">Tax</p>
                       <p className="text-xs text-gray-500 font-custom">
-                        {maritalStatus} / Children{" "}
-                        <span className="text-blue">{childrenCount} </span>
+                        {user_data?.spoused ? "Married" : "Single"} / Children{" "}
+                        <span className="text-blue">
+                          {user_data?.numberOfChildren || 0}{" "}
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -947,6 +788,7 @@ export default function UserProfile() {
         />
       )}
       <AddUserDialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen} />
+      <LogoutDialog open={openLogoutDialog} setOpen={setOpenLogoutDialog} />
     </>
   );
 }

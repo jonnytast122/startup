@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
@@ -56,13 +57,48 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteUser, fetchUser } from "@/lib/api/user";
 
+import { fetchBranches } from "@/lib/api/branch";
+import { fetchPositions } from "@/lib/api/position";
+import { fetchWorkShift } from "@/lib/api/work-shift";
+import { fetchCompany } from "@/lib/api/company";
+
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
   { value: "as XLS", label: "as XLS" },
   { value: "as PDF", label: "as PDF" },
 ];
-
 // const statusFilter = ["Active", "Inactive", "Pending"];
+
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 // Component to handle profile rendering safely
 const ProfileCell = ({ profileImg, employeeName }) => {
@@ -101,6 +137,7 @@ const UsersScreen = ({
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const router = useRouter();
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const columns = [
     {
       id: "role",
@@ -219,13 +256,45 @@ const UsersScreen = ({
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => <ActionsCell user={row.original} />,
+      cell: ({ row }) => (
+        <ActionsCell
+          user={row.original}
+          showSuccess={showSuccess}
+          showError={showError}
+        />
+      ),
     },
     {
       id: "filter",
       header: ({ table }) => <ColumnVisibilityDropdown table={table} />,
     },
   ];
+
+  // fetch data
+  const { data: company } = useQuery({
+    queryKey: ["company"],
+    queryFn: fetchCompany,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: branches } = useQuery({
+    queryKey: ["branches"],
+    queryFn: fetchBranches,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: positions } = useQuery({
+    queryKey: ["positions"],
+    queryFn: fetchPositions,
+    staleTime: 30 * 60 * 1000,
+  });
+
+  const { data: workshift, isLoading: workshiftLoading } = useQuery({
+    queryKey: ["workShift", company?.id],
+    queryFn: () => fetchWorkShift(company.id),
+    enabled: !!company?.id,
+    staleTime: 30 * 60 * 1000,
+  });
 
   // table header initialization
   const table = useReactTable({
@@ -284,6 +353,7 @@ const UsersScreen = ({
 
   return (
     <div className="p-4">
+      {ToastPortal}
       <TopControls
         onAddUser={onAddUser}
         showUploadDialog={showUploadDialog}
@@ -309,13 +379,17 @@ const UsersScreen = ({
       <AddUserManuallyDialog
         open={showAddDialog}
         onOpenChange={setShowAddDialog}
+        branches={branches}
+        positions={positions}
+        workshift={workshift}
+        workshiftLoading={workshiftLoading}
       />
     </div>
   );
 };
 
 // Sub-components for better readability
-const ActionsCell = ({ user }) => {
+const ActionsCell = ({ user, showSuccess, showError }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
 
@@ -327,6 +401,12 @@ const ActionsCell = ({ user }) => {
     mutationFn: (userId) => deleteUser(userId),
     onSuccess: () => {
       queryClient.invalidateQueries(["users"]);
+      const name = user?.employee?.name || "User";
+      showSuccess?.(`Deleted ${name} successfully`);
+    },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to delete user";
+      showError?.(msg);
     },
   });
   const openDeleteDialog = (item) => {

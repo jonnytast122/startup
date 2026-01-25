@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+"use client";
+
+import React, { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   Dialog,
   DialogContent,
@@ -25,15 +28,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { getEmployee } from "@/lib/api/company";
+import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
+import { createLeaveForEmployee } from "@/lib/api/adminLeave";
 
-const users = [
-  { id: 1, name: "Doe Ibrahim" },
-  { id: 2, name: "Lucy Trevo" },
-  { id: 3, name: "John Mark" },
-];
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
+  const queryClient = useQueryClient();
+  const company = queryClient.getQueryData(["company"]);
+
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
+
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [selectedLeavePolicy, setSelectedLeavePolicy] = useState("");
   const [allDay, setAllDay] = useState(false);
   const [date, setDate] = useState(new Date());
   const [startDate, setStartDate] = useState(new Date());
@@ -41,6 +79,46 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
   const [startTime, setStartTime] = useState("08:00");
   const [endTime, setEndTime] = useState("18:00");
   const [note, setNote] = useState("");
+  const [openDatePop, setOpenDatePop] = useState(false);
+  const [openStartDatePop, setOpenStartDatePop] = useState(false);
+  const [openEndDatePop, setOpenEndDatePop] = useState(false);
+
+  const { data: employees } = useQuery({
+    queryKey: ["company-employees", company?.id],
+    queryFn: () => getEmployee(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const { data: leavePolicies } = useQuery({
+    queryKey: ["leavePolicies", company?.id],
+    queryFn: () => fetchCompanyLeavePolicy(company?.id),
+    enabled: !!company?.id,
+  });
+
+  const employeeOptions = useMemo(() => {
+    const raw = employees?.data ?? employees ?? [];
+    return Array.isArray(raw)
+      ? raw.map((e) => ({
+          id: e.id ?? e.userId ?? e._id,
+          name:
+            e.name || e.username || e.email || String(e.id ?? e.userId ?? e._id),
+        }))
+      : [];
+  }, [employees]);
+
+  const addLeaveMutation = useMutation({
+    mutationFn: createLeaveForEmployee,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leave"] });
+      showSuccess("Leave created successfully");
+      onOpenChange(false);
+    },
+    onError: (err) => {
+      console.error(err);
+      const msg = err?.response?.data?.message || err?.message || "Failed to add leave";
+      showError(msg);
+    },
+  });
 
   const handleToggleUser = (user) => {
     setSelectedUsers((prev) =>
@@ -59,36 +137,65 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     return diffMs > 0 ? (diffMs / (1000 * 60 * 60)).toFixed(2) : "0.00";
   };
 
-const handleDone = () => {
-  if (selectedUsers.length === 0) return;
+  const handleDone = () => {
+    if (!selectedLeavePolicy) {
+      showError("Please select a leave policy.");
+      return;
+    }
+    if (selectedUsers.length === 0) {
+      showError("Please select at least one employee.");
+      return;
+    }
+    if (!allDay) {
+      const [sh, sm] = startTime.split(":").map(Number);
+      const [eh, em] = endTime.split(":").map(Number);
+      if (eh * 60 + em <= sh * 60 + sm) {
+        showError("End time must be after start time.");
+        return;
+      }
+    }
 
-  const payloads = selectedUsers.map((user) => ({
-    profile: "/avatars/default.png",
-    firstname: user.name.split(" ")[0],
-    lastname: user.name.split(" ")[1] || "",
-    department: "Engineering",
-    job: "Developer",
-    shifttype: "Schedule",
-    annualleave: "2 / 15 days",
-    sickleave: "1 / 15 days",
-    assignleave: "1 / 2",
-    unpaidleave: "0 / Unlimited",
-    onleavestatus: {
-      annual: "Approved",
-      sick: "Pending",
-    },
-    date: allDay
-      ? format(startDate, "yyyy-MM-dd") + " to " + format(endDate, "yyyy-MM-dd")
-      : format(date, "yyyy-MM-dd"),
-  }));
+    // Validate date range
+    const start = allDay ? startDate : startDate;
+    const end = allDay ? endDate : endDate;
+    if (end < start) {
+      showError("End date must be on or after start date.");
+      return;
+    }
 
-  payloads.forEach((p) => onConfirm(p));
-  onOpenChange(false);
-};
+    // Build dateTime array with per-day start/end ISO datetimes
+    const buildDateTimeArray = () => {
+      const dates = [];
+      const s = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const e = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+      const [sh, sm] = (allDay ? "00:00" : startTime).split(":").map(Number);
+      const [eh, em] = (allDay ? "23:59" : endTime).split(":").map(Number);
+
+      for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
+        const startDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), sh || 0, sm || 0, 0, 0);
+        const endDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), eh || 0, em || 0, 0, 0);
+        dates.push({ start_time: startDt.toISOString(), end_time: endDt.toISOString() });
+      }
+      return dates;
+    };
+
+    const data = {
+      type: selectedLeavePolicy,
+      startDate: format(startDate, "yyyy-MM-dd"),
+      endDate: format(endDate, "yyyy-MM-dd"),
+      dateTime: buildDateTimeArray(),
+      note: note,
+    };
+    const employeeList = selectedUsers.map((u) => u.id);
+
+    addLeaveMutation.mutate({ employeeList, data });
+  };
 
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
+      {ToastPortal}
       <DialogContent className="max-w-xl font-custom">
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle></DialogTitle>
@@ -125,16 +232,16 @@ const handleDone = () => {
                 ))}
                 <Select
                   onValueChange={(val) => {
-                    const found = users.find((u) => u.name === val);
+                    const found = employeeOptions.find((u) => String(u.id) === String(val));
                     if (found) handleToggleUser(found);
                   }}
                 >
                   <SelectTrigger className="w-48">
-                    <SelectValue placeholder="Select user" />
+                    <SelectValue placeholder="Select employee" />
                   </SelectTrigger>
                   <SelectContent className="font-custom">
-                    {users.map((user) => (
-                      <SelectItem key={user.id} value={user.name}>
+                    {employeeOptions.map((user) => (
+                      <SelectItem key={user.id} value={String(user.id)}>
                         {user.name}
                       </SelectItem>
                     ))}
@@ -149,19 +256,16 @@ const handleDone = () => {
               </label>
 
               <div className="w-2/3">
-                <Select>
+                <Select value={selectedLeavePolicy} onValueChange={setSelectedLeavePolicy}>
                   <SelectTrigger className="w-48 text-gray-500">
-                    <SelectValue placeholder="Select leave type" />
+                    <SelectValue placeholder="Select leave policy" />
                   </SelectTrigger>
                   <SelectContent className="font-custom">
-                    <SelectItem value="sick">Sick Leave</SelectItem>
-                    <SelectItem value="vacation">Vacation Leave</SelectItem>
-                    <SelectItem value="personal">Personal Leave</SelectItem>
-                    <SelectItem value="bereavement">
-                      Bereavement Leave
-                    </SelectItem>
-                    <SelectItem value="maternity">Maternity Leave</SelectItem>
-                    <SelectItem value="paternity">Paternity Leave</SelectItem>
+                    {leavePolicies?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -179,7 +283,7 @@ const handleDone = () => {
 
             {/* Conditional Date and Time Display */}
             {allDay ? (
-              // ALL DAY = ON → Start/End Date only
+              // ALL DAY = ON → Start/End Date
               <div className="flex items-start gap-4">
                 <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                   Date:
@@ -188,51 +292,36 @@ const handleDone = () => {
                   {/* Start Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">Start:</label>
-                    <Popover>
+                    <Popover modal={false} open={openStartDatePop} onOpenChange={(o)=>{
+                      setOpenStartDatePop(o);
+                      if(o){ setOpenEndDatePop(false); setOpenDatePop(false);} 
+                    }}>
                       <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
+                        <Button variant="outline" className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300">
                           {format(startDate, "dd/MM/yyyy")}
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={startDate}
-                          onSelect={setStartDate}
-                        />
+                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
+                        <Calendar mode="single" selected={startDate} defaultMonth={startDate} initialFocus onSelect={(d)=>{ if(d){ setStartDate(d); setOpenStartDatePop(false);} }} />
                       </PopoverContent>
                     </Popover>
                   </div>
-
                   {/* End Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">End:</label>
-                    <Popover>
+                    <Popover modal={false} open={openEndDatePop} onOpenChange={(o)=>{
+                      setOpenEndDatePop(o);
+                      if(o){ setOpenStartDatePop(false); setOpenDatePop(false);} 
+                    }}>
                       <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
-                        >
+                        <Button variant="outline" className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300">
                           {format(endDate, "dd/MM/yyyy")}
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={endDate}
-                          onSelect={setEndDate}
-                        />
+                      <PopoverContent side="bottom" align="end" alignOffset={-16} sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
+                        <Calendar mode="single" selected={endDate} defaultMonth={endDate} initialFocus onSelect={(d)=>{ if(d){ setEndDate(d); setOpenEndDatePop(false);} }} />
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -244,28 +333,44 @@ const handleDone = () => {
                 {/* Date Row */}
                 <div className="flex items-start gap-4">
                   <label className="text-sm text-[#3F4648] w-1/3 pt-2">
-                    Date:
+                    Start date:
                   </label>
                   <div className="w-2/3">
-                    <Popover>
+                    <Popover modal={false} open={openStartDatePop} onOpenChange={(o)=>{ setOpenStartDatePop(o); if(o){ setOpenEndDatePop(false); } }}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
                           className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
                         >
-                          {format(date, "dd/MM/yyyy")}
+                          {format(startDate, "dd/MM/yyyy")}
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="w-auto p-0 bg-white"
-                      >
-                        <Calendar
-                          mode="single"
-                          selected={date}
-                          onSelect={setDate}
-                        />
+                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
+                        <Calendar mode="single" selected={startDate} defaultMonth={startDate} initialFocus onSelect={(d)=>{ if(d){ setStartDate(d); setOpenStartDatePop(false);} }} />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {/* End Date Row */}
+                <div className="flex items-start gap-4">
+                  <label className="text-sm text-[#3F4648] w-1/3 pt-2">
+                    End date:
+                  </label>
+                  <div className="w-2/3">
+                    <Popover modal={false} open={openEndDatePop} onOpenChange={(o)=>{ setOpenEndDatePop(o); if(o){ setOpenStartDatePop(false); } }}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
+                        >
+                          {format(endDate, "dd/MM/yyyy")}
+                          <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
+                        <Calendar mode="single" selected={endDate} defaultMonth={endDate} initialFocus onSelect={(d)=>{ if(d){ setEndDate(d); setOpenEndDatePop(false);} }} />
                       </PopoverContent>
                     </Popover>
                   </div>

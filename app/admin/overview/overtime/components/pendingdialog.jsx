@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Smile, Search } from "lucide-react";
+import { Smile, Search, AlertTriangle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -44,6 +45,38 @@ const ALL = [
   { value: "All users group", label: "All users group" },
   { value: "Assigned features", label: "Assigned features" },
 ];
+
+// Lightweight local toast hook (no external deps)
+function useLocalToast() {
+  const [toast, setToast] = useState(null);
+
+  const show = (type, message) => {
+    setToast({ type, message });
+    window.clearTimeout(useLocalToast._tid);
+    useLocalToast._tid = window.setTimeout(() => setToast(null), 3000);
+  };
+
+  const showSuccess = (message) => show("success", message);
+  const showError = (message) => show("error", message);
+
+  const ToastPortal = toast
+    ? createPortal(
+        <div className="fixed bottom-6 right-6 z-[1000]">
+          <div
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+              toast.type === "success" ? "bg-green-600" : "bg-red-600"
+            }`}
+          >
+            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
+            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+          </div>
+        </div>,
+        document.body
+      )
+    : null;
+
+  return { showSuccess, showError, ToastPortal };
+}
 
 const data = [
   {
@@ -102,7 +135,7 @@ const columns = [
   },
   {
     accessorKey: "date",
-    header: "OT Date",
+    header: "Date",
     cell: ({ row }) => (
       <div className="font-custom">
         {format(parseISO(row.original.date), "yyyy-MM-dd")}
@@ -198,7 +231,7 @@ const useTransformedOvertimeData = (apiData) => {
           : "";
 
       return {
-        id: item.id,
+        id: item._id,
         employee: item.employee,
         startTime: item.startTime,
         endTime: item.endTime,
@@ -223,10 +256,14 @@ const useTransformedOvertimeData = (apiData) => {
 const PendingDialog = ({ onClose }) => {
   const [open, isOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 2, 10),
-    endDate: new Date(2025, 10, 30),
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    return {
+      startDate: new Date(year, 0, 1), // Jan 1 of current year
+      endDate: new Date(year, 11, 31), // Dec 31 of current year
+      key: "selection",
+    };
   });
 
   const { data: overtimeRespone , isLoading: overtimeLoading , error: overtimeError } = useQuery({
@@ -437,23 +474,39 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
   console.log(overTime);
 
   const queryClient = useQueryClient();
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const declineMutation = useMutation({
     mutationFn: rejectOvertime,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      alert("Decline successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      showSuccess(
+        "Declined successfully for " + employee.name + " on " + startdate.split("T")[0]
+      );
+      setOpen(false);
+      setComment("");
     },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to decline request";
+      showError(
+        "Decline failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          msg
+      );
+      setOpen(false);
+    }
   });
 
   const handleDecline = () => {
     declineMutation.mutate({id: overTime.id, message: comment});
-    setOpen(false);
-    setComment("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-5 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -506,23 +559,40 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
   const [comment, setComment] = useState("");
 
   const queryClient = useQueryClient();
+  const { showSuccess, showError, ToastPortal } = useLocalToast();
   const approveMutation = useMutation({
     mutationFn: approveOvertime,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
-      alert("Aprove successfully for " + employee.name + " on " + startdate.split("T")[0] );
+      showSuccess(
+        "Approved successfully for " + employee.name + " on " + startdate.split("T")[0]
+      );
+      setOpen(false);
+      setComment("");
     },
+    onError: (err) => {
+      const msg = err?.response?.data?.message || err?.message || "Failed to approve request";
+      showError(
+        "Approve failed for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0] +
+          "\n" +
+          msg
+      );
+      setOpen(false);
+    }
   });
 
   const handleApprove = () => {
+    console.log("overtime",overTime,comment)
     approveMutation.mutate({id: overTime.id, message: comment});
-    setOpen(false);
-    setComment("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-5 rounded-full hover:bg-[#4376B0] transition"
@@ -572,9 +642,11 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
 const ApproveAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition"
@@ -610,7 +682,7 @@ const ApproveAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Approved all requests!\nComment: ${comment}`);
+              showSuccess(`Approved all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#5494DA] text-white rounded-full"
@@ -626,9 +698,11 @@ const ApproveAllDialog = () => {
 const DeclineAllDialog = () => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
+  const { showSuccess, ToastPortal } = useLocalToast();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
+      {ToastPortal}
       <DialogTrigger asChild>
         <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
@@ -664,7 +738,7 @@ const DeclineAllDialog = () => {
           <Button
             onClick={() => {
               setOpen(false);
-              alert(`Declined all requests!\nComment: ${comment}`);
+              showSuccess(`Declined all requests!\nComment: ${comment}`);
               setComment("");
             }}
             className="bg-[#FB5F59] hover:bg-[#d9413c] text-white rounded-full"
