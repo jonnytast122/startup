@@ -179,6 +179,9 @@ const ApiRoutes = {
   adminPayroll: {
     getPayroll: `${BASE_URL}/payrolls`,
     getPayrollByEmployee: `${BASE_URL}/payrolls/employee/{id}`,
+    getDailyPayroll: `${BASE_URL}/payrolls/daily`,
+    getDailyPayrollSummary: `${BASE_URL}/payrolls/daily-summary`,
+    getCompanyPayrollDate: `${BASE_URL}/payrolls/company-payroll-date`,
   },
 };
 
