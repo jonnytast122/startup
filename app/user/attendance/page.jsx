@@ -16,6 +16,8 @@ import RequestLeaveDialog from "./components/requestleavedialog.jsx";
 import SuccessDialog from "./components/successdialog.jsx";
 import TimesheetTable from "./components/timesheettable.jsx";
 import SelectShiftDialog from "./components/select-shift-dialog.jsx";
+import StreakPetModal from "./components/streakpetmodal.jsx";
+import RatingDialog from "./components/ratingdialog.jsx";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getAttendances,
@@ -147,7 +149,16 @@ function TimerButton({
     "bg-blue-500 hover:bg-blue-600"
   );
   const [errorMessage, setErrorMessage] = useState("");
-  const [errorOpen, setErrorOpen] = useState(false);
+  const [showStreakPetModal, setShowStreakPetModal] = useState(false);
+  const [showRatingDialog, setShowRatingDialog] = useState(false);
+  const [ratingMessage, setRatingMessage] = useState("");
+
+  // Streak pet dragging state
+  const [petPosition, setPetPosition] = useState(null); // null means use default position
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [hasMoved, setHasMoved] = useState(false);
+  const petRef = useRef(null);
 
   // Clock in mutation function
   const clockInMutation = useMutation({
@@ -159,6 +170,10 @@ function TimerButton({
       setButtonColor("bg-blue-500 hover:bg-blue-600");
       setIsRunning(true); // ✅ only mark running when success
       if (onStarted) onStarted(shift?.name || "", startTime);
+
+      // Show rating dialog after clock in
+      setRatingMessage("Yo! How was your day? Darling");
+      setShowRatingDialog(true);
     },
     onError: (error) => {
       const message =
@@ -292,10 +307,129 @@ function TimerButton({
     };
     if (onShowShiftDetail) onShowShiftDetail(detail);
     if (onStopped) onStopped(formatTime(seconds));
+
+    // Show rating dialog after clock out
+    setRatingMessage("Yo! How are you feeling today?");
+    setShowRatingDialog(true);
+
     setSeconds(0);
   };
 
   console.log("selectedShift", selectedShift);
+
+  // Get pet element size dynamically
+  const getPetSize = () => {
+    if (petRef.current) {
+      const rect = petRef.current.getBoundingClientRect();
+      return { width: rect.width, height: rect.height };
+    }
+    // Fallback sizes for different breakpoints
+    const width = window.innerWidth;
+    if (width >= 768) return { width: 96, height: 96 }; // md: text-6xl
+    if (width >= 640) return { width: 80, height: 80 }; // sm: text-5xl
+    return { width: 60, height: 60 }; // text-4xl
+  };
+
+  // Streak pet drag handlers
+  const handlePetMouseDown = (e) => {
+    e.stopPropagation();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    // If no position set yet, get the current position from the element
+    if (petPosition === null && petRef.current) {
+      const rect = petRef.current.getBoundingClientRect();
+      setPetPosition({ x: rect.left, y: rect.top });
+      setDragStart({ x: clientX - rect.left, y: clientY - rect.top });
+    } else {
+      setDragStart({ x: clientX - petPosition.x, y: clientY - petPosition.y });
+    }
+
+    setIsDragging(true);
+    setHasMoved(false);
+  };
+
+  const handlePetMouseMove = (e) => {
+    if (!isDragging) return;
+
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    let newX = clientX - dragStart.x;
+    let newY = clientY - dragStart.y;
+
+    // Get window dimensions and pet element size
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const petSize = getPetSize();
+
+    // Apply boundary constraints - keep pet on screen
+    newX = Math.max(0, Math.min(newX, windowWidth - petSize.width));
+    newY = Math.max(0, Math.min(newY, windowHeight - petSize.height));
+
+    // Check if moved more than 5 pixels
+    if (petPosition && (Math.abs(newX - petPosition.x) > 5 || Math.abs(newY - petPosition.y) > 5)) {
+      setHasMoved(true);
+    }
+
+    setPetPosition({
+      x: newX,
+      y: newY,
+    });
+  };
+
+  const handlePetMouseUp = (e) => {
+    setIsDragging(false);
+
+    // If hasn't moved much, treat it as a click
+    if (!hasMoved) {
+      setShowStreakPetModal(true);
+    }
+  };
+
+  // Add/remove event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      const move = (e) => handlePetMouseMove(e);
+      const up = (e) => handlePetMouseUp(e);
+
+      window.addEventListener("mousemove", move);
+      window.addEventListener("mouseup", up);
+      window.addEventListener("touchmove", move, { passive: false });
+      window.addEventListener("touchend", up);
+
+      return () => {
+        window.removeEventListener("mousemove", move);
+        window.removeEventListener("mouseup", up);
+        window.removeEventListener("touchmove", move);
+        window.removeEventListener("touchend", up);
+      };
+    }
+  }, [isDragging, dragStart, petPosition]);
+
+  // Handle window resize - keep pet on screen
+  useEffect(() => {
+    const handleResize = () => {
+      if (petPosition !== null) {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const petSize = getPetSize();
+
+        // Adjust position if pet is now off-screen
+        const newX = Math.max(0, Math.min(petPosition.x, windowWidth - petSize.width));
+        const newY = Math.max(0, Math.min(petPosition.y, windowHeight - petSize.height));
+
+        if (newX !== petPosition.x || newY !== petPosition.y) {
+          setPetPosition({ x: newX, y: newY });
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    // Run immediately to adjust on mount
+    handleResize();
+    return () => window.removeEventListener("resize", handleResize);
+  }, [petPosition]);
 
   return (
     <div className="flex flex-col items-center gap-6 w-full">
@@ -303,37 +437,65 @@ function TimerButton({
 
       {!isRunning ? (
         <>
-          <Button
-            onClick={() => {
-              const availableShifts = Array.isArray(shift)
-                ? shift
-                : shift
-                ? [shift]
-                : [];
-              if (availableShifts.length > 1) {
-                setShowSelectShift(true);
-              } else {
-                const only = availableShifts[0] || null;
-                startTimer(only || shift?.name || null);
+          <div className="relative flex items-center justify-center w-full">
+            <Button
+              onClick={() => {
+                const availableShifts = Array.isArray(shift)
+                  ? shift
+                  : shift
+                  ? [shift]
+                  : [];
+                if (availableShifts.length > 1) {
+                  setShowSelectShift(true);
+                } else {
+                  const only = availableShifts[0] || null;
+                  startTimer(only || shift?.name || null);
+                }
+              }}
+              className={`rounded-full w-40 h-40 ${buttonColor} text-white text-2xl sm:text-3xl font-custom shadow-lg flex flex-col items-center justify-center`}
+            >
+              <Timer className="w-10 h-10 mb-2" />
+              Clock In
+            </Button>
+
+            {/* Streak Pet - Bunny - Draggable */}
+            <div
+              ref={petRef}
+              className={`fixed cursor-move hover:scale-110 z-50 select-none touch-none transition-all ${
+                petPosition === null ? "right-4 sm:right-8 top-1/2 -translate-y-1/2" : ""
+              } ${isDragging ? "opacity-80 scale-110" : "opacity-100"}`}
+              style={
+                petPosition !== null
+                  ? {
+                      left: `${petPosition.x}px`,
+                      top: `${petPosition.y}px`,
+                      animation: !isDragging ? "bounce 1s infinite" : "none",
+                      filter: isDragging ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" : "none",
+                    }
+                  : {
+                      animation: !isDragging ? "bounce 1s infinite" : "none",
+                      filter: isDragging ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" : "none",
+                    }
               }
-            }}
-            className={`rounded-full w-40 h-40 ${buttonColor} text-white text-2xl sm:text-3xl font-custom shadow-lg flex flex-col items-center justify-center`}
-          >
-            <Timer className="w-10 h-10 mb-2" />
-            Clock In
-          </Button>
-          {/* Error dialog for failed clock-in */}
-          <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
-            <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
-              <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
-              <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
-                Clock In Failed
-              </DialogTitle>
-              <div className="text-base text-red-700">
-                {errorMessage}
-              </div>
-            </DialogContent>
-          </Dialog>
+              onMouseDown={handlePetMouseDown}
+              onTouchStart={handlePetMouseDown}
+            >
+              <div className="text-4xl sm:text-5xl md:text-6xl">🐰</div>
+            </div>
+          </div>
+
+          {/* Streak Pet Modal */}
+          <StreakPetModal
+            open={showStreakPetModal}
+            onClose={() => setShowStreakPetModal(false)}
+            streakCount={12}
+          />
+
+          {errorMessage && (
+            <p className="text-red-500 text-sm font-custom mt-3 text-center">
+              {errorMessage}
+            </p>
+          )}
           <SelectShiftDialog
             open={showSelectShift}
             onOpenChange={setShowSelectShift}
@@ -364,6 +526,17 @@ function TimerButton({
           <SlideToStop onStop={stopTimer} />
         </>
       )}
+
+      {/* Rating Dialog */}
+      <RatingDialog
+        open={showRatingDialog}
+        onClose={() => setShowRatingDialog(false)}
+        message={ratingMessage}
+        onRate={(rating) => {
+          console.log("User rated:", rating);
+          // You can add API call here to save the rating
+        }}
+      />
     </div>
   );
 }
