@@ -1,168 +1,116 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { CreditCard, Settings, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { DateRangePicker } from "react-date-range";
+import { CreditCard } from "lucide-react";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
-import CustomizeReportDialog from "./components/customize-report-dialog";
-import UserProfileSection from "./components/user-profile-section";
 import PayrollTable from "./components/payroll-table";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useEffect, useMemo, useState } from "react";
 import {
+  createCompanyPayrollDate,
   getCompanyPayrollDate,
-  getDailyPayrollSummary,
 } from "@/lib/api/adminPayroll";
-import { useQuery } from "@tanstack/react-query";
+import { FaSpinner } from "react-icons/fa";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function PayrollPage() {
-  const formatter = useMemo(
-    () =>
+  const queryClient = useQueryClient();
+  const [startDay, setStartDay] = useState("");
+  const [taxRate, setTaxRate] = useState("");
+  const [nssfRate, setNssfRate] = useState("");
+  const [selectedRange, setSelectedRange] = useState({
+    startDate: null,
+    endDate: null,
+  });
+  const formatDateKey = useMemo(
+    () => (date) =>
       new Intl.DateTimeFormat("en-CA", {
         timeZone: "Asia/Phnom_Penh",
         year: "numeric",
         month: "2-digit",
         day: "2-digit",
-      }),
+      }).format(date),
     [],
   );
-  const formatDateKey = useCallback(
-    (date) => formatter.format(date),
-    [formatter],
-  );
-
-  const today = new Date();
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: today,
-    endDate: today,
-    key: "selection",
-  });
-  const [selectedDateKey, setSelectedDateKey] = useState(formatDateKey(today));
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showCustomizeDialog, setShowCustomizeDialog] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const handleRowClick = (emp) => {
-    setSelectedEmployee(emp);
-  };
-
-  const {
-    data: payrollSummary,
-    isLoading: isLoadingPayroll,
-    error: payrollError,
-    Paid,
-  } = useQuery({
-    queryKey: [
-      "dailyPayrollSummary",
-      selectedRange.startDate,
-      selectedRange.endDate,
-    ],
-    queryFn: () =>
-      getDailyPayrollSummary(
-        formatDateKey(selectedRange.startDate),
-        formatDateKey(selectedRange.endDate),
-      ),
-    enabled: Boolean(selectedRange.startDate && selectedRange.endDate),
-  });
 
   const { data: companyPayrollDate } = useQuery({
     queryKey: ["companyPayrollDate"],
     queryFn: () => getCompanyPayrollDate(),
   });
-  const getCycleStartDate = (date, startDay) => {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    const day = date.getDate();
 
-    let targetYear = year;
-    let targetMonth = month;
-    if (day < startDay) {
+  useEffect(() => {
+    if (!companyPayrollDate) return;
+    setStartDay(
+      companyPayrollDate.startDay !== undefined
+        ? String(companyPayrollDate.startDay)
+        : "",
+    );
+    setTaxRate(
+      companyPayrollDate.taxExchangeRate !== undefined
+        ? String(companyPayrollDate.taxExchangeRate)
+        : "",
+    );
+    setNssfRate(
+      companyPayrollDate.nssfExchangeRate !== undefined
+        ? String(companyPayrollDate.nssfExchangeRate)
+        : "",
+    );
+    const startDayValue =
+      companyPayrollDate.startDay !== undefined
+        ? Number(companyPayrollDate.startDay)
+        : null;
+    if (!startDayValue) return;
+    const now = new Date(
+      new Date().toLocaleString("en-US", { timeZone: "Asia/Phnom_Penh" }),
+    );
+    const referenceDate = new Date(now);
+    if (referenceDate.getDate() === startDayValue) {
+      referenceDate.setDate(referenceDate.getDate() - 1);
+    }
+    let targetYear = referenceDate.getFullYear();
+    let targetMonth = referenceDate.getMonth();
+    if (referenceDate.getDate() < startDayValue) {
       targetMonth -= 1;
       if (targetMonth < 0) {
         targetMonth = 11;
         targetYear -= 1;
       }
     }
-
     const daysInTargetMonth = new Date(
       targetYear,
       targetMonth + 1,
       0,
     ).getDate();
-    const startDayClamped = Math.min(startDay, daysInTargetMonth);
-    return new Date(targetYear, targetMonth, startDayClamped);
-  };
-
-  useEffect(() => {
-    const startDay = Number(companyPayrollDate?.startDay);
-    if (!startDay) return;
-    const cambodiaNow = new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Asia/Phnom_Penh" }),
+    const startDayClamped = Math.min(startDayValue, daysInTargetMonth);
+    const cycleStart = new Date(targetYear, targetMonth, startDayClamped);
+    setSelectedRange((prev) =>
+      prev.startDate && prev.endDate
+        ? prev
+        : { startDate: cycleStart, endDate: now },
     );
-    const referenceDate = new Date(cambodiaNow);
-    if (referenceDate.getDate() === startDay) {
-      referenceDate.setDate(referenceDate.getDate() - 1);
-    }
-    const cycleStart = getCycleStartDate(referenceDate, startDay);
-    setSelectedRange((prev) => {
-      const prevStart = prev.startDate?.getTime?.() || 0;
-      const prevEnd = prev.endDate?.getTime?.() || 0;
-      if (
-        prevStart === cycleStart.getTime() &&
-        prevEnd === cambodiaNow.getTime()
-      ) {
-        return prev;
-      }
-      return { startDate: cycleStart, endDate: cambodiaNow, key: "selection" };
-    });
-    setSelectedDateKey(formatDateKey(cambodiaNow));
-  }, [companyPayrollDate, formatDateKey]);
+  }, [companyPayrollDate]);
 
-  const payrollRows = useMemo(() => {
-    const records = Array.isArray(payrollSummary?.records)
-      ? payrollSummary.records
-      : [];
-    return records.map((record, index) => {
-      return {
-        id: record.employee?._id || index,
-        companyIdentifier: record.employee?.companyIdentifier || "--",
-        profileImage: record.employee?.profileImg || "",
-        name: record.employee?.name || "--",
-        profile: record.employee?.profileImg || "",
-        baseSalary: record.baseSalary ?? 0,
-        cash: record.cashAmount ?? 0,
-        ibanking: record.ibankingAmount ?? 0,
-        bonus: 0,
-        ot: record.overtimePay ?? 0,
-        nssfRate: record.nssfExchangeRate ?? "--",
-        taxRate: record.taxExchangeRate ?? "--",
-        unpaidLeave: record.leaveDeduction ?? 0,
-        nssfExpense: record.nssfAmount ?? 0,
-        taxRatePercent: "--",
-        taxExpense: record.taxAmount ?? 0,
-        estimatedNetPay: record.netDaily ?? 0,
-        netSalary: record.netSalary ?? 0,
-      };
-    });
-  }, [payrollSummary]);
+  const updateCompanyPayrollDate = useMutation({
+    mutationFn: createCompanyPayrollDate,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["companyPayrollDate"] });
+      queryClient.invalidateQueries({ queryKey: ["dailyPayrollSummary"] });
+    },
+  });
 
-  const Filter = [
-    { value: "Select all", label: "Select all" },
-    { value: "All users group", label: "All users group" },
-    { value: "Assigned features", label: "Assigned features" },
-  ];
+  const handleSave = async () => {
+    const payload = {
+      startDay: Number(startDay),
+      taxExchangeRate: taxRate ? Number(taxRate) : undefined,
+      nssfExchangeRate: nssfRate ? Number(nssfRate) : undefined,
+    };
+    await updateCompanyPayrollDate.mutateAsync(payload);
+  };
 
   return (
     <div>
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+      <div className="bg-white flex flex-row justify-between rounded-xl mb-3 shadow-md py-6 px-6 border">
         <div className="flex items-center justify-between p-5">
           <a href="/overview/payroll" className="block">
             <div className="flex items-center space-x-3 cursor-pointer">
@@ -171,66 +119,62 @@ export default function PayrollPage() {
             </div>
           </a>
         </div>
-      </div>
 
-      {!selectedEmployee ? (
-        <div className="bg-white rounded-xl shadow-md py-6 px-6 font-custom">
-          {/* <div className="mb-4 relative">
-            <button
-              onClick={() => setShowDatePicker(!showDatePicker)}
-              className="flex items-center justify-between px-4 py-2 border text-sm bg-white shadow-sm rounded-full w-auto focus:outline-none"
-            >
-              {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-              <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
-            </button>
-            {showDatePicker && (
-              <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
-                <DateRangePicker
-                  ranges={[selectedRange]}
-                  onChange={(ranges) => {
-                    const newRange = ranges.selection;
-                    setSelectedRange(newRange);
-                    if (newRange?.startDate) {
-                      setSelectedDateKey(formatDateKey(newRange.startDate));
-                    }
-
-                    const start = newRange.startDate;
-                    const end = newRange.endDate;
-                    if (start && end && start.getTime() !== end.getTime()) {
-                      setShowDatePicker(false);
-                    }
-                  }}
-                  rangeColors={["#3b82f6"]}
+        <div className="text-gray-600 font-custom text-sm md:text-md lg:text-md px-5">
+          <div className="flex items-start gap-3">
+            <div className="flex flex-wrap items-center gap-4 w-2/3">
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-[#3F4648]">NSSF Rate:</label>
+                <Input
+                  className="rounded-full px-4 py-2 text-sm w-[120px] border border-gray-300"
+                  value={nssfRate}
+                  onChange={(e) => setNssfRate(e.target.value)}
+                  inputMode="numeric"
                 />
               </div>
-            )}
-          </div> */}
 
-          <PayrollTable
-            rows={payrollRows}
-            isLoading={isLoadingPayroll}
-            errorMessage={payrollError?.message || ""}
-          />
-
-          {/* <div className="flex justify-center">
-            <Button
-              onClick={() => setDialogOpen(true)}
-              className="mt-4 px-6 py-2 rounded-full bg-[#5494DA] shadow-lg hover:bg-blue-600 text-white"
-            >
-              + Add Payroll Table
-            </Button>
-          </div> */}
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-[#3F4648]">Tax Rate:</label>
+                <Input
+                  className="rounded-full px-4 py-2 text-sm w-[120px] border border-gray-300"
+                  value={taxRate}
+                  onChange={(e) => setTaxRate(e.target.value)}
+                  inputMode="numeric"
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-sm text-[#3F4648]">Start Day:</label>
+                <Input
+                  className="rounded-full px-4 py-2 text-sm w-[50px] border border-gray-300"
+                  value={startDay}
+                  onChange={(e) => setStartDay(e.target.value)}
+                  inputMode="numeric"
+                />
+                <span>th</span>
+              </div>
+              <Button
+                className="rounded-full px-6"
+                onClick={handleSave}
+                disabled={!startDay || updateCompanyPayrollDate.isPending}
+              >
+                {updateCompanyPayrollDate.isPending ? (
+                  <FaSpinner className="animate-spin text-white text-xl" />
+                ) : (
+                  "Update"
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
-      ) : (
-        <UserProfileSection
-          employee={selectedEmployee}
-          onClose={() => setSelectedEmployee(null)}
+      </div>
+
+      <div className="bg-white rounded-xl shadow-md py-6 px-6 font-custom">
+        <PayrollTable
+          onRangeChange={setSelectedRange}
+          taxExchangeRate={taxRate}
+          nssfExchangeRate={nssfRate}
         />
-      )}
-      <CustomizeReportDialog
-        open={showCustomizeDialog}
-        setOpen={setShowCustomizeDialog}
-      />
+      </div>
     </div>
   );
 }

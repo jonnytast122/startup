@@ -30,3 +30,28 @@ export const getCompanyPayrollDate = async () => {
     const response = await api.get(ApiRoutes.adminPayroll.getCompanyPayrollDate);
     return response.data;
 }
+
+export const createCompanyPayrollDate = async (payload: {
+    startDay: number;
+    taxExchangeRate?: number;
+    nssfExchangeRate?: number;
+}) => {
+    const response = await api.post(
+        ApiRoutes.adminPayroll.createCompanyPayrollDate,
+        payload
+    );
+    return response.data;
+}
+
+export const finalizePayrollSummary = async (payload: {
+    startDate: string;
+    endDate: string;
+    taxExchangeRate?: number;
+    nssfExchangeRate?: number;
+}) => {
+    const response = await api.post(
+        ApiRoutes.adminPayroll.finalizePayrollSummary,
+        payload
+    );
+    return response.data;
+}
