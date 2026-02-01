@@ -147,7 +147,7 @@ export default function AddUserManuallyDialog({
       allowedRemoteCheckIn: "",
       dailyRate: "",
       hourlyRate: "",
-    }))
+    })),
   );
 
   const [addedRowIds, setAddedRowIds] = useState([]);
@@ -238,14 +238,15 @@ export default function AddUserManuallyDialog({
     },
     onError: (error) => {
       setServerError(
-        error?.response?.data?.error ?? "Failed to add users. Please try again."
+        error?.response?.data?.error ??
+          "Failed to add users. Please try again.",
       );
     },
   });
 
   // handle select shift REUSABLE COMPONENT
   function ShiftMultiSelect({ value = [], onChange, options = [] }) {
-    const shifts = Array.isArray(options) ? options : options?.results ?? [];
+    const shifts = Array.isArray(options) ? options : (options?.results ?? []);
     const selected = Array.isArray(value) ? value.map(String) : [];
 
     const [open, setOpen] = React.useState(false);
@@ -254,7 +255,7 @@ export default function AddUserManuallyDialog({
       onChange(
         selected.includes(id)
           ? selected.filter((v) => v !== id)
-          : [...selected, id]
+          : [...selected, id],
       );
     };
 
@@ -393,7 +394,7 @@ export default function AddUserManuallyDialog({
     (id, field, value) => {
       setData((prevData) => {
         const newData = prevData.map((row) =>
-          row.id === id ? { ...row, [field]: value } : row
+          row.id === id ? { ...row, [field]: value } : row,
         );
         // Validate immediately with the updated data
         validateRows(newData);
@@ -401,7 +402,7 @@ export default function AddUserManuallyDialog({
         return newData;
       });
     },
-    [setData, validateRows]
+    [setData, validateRows],
   );
 
   // helper to format and submit data
@@ -420,8 +421,8 @@ export default function AddUserManuallyDialog({
           typeof v === "object" && !Array.isArray(v) ? cleanObject(v) : v,
         ])
         .filter(([, v]) =>
-          typeof v === "object" ? Object.keys(v).length > 0 : true
-        )
+          typeof v === "object" ? Object.keys(v).length > 0 : true,
+        ),
     );
 
   // handle submit users
@@ -1019,7 +1020,7 @@ export default function AddUserManuallyDialog({
         header: "Bank Provider*",
         cell: ({ row }) => {
           const selected = bankProviders.find(
-            (bank) => bank.value === row.original.bankProvider
+            (bank) => bank.value === row.original.bankProvider,
           );
 
           return (
@@ -1125,7 +1126,7 @@ export default function AddUserManuallyDialog({
               handleInputChange(
                 row.original.id,
                 "numberOfChildren",
-                e.target.value
+                e.target.value,
               )
             }
             placeholder="0"
@@ -1214,7 +1215,7 @@ export default function AddUserManuallyDialog({
                 {table
                   .getAllColumns()
                   .filter(
-                    (column) => column.getCanHide() && column.id !== "actions"
+                    (column) => column.getCanHide() && column.id !== "actions",
                   )
                   .map((column) => (
                     <div
@@ -1249,7 +1250,7 @@ export default function AddUserManuallyDialog({
         ),
       },
     ],
-    [handleInputChange, handleDeleteRow, branches, workshift, workshiftLoading]
+    [handleInputChange, handleDeleteRow, branches, workshift, workshiftLoading],
   );
 
   const table = useReactTable({
@@ -1303,88 +1304,97 @@ export default function AddUserManuallyDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-6xl">
-          <DialogHeader className="text-center">
-            <DialogTitle className="sr-only">Add New User</DialogTitle>
-            <div className="flex items-center justify-center space-x-3">
-              <h1 className="text-2xl font-custom text-light-gray">Review</h1>
+        <DialogContent className="max-w-6xl max-h-[90vh] flex flex-col">
+          {/* SCROLLABLE CONTENT */}
+          <div className="flex-1 overflow-y-auto pr-1">
+            <DialogHeader className="text-center">
+              <DialogTitle className="sr-only">Add New User</DialogTitle>
+
+              <div className="flex items-center justify-center space-x-3">
+                <h1 className="text-2xl font-custom text-light-gray">Review</h1>
+              </div>
+
+              {(addedCount > 0 || duplicateCount > 0) && (
+                <div className="flex justify-start gap-6 pt-2 pl-2">
+                  {addedCount > 0 && (
+                    <p className="text-blue-500 font-medium text-sm">
+                      {addedCount} Added
+                    </p>
+                  )}
+                  {duplicateCount > 0 && (
+                    <p className="text-red-500 font-medium text-sm">
+                      {duplicateCount} Duplicated
+                    </p>
+                  )}
+                </div>
+              )}
+            </DialogHeader>
+
+            <div className="mt-6 overflow-x-auto">
+              <Table className="w-full min-w-max rounded-lg overflow-hidden">
+                <TableHeader className="bg-[#e4e4e4] font-custom text-md">
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <TableRow key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <TableHead
+                          key={header.id}
+                          className={
+                            header.id === "actions"
+                              ? "w-[60px]"
+                              : "min-w-[100px]"
+                          }
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                        </TableHead>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableHeader>
+
+                <TableBody>
+                  {table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id}>
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
 
-            {(addedCount > 0 || duplicateCount > 0) && (
-              <div className="flex justify-start gap-6 pt-2 pl-2">
-                {addedCount > 0 && (
-                  <p className="text-blue-500 font-medium text-sm">
-                    {addedCount} Added
-                  </p>
-                )}
-                {duplicateCount > 0 && (
-                  <p className="text-red-500 font-medium text-sm">
-                    {duplicateCount} Duplicated
-                  </p>
-                )}
-              </div>
+            {/* ADD ROW */}
+            <div className="flex justify-center mt-4">
+              <Button
+                onClick={handleAddRow}
+                className="bg-white border rounded-full text-blue-500 hover:bg-blue-100 flex items-center gap-2 font-custom py-2 px-4"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Row</span>
+              </Button>
+            </div>
+
+            {serverError && (
+              <p className="text-red-500 text-sm font-custom mt-2">
+                {serverError}
+              </p>
             )}
-          </DialogHeader>
 
-          <div className="mt-6 overflow-x-auto">
-            <Table className="w-full min-w-max rounded-lg overflow-hidden">
-              <TableHeader className="bg-[#e4e4e4] rounded-lg font-custom text-md">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead
-                        key={header.id}
-                        className={
-                          header.id === "actions" ? "w-[60px]" : "min-w-[100px]"
-                        }
-                      >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-
-          {/*  Add Row Button      */}
-          <div className="flex justify-center mt-4">
-            <Button
-              onClick={handleAddRow}
-              className="bg-white border rounded-full text-blue-500 hover:bg-blue-100 flex items-center space-x-2 font-custom py-2 px-4"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Row</span>
-            </Button>
-          </div>
-          {serverError && (
-            <p className="text-red-500 text-sm font-custom mb-2">
-              {serverError}
+            <p className="text-red-500 text-sm font-custom text-right mt-2">
+              Please fill all the require information*
             </p>
-          )}
+          </div>
 
-          <p className="text-red-500 text-sm font-custom text-right">
-            Please fill all the require information*
-          </p>
-
-          <DialogFooter className="flex justify-end gap-2 mt-6">
+          {/* FIXED FOOTER */}
+          <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button
               variant="outline"
               onClick={() => onOpenChange(false)}
@@ -1399,17 +1409,17 @@ export default function AddUserManuallyDialog({
                 addUserMutation.isPending ||
                 (errorsMap && Object.keys(errorsMap).length > 0)
               }
-              className={`rounded-full font-custom py-6 px-9 text-white transition-colors
-              ${
-                addUserMutation.isPending
-                  ? "bg-gray-400 cursor-wait"
-                  : errorsMap && Object.keys(errorsMap).length > 0
-                  ? "bg-red-500 hover:bg-red-600 cursor-not-allowed"
-                  : "bg-blue-500 hover:bg-blue-600"
-              }`}
+              className={`rounded-full font-custom py-6 px-9 text-white
+        ${
+          addUserMutation.isPending
+            ? "bg-gray-400 cursor-wait"
+            : errorsMap && Object.keys(errorsMap).length > 0
+              ? "bg-red-500 cursor-not-allowed"
+              : "bg-blue-500 hover:bg-blue-600"
+        }`}
             >
               {addUserMutation.isPending ? (
-                <FaSpinner className="animate-spin text-white text-lg" />
+                <FaSpinner className="animate-spin text-lg" />
               ) : (
                 "Confirm"
               )}
@@ -1417,6 +1427,7 @@ export default function AddUserManuallyDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
       <SuccessDialog
         open={successOpen}
         onClose={() => {

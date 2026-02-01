@@ -64,8 +64,6 @@ const exportOptions = [
   { value: "as XLS", label: "as XLS" },
 ];
 
-const today = new Date().toISOString().split("T")[0]; // e.g. "2025-07-14"
-
 const columns = [
   {
     accessorKey: "profile",
@@ -106,21 +104,21 @@ const columns = [
       </div>
     ),
   },
-  { accessorKey: "shifttype", header: "Shift Type" },
+  { accessorKey: "shiftType", header: "Shift Type" },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.status.trim(); // Remove extra spaces
+      const status = row.original.status.trim();
 
       const statusClass =
         status === "On time"
           ? "text-green"
           : status === "Late"
-          ? "text-red"
-          : status === "Early"
-          ? "text-blue"
-          : "text-gray";
+            ? "text-red"
+            : status === "Early"
+              ? "text-blue"
+              : "text-gray";
 
       return (
         <div className={`text-md font-custom ${statusClass}`}>{status}</div>
@@ -182,7 +180,14 @@ const formatTime = (isoString) => {
 // Transform attendances into table-friendly rows
 
 const TodayScreen = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString());
+  const cambodiaNow = useMemo(
+    () =>
+      new Date(
+        new Date().toLocaleString("en-US", { timeZone: "Asia/Phnom_Penh" }),
+      ),
+    [],
+  );
+  const [selectedDate, setSelectedDate] = useState(cambodiaNow.toISOString());
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -196,13 +201,20 @@ const TodayScreen = () => {
     },
   ]);
 
-  const formatDate = (date) => {
-    return date.toISOString().split("T")[0]; // keeps only YYYY-MM-DD
-  };
+  const formatDate = useMemo(
+    () => (date) =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Phnom_Penh",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(date),
+    [],
+  );
 
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(),
-    endDate: new Date(),
+    startDate: cambodiaNow,
+    endDate: cambodiaNow,
     key: "selection",
   });
 
@@ -231,15 +243,22 @@ const TodayScreen = () => {
     enabled: true,
   });
 
+  const rangeStartKey = selectedRange?.startDate
+    ? formatDate(selectedRange.startDate)
+    : "";
+  const rangeEndKey = selectedRange?.endDate
+    ? formatDate(selectedRange.endDate)
+    : "";
+
   const { data: attendances } = useQuery({
-    queryKey: ["attendances", company?.id],
+    queryKey: ["attendances", company?.id, rangeStartKey, rangeEndKey],
     queryFn: () =>
       getAttendances(
         company?.id,
         formatDate(selectedRange.startDate),
-        formatDate(selectedRange.endDate)
+        formatDate(selectedRange.endDate),
       ),
-    enabled: !!company?.id,
+    enabled: !!company?.id && !!rangeStartKey && !!rangeEndKey,
   });
 
   const transformedData = useMemo(() => {
@@ -251,7 +270,7 @@ const TodayScreen = () => {
 
       // Get last checkOut
       const checkOuts = record.transactions.filter(
-        (t) => t.type === "checkOut"
+        (t) => t.type === "checkOut",
       );
       const lastCheckOut =
         checkOuts.length > 0 ? checkOuts[checkOuts.length - 1] : null;
@@ -285,10 +304,10 @@ const TodayScreen = () => {
   useEffect(() => {
     if (company?.id && selectedRange.startDate && selectedRange.endDate) {
       queryClient.invalidateQueries({
-        queryKey: ["attendances", company.id],
+        queryKey: ["attendances", company.id, rangeStartKey, rangeEndKey],
       });
     }
-  }, [selectedRange, company?.id, queryClient]);
+  }, [selectedRange, company?.id, queryClient, rangeStartKey, rangeEndKey]);
 
   return (
     <>
@@ -341,12 +360,14 @@ const TodayScreen = () => {
                         if (start && end && start.getTime() !== end.getTime()) {
                           setShowDatePicker(false);
                         }
-                        //revalidate query
                         queryClient.invalidateQueries({
-                          queryKey: ["attendances", company?.id],
+                          queryKey: [
+                            "attendances",
+                            company?.id,
+                            formatDate(start),
+                            formatDate(end),
+                          ],
                         });
-
-                        console.log("Selected range:", newRange);
                       }}
                       rangeColors={["#3b82f6"]}
                     />
@@ -354,7 +375,11 @@ const TodayScreen = () => {
                 )}
                 <Button
                   onClick={() => {
-                    const today = new Date();
+                    const today = new Date(
+                      new Date().toLocaleString("en-US", {
+                        timeZone: "Asia/Phnom_Penh",
+                      }),
+                    );
                     setSelectedRange({
                       startDate: today,
                       endDate: today,
@@ -395,8 +420,8 @@ const TodayScreen = () => {
                         status === "On Time"
                           ? "bg-green-500"
                           : status === "Late"
-                          ? "bg-red-500"
-                          : "bg-yellow-400";
+                            ? "bg-red-500"
+                            : "bg-yellow-400";
 
                       return (
                         <SelectItem
