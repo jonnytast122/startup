@@ -61,22 +61,42 @@ export default function WorkShiftDialog({
 
   const queryClient = useQueryClient();
 
+  const normalizeShiftType = (value) => {
+    if (!value) return "Standard";
+    const lower = String(value).toLowerCase();
+    return lower === "flexible" ? "Flexible" : "Standard";
+  };
+
 
   useEffect(() => {
     if (shift) {
       setShiftName(shift.name || "New Shift");
       setWorkingDays(shift.workingDays || 22);
-      setWorkingDayType(shift.workingDayType || "Standard");
-      setShiftDays(shift.workDays || []);
-      setReminderDays(shift.reminderDays || []);
+      const normalizedType = normalizeShiftType(shift.shiftType);
+      setWorkingDayType(normalizedType);
+      const scheduleDays = Array.isArray(shift.schedules)
+        ? shift.schedules.map((s) => s.day)
+        : [];
+      setShiftDays(scheduleDays);
+      setReminderDays(shift.reminder?.reminderDays || []);
 
-      if (shift.workingDayType === "Standard") {
-        setStartTime(removeAmPm(shift.workDuration?.start) || "09:00");
-        setEndTime(removeAmPm(shift.workDuration?.end) || "17:00");
-        setBreakStart(removeAmPm(shift.break?.start) || "12:00");
-        setBreakEnd(removeAmPm(shift.break?.end) || "13:00");
-      } else if (shift.flexibleSchedule) {
-        setFlexibleSchedule(shift.flexibleSchedule);
+      if (normalizedType === "Standard") {
+        const firstSchedule = shift.schedules?.[0];
+        setStartTime(removeAmPm(firstSchedule?.workDuration?.start || "09:00"));
+        setEndTime(removeAmPm(firstSchedule?.workDuration?.end || "17:00"));
+        setBreakStart(removeAmPm(firstSchedule?.break?.start || "12:00"));
+        setBreakEnd(removeAmPm(firstSchedule?.break?.end || "13:00"));
+      } else if (Array.isArray(shift.schedules)) {
+        const nextFlexible = { ...flexibleSchedule };
+        shift.schedules.forEach((schedule) => {
+          nextFlexible[schedule.day] = {
+            startTime: removeAmPm(schedule.workDuration?.start || "09:00"),
+            endTime: removeAmPm(schedule.workDuration?.end || "17:00"),
+            breakStart: removeAmPm(schedule.break?.start || "12:00"),
+            breakEnd: removeAmPm(schedule.break?.end || "13:00"),
+          };
+        });
+        setFlexibleSchedule(nextFlexible);
       }
 
       setClockInReminder(shift.clockInReminder || "08:40");
@@ -178,67 +198,106 @@ export default function WorkShiftDialog({
   });
 
   const onCreate = () => {
-    const baseData = {
-      name: shiftName,
-      workingDays: workingDays,
-      workingDayType: workingDayType,
-      workDays: shiftDays,
-    };
+    const shiftType = workingDayType === "Flexible" ? "flexible" : "standard";
+    const schedules =
+      workingDayType === "Standard"
+        ? shiftDays.map((day) => ({
+            day,
+            workDuration: {
+              start: toAmPm(startTime),
+              end: toAmPm(endTime),
+            },
+            ...(breakStart && breakEnd
+              ? {
+                  break: {
+                    start: toAmPm(breakStart),
+                    end: toAmPm(breakEnd),
+                  },
+                }
+              : {}),
+          }))
+        : shiftDays.map((day) => ({
+            day,
+            workDuration: {
+              start: toAmPm(flexibleSchedule[day].startTime),
+              end: toAmPm(flexibleSchedule[day].endTime),
+            },
+            ...(flexibleSchedule[day].breakStart &&
+            flexibleSchedule[day].breakEnd
+              ? {
+                  break: {
+                    start: toAmPm(flexibleSchedule[day].breakStart),
+                    end: toAmPm(flexibleSchedule[day].breakEnd),
+                  },
+                }
+              : {}),
+          }));
 
-    if (workingDayType === "Standard") {
-      uploadWorkShift.mutate({
-        ...baseData,
-        workDuration: {
-          start: toAmPm(startTime),
-          end: toAmPm(endTime),
+    uploadWorkShift.mutate({
+      name: shiftName,
+      shiftType,
+      schedules,
+      reminder: {
+        reminderDays,
+        employeeReminders: {
+          clockIn: toAmPm(clockInReminder),
+          clockOut: toAmPm(clockOutReminder),
         },
-        break: {
-          start: toAmPm(breakStart),
-          end: toAmPm(breakEnd),
-        },
-      });
-    } else {
-      // Flexible type - send individual schedules for each day
-      uploadWorkShift.mutate({
-        ...baseData,
-        flexibleSchedule: flexibleSchedule,
-      });
-    }
+      },
+    });
   };
 
   const onUpdate = () => {
-    const baseData = {
-      name: shiftName,
-      workingDays: workingDays,
-      workingDayType: workingDayType,
-      workDays: shiftDays,
-    };
+    const shiftType = workingDayType === "Flexible" ? "flexible" : "standard";
+    const schedules =
+      workingDayType === "Standard"
+        ? shiftDays.map((day) => ({
+            day,
+            workDuration: {
+              start: toAmPm(startTime),
+              end: toAmPm(endTime),
+            },
+            ...(breakStart && breakEnd
+              ? {
+                  break: {
+                    start: toAmPm(breakStart),
+                    end: toAmPm(breakEnd),
+                  },
+                }
+              : {}),
+          }))
+        : shiftDays.map((day) => ({
+            day,
+            workDuration: {
+              start: toAmPm(flexibleSchedule[day].startTime),
+              end: toAmPm(flexibleSchedule[day].endTime),
+            },
+            ...(flexibleSchedule[day].breakStart &&
+            flexibleSchedule[day].breakEnd
+              ? {
+                  break: {
+                    start: toAmPm(flexibleSchedule[day].breakStart),
+                    end: toAmPm(flexibleSchedule[day].breakEnd),
+                  },
+                }
+              : {}),
+          }));
 
-    if (workingDayType === "Standard") {
-      updateShift.mutate({
-        id: shift.id,
-        data: {
-          ...baseData,
-          workDuration: {
-            start: toAmPm(startTime),
-            end: toAmPm(endTime),
-          },
-          break: {
-            start: toAmPm(breakStart),
-            end: toAmPm(breakEnd),
+    updateShift.mutate({
+      id: shift._id || shift.id,
+      data: {
+        name: shiftName,
+        shiftType,
+        schedules,
+        reminder: {
+          reminderDays,
+          employeeReminders: {
+            clockIn: toAmPm(clockInReminder),
+            clockOut: toAmPm(clockOutReminder),
           },
         },
-      });
-    } else {
-      // Flexible type - send individual schedules for each day
-      updateShift.mutate({
-        id: shift.id,
-        data: {
-          ...baseData,
-          flexibleSchedule: flexibleSchedule,
-        },
-      });
-    }
+      },
+    });
   };
 
   return (

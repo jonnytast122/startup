@@ -143,7 +143,7 @@ export default function WorkShiftPage() {
 							<TableBody>
 								{workshift?.results?.results.map((shift) => (
 									<TableRow
-										key={shift.id}
+										key={shift._id || shift.id}
 										className="cursor-pointer hover:bg-gray-100"
 										onClick={() => setViewingShift(shift)}
 									>
@@ -310,7 +310,7 @@ export default function WorkShiftPage() {
 								className="rounded-full px-7 font-custom"
 								style={{ backgroundColor: "#fb5f59", color: "white" }}
 								onClick={() => {
-									onDelete(confirmDelete.id);
+									onDelete(confirmDelete._id || confirmDelete.id);
 									setConfirmDelete(null);
 								}}
 							>
