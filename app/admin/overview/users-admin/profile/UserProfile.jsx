@@ -28,7 +28,7 @@ import { Button } from "react-scroll";
 import DeleteDialog from "../components/deletedialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchWorkShift } from "@/lib/api/work-shift";
-import { updateUser } from "@/lib/api/user";
+import { getMyDetails, updateUser } from "@/lib/api/user";
 import { fetchBranches } from "@/lib/api/branch";
 import { fetchPositions } from "@/lib/api/position";
 import { fetchCompany } from "@/lib/api/company";
@@ -43,6 +43,11 @@ export default function UserProfile({ user }) {
   const { data: company } = useQuery({
     queryKey: ["company"],
     queryFn: fetchCompany,
+  });
+
+  const { data: myDetails } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
   });
 
   const { data: workshift } = useQuery({
@@ -124,6 +129,14 @@ export default function UserProfile({ user }) {
   });
 
   const profileImage = selectedFile || user?.profileImg;
+
+  const role = (myDetails?.role || myDetails?.employee?.role || "").toLowerCase();
+  const permissions = Array.isArray(myDetails?.permissions)
+    ? myDetails.permissions
+    : Array.isArray(myDetails?.employee?.permissions)
+      ? myDetails.employee.permissions
+      : [];
+  const canManageUsers = role === "owner" || permissions.includes("manageUsers");
 
   const [companyId, setCompanyId] = useState(
     user?.employee?.companyIdentifier || ""
@@ -1236,17 +1249,32 @@ export default function UserProfile({ user }) {
       </div>
 
       <div className="flex justify-center">
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-70"
-        >
-          {isSaving ? (
-            <FaSpinner className="animate-spin text-white text-lg" />
-          ) : (
-            "Save Changes"
-          )}
-        </Button>
+        {canManageUsers ? (
+          <Button
+            onClick={handleSave}
+            disabled={isSaving}
+            className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg hover:bg-blue-600 transition disabled:opacity-70"
+          >
+            {isSaving ? (
+              <FaSpinner className="animate-spin text-white text-lg" />
+            ) : (
+              "Save Changes"
+            )}
+          </Button>
+        ) : (
+          <div className="relative group">
+            <Button
+              disabled
+              // Disable save if admin doesn't have manageUsers permission.
+              className="mt-4 bg-blue-400 text-white font-custom px-6 py-2 rounded-lg opacity-60 cursor-not-allowed"
+            >
+              Save Changes
+            </Button>
+            <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+              You have no permission
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Dialogs - Only render when needed */}

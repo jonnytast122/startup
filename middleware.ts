@@ -27,8 +27,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 
-  // Admin-only routes
-  if (pathname.startsWith("/admin") && role !== "owner") {
+  // Admin routes accessible by "admin" or "owner"
+  if (pathname.startsWith("/admin") && !["admin", "owner"].includes(role!)) {
     return NextResponse.redirect(new URL("/unauthorized", req.url));
   }
 

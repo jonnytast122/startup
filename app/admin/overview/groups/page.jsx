@@ -30,6 +30,7 @@ import {
   deleteSection,
   updateSection,
 } from "@/lib/api/group";
+import { getMyDetails } from "@/lib/api/user";
 
 export default function GroupPage() {
   const queryClient = useQueryClient();
@@ -39,6 +40,20 @@ export default function GroupPage() {
     queryKey: ["sections"],
     queryFn: fetchSections,
   });
+
+  const { data: myDetails } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
+
+  const role = (myDetails?.role || myDetails?.employee?.role || "").toLowerCase();
+  const permissions = Array.isArray(myDetails?.permissions)
+    ? myDetails.permissions
+    : Array.isArray(myDetails?.employee?.permissions)
+      ? myDetails.employee.permissions
+      : [];
+  const canManageGroupSections =
+    role === "owner" || permissions.includes("manageGroupSections");
 
   // States
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -167,15 +182,29 @@ export default function GroupPage() {
             )}
 
             <button
-              onClick={() =>
+              onClick={() => {
+                if (!canManageGroupSections) return;
                 setDeleteTarget({
                   type: "section",
                   id: section._id,
                   name: section.name,
-                })
-              }
+                });
+              }}
             >
-              <Trash2 className="w-5 h-5 text-black hover:text-red-600" />
+              <span className="relative group">
+                <Trash2
+                  className={`w-5 h-5 ${
+                    canManageGroupSections
+                      ? "text-black hover:text-red-600"
+                      : "text-gray-300"
+                  }`}
+                />
+                {!canManageGroupSections && (
+                  <span className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+                    You have no permission
+                  </span>
+                )}
+              </span>
             </button>
           </div>
 
@@ -238,12 +267,40 @@ export default function GroupPage() {
                       <span>{group.createdBy?.name}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="text-right font-custom">
+                  <TableCell className="text-center align-middle font-custom">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="p-1 rounded hover:bg-gray-100">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </button>
+                        <span className="relative group">
+                          <button
+                            className={`p-1 rounded ${
+                              canManageGroupSections
+                                ? "hover:bg-gray-100"
+                                : "opacity-60 cursor-not-allowed"
+                            }`}
+                            onClick={(e) => {
+                              if (!canManageGroupSections) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }
+                            }}
+                            onPointerDown={(e) => {
+                              if (!canManageGroupSections) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                              }
+                            }}
+                            type="button"
+                          >
+                            <MoreHorizontal
+                              className={`h-4 w-4 ${canManageGroupSections ? "" : "text-gray-300"}`}
+                            />
+                          </button>
+                          {!canManageGroupSections && (
+                            <span className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+                              You have no permission
+                            </span>
+                          )}
+                        </span>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="start"
@@ -251,25 +308,33 @@ export default function GroupPage() {
                         className="bg-white border px-4 border-gray-200 shadow-lg rounded-md font-custom"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <DropdownMenuItem
-                          onClick={() =>
-                            openEditModal(section._id, group, false)
-                          }
-                        >
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setDeleteTarget({
-                              type: "group",
-                              id: group._id,
-                              name: group.name,
-                            })
-                          }
-                          className="text-red-500"
-                        >
-                          Delete
-                        </DropdownMenuItem>
+                        {canManageGroupSections ? (
+                          <>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                openEditModal(section._id, group, false)
+                              }
+                            >
+                              Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                setDeleteTarget({
+                                  type: "group",
+                                  id: group._id,
+                                  name: group.name,
+                                })
+                              }
+                              className="text-red-500"
+                            >
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        ) : (
+                          <DropdownMenuItem disabled>
+                            No permission
+                          </DropdownMenuItem>
+                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -278,13 +343,27 @@ export default function GroupPage() {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={4} className="text-left">
-                  <Button
-                    className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                    onClick={() => openAddModal(section._id)}
-                  >
-                    <Plus size={12} className="mr-2" /> Add Group
-                  </Button>
+                <TableCell colSpan={4} className="text-left overflow-visible">
+                  {canManageGroupSections ? (
+                    <Button
+                      className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
+                      onClick={() => openAddModal(section._id)}
+                    >
+                      <Plus size={12} className="mr-2" /> Add Group
+                    </Button>
+                  ) : (
+                    <div className="relative group inline-flex">
+                      <Button
+                        className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 opacity-60 cursor-not-allowed"
+                        disabled
+                      >
+                        <Plus size={12} className="mr-2" /> Add Group
+                      </Button>
+                      <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+                        You have no permission
+                      </div>
+                    </div>
+                  )}
                 </TableCell>
               </TableRow>
             </TableFooter>
@@ -307,9 +386,23 @@ export default function GroupPage() {
 
       <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4 font-custom">
         {sections.map((section) => renderGroupSection(section))}
-        <Button className="w-fit mt-4" onClick={() => setIsSectionOpen(true)}>
-          <Plus size={16} className="mr-2" /> Add Section
-        </Button>
+        {canManageGroupSections ? (
+          <Button className="w-fit mt-4" onClick={() => setIsSectionOpen(true)}>
+            <Plus size={16} className="mr-2" /> Add Section
+          </Button>
+        ) : (
+          <div className="relative group inline-flex w-fit mt-4">
+            <Button
+              className="opacity-60 cursor-not-allowed"
+              disabled
+            >
+              <Plus size={16} className="mr-2" /> Add Section
+            </Button>
+            <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+              You have no permission
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Group Dialog */}

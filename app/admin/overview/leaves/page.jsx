@@ -138,8 +138,8 @@ const columns = [
         percentUsed > 75
           ? "text-red-500"
           : percentUsed > 50
-          ? "text-orange-500"
-          : "text-blue-500";
+            ? "text-orange-500"
+            : "text-blue-500";
 
       return (
         <span className={textColor}>
@@ -193,8 +193,8 @@ const columns = [
               status === "approved"
                 ? "text-blue-500"
                 : status === "rejected"
-                ? "text-red-500"
-                : "text-gray-500"
+                  ? "text-red-500"
+                  : "text-gray-500"
             }`}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -484,10 +484,7 @@ const Leaves = () => {
                 <AddLeaveDialog
                   open={openAddLeaveDialog}
                   onOpenChange={setOpenAddLeaveDialog}
-                  onConfirm={(newLeave) => {
-                    // Handle new leave creation if needed
-                    console.log("New leave:", newLeave);
-                  }}
+                  onConfirm={(newLeave) => {}}
                 />
                 <Select>
                   <SelectTrigger className="w-24 font-custom rounded-full">
@@ -524,7 +521,7 @@ const Leaves = () => {
                           >
                             {flexRender(
                               header.column.columnDef.header,
-                              header.getContext()
+                              header.getContext(),
                             )}
                           </TableHead>
                         ))}
@@ -545,7 +542,7 @@ const Leaves = () => {
                           >
                             {flexRender(
                               cell.column.columnDef.cell,
-                              cell.getContext()
+                              cell.getContext(),
                             )}
                           </TableCell>
                         ))}

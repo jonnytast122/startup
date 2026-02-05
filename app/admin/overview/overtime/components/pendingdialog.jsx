@@ -38,7 +38,11 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getOvertime, approveOvertime, rejectOvertime } from "@/lib/api/adminOvertime";
+import {
+  getOvertime,
+  approveOvertime,
+  rejectOvertime,
+} from "@/lib/api/adminOvertime";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -67,11 +71,15 @@ function useLocalToast() {
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -252,7 +260,6 @@ const useTransformedOvertimeData = (apiData) => {
   }, [apiData]);
 };
 
-
 const PendingDialog = ({ onClose }) => {
   const [open, isOpen] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -266,8 +273,16 @@ const PendingDialog = ({ onClose }) => {
     };
   });
 
-  const { data: overtimeRespone , isLoading: overtimeLoading , error: overtimeError } = useQuery({
-    queryKey: ["overtime-pending", selectedRange.startDate, selectedRange.endDate],
+  const {
+    data: overtimeRespone,
+    isLoading: overtimeLoading,
+    error: overtimeError,
+  } = useQuery({
+    queryKey: [
+      "overtime-pending",
+      selectedRange.startDate,
+      selectedRange.endDate,
+    ],
     queryFn: () =>
       getOvertime({
         startDate: selectedRange.startDate.toISOString().split("T")[0],
@@ -425,7 +440,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </TableHead>
                     ))}
@@ -444,7 +459,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -471,37 +486,45 @@ const PendingDialog = ({ onClose }) => {
 const DeclineDialog = ({ employee, startdate, overTime }) => {
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState("");
-  console.log(overTime);
 
   const queryClient = useQueryClient();
   const { showSuccess, showError, ToastPortal } = useLocalToast();
   const declineMutation = useMutation({
     mutationFn: rejectOvertime,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({
+        queryKey: ["overtime-pending"],
+        exact: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
       showSuccess(
-        "Declined successfully for " + employee.name + " on " + startdate.split("T")[0]
+        "Declined successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0],
       );
       setOpen(false);
       setComment("");
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.message || "Failed to decline request";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to decline request";
       showError(
         "Decline failed for " +
           employee.name +
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          msg
+          msg,
       );
       setOpen(false);
-    }
+    },
   });
 
   const handleDecline = () => {
-    declineMutation.mutate({id: overTime.id, message: comment});
+    declineMutation.mutate({ id: overTime.id, message: comment });
   };
 
   return (
@@ -523,8 +546,8 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s OT on{" "}
-          <span className="font-custom">{startdate.split("T")[0]}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s
+          OT on <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
@@ -563,31 +586,39 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
   const approveMutation = useMutation({
     mutationFn: approveOvertime,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["overtime-pending"], exact: false });
+      queryClient.invalidateQueries({
+        queryKey: ["overtime-pending"],
+        exact: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
       showSuccess(
-        "Approved successfully for " + employee.name + " on " + startdate.split("T")[0]
+        "Approved successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0],
       );
       setOpen(false);
       setComment("");
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.message || "Failed to approve request";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to approve request";
       showError(
         "Approve failed for " +
           employee.name +
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          msg
+          msg,
       );
       setOpen(false);
-    }
+    },
   });
 
   const handleApprove = () => {
-    console.log("overtime",overTime,comment)
-    approveMutation.mutate({id: overTime.id, message: comment});
+    approveMutation.mutate({ id: overTime.id, message: comment });
   };
 
   return (
@@ -608,8 +639,9 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s OT
-          request on <span className="font-custom">{startdate.split("T")[0]}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s
+          OT request on{" "}
+          <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"

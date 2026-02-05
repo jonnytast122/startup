@@ -28,6 +28,7 @@ import {
   deleteLeavePolicy,
 } from "@/lib/api/policy";
 import { fetchCompany } from "@/lib/api/company";
+import { getMyDetails } from "@/lib/api/user";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 export default function PolicyPage() {
@@ -42,6 +43,20 @@ export default function PolicyPage() {
     queryKey: ["company"],
     queryFn: fetchCompany,
   });
+
+  const { data: myDetails } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
+
+  const role = (myDetails?.role || myDetails?.employee?.role || "").toLowerCase();
+  const permissions = Array.isArray(myDetails?.permissions)
+    ? myDetails.permissions
+    : Array.isArray(myDetails?.employee?.permissions)
+      ? myDetails.employee.permissions
+      : [];
+  const canManageLeavePolicies =
+    role === "owner" || permissions.includes("manageLeavePolicies");
 
   const { data: overtimeSettings, isLoading: overtimeLoading } = useQuery({
     queryKey: ["overtimeSettings", company?.id], // include company ID in the key
@@ -163,26 +178,59 @@ export default function PolicyPage() {
                 >
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="mx-auto">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
+                      <span className="relative group">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`mx-auto ${
+                            canManageLeavePolicies
+                              ? ""
+                              : "opacity-60 cursor-not-allowed"
+                          }`}
+                          onClick={(e) => {
+                            if (!canManageLeavePolicies) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }
+                          }}
+                          onPointerDown={(e) => {
+                            if (!canManageLeavePolicies) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }
+                          }}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                        {!canManageLeavePolicies && (
+                          <span className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+                            You have no permission
+                          </span>
+                        )}
+                      </span>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="start"
                       side="right"
                       className="bg-white border px-4 border-gray-200 shadow-lg rounded-md font-custom"
                     >
-                      <DropdownMenuItem
-                        onClick={() => openModal(category, data, false)}
-                      >
-                        Edit {category === "leave" ? "Leave" : "Overtime"}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setConfirmDelete({ category, data })}
-                        className="text-red-500"
-                      >
-                        Delete {category === "leave" ? "Leave" : "Overtime"}
-                      </DropdownMenuItem>
+                      {canManageLeavePolicies ? (
+                        <>
+                          <DropdownMenuItem
+                            onClick={() => openModal(category, data, false)}
+                          >
+                            Edit {category === "leave" ? "Leave" : "Overtime"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setConfirmDelete({ category, data })}
+                            className="text-red-500"
+                          >
+                            Delete {category === "leave" ? "Leave" : "Overtime"}
+                          </DropdownMenuItem>
+                        </>
+                      ) : (
+                        <DropdownMenuItem disabled>No permission</DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>
@@ -190,19 +238,29 @@ export default function PolicyPage() {
               </TableRow>
             ))}
           </TableBody>
-          <TableFooter>
-            <TableRow>
-              <TableCell colSpan={4} className="text-left">
-                <Button
-                  className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
-                  onClick={() => openModal(category, null)}
-                >
-                  <Plus size={12} className="mr-2" /> Add Policy
-                </Button>
-              </TableCell>
-            </TableRow>
-          </TableFooter>
         </Table>
+        <div className="px-4 py-3">
+          {canManageLeavePolicies ? (
+            <Button
+              className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 hover:bg-blue-200"
+              onClick={() => openModal(category, null)}
+            >
+              <Plus size={12} className="mr-2" /> Add Policy
+            </Button>
+          ) : (
+            <div className="relative group inline-flex">
+              <Button
+                className="border-none shadow-none bg-transparent text-blue-700 py-0 m-0 opacity-60 cursor-not-allowed"
+                disabled
+              >
+                <Plus size={12} className="mr-2" /> Add Policy
+              </Button>
+              <div className="pointer-events-none absolute left-1/2 top-full z-50 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+                You have no permission
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
