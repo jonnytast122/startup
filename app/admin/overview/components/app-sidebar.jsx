@@ -26,8 +26,28 @@ import {
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetchCompany } from "@/lib/api/company";
+import { getMyDetails } from "@/lib/api/user";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "@/config/firebase";
+
+const userFixedPermissions = [
+  "createOrUpdateAttendance",
+  "requestRemoteAttendance",
+  "viewAttendance",
+  "requestLeave",
+  "viewLeaveBalance",
+  "createOvertimeRequest",
+  "updateOvertimeRequest",
+  "deleteOvertimeRequest",
+  "getOvertimeRequest",
+  "getMyOvertimeSettings",
+  "updateOvertimeRequestStatus",
+  "unclaimingOvertimeRequest",
+  "getCompanies",
+  "getMyDetail",
+  "getMyCalendars",
+  "viewDashboard",
+];
 
 // This is sample data.
 const data = {
@@ -40,6 +60,7 @@ const data = {
           url: "/admin/overview",
           icon: LayoutDashboard,
           alert: 0,
+          permissions: ["viewDashboard"],
         },
       ],
     },
@@ -51,24 +72,28 @@ const data = {
           url: "/admin/overview/attendence",
           icon: CalendarClock,
           alert: 0,
+          permissions: ["viewAttendance"],
         },
         {
           title: "Overtime",
           url: "/admin/overview/overtime",
           icon: CalendarPlus2,
           alert: 0,
+          permissions: ["getOvertimeRequest"],
         },
         {
           title: "Leaves",
           url: "/admin/overview/leaves",
           icon: LogOut,
           alert: 0,
+          permissions: ["getLeaveRequests"],
         },
         {
           title: "Payroll",
           url: "/admin/overview/payroll",
           icon: CreditCard,
           alert: 0,
+          permissions: ["viewPayroll"],
         },
       ],
     },
@@ -80,30 +105,35 @@ const data = {
           url: "/admin/overview/company",
           icon: Settings,
           alert: 0,
+          permissions: ["getCompanies"],
         },
         {
           title: "Policy",
           url: "/admin/overview/policy",
           icon: Lightbulb,
           alert: 0,
+          permissions: ["getLeavePolicies", "getOvertimeSettings"],
         },
         {
           title: "Workshift",
           url: "/admin/overview/workshift",
           icon: BookCheck,
           alert: 0,
+          permissions: ["getShifts", "getAllShifts"],
         },
         {
           title: "Users & Admin",
           url: "/admin/overview/users-admin",
           icon: User,
           alert: 0,
+          permissions: ["getUsers", "manageUsers"],
         },
         {
           title: "Groups",
           url: "/admin/overview/groups",
           icon: Users,
           alert: 0,
+          permissions: ["getGroups"],
         },
       ],
     },
@@ -126,6 +156,11 @@ export function AppSidebar(props) {
   const { data: company } = useQuery({
     queryKey: ["company"],
     queryFn: fetchCompany,
+  });
+
+  useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
   });
 
   // useEffect(() => {

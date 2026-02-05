@@ -88,6 +88,11 @@ const ApiRoutes = {
     delete: `${BASE_URL}/users/{id}`,
     search: `${BASE_URL}/users/search`,
   },
+  userRoles: {
+    promote: `${BASE_URL}/roles/promote`,
+    demote: `${BASE_URL}/roles/demote/{id}`,
+    updatePermissions: `${BASE_URL}/roles/{id}/permissions`,
+  },
   calendar: {
     get: `${BASE_URL}/calendars/all`,
     create: `${BASE_URL}/calendars`,

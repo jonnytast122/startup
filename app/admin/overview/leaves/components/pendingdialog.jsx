@@ -38,7 +38,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { format, isWithinInterval, parseISO } from "date-fns";
 
-import { useQuery,useMutation,useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getLeave, approveLeave, rejectLeave } from "@/lib/api/adminLeave";
 
 const ALL = [
@@ -46,7 +46,6 @@ const ALL = [
   { value: "All users group", label: "All users group" },
   { value: "Assigned features", label: "Assigned features" },
 ];
-
 
 const exportOptions = [
   { value: "as CSV", label: "as CSV" },
@@ -77,10 +76,12 @@ function useLocalToast() {
             <div className="mt-0.5">
               {toast.type === "success" ? "✅" : "⚠️"}
             </div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -119,18 +120,22 @@ const columns = [
       </div>
     ),
   },
-  { accessorKey: "startDate", header: "Start date",
+  {
+    accessorKey: "startDate",
+    header: "Start date",
     cell: ({ row }) => {
       const startTime = row.original.startDate.split("T")[0];
       return startTime;
     },
-   },
-  { accessorKey: "endDate", header: "End date",
+  },
+  {
+    accessorKey: "endDate",
+    header: "End date",
     cell: ({ row }) => {
       const startTime = row.original.endDate.split("T")[0];
       return startTime;
     },
-   },
+  },
   {
     accessorKey: "start_time",
     header: "Start Time",
@@ -266,8 +271,6 @@ const PendingDialog = ({ onClose }) => {
     enabled: open,
   });
 
-  console.log(leaveResponse);
-
   // Transform API data to match table format
   const leaveData = useMemo(() => {
     if (!leaveResponse) return [];
@@ -311,8 +314,6 @@ const PendingDialog = ({ onClose }) => {
   const filteredData = useMemo(() => {
     return leaveData;
   }, [selectedRange]);
-
-  console.log(filteredData);
 
   const table = useReactTable({
     data: leaveData,
@@ -429,7 +430,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </TableHead>
                     ))}
@@ -446,7 +447,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -479,13 +480,16 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
   const approveMutation = useMutation({
     mutationFn: approveLeave,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
+      queryClient.invalidateQueries({
+        queryKey: ["leave-pending"],
+        exact: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
       showSuccess(
         "Approved successfully for " +
           employee.name +
           " on " +
-          startdate.split("T")[0]
+          startdate.split("T")[0],
       );
     },
     onError: (error) => {
@@ -496,17 +500,16 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          message
+          message,
       );
     },
   });
 
   const handleApprove = () => {
-    approveMutation.mutate({id: leave._id, message: comment});
+    approveMutation.mutate({ id: leave._id, message: comment });
     setOpen(false);
     setComment("");
   };
-
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -526,8 +529,9 @@ const ApproveDialog = ({ employee, startdate, leave }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to approve{" "}
-          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s leave
-          on <span className="font-custom">{startdate.split("T")[0]}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s
+          leave on{" "}
+          <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"
@@ -567,13 +571,16 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
   const approveMutation = useMutation({
     mutationFn: rejectLeave,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["leave-pending"], exact: false });
+      queryClient.invalidateQueries({
+        queryKey: ["leave-pending"],
+        exact: false,
+      });
       queryClient.invalidateQueries({ queryKey: ["leave"], exact: false });
       showSuccess(
         "Declined successfully for " +
           employee.name +
           " on " +
-          startdate.split("T")[0]
+          startdate.split("T")[0],
       );
     },
     onError: (error) => {
@@ -584,13 +591,13 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          message
+          message,
       );
     },
   });
 
   const handleDecline = () => {
-    approveMutation.mutate({id: leave._id, message: comment});
+    approveMutation.mutate({ id: leave._id, message: comment });
     setOpen(false);
     setComment("");
   };
@@ -614,8 +621,9 @@ const DeclineDialog = ({ employee, startdate, leave }) => {
         </DialogHeader>
         <p className="text-gray text-2xl font-custom mb-6">
           Do you want to decline{" "}
-          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s leave
-          on <span className="font-custom">{startdate.split("T")[0]}</span>?
+          <span className="text-[#5494DA] font-custom">{employee.name}</span>'s
+          leave on{" "}
+          <span className="font-custom">{startdate.split("T")[0]}</span>?
         </p>
         <input
           id="note_request"

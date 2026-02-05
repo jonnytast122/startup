@@ -10,7 +10,7 @@ import AddAdminDialog from "./components/addadmindialog";
 import { FaSpinner } from "react-icons/fa";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchUsers } from "@/lib/api/user";
+import { fetchUsers, getMyDetails } from "@/lib/api/user";
 
 export default function UserAdminPage() {
   const [activeTab, setActiveTab] = useState("Users");
@@ -28,6 +28,25 @@ export default function UserAdminPage() {
       setUsersCount(data?.totalResults || 0);
     },
   });
+
+  const { data: myDetails } = useQuery({
+    queryKey: ["my-details"],
+    queryFn: getMyDetails,
+  });
+
+  // Only allow Add User if admin has manageUsers (owners always allowed).
+  const role = (
+    myDetails?.role ||
+    myDetails?.employee?.role ||
+    ""
+  ).toLowerCase();
+  const permissions = Array.isArray(myDetails?.permissions)
+    ? myDetails.permissions
+    : Array.isArray(myDetails?.employee?.permissions)
+      ? myDetails.employee.permissions
+      : [];
+  const canManageUsers =
+    role === "owner" || permissions.includes("manageUsers");
 
   const users = data?.results || [];
   const totalPages = data?.totalPages || 1;
@@ -77,8 +96,8 @@ export default function UserAdminPage() {
                 activeTab === "Users"
                   ? "Search users..."
                   : activeTab === "Admins"
-                  ? "Search admins..."
-                  : "Search users..."
+                    ? "Search admins..."
+                    : "Search users..."
               }
               className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
@@ -101,6 +120,7 @@ export default function UserAdminPage() {
                 setUsersCount={setUsersCount}
                 searchQuery={searchQuery}
                 onAddUser={() => setDialogType("user")}
+                canManageUsers={canManageUsers}
                 isLoading={isLoading}
                 page={page}
                 setPage={setPage}

@@ -85,15 +85,19 @@ function useLocalToast() {
     ? createPortal(
         <div className="fixed bottom-6 right-6 z-[1000]">
           <div
-            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex items-start gap-3 ${
+            className={`min-w-[280px] max-w-[380px] rounded-lg shadow-lg px-4 py-3 text-white flex justify-center items-center gap-3 ${
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -130,6 +134,7 @@ const UsersScreen = ({
   users = [],
   setUsersCount,
   onAddUser,
+  canManageUsers,
   page,
   setPage,
   totalPages,
@@ -261,6 +266,7 @@ const UsersScreen = ({
           user={row.original}
           showSuccess={showSuccess}
           showError={showError}
+          canManageUsers={canManageUsers}
         />
       ),
     },
@@ -361,6 +367,7 @@ const UsersScreen = ({
         showAddDialog={showAddDialog}
         setShowAddDialog={setShowAddDialog}
         setExportType={setExportType}
+        canManageUsers={canManageUsers}
       />
 
       <UsersTable
@@ -389,7 +396,7 @@ const UsersScreen = ({
 };
 
 // Sub-components for better readability
-const ActionsCell = ({ user, showSuccess, showError }) => {
+const ActionsCell = ({ user, showSuccess, showError, canManageUsers }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [actionType, setActionType] = useState(null);
 
@@ -405,7 +412,8 @@ const ActionsCell = ({ user, showSuccess, showError }) => {
       showSuccess?.(`Deleted ${name} successfully`);
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.message || "Failed to delete user";
+      const msg =
+        err?.response?.data?.message || err?.message || "Failed to delete user";
       showError?.(msg);
     },
   });
@@ -422,43 +430,62 @@ const ActionsCell = ({ user, showSuccess, showError }) => {
     }
   };
 
-  // const handleOpen = (type) => {
-  //   setActionType(type);
-  //   setDialogOpen(true);
-  // };
+  const role = user?.employee?.role;
+
+  const handleOpen = (type) => {
+    setActionType(type);
+    setDialogOpen(true);
+  };
 
   return (
     <div className="flex items-center justify-end gap-2">
-      {/* {role === "admin" || role === "owner" ? (
-        <UserMinus
-          className="w-4 h-4 text-orange-500 cursor-pointer"
-          title="Demote"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleOpen("demote");
+      {canManageUsers ? (
+        role === "admin" || role === "owner" ? (
+          <UserMinus
+            className="w-4 h-4 text-orange-500 cursor-pointer"
+            title="Demote"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpen("demote");
+            }}
+          />
+        ) : (
+          <UserPlus
+            className="w-4 h-4 text-green-600 cursor-pointer"
+            title="Promote"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleOpen("promote");
+            }}
+          />
+        )
+      ) : (
+        <span className="relative group">
+          <UserPlus className="w-4 h-4 text-gray-300" />
+          <span className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+            You have no permission
+          </span>
+        </span>
+      )}
+      {canManageUsers ? (
+        <Trash2
+          className="w-4 h-4 text-red-500 cursor-pointer"
+          title="Delete"
+          onClick={() => {
+            openDeleteDialog({
+              id: user.employee?._id || user.employee?.id,
+              name: user.employee?.name,
+            });
           }}
         />
       ) : (
-        <UserPlus
-          className="w-4 h-4 text-green-600 cursor-pointer"
-          title="Promote"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleOpen("promote");
-          }}
-        />
-      )} */}
-      <Trash2
-        className="w-4 h-4 text-red-500 cursor-pointer"
-        title="Delete"
-        onClick={() => {
-          // e.stopPropagation();
-          openDeleteDialog({
-            id: user.employee?.id,
-            name: user.employee?.name,
-          });
-        }}
-      />
+        <span className="relative group">
+          <Trash2 className="w-4 h-4 text-gray-300" />
+          <span className="pointer-events-none absolute right-0 top-full z-10 mt-2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+            You have no permission
+          </span>
+        </span>
+      )}
       {/* <Archive
         className="w-4 h-4 text-gray-500 cursor-pointer"
         title="Archive"
@@ -471,6 +498,8 @@ const ActionsCell = ({ user, showSuccess, showError }) => {
         setOpen={setDialogOpen}
         type={actionType}
         user={user}
+        showSuccess={showSuccess}
+        showError={showError}
         onConfirm={(newRole, branch, features) => {
           setDialogOpen(false);
         }}
@@ -523,6 +552,7 @@ const TopControls = ({
   setShowAddDialog,
   setShowUploadDialog,
   setExportType,
+  canManageUsers,
 }) => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
@@ -561,37 +591,51 @@ const TopControls = ({
       </div>
 
       <div className="flex w-full sm:w-auto gap-4">
-        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-          <DropdownMenuTrigger asChild>
+        {canManageUsers ? (
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="rounded-full font-custom px-4 py-2 flex items-center gap-2"
+                onClick={onAddUser}
+              >
+                Add User
+              </Button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
+              <DropdownMenuItem
+                onClick={handleAddManually}
+                className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+              >
+                <Plus className="w-4 h-4 mr-2" /> Add Manually
+              </DropdownMenuItem>
+              {/* <DropdownMenuItem
+                onClick={() => setShowUploadDialog(true)}
+                className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+              >
+                <Download className="w-4 h-4 mr-2" /> Import
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => alert("Importing...")}
+                className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
+              >
+                <PanelTopOpen className="w-4 h-4 mr-2" /> Download Template
+              </DropdownMenuItem> */}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="relative group">
             <Button
-              className="rounded-full font-custom px-4 py-2 flex items-center gap-2"
-              onClick={onAddUser}
+              className="rounded-full font-custom px-4 py-2 flex items-center gap-2 cursor-not-allowed opacity-60"
+              disabled
             >
               Add User
             </Button>
-          </DropdownMenuTrigger>
-
-          <DropdownMenuContent className="font-custom bg-white shadow-md border p-2">
-            <DropdownMenuItem
-              onClick={handleAddManually}
-              className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
-            >
-              <Plus className="w-4 h-4 mr-2" /> Add Manually
-            </DropdownMenuItem>
-            {/* <DropdownMenuItem
-              onClick={() => setShowUploadDialog(true)}
-              className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
-            >
-              <Download className="w-4 h-4 mr-2" /> Import
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => alert("Importing...")}
-              className="hover:bg-blue-50 hover:text-blue-600 cursor-pointer transition-colors"
-            >
-              <PanelTopOpen className="w-4 h-4 mr-2" /> Download Template
-            </DropdownMenuItem> */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            <div className="pointer-events-none absolute left-1/2 top-full z-10 mt-2 -translate-x-1/2 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-md transition group-hover:opacity-100">
+              You have no permission
+            </div>
+          </div>
+        )}
 
         <Select onValueChange={(value) => setExportType(value)}>
           <SelectTrigger className="rounded-full font-custom px-4 py-2 flex items-center gap-2">
@@ -626,7 +670,7 @@ const UsersTable = ({ table, router, page, setPage, totalPages }) => (
               >
                 {flexRender(
                   header.column.columnDef.header,
-                  header.getContext()
+                  header.getContext(),
                 )}
               </TableHead>
             ))}
@@ -778,10 +822,14 @@ const UsersTable = ({ table, router, page, setPage, totalPages }) => (
                 );
               }
 
+              const cellClass = isActions
+                ? "whitespace-nowrap overflow-visible text-center items-center"
+                : "whitespace-nowrap overflow-hidden text-ellipsis text-center items-center";
+
               return (
                 <TableCell
                   key={cell.id}
-                  className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
+                  className={cellClass}
                   onClick={() => {
                     if (!isActions) {
                       const user = row.original;
@@ -789,7 +837,7 @@ const UsersTable = ({ table, router, page, setPage, totalPages }) => (
 
                       if (!employeeId) return;
                       router.push(
-                        `/admin/overview/users-admin/profile/${employeeId}`
+                        `/admin/overview/users-admin/profile/${employeeId}`,
                       );
                     }
                   }}
@@ -837,11 +885,11 @@ export const exportTableToExcel = (table, data, fileName = "users.xlsx") => {
     .filter(
       (col) =>
         col.getIsVisible() &&
-        !["actions", "filter", "profile", "role"].includes(col.id)
+        !["actions", "filter", "profile", "role"].includes(col.id),
     );
 
   const headers = visibleColumns.map((col) =>
-    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id,
   );
 
   const rows = data.map((row) =>
@@ -870,7 +918,7 @@ export const exportTableToExcel = (table, data, fileName = "users.xlsx") => {
 
       // Default
       return value ?? "--";
-    })
+    }),
   );
 
   const worksheet = XLSX.utils.aoa_to_sheet([headers, ...rows]);
@@ -888,11 +936,11 @@ export const exportTableToCSV = (table, data, fileName = "users.csv") => {
     .filter(
       (col) =>
         col.getIsVisible() &&
-        !["actions", "filter", "profile", "role"].includes(col.id)
+        !["actions", "filter", "profile", "role"].includes(col.id),
     );
 
   const headers = visibleColumns.map((col) =>
-    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id,
   );
 
   const rows = data.map((row) =>
@@ -901,11 +949,11 @@ export const exportTableToCSV = (table, data, fileName = "users.csv") => {
       const value = accessorFn ? accessorFn(row) : row[col.id];
       if (Array.isArray(value)) return value.map((v) => v.name ?? v).join("; ");
       return value ?? "";
-    })
+    }),
   );
 
   const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join(
-    "\n"
+    "\n",
   );
 
   const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -925,11 +973,11 @@ export const exportTableToPDF = (table, data, fileName = "users.pdf") => {
     .filter(
       (col) =>
         col.getIsVisible() &&
-        !["actions", "filter", "profile", "role"].includes(col.id)
+        !["actions", "filter", "profile", "role"].includes(col.id),
     );
 
   const headers = visibleColumns.map((col) =>
-    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id
+    typeof col.columnDef.header === "string" ? col.columnDef.header : col.id,
   );
 
   const rows = data.map((row) =>
@@ -957,7 +1005,7 @@ export const exportTableToPDF = (table, data, fileName = "users.pdf") => {
       }
 
       return value ?? "--";
-    })
+    }),
   );
 
   // 🧾 Add title
