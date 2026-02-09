@@ -25,11 +25,13 @@ function formatDate(dateStr) {
   return `${year}-${month}-${day}`;
 }
 
-
 function formatTime(dateStr) {
   if (!dateStr) return "-";
   const date = new Date(dateStr);
-  return date.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function formatWorkHours(hours) {
@@ -39,14 +41,16 @@ function formatWorkHours(hours) {
   return `${h}h ${m}m`;
 }
 
-
-
 export default function UserProfileSection({ employee, onClose }) {
   const [showPicker, setShowPicker] = useState(false);
-  const [payPeriod, setPayPeriod] = useState({
-    startDate: new Date(2025, 4, 26),
-    endDate: new Date(2025, 11, 25),
-    key: "selection",
+  const today = useMemo(() => new Date(), []);
+  const [payPeriod, setPayPeriod] = useState(() => {
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    return {
+      startDate: startOfMonth,
+      endDate: today,
+      key: "selection",
+    };
   });
 
   const datePickerRef = useRef(null);
@@ -68,17 +72,39 @@ export default function UserProfileSection({ employee, onClose }) {
   ];
 
   if (!employee) return null;
-  console.log(employee);
+  console.log("employee:", employee);
+
+  const displayName =
+    employee.fullname ||
+    employee?.employee?.name ||
+    `${employee.firstname || ""} ${employee.lastname || ""}`.trim() ||
+    "Unknown";
+
+  const employeeId =
+    employee?.employeeId ||
+    employee?.employee?._id ||
+    employee?.employee?.id ||
+    employee?.id;
+  console.log("Employee ID:", employeeId);
 
   const { data: attendances } = useQuery({
-    queryKey: ["employee-attendances", employee.id],
+    queryKey: [
+      "employee-attendances",
+      employeeId,
+      formatDate(payPeriod.startDate),
+      formatDate(payPeriod.endDate),
+    ],
     queryFn: () =>
       getEmployeeAttendance(
-        employee.employee._id,
+        employeeId,
         formatDate(payPeriod.startDate),
-        formatDate(payPeriod.endDate)
+        formatDate(payPeriod.endDate),
       ),
+    enabled: !!employeeId,
   });
+
+  console.log(attendances);
+  console.log("Raw API Response id:", employeeId);
 
   // transform API response
   const transformed = useMemo(() => {
@@ -86,7 +112,7 @@ export default function UserProfileSection({ employee, onClose }) {
     return attendances.map((record) => {
       const checkIns = record.transactions.filter((t) => t.type === "checkIn");
       const checkOuts = record.transactions.filter(
-        (t) => t.type === "checkOut"
+        (t) => t.type === "checkOut",
       );
       const firstIn = checkIns[0]?.time || null;
       const lastOut = checkOuts[checkOuts.length - 1]?.time || null;
@@ -95,13 +121,24 @@ export default function UserProfileSection({ employee, onClose }) {
         id: record._id,
         date: record.date,
         status: record.status,
-        job: record.jobTitle || "Unknown",
+        job: (() => {
+          const jobValue = record.employee?.info?.job;
+          if (typeof jobValue === "string" && jobValue.trim()) return jobValue;
+          if (jobValue?.name) return jobValue.name;
+          if (record.jobTitle) return record.jobTitle;
+          if (record.job) return record.job;
+          return "Unknown";
+        })(),
         workHours: record.workHours,
         firstIn,
         lastOut,
+        dailyTotals: record.dailyTotals || null,
+        employeeNote: record.employeeNote || null,
+        managerNote: record.managerNote || null,
       };
     });
   }, [attendances]);
+  console.log("transformed: ", transformed);
 
   return (
     <div className="bg-white">
@@ -115,7 +152,7 @@ export default function UserProfileSection({ employee, onClose }) {
           />
           <div className="flex items-center gap-32">
             <p className="font-semibold text-lg whitespace-nowrap">
-              {employee.firstname} {employee.lastname}
+              {displayName}
             </p>
             <div className="relative" ref={datePickerRef}>
               <span className="mr-2 text-sm text-gray-500">Pay period:</span>
@@ -178,15 +215,15 @@ export default function UserProfileSection({ employee, onClose }) {
           <thead>
             <tr className="text-sm text-gray-700 bg-gray-100">
               <th className="text-center px-3 py-2"></th>
-              <th className="text-left px-3 py-2">Date</th>
-              <th className="text-left px-3 py-2">Jobs</th>
-              <th className="text-left px-3 py-2">Status</th>
-              <th className="text-left px-3 py-2">Start</th>
-              <th className="text-left px-3 py-2">End</th>
-              <th className="text-left px-3 py-2">Total hours</th>
-              <th className="text-left px-3 py-2">Daily Totals</th>
-              <th className="text-left px-3 py-2">Employee Note</th>
-              <th className="text-left px-3 py-2">Manager Note</th>
+              <th className="text-center px-3 py-2">Date</th>
+              <th className="text-center px-3 py-2">Job</th>
+              <th className="text-center px-3 py-2">Status</th>
+              <th className="text-center px-3 py-2">Start</th>
+              <th className="text-center px-3 py-2">End</th>
+              <th className="text-center px-3 py-2">Total hours</th>
+              <th className="text-center px-3 py-2">Daily Totals</th>
+              <th className="text-center px-3 py-2">Employee Note</th>
+              <th className="text-center px-3 py-2">Manager Note</th>
             </tr>
           </thead>
           <tbody>
@@ -198,29 +235,54 @@ export default function UserProfileSection({ employee, onClose }) {
                 }`}
               >
                 <td className="px-3 py-2"></td>
-                <td className="px-3 py-2">{formatDate(rec.date)}</td>
-                <td className="px-3 py-2">{rec.job}</td>
-                <td className="px-3 py-2">{rec.status}</td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-1 justify-start">
+                <td className="px-3 py-2 text-center">{formatDate(rec.date)}</td>
+                <td className="px-3 py-2 text-center">
+                  <span className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
+                    {rec.job}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {(() => {
+                    const status = (rec.status || "").trim();
+                    const statusClass =
+                      status === "On time"
+                        ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5CB85C] text-green"
+                        : status === "Late"
+                          ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#ED4C4C] text-red"
+                          : status === "Early"
+                            ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#ED4C4C] text-yellow-400"
+                            : "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5CB85C] text-green";
+                    return <span className={statusClass}>{status || "-"}</span>;
+                  })()}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  <div className="flex items-center gap-1 justify-center">
                     <span>{formatTime(rec.firstIn)}</span>
                     {rec.firstIn && (
                       <MapPin className="w-4 h-4 text-gray-600" />
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-2">
-                  <div className="flex items-center gap-1 justify-start">
+                <td className="px-3 py-2 text-center">
+                  <div className="flex items-center gap-1 justify-center">
                     <span>{formatTime(rec.lastOut)}</span>
                     {rec.lastOut && (
                       <MapPin className="w-4 h-4 text-gray-600" />
                     )}
                   </div>
                 </td>
-                <td className="px-3 py-2">{formatWorkHours(rec.workHours)}</td>
-                <td className="px-3 py-2">{rec.dailyTotals || "-"}</td>
-                <td className="px-3 py-2">{rec.employeeNote || "-"}</td>
-                <td className="px-3 py-2">{rec.managerNote || "-"}</td>
+                <td className="px-3 py-2 text-center">
+                  {formatWorkHours(rec.workHours)}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {rec.dailyTotals || "-"}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {rec.employeeNote || "-"}
+                </td>
+                <td className="px-3 py-2 text-center">
+                  {rec.managerNote || "-"}
+                </td>
               </tr>
             ))}
           </tbody>

@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import UserProfileSection from "./user-profile-section"; // adjust the path if needed
+import UserProfileSection from "../records/[id]/user-profile-section"; // adjust the path if needed
 import { Search, ListFilter, ChevronDown } from "lucide-react";
 
 const exportOptions = [
@@ -401,7 +401,7 @@ const TimesheetScreen = () => {
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                         </TableHead>
                       ))}
@@ -422,7 +422,7 @@ const TimesheetScreen = () => {
                         >
                           {flexRender(
                             cell.column.columnDef.cell,
-                            cell.getContext()
+                            cell.getContext(),
                           )}
                         </TableCell>
                       ))}
@@ -492,7 +492,7 @@ const TimesheetScreen = () => {
                         return sum + h * 60 + m;
                       }, 0);
                       const totalHoursFormatted = `${Math.floor(
-                        totalMinutes / 60
+                        totalMinutes / 60,
                       )}:${String(totalMinutes % 60).padStart(2, "0")}`;
 
                       // calculate total shiftonjob

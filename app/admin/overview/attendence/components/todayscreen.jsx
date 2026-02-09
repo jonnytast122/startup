@@ -46,7 +46,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import AddAttendanceDialog from "./addattendencedialog";
 import AddAttendanceTableDialog from "./addattendencetabledialog";
-import UserProfileSection from "./user-profile-section"; // adjust the path if needed
+import UserProfileSection from "../records/[id]/user-profile-section"; // adjust the path if needed
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAttendances } from "@/lib/api/adminAttendance";
@@ -70,8 +70,12 @@ const columns = [
     header: "",
     cell: ({ row }) => {
       const profileExists = row.original.profile; // Check if profile exists
-      const firstNameInitial = row.original.firstname.charAt(0).toUpperCase();
-      const lastNameInitial = row.original.lastname.charAt(0).toUpperCase();
+      const initials = (row.original.fullname || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase())
+        .slice(0, 2)
+        .join("");
 
       return (
         <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-300">
@@ -84,16 +88,14 @@ const columns = [
             />
           ) : (
             <span className="text-xs text-gray-500 font-custom">
-              {firstNameInitial}
-              {lastNameInitial}
+              {initials}
             </span>
           )}
         </div>
       );
     },
   },
-  { accessorKey: "firstname", header: "First name" },
-  { accessorKey: "lastname", header: "Last name" },
+  { accessorKey: "fullname", header: "Full name" },
   { accessorKey: "department", header: "Department" },
   {
     accessorKey: "job",
@@ -113,12 +115,12 @@ const columns = [
 
       const statusClass =
         status === "On time"
-          ? "text-green"
+          ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5CB85C] text-green"
           : status === "Late"
-            ? "text-red"
+            ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#ED4C4C] text-red"
             : status === "Early"
-              ? "text-blue"
-              : "text-gray";
+              ? "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#ED4C4C] text-yellow-400"
+              : "px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5CB85C] text-green";
 
       return (
         <div className={`text-md font-custom ${statusClass}`}>{status}</div>
@@ -275,23 +277,39 @@ const TodayScreen = () => {
       const lastCheckOut =
         checkOuts.length > 0 ? checkOuts[checkOuts.length - 1] : null;
 
+      const shiftTypes = Array.isArray(record.employee?.info?.shiftType)
+        ? record.employee?.info?.shiftType
+        : record.employee?.info?.shiftType
+          ? [record.employee?.info?.shiftType]
+          : [];
+      const fallbackShift = shiftTypes[0] || null;
+      const shiftSource = record.shift || fallbackShift;
+      const todayDay = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Phnom_Penh",
+        weekday: "short",
+      }).format(new Date(record.date));
+      const todaySchedule = shiftSource?.schedules?.find(
+        (schedule) => schedule.day === todayDay,
+      );
+      const scheduleLabel = todaySchedule?.workDuration
+        ? `${todaySchedule.workDuration.start || "--"} - ${
+            todaySchedule.workDuration.end || "--"
+          }`
+        : "--";
+
       return {
         id: record._id,
+        employeeId: record.employee?._id,
         employee: record.employee,
         profile: record.employee?.profile || null, // if you add profile later
-        firstname: record.employee?.name?.split(" ")[0] || "",
-        lastname: record.employee?.name?.split(" ")[1] || "",
+        fullname: record.employee?.name || "",
         department: record.employee?.info?.department?.name || "--",
-        job: record.employee?.info?.job || "--", // fallback if not in API
-        shifttype: record.employee?.info?.shiftType?.name || "Scheduled",
+        job: record.employee?.info?.job || "--",
+        shiftType: shiftSource?.name || "Scheduled",
         status: record.status || "",
         Clockin: firstCheckIn ? formatTime(firstCheckIn.time) : "",
         Clockout: lastCheckOut ? formatTime(lastCheckOut.time) : "",
-        regularhours: record.employee?.info?.shiftType?.workDuration
-          ? `${record.employee.info.shiftType.workDuration.start || "--"} - ${
-              record.employee.info.shiftType.workDuration.end || "--"
-            }`
-          : "--",
+        regularhours: scheduleLabel,
         overtime: record.overtime || "",
         totalhours: formatWorkHours(record.workHours),
         date: record.date,
@@ -506,7 +524,7 @@ const TodayScreen = () => {
                     {columns.map((col, idx) => (
                       <TableHead
                         key={idx}
-                        className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md"
+                        className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md text-center"
                       >
                         {typeof col.header === "function"
                           ? col.header()
@@ -525,7 +543,7 @@ const TodayScreen = () => {
                       {columns.map((col, colIdx) => (
                         <TableCell
                           key={colIdx}
-                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis text-center"
                         >
                           {typeof col.cell === "function"
                             ? col.cell({ row: { original: row } })
