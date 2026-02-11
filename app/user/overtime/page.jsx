@@ -9,28 +9,30 @@ export default function Overtime() {
   return (
     <div>
       {/* Top Bar */}
-      <div className="bg-white rounded-xl shadow-md py-1 px-1 border">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-4 px-4 lg:py-6 lg:px-6 border">
         <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
           {/* Title */}
           <a href="/user/overtime" className="block shrink-0">
             <div className="flex items-center space-x-3">
-              <CalendarPlus2 className="text-[#2998FF]" width={30} height={36} />
-              <span className="font-custom text-1xl sm:text-2xl text-black">
-                Overtime
-              </span>
+              <CalendarPlus2
+                className="text-[#2998FF]"
+                width={30}
+                height={36}
+              />
+              <span className="font-custom text-3xl text-black">Overtime</span>
             </div>
           </a>
 
           {/* Actions */}
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <PendingDialog className="px-3 py-1.5 text-sm sm:text-base shrink-0 w-full sm:w-auto" />
-            <RequestDialog className="px-3 py-1.5 text-sm sm:text-base shrink-0 w-full sm:w-auto" />
+          <div className="flex flex-row lg:flex-wrap items-center gap-2 ">
+            <PendingDialog className="px-3 py-1.5 text-sm shrink-0 w-auto" />
+            <RequestDialog className="px-3 py-1.5 text-sm shrink-0 w-auto" />
           </div>
         </div>
       </div>
 
       {/* Body */}
-      <div className="w-full overflow-x-auto">
+      <div className="w-full overflow-auto">
         <HistoryTable />
       </div>
     </div>

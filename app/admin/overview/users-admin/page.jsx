@@ -99,7 +99,7 @@ export default function UserAdminPage() {
                     ? "Search admins..."
                     : "Search users..."
               }
-              className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
             />
           </div>
         </div>

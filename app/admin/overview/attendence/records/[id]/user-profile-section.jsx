@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, MapPin } from "lucide-react";
+import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { DateRangePicker } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -72,7 +72,6 @@ export default function UserProfileSection({ employee, onClose }) {
   ];
 
   if (!employee) return null;
-  console.log("employee:", employee);
 
   const displayName =
     employee.fullname ||
@@ -103,8 +102,30 @@ export default function UserProfileSection({ employee, onClose }) {
     enabled: !!employeeId,
   });
 
-  console.log(attendances);
-  console.log("Raw API Response id:", employeeId);
+  const ProfileCell = ({ profileImg, employeeName }) => {
+    const [imageError, setImageError] = useState(false);
+    const nameParts = employeeName.split(" ");
+    const firstNameInitial = nameParts[0]?.charAt(0)?.toUpperCase() ?? "";
+    const lastNameInitial = nameParts[1]?.charAt(0)?.toUpperCase() ?? "";
+
+    return (
+      <div className="flex justify-center items-center w-20 h-20 rounded-full bg-gray-300 overflow-hidden">
+        {profileImg && !imageError ? (
+          <img
+            src={profileImg}
+            alt="Profile"
+            className="w-full h-full object-cover"
+            onError={() => setImageError(true)}
+          />
+        ) : (
+          <span className="text-2xl text-gray-600 font-medium">
+            {firstNameInitial}
+            {lastNameInitial}
+          </span>
+        )}
+      </div>
+    );
+  };
 
   // transform API response
   const transformed = useMemo(() => {
@@ -138,30 +159,29 @@ export default function UserProfileSection({ employee, onClose }) {
       };
     });
   }, [attendances]);
-  console.log("transformed: ", transformed);
 
   return (
     <div className="bg-white">
       {/* HEADER */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-4">
-          <img
-            src={employee.profile}
-            alt="Avatar"
-            className="w-12 h-12 rounded-full"
+          <ProfileCell
+            profileImg={employee.profile}
+            employeeName={displayName}
           />
           <div className="flex items-center gap-32">
             <p className="font-semibold text-lg whitespace-nowrap">
               {displayName}
             </p>
             <div className="relative" ref={datePickerRef}>
-              <span className="mr-2 text-sm text-gray-500">Pay period:</span>
+              <span className="mr-2 ">Working period:</span>
               <button
                 onClick={() => setShowPicker(!showPicker)}
-                className="text-sm text-gray-600 border px-3 py-1 rounded-md inline-flex items-center gap-2"
+                className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
               >
-                {`${payPeriod.startDate.toLocaleDateString()} to ${payPeriod.endDate.toLocaleDateString()}`}
-                <ChevronDown className="w-4 h-4" />
+                <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
+                {`${payPeriod.startDate.toLocaleDateString()} - ${payPeriod.endDate.toLocaleDateString()}`}
+                <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
               </button>
               {showPicker && (
                 <div className="absolute z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
@@ -210,7 +230,7 @@ export default function UserProfileSection({ employee, onClose }) {
       <hr className="border-gray-200 mb-4" />
 
       {/* TABLE */}
-      <div className="overflow-x-auto border border-gray-300 rounded-lg">
+      <div className="overflow-auto border border-gray-300 rounded-lg">
         <table className="w-full border-separate border-spacing-0">
           <thead>
             <tr className="text-sm text-gray-700 bg-gray-100">
@@ -235,7 +255,9 @@ export default function UserProfileSection({ employee, onClose }) {
                 }`}
               >
                 <td className="px-3 py-2"></td>
-                <td className="px-3 py-2 text-center">{formatDate(rec.date)}</td>
+                <td className="px-3 py-2 text-center">
+                  {formatDate(rec.date)}
+                </td>
                 <td className="px-3 py-2 text-center">
                   <span className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
                     {rec.job}

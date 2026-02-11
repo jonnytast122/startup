@@ -30,8 +30,6 @@ export default function Leaves() {
     );
   }
 
-  console.log(balance);
-
   return (
     <div>
       {/* Top Bar */}

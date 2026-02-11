@@ -14,7 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
-  PopoverTrigger,  
+  PopoverTrigger,
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { ChevronDown, X } from "lucide-react";
@@ -46,7 +46,7 @@ const AddAttendanceDialog = ({ open, onOpenChange, onConfirm }) => {
     setSelectedUsers((prev) =>
       prev.some((u) => u.id === user.id)
         ? prev.filter((u) => u.id !== user.id)
-        : [...prev, user]
+        : [...prev, user],
     );
   };
 
@@ -103,7 +103,7 @@ const AddAttendanceDialog = ({ open, onOpenChange, onConfirm }) => {
                       className="cursor-pointer"
                       onClick={() =>
                         setSelectedUsers((prev) =>
-                          prev.filter((u) => u.id !== user.id)
+                          prev.filter((u) => u.id !== user.id),
                         )
                       }
                     />
@@ -284,10 +284,10 @@ const AddAttendanceDialog = ({ open, onOpenChange, onConfirm }) => {
         <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
         <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
           <Button
-            className="py-4 px-6 text-lg font-custom rounded-full"
+            className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleDone}
           >
-            Done
+            Save
           </Button>
         </div>
       </DialogContent>

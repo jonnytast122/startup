@@ -347,7 +347,7 @@ function AddBranchDialog({ isEdit, branch }) {
               <div className="flex justify-end">
                 <Button
                   onClick={handleSave}
-                  className="py-4 px-6 text-md font-custom rounded-full"
+                  className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
                 >
                   {isEdit ? (
                     updateBranchMutation.isPending ? (

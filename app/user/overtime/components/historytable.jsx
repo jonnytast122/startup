@@ -29,41 +29,24 @@ import {
 
 import { getMyRequests } from "@/lib/api/userOvertime";
 import { useQuery } from "@tanstack/react-query";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
 
-/* =======================
-   Fake Data (unchanged)
-   ======================= */
-const fakeData = [
-  {
-    date: "2025-07-02",
-    policy: "Sick Leave",
-    requestedOn: "2025-07-02",
-    totalOvertime: "2 hour",
-    status: "Pending",
-    totalHour: "08:00",
-    note: "Reviewed by manager",
-  },
-  {
-    date: "2025-07-04",
-    policy: "Annual Leave",
-    requestedOn: "2025-07-04",
-    totalOvertime: "3 hour",
-    status: "Approved",
-    totalHour: "07:30",
-    note: "Auto-submitted",
-  },
-  // ... other rows ...
-];
-
-/* =======================
-   Utils (unchanged)
-   ======================= */
-const fmtKey = (d) => {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
 };
+
+const fmtKey = (d) => formatDate(d);
+
+const isSameDay = (a, b) =>
+  a &&
+  b &&
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth() &&
+  a.getDate() === b.getDate();
 
 function getDatesInRange(startDate, endDate) {
   const dates = [];
@@ -82,7 +65,7 @@ function getTimesheetRows(selectedRange) {
   if (!selectedRange.startDate || !selectedRange.endDate) return [];
   const allDates = getDatesInRange(
     selectedRange.startDate,
-    selectedRange.endDate
+    selectedRange.endDate,
   );
 
   const fakeMap = {};
@@ -119,34 +102,19 @@ function getTimesheetRows(selectedRange) {
   return out;
 }
 
-/* =======================
-   Columns (unchanged)
-   ======================= */
 const columns = [
-  {
-    id: "blank",
-    header: () => null,
-    cell: () => null,
-    size: 36,
-  },
   {
     accessorKey: "date",
     header: "Date",
     cell: ({ row }) => {
-      let d = row.original.date;
+      const d = row.original.date;
       if (!d || row.original._section) return "";
-      if (typeof d === "string") d = new Date(d);
-      return d.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      return formatDate(d);
     },
   },
   {
     accessorKey: "policy",
-    header: "Policy",
+    header: "OT Type",
     cell: ({ row }) => (row.original.policy ? row.original.policy : "--"),
   },
   {
@@ -155,12 +123,7 @@ const columns = [
     cell: ({ row }) => {
       const v = row.original.requestedOn;
       if (!v) return "--";
-      const d = typeof v === "string" ? new Date(v) : v;
-      return d.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      return formatDate(v);
     },
   },
   {
@@ -173,15 +136,20 @@ const columns = [
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const s = row.original.status;
-      if (!s) return "--";
-      const color =
-        s === "Approved"
-          ? "text-blue-600"
-          : s === "Pending"
-            ? "text-yellow-600"
-            : "text-red-600";
-      return <span className={`font-medium ${color}`}>{s}</span>;
+      const status = row.original.status || "Request for overtime";
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            status === "Approved"
+              ? "text-blue-500 bg-blue-100"
+              : status === "Rejected"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
+          }`}
+        >
+          {status}
+        </span>
+      );
     },
   },
   {
@@ -194,12 +162,23 @@ const columns = [
     header: "Note",
     cell: ({ row }) => (row.original.note ? row.original.note : "--"),
   },
+  {
+    accessorKey: "attachment",
+    header: "Attachment",
+    cell: ({ row }) =>
+      row.original.attachment ? row.original.attachment : "--",
+  },
 ];
 
 /* =======================
    Beautiful dialog calendar (from your sample)
    ======================= */
-function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
+function Controls({
+  popoverAlign = "left",
+  selectedRange,
+  setSelectedRange,
+  onRangeSelected,
+}) {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const datePickerRef = useRef(null);
   const buttonRef = useRef(null);
@@ -258,12 +237,13 @@ function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
             onChange={(ranges) => {
               const newRange = ranges.selection;
               setSelectedRange(newRange);
-              if (
-                newRange.startDate &&
-                newRange.endDate &&
-                newRange.startDate.getTime() !== newRange.endDate.getTime()
-              ) {
-                setShowDatePicker(false);
+              if (newRange.startDate && newRange.endDate) {
+                onRangeSelected?.(newRange);
+                if (
+                  newRange.startDate.getTime() !== newRange.endDate.getTime()
+                ) {
+                  setShowDatePicker(false);
+                }
               }
             }}
             moveRangeOnFirstSelection={false}
@@ -271,7 +251,6 @@ function Controls({ popoverAlign = "left", selectedRange, setSelectedRange }) {
           />
         </div>
       )}
-
     </div>
   );
 }
@@ -283,41 +262,50 @@ function normalizeRequests(requests) {
     const [sh, sm] = req.startTime.split(":").map(Number);
     const [eh, em] = req.endTime.split(":").map(Number);
 
-    let diffMinutes = (eh * 60 + em) - (sh * 60 + sm);
-    if (diffMinutes < 0) diffMinutes += 24 * 60; // handle overnight cases
-    const diffHrs = Math.floor(diffMinutes / 60);
-    const diffMin = diffMinutes % 60;
+    let diffMinutes = eh * 60 + em - (sh * 60 + sm);
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+    const hoursDecimal = diffMinutes / 60;
+    const formatted = formatWorkHours(hoursDecimal);
 
     return {
       date: req.date, // keep ISO string, format in column
       policy: req.overtimeType?.name || "--",
       requestedOn: req.createdAt || req.date, // fallback if API doesn’t provide createdAt
-      totalOvertime: `${diffHrs}h ${diffMin}m`,
+      totalOvertime: formatted,
       status: req.status
         ? req.status.charAt(0).toUpperCase() + req.status.slice(1)
         : "--",
-      totalHour: `${String(diffHrs).padStart(2, "0")}:${String(
-        diffMin
-      ).padStart(2, "0")}`,
+      totalHour: formatted,
       note: req.description || "--",
     };
   });
 }
-
 
 /* =======================
    Component
    ======================= */
 export default function TimesheetTable() {
   const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1),
-    endDate: new Date(2025, 6, 31),
+    startDate: new Date(),
+    endDate: new Date(),
     key: "selection",
   });
+  const [hasSelectedRange, setHasSelectedRange] = useState(false);
 
   const { data: requests = [] } = useQuery({
-    queryKey: ["user-overtime-requests"],
-    queryFn: getMyRequests,
+    queryKey: [
+      "user-overtime-requests",
+      hasSelectedRange,
+      selectedRange.startDate,
+      selectedRange.endDate,
+    ],
+    queryFn: () =>
+      hasSelectedRange
+        ? getMyRequests({
+            startDate: formatDate(selectedRange.startDate),
+            endDate: formatDate(selectedRange.endDate),
+          })
+        : getMyRequests(),
   });
 
   const data = useMemo(() => normalizeRequests(requests), [requests]);
@@ -334,36 +322,44 @@ export default function TimesheetTable() {
   ];
 
   return (
-    <div className="w-full overflow-x-auto">
-      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[800px]">
+    <div className="w-full overflow-y-auto">
+      <div className="p-1 bg-white rounded-xl mb-3 shadow-md lg:py-2 lg:px-6 border font-custom">
         {/* Top Bar (unchanged layout; just swapped calendar UI) */}
         <div className="mb-3">
-          <div className="flex items-center gap-3 w-full flex-nowrap">
-            <div className="font-custom text-xl font-semibold whitespace-nowrap ml-2">
-              Request History
+          <div className="p-4 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+            <div className="font-custom text-3xl text-black">
+              Overtime Record
             </div>
+            <div className="flex flex-row items-center gap-2 w-full lg:w-auto lg:ml-auto">
+              {/* Beautiful calendar dialog */}
+              <Controls
+                popoverAlign="left"
+                selectedRange={selectedRange}
+                setSelectedRange={setSelectedRange}
+                onRangeSelected={(range) => {
+                  const today = new Date();
+                  const isTodayRange =
+                    isSameDay(range.startDate, range.endDate) &&
+                    isSameDay(range.startDate, today);
+                  setHasSelectedRange(!isTodayRange);
+                }}
+              />
 
-            {/* Beautiful calendar dialog */}
-            <Controls
-              popoverAlign="left"
-              selectedRange={selectedRange}
-              setSelectedRange={setSelectedRange}
-            />
-
-            {/* Export on the far right (unchanged) */}
-            <div className="ml-auto">
-              <Select>
-                <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
-                  <SelectValue placeholder="Export" />
-                </SelectTrigger>
-                <SelectContent className="font-custom">
-                  {exportOptions.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Export on the far right (unchanged) */}
+              <div className="ml-auto">
+                <Select>
+                  <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
+                    <SelectValue placeholder="Export" />
+                  </SelectTrigger>
+                  <SelectContent className="font-custom">
+                    {exportOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </div>
@@ -371,14 +367,14 @@ export default function TimesheetTable() {
         {/* Summary row (unchanged) */}
         <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
           <span>
-            <span className="font-semibold text-black">Total Leaves:</span>{" "}
+            <span className="font-semibold text-black">Total Overtime:</span>{" "}
             {data.filter((r) => !r._section).length} day
           </span>
         </div>
 
         {/* Table (unchanged) */}
-        <div className="w-full ml-2">
-          <Table className="min-w-[750px] w-full">
+        <div className="rounded-md border mt-6 overflow-y-auto">
+          <Table>
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (
                 <TableRow
@@ -388,7 +384,7 @@ export default function TimesheetTable() {
                   {hg.headers.map((h) => (
                     <TableHead
                       key={h.id}
-                      className="whitespace-nowrap px-2 min-w-[70px] text-xs font-custom"
+                      className="whitespace-nowrap px-2 min-w-[70px] text-xs font-custom text-center"
                     >
                       {flexRender(h.column.columnDef.header, h.getContext())}
                     </TableHead>
@@ -416,7 +412,7 @@ export default function TimesheetTable() {
                       {table.getAllColumns().map((col) => (
                         <TableCell
                           key={col.id}
-                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2"
+                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis px-2 text-center"
                         >
                           {flexRender(col.columnDef.cell, {
                             row: { original: row, index: i },
@@ -424,7 +420,7 @@ export default function TimesheetTable() {
                         </TableCell>
                       ))}
                     </TableRow>
-                  )
+                  ),
                 )
               )}
             </TableBody>

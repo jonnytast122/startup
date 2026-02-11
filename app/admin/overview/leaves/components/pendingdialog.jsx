@@ -346,7 +346,7 @@ const PendingDialog = ({ onClose }) => {
 
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div className="flex w-full sm:w-auto gap-4">
-            <Select>
+            {/* <Select>
               <SelectTrigger className="w-48 font-custom rounded-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
@@ -357,7 +357,7 @@ const PendingDialog = ({ onClose }) => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
 
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}

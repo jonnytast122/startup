@@ -203,7 +203,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
   const handleEmployeeChange = (e) => {
     const selectedOptions = Array.from(
       e.target.selectedOptions,
-      (option) => option.value
+      (option) => option.value,
     );
     setSelectedEmployees(selectedOptions);
   };
@@ -252,8 +252,8 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
             {isViewMode
               ? "View Leave Policy"
               : policy
-              ? "Edit Leave Policy"
-              : "Add Leave Policy"}
+                ? "Edit Leave Policy"
+                : "Add Leave Policy"}
           </DialogTitle>
           <div className="w-full h-[1px] bg-[#A6A6A6] my-4" />
         </DialogHeader>
@@ -425,7 +425,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                 <div className="border border-gray-300 rounded-lg p-3 bg-white max-h-40 overflow-y-auto">
                   {employees.map((emp) => {
                     const isChecked = selectedEmployees.some(
-                      (e) => e.id === emp.id
+                      (e) => e.id === emp.id,
                     );
                     return (
                       <label
@@ -442,7 +442,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
                             if (isChecked) {
                               // remove
                               setSelectedEmployees((prev) =>
-                                prev.filter((e) => e.id !== emp.id)
+                                prev.filter((e) => e.id !== emp.id),
                               );
                             } else {
                               // add
@@ -493,7 +493,7 @@ const PolicyLeave = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           {!isViewMode && (
             <div className="w-full flex justify-end mt-4">
               <Button
-                className="py-4 px-6 text-lg font-semibold rounded-full"
+                className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
                 onClick={handleConfirm}
               >
                 Save

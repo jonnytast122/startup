@@ -9,6 +9,8 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
+import { FaSpinner } from "react-icons/fa";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -26,8 +28,14 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
-import { CalendarPlus2, Search, ChevronDown } from "lucide-react";
+import { CalendarPlus2, Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
@@ -54,27 +62,33 @@ const columns = [
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
-      const profile = row.original.profile;
-      const initials = `${row.original.firstname?.charAt(0) || ""}${
-        row.original.lastname?.charAt(0) || ""
-      }`;
+      const profileExists = row.original.profile; // Check if profile exists
+      const initials = (row.original.fullname || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase())
+        .slice(0, 2)
+        .join("");
+
       return (
-        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
-          {profile ? (
+        <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-300">
+          {profileExists ? (
+            // Replace with an actual image if available
             <img
-              src={profile}
+              src={row.original.profile}
               alt="Profile"
               className="w-full h-full rounded-full object-cover"
             />
           ) : (
-            <span className="text-xs text-gray-500">{initials}</span>
+            <span className="text-xs text-gray-500 font-custom">
+              {initials}
+            </span>
           )}
         </div>
       );
     },
   },
-  { accessorKey: "firstname", header: "First name" },
-  { accessorKey: "lastname", header: "Last name" },
+  { accessorKey: "fullname", header: "Full name" },
   { accessorKey: "department", header: "Department" },
   {
     accessorKey: "job",
@@ -85,16 +99,24 @@ const columns = [
       </div>
     ),
   },
-  { accessorKey: "shifttype", header: "Shift Type" },
+  {
+    accessorKey: "shiftType",
+    header: "Shift Type",
+    cell: ({ row }) => {
+      const shiftType = row.original.shiftType || [];
+      if (shiftType.length === 0) return "--";
+      if (shiftType.length === 1) return shiftType[0].name;
+      return `${shiftType.length} Shifts`;
+    },
+  },
   {
     accessorKey: "date",
     header: "Date",
     cell: ({ row }) => (
-      <span className="text-sm text-gray-600">
-        {row.original.date || ""}
-      </span>
+      <span className="text-sm text-gray-600">{row.original.date || ""}</span>
     ),
   },
+  { accessorKey: "otType", header: "OT Type" },
   {
     accessorKey: "otrequest",
     header: "OT Request",
@@ -113,9 +135,10 @@ const columns = [
       </span>
     ),
   },
+
   {
     accessorKey: "ottotal",
-    header: "OT Total",
+    header: "Total",
     cell: ({ row }) => {
       const value = row.original.ottotal;
       if (!value)
@@ -133,12 +156,12 @@ const columns = [
       const status = row.original.status || "Request for overtime";
       return (
         <span
-          className={`font-medium ${
-            status === "Approved"
-              ? "text-blue-500"
-              : status === "Declined"
-              ? "text-red-500"
-              : "text-gray-500"
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            status === "approved"
+              ? "text-blue-500 bg-blue-100"
+              : status === "rejected"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
           }`}
         >
           {status}
@@ -146,19 +169,10 @@ const columns = [
       );
     },
   },
-  {
-    accessorKey: "description",
-    header: "Note",
-    cell: ({ row }) => {
-      const status = row.original.status || "Request for overtime";
-      const description = row.original.description || "";
-      return (
-        <div className="flex items-center space-x-6 text-sm">
-          <span className="text-gray-800">{description}</span>
-        </div>
-      );
-    },
-  },
+
+  { accessorKey: "description", header: "Note" },
+
+  { accessorKey: "attachment", header: "Attachment" },
 ];
 
 // Helpers
@@ -185,22 +199,30 @@ const useTransformedOvertimeData = (apiData) => {
     return apiData.map((item) => {
       const startTime = item.startTime || "";
       const endTime = item.endTime || "";
-      const otHours =
-        startTime && endTime
-          ? `${calculateHours(startTime, endTime)} hours`
-          : "";
+      const hoursValue =
+        typeof item.totalHours === "number"
+          ? item.totalHours
+          : startTime && endTime
+            ? calculateHours(startTime, endTime)
+            : 0;
+      const hoursLabel = formatWorkHours(hoursValue || 0);
+      const requestType = item.requestType || "request";
 
       return {
         employee: item.employee,
-        profile: item.employee?.profile || "/avatars/ralph.png",
-        firstname: item.employee?.name?.split(" ")[0] || "",
-        lastname: item.employee?.name?.split(" ")[1] || "",
-        department: item.department || "N/A",
-        job: item.overtimeType?.name || "N/A",
-        shifttype: item.shifttype || "Schedule",
-        otrequest: otHours,
-        otassigned: otHours,
-        ottotal: otHours,
+        profile: item.employee?.info?.profileImg || null,
+        fullname: item.employee?.name || "--",
+        department: item.employee?.info?.department?.name || "--",
+        job: item.employee?.info?.job || "--",
+        shiftType: Array.isArray(item.employee?.info?.shiftType)
+          ? item.employee.info.shiftType
+          : item.employee?.info?.shiftType
+            ? [item.employee.info.shiftType]
+            : [],
+        otType: item.overtimeType?.name || "--",
+        otrequest: requestType === "request" ? hoursLabel : "--",
+        otassigned: requestType === "assigned" ? hoursLabel : "--",
+        ottotal: hoursLabel,
         description: item.description || "Request for overtime",
         status: item.status || "Pending",
         date: item.date ? formatDate(item.date) : "",
@@ -217,11 +239,9 @@ const Overtime = () => {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedRange, setSelectedRange] = useState(() => {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
     return {
-      startDate: new Date(year, month, 1), // Start of current month
-      endDate: new Date(year, month + 1, 0), // End of current month
+      startDate: now,
+      endDate: now,
       key: "selection",
     };
   });
@@ -229,7 +249,7 @@ const Overtime = () => {
   const queryClient = useQueryClient();
   const company = queryClient.getQueryData(["company"]);
 
-  const { data: overtime } = useQuery({
+  const { data: overtime, isLoading: isOvertimeLoading } = useQuery({
     queryKey: [
       "overtime",
       company?.id,
@@ -244,18 +264,32 @@ const Overtime = () => {
     enabled: !!company?.id,
   });
 
-  const transformedOvertimeData = useTransformedOvertimeData(overtime);
+  const transformedOvertimeData = useTransformedOvertimeData(overtime?.data);
+
+  const isTodayRange = useMemo(() => {
+    const today = new Date();
+    const sameDay = (a, b) =>
+      a.getFullYear() === b.getFullYear() &&
+      a.getMonth() === b.getMonth() &&
+      a.getDate() === b.getDate();
+    return (
+      selectedRange.startDate &&
+      selectedRange.endDate &&
+      sameDay(selectedRange.startDate, today) &&
+      sameDay(selectedRange.endDate, today)
+    );
+  }, [selectedRange.startDate, selectedRange.endDate]);
 
   // Merge API data into state (optional, if you want live update)
   React.useEffect(() => {
-      setOtData(transformedOvertimeData || []);
+    setOtData(transformedOvertimeData || []);
   }, [transformedOvertimeData]);
 
   const filteredData = useMemo(() => {
     return otData.filter((item) =>
-      `${item.firstname} ${item.lastname}`
+      `${item.fullname || ""}`
         .toLowerCase()
-        .includes(searchQuery.toLowerCase())
+        .includes(searchQuery.toLowerCase()),
     );
   }, [otData, searchQuery, selectedRange]);
 
@@ -267,13 +301,7 @@ const Overtime = () => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  useEffect(() => {
-    if (selectedRange.startDate && selectedRange.endDate) {
-      queryClient.invalidateQueries({
-        queryKey: ["overtime", company?.id, selectedRange],
-      });
-    }
-  }, [selectedRange, queryClient]);
+  // No manual invalidation needed; query key already includes the range.
 
   return (
     <div>
@@ -290,6 +318,26 @@ const Overtime = () => {
               <span className="font-custom text-3xl text-black">Overtime</span>
             </div>
           </a>
+          {/* <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 font-custom">
+            <span>
+              Request OT Hours:{" "}
+              <span className="text-blue-500 font-semibold">
+                {overtime?.summary?.requestHours?.toFixed(2) || "0.00"}
+              </span>
+            </span>
+            <span>
+              Assigned OT Hours:{" "}
+              <span className="text-blue-500 font-semibold">
+                {overtime?.summary?.assignedHours?.toFixed(2) || "0.00"}
+              </span>
+            </span>
+            <span>
+              Total OT Hours:{" "}
+              <span className="text-blue-500 font-semibold">
+                {overtime?.summary?.totalHours?.toFixed(2) || "0.00"}
+              </span>
+            </span>
+          </div> */}
           {/* <div className="flex items-center space-x-4">
             <p className="font-custom text-gray-700 text-xs sm:text-sm md:text-md lg:text-md">
               Asset
@@ -326,11 +374,11 @@ const Overtime = () => {
           onClose={() => setSelectedEmployee(null)}
         />
       ) : (
-        <div className="p-4 bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+        <div className="p-4 bg-white rounded-xl mb-3 shadow-md py-6 px-6 border font-custom">
           {/* Filters */}
           <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
             <div className="flex w-full sm:w-auto gap-4">
-              <Select>
+              {/* <Select>
                 <SelectTrigger className="w-fit px-3 font-custom rounded-full">
                   <SelectValue placeholder="All" />
                 </SelectTrigger>
@@ -341,16 +389,17 @@ const Overtime = () => {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
 
               {/* Date Picker */}
               <div className="flex items-center relative">
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                  className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
                 >
-                  {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-                  <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+                  <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
+                  {`${selectedRange.startDate.toLocaleDateString()} - ${selectedRange.endDate.toLocaleDateString()}`}
+                  <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
                 </button>
                 {showDatePicker && (
                   <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
@@ -370,6 +419,7 @@ const Overtime = () => {
                   </div>
                 )}
               </div>
+
               <Button
                 onClick={() => {
                   const today = new Date();
@@ -386,14 +436,13 @@ const Overtime = () => {
             </div>
 
             <div className="flex w-full sm:w-auto gap-4 items-center">
+              {/* Search Input */}
               <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
                 <Search className="absolute left-3 text-gray-400" size={20} />
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by name"
-                  className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+                  placeholder="Search..."
                 />
               </div>
 
@@ -409,39 +458,6 @@ const Overtime = () => {
               <AddOTDialog
                 open={openAddOTDialog}
                 onOpenChange={setOpenAddOTDialog}
-                onConfirm={(data) => {
-                  const randomFrom = (arr) =>
-                    arr[Math.floor(Math.random() * arr.length)];
-                  const jobTypes = [
-                    "Accountant",
-                    "Engineer",
-                    "Supervisor",
-                    "Manager",
-                  ];
-                  const departments = ["HR", "IT", "Marketing", "Operations"];
-                  const shiftTypes = ["Schedule", "Flexible", "Night"];
-                  const todayStr = new Date().toISOString().split("T")[0];
-
-                  const newRows = data.users.map((user) => ({
-                    profile: "/avatars/ralph.png",
-                    firstname: user.name.split(" ")[0],
-                    lastname: user.name.split(" ")[1] || "",
-                    job: randomFrom(jobTypes),
-                    department: randomFrom(departments),
-                    shifttype: randomFrom(shiftTypes),
-                    otrequest: `${data.hours} hours`,
-                    otassigned: `${(parseFloat(data.hours) / 2).toFixed(
-                      1
-                    )} hours`,
-                    ottotal: `${data.hours} hours`,
-                    onleavestatus: { annual: "Pending", sick: "Approved" },
-                    date: data.date
-                      ? new Date(data.date).toISOString().split("T")[0]
-                      : todayStr,
-                  }));
-
-                  setOtData((prev) => [...prev, ...newRows]);
-                }}
               />
 
               <Select>
@@ -460,12 +476,16 @@ const Overtime = () => {
           </div>
 
           {/* Table */}
-          {filteredData.length === 0 ? (
+          {isOvertimeLoading ? (
+            <div className="flex items-center justify-center w-full h-full py-10">
+              <FaSpinner className="animate-spin text-blue-500 text-4xl" />
+            </div>
+          ) : filteredData.length === 0 ? (
             <p className="text-center text-gray-300 mt-4 text-xl font-custom">
-              No Data Available
+              {isTodayRange ? "No overtime today" : "No Data Available"}
             </p>
           ) : (
-            <div className="rounded-md border mt-6">
+            <div className="rounded-md border mt-6 overflow-y-auto">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -476,11 +496,11 @@ const Overtime = () => {
                       {headerGroup.headers.map((header) => (
                         <TableHead
                           key={header.id}
-                          className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-xs"
+                          className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-md text-center"
                         >
                           {flexRender(
                             header.column.columnDef.header,
-                            header.getContext()
+                            header.getContext(),
                           )}
                         </TableHead>
                       ))}
@@ -492,19 +512,77 @@ const Overtime = () => {
                     <TableRow
                       key={row.id}
                       onClick={() => setSelectedEmployee(row.original)}
-                      className="cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis text-center cursor-pointer hover:bg-gray-100 transition-colors"
                     >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
-                        </TableCell>
-                      ))}
+                      {row.getVisibleCells().map((cell) => {
+                        if (cell.column.id === "shiftType") {
+                          const shiftTypes = Array.isArray(
+                            row.original.shiftType,
+                          )
+                            ? row.original.shiftType
+                            : row.original.shiftType
+                              ? [row.original.shiftType]
+                              : [];
+                          let cellContent;
+
+                          if (shiftTypes.length === 0) cellContent = "--";
+                          else if (shiftTypes.length === 1)
+                            cellContent = shiftTypes[0].name;
+                          else
+                            cellContent = (
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                                      {shiftTypes.length} Shifts
+                                    </span>
+                                  </TooltipTrigger>
+                                  <TooltipContent
+                                    side="bottom"
+                                    align="start"
+                                    className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                                  >
+                                    <div className="whitespace-pre-wrap font-custom">
+                                      <h1 className="font-bold text-xl">
+                                        Shift Types
+                                      </h1>
+                                      <br />
+                                      {shiftTypes.map((g) => (
+                                        <span
+                                          key={g.id || g.name}
+                                          className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                                        >
+                                          {g.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
+
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
+                            >
+                              {cellContent}
+                            </TableCell>
+                          );
+                        }
+
+                        return (
+                          <TableCell
+                            key={cell.id}
+                            className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
+                          >
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        );
+                      })}
                     </TableRow>
                   ))}
                 </TableBody>
