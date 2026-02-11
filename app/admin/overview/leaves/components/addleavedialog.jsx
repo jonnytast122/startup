@@ -53,11 +53,15 @@ function useLocalToast() {
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -101,7 +105,10 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
       ? raw.map((e) => ({
           id: e.id ?? e.userId ?? e._id,
           name:
-            e.name || e.username || e.email || String(e.id ?? e.userId ?? e._id),
+            e.name ||
+            e.username ||
+            e.email ||
+            String(e.id ?? e.userId ?? e._id),
         }))
       : [];
   }, [employees]);
@@ -115,7 +122,8 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     },
     onError: (err) => {
       console.error(err);
-      const msg = err?.response?.data?.message || err?.message || "Failed to add leave";
+      const msg =
+        err?.response?.data?.message || err?.message || "Failed to add leave";
       showError(msg);
     },
   });
@@ -124,7 +132,7 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     setSelectedUsers((prev) =>
       prev.some((u) => u.id === user.id)
         ? prev.filter((u) => u.id !== user.id)
-        : [...prev, user]
+        : [...prev, user],
     );
   };
 
@@ -166,16 +174,43 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
     // Build dateTime array with per-day start/end ISO datetimes
     const buildDateTimeArray = () => {
       const dates = [];
-      const s = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-      const e = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      const s = new Date(
+        startDate.getFullYear(),
+        startDate.getMonth(),
+        startDate.getDate(),
+      );
+      const e = new Date(
+        endDate.getFullYear(),
+        endDate.getMonth(),
+        endDate.getDate(),
+      );
 
       const [sh, sm] = (allDay ? "00:00" : startTime).split(":").map(Number);
       const [eh, em] = (allDay ? "23:59" : endTime).split(":").map(Number);
 
       for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
-        const startDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), sh || 0, sm || 0, 0, 0);
-        const endDt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), eh || 0, em || 0, 0, 0);
-        dates.push({ start_time: startDt.toISOString(), end_time: endDt.toISOString() });
+        const startDt = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+          sh || 0,
+          sm || 0,
+          0,
+          0,
+        );
+        const endDt = new Date(
+          d.getFullYear(),
+          d.getMonth(),
+          d.getDate(),
+          eh || 0,
+          em || 0,
+          0,
+          0,
+        );
+        dates.push({
+          start_time: startDt.toISOString(),
+          end_time: endDt.toISOString(),
+        });
       }
       return dates;
     };
@@ -191,7 +226,6 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
 
     addLeaveMutation.mutate({ employeeList, data });
   };
-
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -224,7 +258,7 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                       className="cursor-pointer"
                       onClick={() =>
                         setSelectedUsers((prev) =>
-                          prev.filter((u) => u.id !== user.id)
+                          prev.filter((u) => u.id !== user.id),
                         )
                       }
                     />
@@ -232,7 +266,9 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                 ))}
                 <Select
                   onValueChange={(val) => {
-                    const found = employeeOptions.find((u) => String(u.id) === String(val));
+                    const found = employeeOptions.find(
+                      (u) => String(u.id) === String(val),
+                    );
                     if (found) handleToggleUser(found);
                   }}
                 >
@@ -256,7 +292,10 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
               </label>
 
               <div className="w-2/3">
-                <Select value={selectedLeavePolicy} onValueChange={setSelectedLeavePolicy}>
+                <Select
+                  value={selectedLeavePolicy}
+                  onValueChange={setSelectedLeavePolicy}
+                >
                   <SelectTrigger className="w-48 text-gray-500">
                     <SelectValue placeholder="Select leave policy" />
                   </SelectTrigger>
@@ -292,36 +331,89 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                   {/* Start Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">Start:</label>
-                    <Popover modal={false} open={openStartDatePop} onOpenChange={(o)=>{
-                      setOpenStartDatePop(o);
-                      if(o){ setOpenEndDatePop(false); setOpenDatePop(false);} 
-                    }}>
+                    <Popover
+                      modal={false}
+                      open={openStartDatePop}
+                      onOpenChange={(o) => {
+                        setOpenStartDatePop(o);
+                        if (o) {
+                          setOpenEndDatePop(false);
+                          setOpenDatePop(false);
+                        }
+                      }}
+                    >
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300">
+                        <Button
+                          variant="outline"
+                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
+                        >
                           {format(startDate, "dd/MM/yyyy")}
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
-                        <Calendar mode="single" selected={startDate} defaultMonth={startDate} initialFocus onSelect={(d)=>{ if(d){ setStartDate(d); setOpenStartDatePop(false);} }} />
+                      <PopoverContent
+                        side="bottom"
+                        align="center"
+                        sideOffset={8}
+                        className="w-auto p-0 bg-white pointer-events-auto z-[80]"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          defaultMonth={startDate}
+                          initialFocus
+                          onSelect={(d) => {
+                            if (d) {
+                              setStartDate(d);
+                              setOpenStartDatePop(false);
+                            }
+                          }}
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
                   {/* End Date */}
                   <div className="flex items-center gap-2">
                     <label className="text-sm text-[#3F4648]">End:</label>
-                    <Popover modal={false} open={openEndDatePop} onOpenChange={(o)=>{
-                      setOpenEndDatePop(o);
-                      if(o){ setOpenStartDatePop(false); setOpenDatePop(false);} 
-                    }}>
+                    <Popover
+                      modal={false}
+                      open={openEndDatePop}
+                      onOpenChange={(o) => {
+                        setOpenEndDatePop(o);
+                        if (o) {
+                          setOpenStartDatePop(false);
+                          setOpenDatePop(false);
+                        }
+                      }}
+                    >
                       <PopoverTrigger asChild>
-                        <Button variant="outline" className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300">
+                        <Button
+                          variant="outline"
+                          className="rounded-xl px-4 py-2 text-sm w-[140px] border border-gray-300"
+                        >
                           {format(endDate, "dd/MM/yyyy")}
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent side="bottom" align="end" alignOffset={-16} sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
-                        <Calendar mode="single" selected={endDate} defaultMonth={endDate} initialFocus onSelect={(d)=>{ if(d){ setEndDate(d); setOpenEndDatePop(false);} }} />
+                      <PopoverContent
+                        side="bottom"
+                        align="end"
+                        alignOffset={-16}
+                        sideOffset={8}
+                        className="w-auto p-0 bg-white pointer-events-auto z-[80]"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          defaultMonth={endDate}
+                          initialFocus
+                          onSelect={(d) => {
+                            if (d) {
+                              setEndDate(d);
+                              setOpenEndDatePop(false);
+                            }
+                          }}
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -336,7 +428,16 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                     Start date:
                   </label>
                   <div className="w-2/3">
-                    <Popover modal={false} open={openStartDatePop} onOpenChange={(o)=>{ setOpenStartDatePop(o); if(o){ setOpenEndDatePop(false); } }}>
+                    <Popover
+                      modal={false}
+                      open={openStartDatePop}
+                      onOpenChange={(o) => {
+                        setOpenStartDatePop(o);
+                        if (o) {
+                          setOpenEndDatePop(false);
+                        }
+                      }}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -346,8 +447,24 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
-                        <Calendar mode="single" selected={startDate} defaultMonth={startDate} initialFocus onSelect={(d)=>{ if(d){ setStartDate(d); setOpenStartDatePop(false);} }} />
+                      <PopoverContent
+                        side="bottom"
+                        align="center"
+                        sideOffset={8}
+                        className="w-auto p-0 bg-white pointer-events-auto z-[80]"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={startDate}
+                          defaultMonth={startDate}
+                          initialFocus
+                          onSelect={(d) => {
+                            if (d) {
+                              setStartDate(d);
+                              setOpenStartDatePop(false);
+                            }
+                          }}
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -359,7 +476,16 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                     End date:
                   </label>
                   <div className="w-2/3">
-                    <Popover modal={false} open={openEndDatePop} onOpenChange={(o)=>{ setOpenEndDatePop(o); if(o){ setOpenStartDatePop(false); } }}>
+                    <Popover
+                      modal={false}
+                      open={openEndDatePop}
+                      onOpenChange={(o) => {
+                        setOpenEndDatePop(o);
+                        if (o) {
+                          setOpenStartDatePop(false);
+                        }
+                      }}
+                    >
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -369,8 +495,24 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
                           <ChevronDown className="w-4 h-4 opacity-50 ml-2" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent side="bottom" align="center" sideOffset={8} className="w-auto p-0 bg-white pointer-events-auto z-[80]">
-                        <Calendar mode="single" selected={endDate} defaultMonth={endDate} initialFocus onSelect={(d)=>{ if(d){ setEndDate(d); setOpenEndDatePop(false);} }} />
+                      <PopoverContent
+                        side="bottom"
+                        align="center"
+                        sideOffset={8}
+                        className="w-auto p-0 bg-white pointer-events-auto z-[80]"
+                      >
+                        <Calendar
+                          mode="single"
+                          selected={endDate}
+                          defaultMonth={endDate}
+                          initialFocus
+                          onSelect={(d) => {
+                            if (d) {
+                              setEndDate(d);
+                              setOpenEndDatePop(false);
+                            }
+                          }}
+                        />
                       </PopoverContent>
                     </Popover>
                   </div>
@@ -427,7 +569,7 @@ const AddLeaveDialog = ({ open, onOpenChange, onConfirm }) => {
         <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
         <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
           <Button
-            className="py-4 px-6 text-lg font-custom rounded-full"
+            className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleDone}
           >
             Publish

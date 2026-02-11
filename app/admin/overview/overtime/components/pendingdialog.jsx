@@ -43,6 +43,7 @@ import {
   approveOvertime,
   rejectOvertime,
 } from "@/lib/api/adminOvertime";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
 
 const ALL = [
   { value: "Select all", label: "Select all" },
@@ -86,45 +87,33 @@ function useLocalToast() {
   return { showSuccess, showError, ToastPortal };
 }
 
-const data = [
-  {
-    profile: "/avatars/ralph.png",
-    employee: "Lucy Trevo",
-    jobType: "Accountant",
-    date: "2025-03-20", // OT Date
-    starttime: "09:00 AM",
-    endtime: "05:00 PM",
-    totalhours: "8",
-    note: "Finished month-end reports.",
-  },
-  {
-    profile: "/avatars/ralph.png",
-    employee: "John Smith",
-    jobType: "Developer",
-    date: "2025-03-22",
-    starttime: "10:00 AM",
-    endtime: "06:00 PM",
-    totalhours: "8",
-    note: "Helped with urgent release patch.",
-  },
-];
-
 const columns = [
   {
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
-      const profileExists = row.original.profile;
-      return profileExists ? (
-        <img
-          src={row.original.profile}
-          alt="Profile"
-          className="w-10 h-10 rounded-full object-cover"
-        />
-      ) : (
-        <div className="w-10 h-10 flex items-center justify-center bg-gray-300 rounded-full">
-          {row.original.firstname.charAt(0)}
-          {row.original.lastname.charAt(0)}
+      const profileExists = row.original.profile; // Check if profile exists
+      const initials = (row.original.employee.name || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase())
+        .slice(0, 2)
+        .join("");
+
+      return (
+        <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-300">
+          {profileExists ? (
+            // Replace with an actual image if available
+            <img
+              src={row.original.profile}
+              alt="Profile"
+              className="w-full h-full rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-xs text-gray-500 font-custom">
+              {initials}
+            </span>
+          )}
         </div>
       );
     },
@@ -135,12 +124,19 @@ const columns = [
     cell: ({ row }) => (
       <div className="flex flex-col">
         <span className="font-medium">{row.original.employee.name}</span>
-        <span className="text-[#5494DA] font-custom text-sm border border-[#5494DA] px-2.5 py-1 rounded-lg w-fit mt-2">
-          {row.original.jobType}
-        </span>
       </div>
     ),
   },
+  {
+    accessorKey: "job",
+    header: "Job",
+    cell: ({ row }) => (
+      <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
+        {row.original.job}
+      </div>
+    ),
+  },
+
   {
     accessorKey: "date",
     header: "Date",
@@ -167,7 +163,7 @@ const columns = [
   },
   {
     accessorKey: "description",
-    header: "Attachment",
+    header: "Note",
     cell: ({ row }) => {
       const words = row.original.description.split(" "); // Split the sentence into words
       const chunkSize = 5; // Define the number of words per row
@@ -190,8 +186,12 @@ const columns = [
     },
   },
   {
+    accessorKey: "",
+    header: "Attachment",
+  },
+  {
     accessorKey: "actions",
-    header: "",
+    header: "Actions",
     cell: ({ row }) => (
       <div className="flex justify-center gap-6">
         <DeclineDialog
@@ -235,19 +235,18 @@ const useTransformedOvertimeData = (apiData) => {
       const endTime = item.endTime || "";
       const otHours =
         startTime && endTime
-          ? `${calculateHours(startTime, endTime)} hours`
-          : "";
+          ? formatWorkHours(calculateHours(startTime, endTime))
+          : formatWorkHours(0);
 
       return {
         id: item._id,
         employee: item.employee,
         startTime: item.startTime,
         endTime: item.endTime,
-        profile: item.employee?.profile || "/avatars/ralph.png",
+        profile: item.employee?.info?.profileImg || null,
         firstname: item.employee?.name?.split(" ")[0] || "",
         lastname: item.employee?.name?.split(" ")[1] || "",
-        department: item.department || "N/A",
-        job: item.overtimeType?.name || "N/A",
+        job: item.employee?.info?.job || "--",
         shifttype: item.shifttype || "Schedule",
         otrequest: otHours,
         otassigned: otHours,
@@ -288,11 +287,14 @@ const PendingDialog = ({ onClose }) => {
         startDate: selectedRange.startDate.toISOString().split("T")[0],
         endDate: selectedRange.endDate.toISOString().split("T")[0],
         status: "pending",
+        requestType: "request",
       }),
     enabled: open,
   });
 
-  const transformedOvertimeData = useTransformedOvertimeData(overtimeRespone);
+  const transformedOvertimeData = useTransformedOvertimeData(
+    overtimeRespone?.data,
+  );
 
   const datePickerRef = useRef(null);
 
@@ -316,16 +318,6 @@ const PendingDialog = ({ onClose }) => {
     };
   }, []);
 
-  const filteredData = useMemo(() => {
-    return data.filter((item) => {
-      const itemDate = parseISO(item.date);
-      return isWithinInterval(itemDate, {
-        start: selectedRange.startDate,
-        end: selectedRange.endDate,
-      });
-    });
-  }, [selectedRange]);
-
   const table = useReactTable({
     data: transformedOvertimeData,
     columns,
@@ -346,7 +338,7 @@ const PendingDialog = ({ onClose }) => {
       </DialogTrigger>
 
       {/* This is the missing part: DialogContent */}
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-5xl font-custom text-center">
         <DialogHeader className="flex flex-col items-center text-center">
           <DialogTitle></DialogTitle>
           <h1 className="font-custom text-light-gray text-2xl sm:text-lg md:text-xl lg:text-3xl py-6">
@@ -357,7 +349,7 @@ const PendingDialog = ({ onClose }) => {
 
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div className="flex w-full sm:w-auto gap-4">
-            <Select>
+            {/* <Select>
               <SelectTrigger className="w-48 font-custom rounded-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
@@ -368,7 +360,7 @@ const PendingDialog = ({ onClose }) => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
 
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
@@ -405,18 +397,14 @@ const PendingDialog = ({ onClose }) => {
           </div>
 
           {/* Right Side Dropdowns */}
-          <div className="flex w-full sm:w-auto gap-4">
-            <div className="relative w-64">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 rounded-full font-custom bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5494DA]"
-              />
-            </div>
+          {/* Search Input */}
+          <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+            <Search className="absolute left-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+              placeholder="Search..."
+            />
           </div>
         </div>
 
@@ -436,7 +424,7 @@ const PendingDialog = ({ onClose }) => {
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
-                        className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-xs py-6"
+                        className="whitespace-nowrap text-center px-2 min-w-[50px] w-[50px] text-md py-6"
                       >
                         {flexRender(
                           header.column.columnDef.header,
@@ -449,7 +437,10 @@ const PendingDialog = ({ onClose }) => {
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
+                  <TableRow
+                    key={row.id}
+                    className="ont-custom text-md whitespace-nowrap overflow-hidden text-ellipsis text-center cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
@@ -680,12 +671,12 @@ const ApproveAllDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       {ToastPortal}
       <DialogTrigger asChild>
-        <Button
+        {/* <Button
           className="bg-[#5494DA] text-white font-custom px-10 rounded-full hover:bg-[#4376B0] transition"
           onClick={() => setOpen(true)}
         >
           Approve all
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
         <DialogHeader className="flex items-center gap-2 justify-center">
@@ -736,12 +727,12 @@ const DeclineAllDialog = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       {ToastPortal}
       <DialogTrigger asChild>
-        <Button
+        {/* <Button
           className="border border-[#FB5F59] text-[#FB5F59] font-custom bg-white px-10 rounded-full hover:bg-[#FB5F59] hover:text-white transition"
           onClick={() => setOpen(true)}
         >
           Decline all
-        </Button>
+        </Button> */}
       </DialogTrigger>
       <DialogContent className="w-[500px] h-[350px] text-center flex flex-col justify-center gap-4">
         <DialogHeader className="flex items-center gap-2 justify-center">

@@ -219,7 +219,7 @@ const PolicyOvertime = ({ open, onClose, onSubmit, policy, isViewMode }) => {
           {!isViewMode && (
             <div className="w-full flex justify-end mt-4">
               <Button
-                className="py-4 px-6 text-lg font-semibold rounded-full"
+                className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
                 onClick={handleConfirm}
               >
                 Save

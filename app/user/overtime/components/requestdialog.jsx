@@ -30,9 +30,17 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { requestOvertime } from "@/lib/api/userOvertime";
 import { getMyOvertimeTypes } from "@/lib/api/userOvertime";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
 
 /* --------- inline TimeInput with scoped CSS to hide native icon --------- */
-function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
+function TimeInput({
+  label,
+  value,
+  onChange,
+  disabled = false,
+  step = 60,
+  invalid = false,
+}) {
   const ref = useRef(null);
   return (
     <div>
@@ -44,7 +52,9 @@ function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
           value={value}
           disabled={disabled}
           onChange={(e) => onChange(e.target.value)}
-          className="time-input-hide-native border rounded px-2 pr-10 py-1 w-full h-9 text-sm appearance-none cursor-pointer"
+          className={`time-input-hide-native border rounded px-2 pr-10 py-1 w-full h-9 text-sm appearance-none cursor-pointer ${
+            invalid ? "border-red-500" : ""
+          }`}
           step={step}
           inputMode="numeric"
           style={{ WebkitAppearance: "none", MozAppearance: "textfield" }}
@@ -85,16 +95,13 @@ function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
   );
 }
 
-const overtimeTypes = ["Weekend", "Night", "Holiday", "Special"];
-
 export default function RequestDialog() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
-  const [selectedOvertimeType, setSelectedOvertimeType] = useState("");
+  const [selectedOvertimeTypeId, setSelectedOvertimeTypeId] = useState("");
   const [allDay, setAllDay] = useState(false);
 
   // All-day ON range (default today)
@@ -107,6 +114,13 @@ export default function RequestDialog() {
   const [endTime, setEndTime] = useState("18:00");
 
   const [note, setNote] = useState("");
+  const [errors, setErrors] = useState({
+    overtimeType: false,
+    startDate: false,
+    endDate: false,
+    startTime: false,
+    endTime: false,
+  });
 
   // Controlled popovers (so only one opens at a time)
   const [openStartPop, setOpenStartPop] = useState(false);
@@ -129,7 +143,7 @@ export default function RequestDialog() {
 
   useEffect(() => {
     if (overtimeSetting) {
-      setSelectedOvertimeType(overtimeSetting);
+      setSelectedOvertimeTypeId(overtimeSetting?.[0]?.id || "");
     }
   }, [overtimeSetting]);
 
@@ -156,13 +170,47 @@ export default function RequestDialog() {
   const totalM = String(totalWorkMins % 60).padStart(2, "0");
 
   const handleSubmit = () => {
+    const nextErrors = {
+      overtimeType: !selectedOvertimeTypeId,
+      startDate: false,
+      endDate: false,
+      startTime: false,
+      endTime: false,
+    };
+
+    if (allDay) {
+      nextErrors.startDate = !startDate;
+      nextErrors.endDate = !endDate;
+    } else {
+      nextErrors.startTime = !startTime;
+      nextErrors.endTime = !endTime;
+    }
+
+    if (
+      nextErrors.overtimeType ||
+      nextErrors.startDate ||
+      nextErrors.endDate ||
+      nextErrors.startTime ||
+      nextErrors.endTime
+    ) {
+      setErrors(nextErrors);
+      return;
+    }
+
     if (!allDay && toMin(endTime) <= toMin(startTime)) {
       alert("End time must be after start time.");
       return;
     }
+    setErrors({
+      overtimeType: false,
+      startDate: false,
+      endDate: false,
+      startTime: false,
+      endTime: false,
+    });
 
     const payload = {
-      overtimeType: selectedOvertimeType, // ✅ already an ID string
+      overtimeType: selectedOvertimeTypeId,
       date: format(allDay ? startDate : oneDayDate, "yyyy-MM-dd"),
       startTime: allDay ? "00:00" : startTime,
       endTime: allDay ? "23:59" : endTime,
@@ -206,14 +254,14 @@ export default function RequestDialog() {
         <DrawerTrigger asChild>
           <Button
             variant="outline"
-            className="text-blue font-custom w-42 h-10 shadow-md border border-gray-400 bg-transparent rounded-full flex items-center hover:bg-blue-500 hover:text-white transition-colors duration-200"
+            className="text-blue font-custom w-auto lg:w-42 h-10 shadow-md border border-gray-400 bg-transparent rounded-full flex items-center hover:bg-blue-500 hover:text-white transition-colors duration-200"
             onClick={() => setDrawerOpen(true)}
           >
             Request Overtime
           </Button>
         </DrawerTrigger>
 
-        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
+        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-full lg:w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
           <DialogTitle></DialogTitle>
           <div className="h-full min-h-screen max-h-screen w-full bg-gray-100 font-custom flex flex-col border-l border-gray-200">
             {/* Header */}
@@ -236,17 +284,25 @@ export default function RequestDialog() {
               {/* Overtime type */}
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium">Overtime type</span>
+                  <span className="text-sm font-medium">Overtime type *</span>
                   <Select
-                    value={selectedOvertimeType.name}
-                    onValueChange={setSelectedOvertimeType}
+                    value={selectedOvertimeTypeId || ""}
+                    onValueChange={setSelectedOvertimeTypeId}
                   >
-                    <SelectTrigger className="h-9 w-44 rounded-full text-sm">
+                    <SelectTrigger
+                      className={`h-9 w-44 font-custom rounded-full text-sm ${
+                        errors.overtimeType ? "border-red-500" : ""
+                      }`}
+                    >
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
                       {overtimeSetting?.map((t) => (
-                        <SelectItem key={t.id} value={t.id} className="text-sm">
+                        <SelectItem
+                          key={t.id}
+                          value={t.id}
+                          className="text-sm font-custom"
+                        >
                           {t.name}
                         </SelectItem>
                       ))}
@@ -278,7 +334,9 @@ export default function RequestDialog() {
                     <div className="grid grid-cols-2 gap-3">
                       {/* Starts */}
                       <div className="relative">
-                        <div className="text-xs text-gray-600 mb-1">Starts</div>
+                        <div className="text-xs text-gray-600 mb-1">
+                          Starts *
+                        </div>
                         <Popover
                           open={openStartPop}
                           onOpenChange={(o) => {
@@ -293,7 +351,9 @@ export default function RequestDialog() {
                             <Button
                               type="button"
                               variant="outline"
-                              className="w-full justify-center rounded-full h-9 text-sm"
+                              className={`w-full justify-center rounded-full h-9 text-sm ${
+                                errors.startDate ? "border-red-500" : ""
+                              }`}
                             >
                               {format(startDate, "dd/MM/yyyy")}
                             </Button>
@@ -320,7 +380,7 @@ export default function RequestDialog() {
 
                       {/* Ends */}
                       <div className="relative">
-                        <div className="text-xs text-gray-600 mb-1">Ends</div>
+                        <div className="text-xs text-gray-600 mb-1">Ends *</div>
                         <Popover
                           open={openEndPop}
                           onOpenChange={(o) => {
@@ -335,7 +395,9 @@ export default function RequestDialog() {
                             <Button
                               type="button"
                               variant="outline"
-                              className="w-full justify-center rounded-full h-9 text-sm"
+                              className={`w-full justify-center rounded-full h-9 text-sm ${
+                                errors.endDate ? "border-red-500" : ""
+                              }`}
                             >
                               {format(endDate, "dd/MM/yyyy")}
                             </Button>
@@ -363,16 +425,14 @@ export default function RequestDialog() {
                     </div>
 
                     {/* Info row */}
-                    <div className="mt-4 text-xs text-gray-600">
-                      Total time leaves: 24 hours
-                    </div>
+                    <div className="mt-4 text-xs text-gray-600"></div>
                   </>
                 ) : (
                   /* All day OFF -> single date + time range */
                   <>
                     <div className="mb-3">
                       <div className="text-sm font-medium mb-1">
-                        Date and time
+                        Date and time *
                       </div>
                       <Popover
                         open={openOneDayPop}
@@ -416,26 +476,27 @@ export default function RequestDialog() {
                     {/* Reliable time pickers (native icon hidden, custom icon shown) */}
                     <div className="grid grid-cols-2 gap-3">
                       <TimeInput
-                        label="Starts"
+                        label="Starts *"
                         value={startTime}
                         onChange={setStartTime}
                         disabled={false}
+                        invalid={errors.startTime}
                       />
                       <TimeInput
-                        label="Ends"
+                        label="Ends *"
                         value={endTime}
                         onChange={setEndTime}
                         disabled={false}
+                        invalid={errors.endTime}
                       />
                     </div>
 
                     {/* Duration preview */}
                     <div className="mt-3 text-xs text-gray-700">
-                      Total time leaves:{" "}
-                      <span className="font-semibold">
-                        {totalH}:{totalM}
-                      </span>{" "}
-                      hours
+                      Total overtime:{" "}
+                      <span className="font-semibold text-blue">
+                        {formatWorkHours(totalWorkMins / 60)}
+                      </span>
                     </div>
                   </>
                 )}
@@ -449,7 +510,7 @@ export default function RequestDialog() {
                     rows={4}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Hi boss, today is my graduation day. I would like to ask for permission."
+                    placeholder="Note (optional)"
                     className="w-full resize-none rounded-[10px] bg-white p-3 text-sm outline-none"
                   />
                 </div>
@@ -464,7 +525,7 @@ export default function RequestDialog() {
             {/* Footer */}
             <DrawerFooter className="pt-0 px-5 pb-4 flex-shrink-0">
               <Button
-                className="w-full h-11 rounded-full text-base font-semibold"
+                className="w-full h-11 rounded-full "
                 onClick={handleSubmit}
               >
                 Send for approval
@@ -489,14 +550,12 @@ export default function RequestDialog() {
 
       {/* Error dialog */}
       <Dialog open={errorOpen} onOpenChange={setErrorOpen}>
-        <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200">
+        <DialogContent className="w-[500px] text-center flex flex-col justify-center gap-3 bg-red-50 border border-red-200 font-custom">
           <AlertTriangle className="w-10 h-10 mx-auto text-red-600" />
           <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
             Request Failed
           </DialogTitle>
-          <div className="text-base text-red-700">
-            {errorMessage}
-          </div>
+          <div className="text-base text-red-700">{errorMessage}</div>
         </DialogContent>
       </Dialog>
     </>

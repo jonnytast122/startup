@@ -38,11 +38,15 @@ function useLocalToast() {
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -116,7 +120,7 @@ const SettingDialog = () => {
 
           <div className="w-full h-[1px] bg-[#A6A6A6]"></div>
           <div className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4">
-            <Button className="py-4 px-6 text-lg font-custom rounded-full">
+            <Button className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white">
               Save Changes
             </Button>
           </div>
@@ -136,7 +140,13 @@ const SettingDialog = () => {
   );
 };
 
-const BorderedBox = ({ title, titleBg, titleText, setEditPolicyOpen, setEditPolicyAssignmentOpen }) => {
+const BorderedBox = ({
+  title,
+  titleBg,
+  titleText,
+  setEditPolicyOpen,
+  setEditPolicyAssignmentOpen,
+}) => {
   return (
     <div className="flex flex-col items-start">
       {/* Small Title Box */}

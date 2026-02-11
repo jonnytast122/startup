@@ -71,11 +71,15 @@ function useLocalToast() {
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
@@ -345,7 +349,7 @@ const PendingDialog = ({ onClose }) => {
 
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
           <div className="flex w-full sm:w-auto gap-4">
-            <Select>
+            {/* <Select>
               <SelectTrigger className="w-48 font-custom rounded-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
@@ -356,7 +360,7 @@ const PendingDialog = ({ onClose }) => {
                   </SelectItem>
                 ))}
               </SelectContent>
-            </Select>
+            </Select> */}
 
             <button
               onClick={() => setShowDatePicker(!showDatePicker)}
@@ -393,24 +397,19 @@ const PendingDialog = ({ onClose }) => {
           </div>
 
           {/* Right Side Dropdowns */}
-          <div className="flex w-full sm:w-auto gap-4">
-            <div className="relative w-64">
-              <Search
-                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <Input
-                type="text"
-                placeholder="Search..."
-                className="pl-10 pr-4 py-2 rounded-full font-custom bg-white border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#5494DA]"
-              />
-            </div>
+          <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+            <Search className="absolute left-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+              placeholder="Search..."
+            />
           </div>
         </div>
 
         {transformedOvertimeData.length === 0 ? (
           <p className="text-center text-gray-300 mt-4 text-xl font-custom">
-            No Data Available
+            No pending requests found.
           </p>
         ) : (
           <div className="rounded-t-lg overflow-hidden">
@@ -428,7 +427,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                       </TableHead>
                     ))}
@@ -447,7 +446,7 @@ const PendingDialog = ({ onClose }) => {
                       >
                         {flexRender(
                           cell.column.columnDef.cell,
-                          cell.getContext()
+                          cell.getContext(),
                         )}
                       </TableCell>
                     ))}
@@ -487,18 +486,24 @@ const DeclineDialog = ({ employee, startdate, overTime }) => {
       });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
       showSuccess(
-        "Declined successfully for " + employee.name + " on " + startdate.split("T")[0]
+        "Declined successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0],
       );
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.message || "Failed to decline request";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to decline request";
       showError(
         "Decline failed for " +
           employee.name +
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          msg
+          msg,
       );
     },
   });
@@ -575,18 +580,24 @@ const ApproveDialog = ({ employee, startdate, overTime }) => {
       });
       queryClient.invalidateQueries({ queryKey: ["overtime"], exact: false });
       showSuccess(
-        "Approved successfully for " + employee.name + " on " + startdate.split("T")[0]
+        "Approved successfully for " +
+          employee.name +
+          " on " +
+          startdate.split("T")[0],
       );
     },
     onError: (err) => {
-      const msg = err?.response?.data?.message || err?.message || "Failed to approve request";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to approve request";
       showError(
         "Approve failed for " +
           employee.name +
           " on " +
           startdate.split("T")[0] +
           "\n" +
-          msg
+          msg,
       );
     },
   });

@@ -83,7 +83,7 @@ export default function AddTitleDialog({ onSaved }) {
             }}
             className="w-full flex justify-end px-4 md:px-6 lg:px-32 mt-4"
           >
-            <Button className="py-4 px-6 text-md font-custom rounded-full">
+            <Button className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white">
               {addPositionMutation.isPending ? (
                 <FaSpinner className="animate-spin text-white text-lg" />
               ) : (

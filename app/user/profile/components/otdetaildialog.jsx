@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
 
 const users = [
   { id: 1, name: "Doe Ibrahim" },
@@ -70,7 +71,7 @@ const AddOTDialog = ({ open, onOpenChange, profileData }) => {
     const start = new Date(0, 0, 0, startH, startM);
     const end = new Date(0, 0, 0, endH, endM);
     const diffMs = end - start;
-    return diffMs > 0 ? (diffMs / (1000 * 60 * 60)).toFixed(2) : "0.00";
+    return diffMs > 0 ? diffMs / (1000 * 60 * 60) : 0;
   };
 
   return (
@@ -201,7 +202,7 @@ const AddOTDialog = ({ open, onOpenChange, profileData }) => {
                       className="bg-gray-100 w-[120px]"
                     />
                     <div className="text-sm font-semibold whitespace-nowrap ml-auto">
-                      {calculateHours()} <span className="font-normal">hours</span>
+                      {formatWorkHours(calculateHours())}
                     </div>
                   </div>
                 </div>

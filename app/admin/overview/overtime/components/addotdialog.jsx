@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
+import { formatWorkHours } from "@/lib/helper/dateTimeConveter";
 import {
   Popover,
   PopoverContent,
@@ -54,17 +55,20 @@ function useLocalToast() {
               toast.type === "success" ? "bg-green-600" : "bg-red-600"
             }`}
           >
-            <div className="mt-0.5">{toast.type === "success" ? "✅" : "⚠️"}</div>
-            <div className="font-custom text-sm whitespace-pre-line">{toast.message}</div>
+            <div className="mt-0.5">
+              {toast.type === "success" ? "✅" : "⚠️"}
+            </div>
+            <div className="font-custom text-sm whitespace-pre-line">
+              {toast.message}
+            </div>
           </div>
         </div>,
-        document.body
+        document.body,
       )
     : null;
 
   return { showSuccess, showError, ToastPortal };
 }
-
 
 const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
   const queryClient = useQueryClient();
@@ -99,12 +103,11 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
 
   const employeeOptions = useMemo(() => {
     const raw = employees?.data ?? employees ?? [];
-    console.log(raw)
     return Array.isArray(raw)
       ? raw.map((e) => ({
           id: e.id ?? e.userId ?? e._id,
           name:
-            e.name||
+            e.name ||
             e.username ||
             e.email ||
             String(e.id ?? e.userId ?? e._id),
@@ -121,7 +124,10 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
     },
     onError: (err) => {
       console.error(err);
-      const msg = err?.response?.data?.message || err?.message || "Failed to add overtime";
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to add overtime";
       showError(msg);
     },
   });
@@ -136,7 +142,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
     setSelectedUsers((prev) =>
       prev.some((u) => u.id === user.id)
         ? prev.filter((u) => u.id !== user.id)
-        : [...prev, user]
+        : [...prev, user],
     );
   };
 
@@ -146,7 +152,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
     const start = new Date(0, 0, 0, startH, startM);
     const end = new Date(0, 0, 0, endH, endM);
     const diffMs = end - start;
-    return diffMs > 0 ? (diffMs / (1000 * 60 * 60)).toFixed(2) : "0.00";
+    return diffMs > 0 ? diffMs / (1000 * 60 * 60) : 0;
   };
 
   const handleDone = () => {
@@ -180,8 +186,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
     addOvertimeMutation.mutate({ employeeList, data });
   };
 
-  const handleSaveDraft = () => {
-  };
+  const handleSaveDraft = () => {};
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -197,20 +202,16 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
 
         <div className="w-full flex flex-col items-center px-4 py-6">
           <div className="w-full md:w-4/5 lg:w-2/3 xl:w-1/2 space-y-6">
-            <div className="flex items-start gap-4">
-              <label className="text-sm text-[#3F4648] w-1/3 pt-1">
-                OT title:
-              </label>
-              <Input placeholder="Type here" className="resize-none w-2/3" />
-            </div>
-
             <div className="flex items-start justify-between gap-4">
               <label className="text-sm text-[#3F4648] w-1/3 pt-2">
                 OT type:
               </label>
 
-              <div className="resize-none w-2/3">
-                <Select value={selectedOvertimeType} onValueChange={setSelectedOvertimeType}>
+              <div className="resize-none w-2/3 border-gray-300">
+                <Select
+                  value={selectedOvertimeType}
+                  onValueChange={setSelectedOvertimeType}
+                >
                   <SelectTrigger className="w-48 text-gray-500">
                     <SelectValue placeholder="Select OT policy" />
                   </SelectTrigger>
@@ -242,7 +243,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                       className="cursor-pointer"
                       onClick={() =>
                         setSelectedUsers((prev) =>
-                          prev.filter((u) => u.id !== user.id)
+                          prev.filter((u) => u.id !== user.id),
                         )
                       }
                     />
@@ -250,7 +251,9 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                 ))}
                 <Select
                   onValueChange={(val) => {
-                    const found = employeeOptions.find((u) => String(u.id) === String(val));
+                    const found = employeeOptions.find(
+                      (u) => String(u.id) === String(val),
+                    );
                     if (found) handleToggleUser(found);
                   }}
                 >
@@ -407,8 +410,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
                     </div>
 
                     <div className="text-sm font-semibold whitespace-nowrap ml-auto">
-                      {calculateHours()}{" "}
-                      <span className="font-normal">hours</span>
+                      {formatWorkHours(calculateHours())}
                     </div>
                   </div>
                 </div>
@@ -417,10 +419,12 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
 
             {/* Note */}
             <div className="flex items-start gap-4">
-              <label className="text-sm text-[#3F4648] w-1/3 pt-1">Note:</label>
+              <label className="text-sm text-[#3F4648] w-1/3 pt-1 ">
+                Note:
+              </label>
               <Textarea
-                placeholder="Type here"
-                className="resize-none w-2/3"
+                placeholder="Note (optional)"
+                className="resize-none w-2/3 border-gray-300 placeholder:text-gray-300"
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
               />
@@ -431,14 +435,7 @@ const AddOTDialog = ({ open, onOpenChange, onConfirm }) => {
         <div className="w-full h-[1px] bg-[#A6A6A6] mt-10"></div>
         <div className="w-full flex justify-end gap-4 px-4 md:px-6 lg:px-32 mt-4">
           <Button
-            variant="outline"
-            className="py-4 px-6 text-md font-custom rounded-full border border-blue-500 text-blue-500"
-            onClick={handleSaveDraft}
-          >
-            Save Draft
-          </Button>
-          <Button
-            className="py-4 px-6 text-md font-custom rounded-full"
+            className="mt-4 px-6 py-2 rounded-full font-custom bg-blue-500 hover:bg-blue-600 text-white"
             onClick={handleDone}
             disabled={addOvertimeMutation.isPending}
           >

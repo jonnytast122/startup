@@ -390,7 +390,7 @@ const Leaves = () => {
             <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
               {/* Left Side Dropdowns */}
               <div className="flex w-full sm:w-auto gap-4">
-                <Select>
+                {/* <Select>
                   <SelectTrigger className="w-fit px-3 font-custom rounded-full">
                     <SelectValue placeholder="All" />
                   </SelectTrigger>
@@ -401,7 +401,7 @@ const Leaves = () => {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select> */}
 
                 <div className="flex items-center relative" ref={datePickerRef}>
                   <button
@@ -461,14 +461,15 @@ const Leaves = () => {
               {/* Right Side Dropdowns */}
               <div className="flex w-full sm:w-auto gap-4">
                 {/* Search Input */}
+
                 <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
                   <Search className="absolute left-3 text-gray-400" size={20} />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name"
-                    className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+                    placeholder="Search..."
                   />
                 </div>
 

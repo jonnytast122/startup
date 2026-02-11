@@ -120,6 +120,8 @@ const ApiRoutes = {
     myOvertimeTypes: `${BASE_URL}/overtime-settings/me`,
     request: `${BASE_URL}/overtime-requests`,
     getRequests: `${BASE_URL}/overtime-requests/me`,
+    acceptAssigned: `${BASE_URL}/overtime-requests/{id}/employee-accept`,
+    rejectAssigned: `${BASE_URL}/overtime-requests/{id}/employee-reject`,
   },
 
   //============== Thing Yet To Implement ===================

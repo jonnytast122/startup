@@ -5,7 +5,7 @@ export const getOvertime = async (params) => {
   const response = await api.get(ApiRoutes.adminOvertime.getOvertime, {
     params: params,
   });
-  return response.data.data;
+  return response.data;
 };
 
 export const approveOvertime = async ({ id, message }) => {
@@ -24,8 +24,19 @@ export const rejectOvertime = async ({ id, message }) => {
   return response.data;
 };
 
-export const getOvertimeByEmployee = async () => {
-  const response = await api.get(ApiRoutes.adminOvertime.getOvertimeByEmployee);
+export const getOvertimeByEmployee = async ({ id, startDate, endDate }) => {
+  const response = await api.get(
+    ApiRoutes.adminOvertime.getOvertimeByEmployee.replace("{id}", id),
+    {
+      params:
+        startDate && endDate
+          ? {
+              startDate,
+              endDate,
+            }
+          : undefined,
+    },
+  );
   return response.data;
 };
 

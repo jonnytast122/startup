@@ -339,7 +339,7 @@ const TodayScreen = () => {
           <div className="mb-4">
             <div className="flex flex-wrap sm:flex-nowrap justify-between items-center gap-4">
               <div className="flex w-full sm:w-auto gap-4">
-                <Select>
+                {/* <Select>
                   <SelectTrigger className="w-auto font-custom rounded-full">
                     <SelectValue placeholder="All activity" />
                   </SelectTrigger>
@@ -350,7 +350,7 @@ const TodayScreen = () => {
                       </SelectItem>
                     ))}
                   </SelectContent>
-                </Select>
+                </Select> */}
                 <button
                   onClick={() => setShowDatePicker(!showDatePicker)}
                   className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
@@ -372,7 +372,7 @@ const TodayScreen = () => {
                         const newRange = ranges.selection;
                         setSelectedRange(newRange);
 
-                        // ✅ Only close if both dates are selected and not the same
+                        // Only close if both dates are selected and not the same
                         const start = newRange.startDate;
                         const end = newRange.endDate;
                         if (start && end && start.getTime() !== end.getTime()) {
@@ -466,8 +466,8 @@ const TodayScreen = () => {
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Search by name"
-                    className="font-custom w-full pl-10 pr-4 py-2 border rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+                    placeholder="Search..."
                   />
                 </div>
 

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, ListFilter } from "lucide-react";
+import { ChevronLeft, ChevronRight, ListFilter, Search } from "lucide-react";
 import { DateRange } from "react-date-range";
 import { format } from "date-fns";
 import {
@@ -544,7 +544,7 @@ export default function PayrollTable({
       taxRatePercent: "--",
       taxExpense: record.taxAmount ?? 0,
       estimatedNetPay: record.netDaily ?? 0,
-      netSalary: isFinalized ? record.netSalary ?? 0 : "--",
+      netSalary: isFinalized ? (record.netSalary ?? 0) : "--",
     }));
   }, [isFinalized, payrollSummary]);
 
@@ -585,7 +585,7 @@ export default function PayrollTable({
       <div className="flex justify-between items-center my-4">
         {/* Left: Groups Select */}
         <div className="flex w-full sm:w-auto gap-4">
-          <Select>
+          {/* <Select>
             <SelectTrigger className="w-25 font-custom rounded-full flex items-center gap-2 relative">
               <ListFilter className="text-blue-500" size={20} />
               <SelectValue className="text-blue-500" placeholder="Filter" />
@@ -597,7 +597,7 @@ export default function PayrollTable({
                 </SelectItem>
               ))}
             </SelectContent>
-          </Select>
+          </Select> */}
 
           <div className="relative flex items-center gap-3">
             <button
@@ -618,7 +618,8 @@ export default function PayrollTable({
               maxDate={undefined}
               onClose={() => setShowDatePicker(false)}
               onApply={(nextRange) => {
-                const nextStart = nextRange?.startDate || selectedRange.startDate;
+                const nextStart =
+                  nextRange?.startDate || selectedRange.startDate;
                 const nextEnd = nextRange?.endDate || selectedRange.endDate;
                 setSelectedRange({
                   startDate: nextStart,
@@ -663,7 +664,9 @@ export default function PayrollTable({
             <Button
               variant="outline"
               className="rounded-full border-gray-400 font-custom"
-              disabled={!rangeStartKey || !rangeEndKey || finalizeMutation.isPending}
+              disabled={
+                !rangeStartKey || !rangeEndKey || finalizeMutation.isPending
+              }
               onClick={() => {
                 finalizeMutation.mutate({
                   startDate: rangeStartKey,
@@ -688,7 +691,16 @@ export default function PayrollTable({
 
         {/* Right: Search, Team, Export */}
         <div className="flex items-center space-x-2">
-          <Input placeholder="Search..." className="w-[180px]" />
+          {/* Search Input */}
+          <div className="relative flex items-center ml-auto w-full sm:w-auto flex-1 max-w-md">
+            <Search className="absolute left-3 text-gray-400" size={20} />
+            <input
+              type="text"
+              value={""}
+              className="font-custom w-full pl-10 text-sm border rounded-lg focus:outline-none focus:ring-1 font-custom focus:ring-blue-500 pr-12 py-2 px-3"
+              placeholder="Search..."
+            />
+          </div>
 
           <Separator orientation="vertical" className="mr-2 h-10" />
           <Select

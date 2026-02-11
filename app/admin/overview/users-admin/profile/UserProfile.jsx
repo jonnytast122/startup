@@ -37,7 +37,6 @@ import { fetchCompanyDepartments } from "@/lib/api/department";
 import { fetchCompanyLeavePolicy } from "@/lib/api/policy";
 
 export default function UserProfile({ user }) {
-  console.log("User profile data:", user);
   const queryClient = useQueryClient();
 
   const { data: company } = useQuery({
@@ -106,7 +105,7 @@ export default function UserProfile({ user }) {
       "state_changed",
       (snapshot) => {
         const percent = Math.round(
-          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100,
         );
         setProgress(percent);
       },
@@ -117,7 +116,7 @@ export default function UserProfile({ user }) {
         getDownloadURL(uploadTask.snapshot.ref).then((url) => {
           setSelectedFile(url);
         });
-      }
+      },
     );
   }, []);
 
@@ -130,28 +129,35 @@ export default function UserProfile({ user }) {
 
   const profileImage = selectedFile || user?.profileImg;
 
-  const role = (myDetails?.role || myDetails?.employee?.role || "").toLowerCase();
+  const role = (
+    myDetails?.role ||
+    myDetails?.employee?.role ||
+    ""
+  ).toLowerCase();
   const permissions = Array.isArray(myDetails?.permissions)
     ? myDetails.permissions
     : Array.isArray(myDetails?.employee?.permissions)
       ? myDetails.employee.permissions
       : [];
-  const canManageUsers = role === "owner" || permissions.includes("manageUsers");
+  const canManageUsers =
+    role === "owner" || permissions.includes("manageUsers");
 
   const [companyId, setCompanyId] = useState(
-    user?.employee?.companyIdentifier || ""
+    user?.employee?.companyIdentifier || "",
   );
   const [firstname, setFirstname] = useState(
-    user?.employee?.name ? user.employee.name.split(" ")[0] : ""
+    user?.employee?.name ? user.employee.name.split(" ")[0] : "",
   );
   const [lastname, setLastname] = useState(
-    user?.employee?.name ? user.employee.name.split(" ").slice(1).join(" ") : ""
+    user?.employee?.name
+      ? user.employee.name.split(" ").slice(1).join(" ")
+      : "",
   );
   const [otherName, setOtherName] = useState(user?.otherName || "N/A");
   const [idCardNumber, setIdCardNumber] = useState(user?.idCardNumber || "N/A");
   const [gender, setGender] = useState(user?.gender || "");
   const [requiredAttendance, setRequiredAttendance] = useState(
-    user?.isRequiredToCheckIn ?? false
+    user?.isRequiredToCheckIn ?? false,
   );
 
   const attendanceOptions = [
@@ -159,50 +165,50 @@ export default function UserProfile({ user }) {
     { label: "NO", value: false },
   ];
   const [salaryType, setSalaryType] = useState(
-    user?.employee?.finance?.salaryInfo?.salaryType || ""
+    user?.employee?.finance?.salaryInfo?.salaryType || "",
   );
   const [phoneNumber, setPhoneNumber] = useState(
-    user?.employee?.phoneNumber || ""
+    user?.employee?.phoneNumber || "",
   );
   const [job, setJob] = useState(user?.job || "");
   const [dateOfBirth, setDateOfBirth] = useState(
-    formatDateForInput(user?.dateOfBirth) || ""
+    formatDateForInput(user?.dateOfBirth) || "",
   );
   const [branch, setBranch] = useState(user?.branch?.id || "");
   const [department, setDepartment] = useState(user?.department?.id || "");
   const [title, setTitle] = useState(user?.position?.id || "");
   const [startDate, setStartDate] = useState(
-    formatDateForInput(user?.startDate) || ""
+    formatDateForInput(user?.startDate) || "",
   );
   const [nssfId, setNssfId] = useState(user?.nssfId || "N/A");
   const [numberOfChildren, setNumberOfChildren] = useState(
-    user?.numberOfChildren || 0
+    user?.numberOfChildren || 0,
   );
   const [spoused, setSpoused] = useState(user?.spoused || false);
   const [bankProvider, setBankProvider] = useState(
-    user?.employee?.finance?.bankDetails?.bankProvider || "N/A"
+    user?.employee?.finance?.bankDetails?.bankProvider || "N/A",
   );
   const [accountNumber, setAccountNumber] = useState(
-    user?.employee?.finance?.bankDetails?.accountNumber || "N/A"
+    user?.employee?.finance?.bankDetails?.accountNumber || "N/A",
   );
   const [cashPercentage, setCashPercentage] = useState(
-    user?.employee?.finance?.paymentMethod?.cashPercentage || 0
+    user?.employee?.finance?.paymentMethod?.cashPercentage || 0,
   );
   const [ibankingPercentage, setIbankingPercentage] = useState(
-    user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0
+    user?.employee?.finance?.paymentMethod?.ibankingPercentage || 0,
   );
   const [baseSalary, setBaseSalary] = useState(
-    user?.employee?.finance?.salaryInfo?.baseSalary || 0
+    user?.employee?.finance?.salaryInfo?.baseSalary || 0,
   );
   const [dailyRate, setDailyRate] = useState(
-    user?.employee?.finance?.salaryInfo?.dailyRate || 0
+    user?.employee?.finance?.salaryInfo?.dailyRate || 0,
   );
 
   const [hourlyRate, setHourlyRate] = useState(
-    user?.employee?.finance?.salaryInfo?.hourlyRate || 0
+    user?.employee?.finance?.salaryInfo?.hourlyRate || 0,
   );
   const [currencyType, setCurrencyType] = useState(
-    user?.employee?.finance?.salaryInfo?.currencyType || ""
+    user?.employee?.finance?.salaryInfo?.currencyType || "",
   );
 
   const [leaveSubPolicies, setLeaveSubPolicies] = useState([]);
@@ -236,19 +242,19 @@ export default function UserProfile({ user }) {
   const toggleWorkShift = (shift) => {
     const id = String(shift.id);
     setSelectedWorkShift((prev) =>
-      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((s) => s !== id) : [...prev, id],
     );
   };
 
   const toggleGroup = (group) => {
     const id = String(group.id);
     setSelectedGroup((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id],
     );
   };
 
   const [selectedLocation, setSelectedLocation] = useState(
-    user?.allowedRemoteCheckIn ?? false
+    user?.allowedRemoteCheckIn ?? false,
   );
 
   const checkInOptions = [
@@ -312,7 +318,7 @@ export default function UserProfile({ user }) {
     if (
       file &&
       ["application/pdf", "image/png", "image/jpeg", "image/jpg"].includes(
-        file.type
+        file.type,
       )
     ) {
       const newFile = {
@@ -357,12 +363,12 @@ export default function UserProfile({ user }) {
   const handleCashEdit = useCallback(() => openDialog("cash"), [openDialog]);
   const handleCashDelete = useCallback(
     () => openDialog("delete", "cash"),
-    [openDialog]
+    [openDialog],
   );
   const handleBankEdit = useCallback(() => openDialog("bank"), [openDialog]);
   const handleBankDelete = useCallback(
     () => openDialog("delete", "bank"),
-    [openDialog]
+    [openDialog],
   );
 
   useEffect(() => {
@@ -399,7 +405,7 @@ export default function UserProfile({ user }) {
                     {renderItem(item)}
                   </h2>
                 </div>
-              )
+              ),
           )}
         </div>
 
@@ -468,7 +474,7 @@ export default function UserProfile({ user }) {
         "Error updating user:",
         variables.id,
         error,
-        variables.data
+        variables.data,
       );
     },
   });
@@ -664,7 +670,7 @@ export default function UserProfile({ user }) {
       },
       {
         onSettled: () => setIsSaving(false),
-      }
+      },
     );
   };
 
@@ -910,7 +916,7 @@ export default function UserProfile({ user }) {
                   setLeaveSubPolicies((prev) =>
                     prev.includes(String(policy.id))
                       ? prev.filter((id) => id !== String(policy.id))
-                      : [...prev, String(policy.id)]
+                      : [...prev, String(policy.id)],
                   );
                 }}
                 renderItem={(policy) => policy.name}
@@ -942,7 +948,7 @@ export default function UserProfile({ user }) {
               ]}
               toggleItem={(label) => {
                 const selected = checkInOptions.find(
-                  (opt) => opt.label === label
+                  (opt) => opt.label === label,
                 );
                 setSelectedLocation(selected?.value ?? false); // store boolean
               }}
@@ -955,12 +961,12 @@ export default function UserProfile({ user }) {
               items={attendanceOptions.map((opt) => opt.label)} // display YES / NO
               selectedItems={[
                 attendanceOptions.find(
-                  (opt) => opt.value === requiredAttendance
+                  (opt) => opt.value === requiredAttendance,
                 )?.label,
               ]}
               toggleItem={(label) => {
                 const selected = attendanceOptions.find(
-                  (opt) => opt.label === label
+                  (opt) => opt.label === label,
                 );
                 setRequiredAttendance(selected?.value ?? false); // store boolean
               }}
