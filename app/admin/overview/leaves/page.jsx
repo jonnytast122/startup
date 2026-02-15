@@ -26,7 +26,19 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { LogIn, Search, ChevronDown } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  LogIn,
+  Search,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import SettingDialog from "./components/settingdialog";
 import PendingDialog from "./components/pendingdialog";
 import "react-date-range/dist/styles.css";
@@ -48,20 +60,29 @@ const exportOptions = [
   { value: "as XLS", label: "as XLS" },
 ];
 
-const columns = [
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+const identityColumns = [
   {
     accessorKey: "profile",
     header: "",
     cell: ({ row }) => {
       const profileExists = row.original.profile;
-      const firstNameInitial =
-        row.original.employee?.name?.charAt(0)?.toUpperCase() || "U";
-      const lastNameInitial =
-        row.original.employee?.name?.split(" ")[1]?.charAt(0)?.toUpperCase() ||
-        "";
+      const initials = (row.original.fullname || "")
+        .split(" ")
+        .filter(Boolean)
+        .map((part) => part[0].toUpperCase())
+        .slice(0, 2)
+        .join("");
 
       return (
-        <div className="flex justify-center items-center w-10 h-10 rounded-full bg-gray-300">
+        <div className="flex justify-center items-center w-8 h-8 rounded-full bg-gray-300">
           {profileExists ? (
             <img
               src={row.original.profile}
@@ -69,147 +90,133 @@ const columns = [
               className="w-full h-full rounded-full object-cover"
             />
           ) : (
-            <span className="text-xs text-gray-500">
-              {firstNameInitial}
-              {lastNameInitial}
+            <span className="text-xs text-gray-500 font-custom">
+              {initials}
             </span>
           )}
         </div>
       );
     },
   },
-  {
-    accessorKey: "firstname",
-    header: "First name",
-    cell: ({ row }) => {
-      const name = row.original.employee?.name || "Unknown";
-      return name.split(" ")[0];
-    },
-  },
-  {
-    accessorKey: "lastname",
-    header: "Last name",
-    cell: ({ row }) => {
-      const name = row.original.employee?.name || "Unknown";
-      return name.split(" ").slice(1).join(" ") || "User";
-    },
-  },
-  {
-    accessorKey: "department",
-    header: "Department",
-    cell: ({ row }) => row.original.department || "Not specified",
-  },
+  { accessorKey: "fullname", header: "Full name" },
+  { accessorKey: "department", header: "Department" },
   {
     accessorKey: "job",
     header: "Job",
     cell: ({ row }) => (
       <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-[#5494DA] text-blue">
-        {row.original.job || "Employee"}
+        {row.original.job}
       </div>
     ),
   },
-  {
-    accessorKey: "shifttype",
-    header: "Shift Type",
-    cell: ({ row }) => row.original.shifttype || "Standard",
-  },
-  {
-    accessorKey: "annualleave",
-    header: "Annual Leaves",
-    cell: ({ row }) => {
-      const value = row.original.annualleave || "0 / 0 days";
-      return value;
-    },
-  },
-  {
-    accessorKey: "sickleave",
-    header: "Sick Leave",
-    cell: ({ row }) => {
-      const value = row.original.sickleave || "0 / 0 days";
-      const match = value.match(/([\d.]+)\s*\/\s*([\d.]+)\s*(\w+)/);
+];
 
-      if (!match) return value;
-
-      const [used, total, unit] = match.slice(1);
-      const percentUsed =
-        total > 0 ? (parseFloat(used) / parseFloat(total)) * 100 : 0;
-
-      const textColor =
-        percentUsed > 75
-          ? "text-red-500"
-          : percentUsed > 50
-            ? "text-orange-500"
-            : "text-blue-500";
-
-      return (
-        <span className={textColor}>
-          {used} / {total} {unit}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "unpaidleave",
-    header: "Unpaid Leave",
-    cell: ({ row }) => {
-      const value = row.original.unpaidleave || "0 / Unlimited";
-      const match = value.match(/([\d.]+)\s*\/\s*(\w+)/);
-
-      if (!match) return value;
-
-      const [used, total] = match.slice(1);
-
-      const textColor =
-        parseFloat(used) > 0 ? "text-orange-500" : "text-red-500";
-
-      return (
-        <span className={textColor}>
-          {used} / {total}
-        </span>
-      );
-    },
-  },
-  {
-    accessorKey: "assignleave",
-    header: "Assigned Leaves",
-    cell: ({ row }) => {
-      const value = row.original.assignleave || "0";
-      return value;
-    },
-  },
-  {
-    accessorKey: "onleavestatus",
-    header: "On Leave Status",
-    cell: ({ row }) => {
-      const status = row.original.status || "pending";
-
-      return (
-        <div className="flex items-center space-x-6 text-sm">
-          <span className="text-gray-800">
-            {row.original.type?.name || "Leave"}
-          </span>
-          <span
-            className={`font-medium ${
-              status === "approved"
-                ? "text-blue-500"
-                : status === "rejected"
-                  ? "text-red-500"
-                  : "text-gray-500"
-            }`}
-          >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </span>
-        </div>
-      );
-    },
-  },
+const leaveInfoColumns = [
   {
     accessorKey: "dates",
     header: "Leave Dates",
     cell: ({ row }) => {
-      const startDate = new Date(row.original.startDate).toLocaleDateString();
-      const endDate = new Date(row.original.endDate).toLocaleDateString();
+      const startDate = formatDate(row.original.startDate);
+      const endDate = formatDate(row.original.endDate);
       return `${startDate} - ${endDate}`;
+    },
+  },
+  {
+    accessorKey: "policy",
+    header: "Leave Policy",
+    cell: ({ row }) => (
+      <div className="px-5 py-1.5 text-md font-custom rounded-full border inline-flex items-center gap-1 border-red text-red-500">
+        {row.original.type?.name || "--"}
+      </div>
+    ),
+  },
+  {
+    accessorKey: "type",
+    header: "Leave Type",
+    cell: ({ row }) => {
+      const type = row.original.type?.type || "paid";
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            type === "paid"
+              ? "text-blue-500 bg-blue-100"
+              : type === "unpaid"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
+          }`}
+        >
+          {type}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "totalLeaveBalance",
+    header: "Total Leave Balance",
+    cell: ({ row }) => {
+      const balance =
+        row.original.totalLeaveBalance ??
+        row.original.totalLeave ??
+        row.original.totalLeaveDays ??
+        0;
+      return (
+        <span className="x-2 py-0.5 px-2 rounded-lg text-xs font-semibold text-red-500 bg-red-100">
+          {balance}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "onleavestatus",
+    header: "Status",
+    cell: ({ row }) => {
+      const status = row.original.status || "pending";
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            status === "approved"
+              ? "text-blue-500 bg-blue-100"
+              : status === "rejected"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
+          }`}
+        >
+          {status}
+        </span>
+      );
+    },
+  },
+  {
+    accessorKey: "managerNote",
+    header: "Manager Note",
+    cell: ({ row }) =>
+      row.original.managerNote || row.original.response || "--",
+  },
+  {
+    accessorKey: "actionBy",
+    header: "Approved/Rejected By",
+    cell: ({ row }) => {
+      const status = String(row.original.status || "").toLowerCase();
+      if (status === "approved") return row.original.approvedBy?.name || "--";
+      if (status === "rejected") return row.original.rejectedBy?.name || "--";
+      return "--";
+    },
+  },
+  {
+    accessorKey: "note",
+    header: "Note",
+  },
+  {
+    accessorKey: "attachment",
+    header: "Attachment",
+    cell: ({ row }) => {
+      const attachment = row.original.attachment;
+      if (!attachment) return "--";
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-sm">{attachment}</span>
+        </div>
+      );
     },
   },
 ];
@@ -218,12 +225,10 @@ const Leaves = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [openAddLeaveDialog, setOpenAddLeaveDialog] = useState(false);
   const [selectedRange, setSelectedRange] = useState(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const today = new Date();
     return {
-      startDate: new Date(year, month, 1), // Start of current month
-      endDate: new Date(year, month + 1, 0), // End of current month
+      startDate: today,
+      endDate: today,
       key: "selection",
     };
   });
@@ -233,42 +238,95 @@ const Leaves = () => {
   const queryClient = useQueryClient();
 
   // Fetch leave data from API
+  const startDateParam = selectedRange.startDate.toISOString().split("T")[0];
+  const endDateParam = selectedRange.endDate.toISOString().split("T")[0];
+
   const {
     data: leaveResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
+    queryKey: ["leave", startDateParam, endDateParam],
     queryFn: () =>
       getLeave({
-        startDate: selectedRange.startDate.toISOString().split("T")[0],
-        endDate: selectedRange.endDate.toISOString().split("T")[0],
+        startDate: startDateParam,
+        endDate: endDateParam,
       }),
     enabled: !!selectedRange.startDate && !!selectedRange.endDate,
   });
 
+  const leavePolicies = Array.isArray(leaveResponse?.meta?.leavePolicies)
+    ? leaveResponse.meta.leavePolicies
+    : [];
+
+  console.log("Leave Response:", leaveResponse);
   // Transform API data to match table format
   const leaveData = useMemo(() => {
-    if (!leaveResponse) return [];
+    const leaveRows = Array.isArray(leaveResponse?.data)
+      ? leaveResponse.data
+      : [];
+    if (leaveRows.length === 0) return [];
 
-    return leaveResponse.map((leave) => ({
+    return leaveRows.map((leave) => ({
       ...leave,
-      // Add mock data for fields not in API response
-      profile: "/avatars/ralph.png",
-      department: "Department", // You might want to get this from employee data
-      job: "Employee",
-      shifttype: "Schedule",
-      annualleave: "2.5 / 15 days",
-      sickleave: "1.5 / 15 days",
-      assignleave: "5",
-      unpaidleave: "0 / Unlimited",
+      fullname: leave.employee?.name || "--",
+      department: leave.employee?.info?.department?.name || "--",
+      job: leave.employee?.info?.job || "--",
+      profile: leave.employee?.info?.profileImg || null,
+      shiftType: Array.isArray(leave.employee?.info?.shiftType)
+        ? leave.employee.info.shiftType
+        : leave.employee?.info?.shiftType
+          ? [leave.employee.info.shiftType]
+          : [],
+      policyBalances: leave.policyBalances || {},
     }));
   }, [leaveResponse]);
+
+  const dynamicPolicyColumns = useMemo(
+    () =>
+      leavePolicies.map((policy) => ({
+        id: `policy-${policy.id}`,
+        header: policy.name,
+        cell: ({ row }) => {
+          const balance = row.original.policyBalances?.[policy.id];
+          if (!balance) return "--";
+          return `${balance.used ?? 0} / ${balance.total ?? 0} days`;
+        },
+      })),
+    [leavePolicies],
+  );
+
+  const tableColumns = useMemo(() => {
+    const balanceColumns =
+      dynamicPolicyColumns.length > 0
+        ? dynamicPolicyColumns
+        : [
+            {
+              id: "no-policy-balance",
+              header: "No Policy",
+              cell: () => "--",
+            },
+          ];
+
+    return [
+      ...identityColumns,
+      {
+        id: "leaveInfoGroup",
+        header: "Leave Info",
+        columns: leaveInfoColumns,
+      },
+      {
+        id: "leaveBalanceInfoGroup",
+        header: "Leave Balance Info",
+        columns: balanceColumns,
+      },
+    ];
+  }, [dynamicPolicyColumns]);
 
   // Filter data based on search query
   const filteredData = useMemo(() => {
     return leaveData.filter((item) => {
-      const employeeName = item.employee?.name || "";
+      const employeeName = item.fullname || "";
       const matchesSearch = employeeName
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -279,7 +337,7 @@ const Leaves = () => {
 
   const table = useReactTable({
     data: filteredData,
-    columns,
+    columns: tableColumns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -309,14 +367,6 @@ const Leaves = () => {
     };
   }, []);
 
-  useEffect(() => {
-    if (selectedRange.startDate && selectedRange.endDate) {
-      queryClient.invalidateQueries({
-        queryKey: ["leave", selectedRange.startDate, selectedRange.endDate],
-      });
-    }
-  }, [selectedRange, queryClient]);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center w-full h-full py-10">
@@ -337,7 +387,7 @@ const Leaves = () => {
 
   return (
     <div>
-      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border">
+      <div className="bg-white rounded-xl mb-3 shadow-md py-6 px-6 border font-custom">
         <div className="flex items-center justify-between p-5">
           {/* Title Section */}
           <a href="/overview/leaves" className="block">
@@ -403,13 +453,15 @@ const Leaves = () => {
                   </SelectContent>
                 </Select> */}
 
-                <div className="flex items-center relative" ref={datePickerRef}>
+                {/* Date Picker */}
+                <div className="flex items-center relative">
                   <button
                     onClick={() => setShowDatePicker(!showDatePicker)}
-                    className="flex items-center font-custom justify-between px-4 py-2 border rounded-md text-sm bg-white shadow-sm"
+                    className="px-4 py-2 border rounded-full text-sm bg-white border-gray-400 shadow-sm font-custom"
                   >
-                    {`${selectedRange.startDate.toLocaleDateString()} to ${selectedRange.endDate.toLocaleDateString()}`}
-                    <ChevronDown className="ml-2 h-4 w-4 text-gray-500" />
+                    <ChevronLeft className="inline-block w-4 h-4 mb-1 mr-3" />
+                    {`${selectedRange.startDate.toLocaleDateString()} - ${selectedRange.endDate.toLocaleDateString()}`}
+                    <ChevronRight className="inline-block w-4 h-4 mb-1 ml-3" />
                   </button>
                   {showDatePicker && (
                     <div className="absolute font-custom z-10 mt-2 bg-white shadow-lg border p-2 rounded-md">
@@ -418,7 +470,6 @@ const Leaves = () => {
                         onChange={(ranges) => {
                           const newRange = ranges.selection;
                           setSelectedRange(newRange);
-
                           const start = newRange.startDate;
                           const end = newRange.endDate;
                           if (
@@ -442,14 +493,6 @@ const Leaves = () => {
                       startDate: today,
                       endDate: today,
                       key: "selection",
-                    });
-
-                    queryClient.invalidateQueries({
-                      queryKey: [
-                        "leave",
-                        selectedRange.startDate,
-                        selectedRange.endDate,
-                      ],
                     });
                   }}
                   className="font-custom rounded-full border border-gray-400 flex items-center justify-between w-auto h-9 text-white"
@@ -507,46 +550,137 @@ const Leaves = () => {
                 No Leave Data Available
               </p>
             ) : (
-              <div className="rounded-md border mt-6">
+              <div className="rounded-md border mt-6 overflow-y-auto">
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
                       <TableRow
                         key={headerGroup.id}
-                        className="bg-gray-200 text-dark-blue"
+                        className="text-dark-blue font-custom "
                       >
-                        {headerGroup.headers.map((header) => (
-                          <TableHead
-                            key={header.id}
-                            className="whitespace-nowrap px-2 min-w-[50px] w-[50px] text-xs"
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                          </TableHead>
-                        ))}
+                        {headerGroup.headers.map((header) => {
+                          const parentId = header.column.parent?.id;
+                          const isLeaveInfo =
+                            header.column.id === "leaveInfoGroup" ||
+                            parentId === "leaveInfoGroup";
+                          const isLeaveBalanceInfo =
+                            header.column.id === "leaveBalanceInfoGroup" ||
+                            parentId === "leaveBalanceInfoGroup";
+
+                          const sectionBgClass = isLeaveInfo
+                            ? "bg-yellow-100"
+                            : isLeaveBalanceInfo
+                              ? "bg-blue-100"
+                              : "bg-gray-200";
+                          const isLeaveBalanceColumn =
+                            header.column.id?.startsWith("policy-") ||
+                            header.column.id === "no-policy-balance" ||
+                            header.column.parent?.id ===
+                              "leaveBalanceInfoGroup";
+                          const widthClass = isLeaveBalanceColumn
+                            ? "min-w-[180px]"
+                            : "min-w-[50px]";
+
+                          return (
+                            <TableHead
+                              key={header.id}
+                              colSpan={header.colSpan}
+                              className={`whitespace-nowrap px-2 ${widthClass} text-md text-center ${sectionBgClass}`}
+                            >
+                              {header.isPlaceholder
+                                ? null
+                                : flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext(),
+                                  )}
+                            </TableHead>
+                          );
+                        })}
                       </TableRow>
                     ))}
                   </TableHeader>
+
                   <TableBody>
                     {table.getRowModel().rows.map((row) => (
                       <TableRow
                         key={row.id}
                         onClick={() => setSelectedEmployee(row.original)}
-                        className="cursor-pointer hover:bg-gray-100 transition-colors"
+                        className="items-center font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis text-center cursor-pointer hover:bg-gray-100 transition-colors"
                       >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            className="font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis"
-                          >
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext(),
-                            )}
-                          </TableCell>
-                        ))}
+                        {row.getVisibleCells().map((cell) => {
+                          if (cell.column.id === "shiftType") {
+                            const shiftType = Array.isArray(
+                              row.original.shiftType,
+                            )
+                              ? row.original.shiftType
+                              : [];
+
+                            let cellContent;
+                            if (shiftType.length === 0) {
+                              cellContent = "--";
+                            } else if (shiftType.length === 1) {
+                              cellContent = shiftType[0]?.name || "--";
+                            } else {
+                              cellContent = (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="text-blue-600 cursor-pointer font-custom bg-gray-100 px-2 py-1 rounded-full">
+                                        {shiftType.length} Shift Type
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent
+                                      side="bottom"
+                                      align="start"
+                                      className="bg-white p-4 rounded-lg shadow-lg max-w-xs mt-1"
+                                    >
+                                      <div className="whitespace-pre-wrap font-custom">
+                                        <p className="text-xl mb-2">
+                                          Shift Type
+                                        </p>
+                                        {shiftType.map((g) => (
+                                          <span
+                                            key={g?._id || g?.id || g?.name}
+                                            className="block bg-gray-100 px-2 py-1 rounded-full mb-1 font-custom text-center"
+                                          >
+                                            {g?.name || "--"}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              );
+                            }
+
+                            return (
+                              <TableCell
+                                key={cell.id}
+                                className="whitespace-nowrap overflow-hidden text-ellipsis text-center items-center"
+                              >
+                                {cellContent}
+                              </TableCell>
+                            );
+                          }
+
+                          const isLeaveBalanceCell =
+                            cell.column.id?.startsWith("policy-") ||
+                            cell.column.id === "no-policy-balance";
+
+                          return (
+                            <TableCell
+                              key={cell.id}
+                              className={`font-custom text-md whitespace-nowrap overflow-hidden text-ellipsis ${
+                                isLeaveBalanceCell ? "min-w-[180px]" : ""
+                              }`}
+                            >
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </TableCell>
+                          );
+                        })}
                       </TableRow>
                     ))}
                   </TableBody>

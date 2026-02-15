@@ -38,6 +38,15 @@ const calculateHours = (start, end) => {
   return hours;
 };
 
+const getEntryTotalHours = (entry) => {
+  const apiHours = Number(entry?.totalHours);
+  if (Number.isFinite(apiHours) && apiHours >= 0) {
+    return apiHours;
+  }
+  return calculateHours(entry?.startTime, entry?.endTime);
+};
+
+
 const exportToCsv = (headers, rows, fileName) => {
   const escape = (value) => {
     const text = value === null || value === undefined ? "" : String(value);
@@ -183,7 +192,7 @@ export default function UserProfileSection({ employee, onClose }) {
       entry?.overtimeType?.name || "--",
       entry?.startTime || "--",
       entry?.endTime || "--",
-      formatWorkHours(calculateHours(entry?.startTime, entry?.endTime)) || "--",
+      formatWorkHours(getEntryTotalHours(entry)) || "--",
       entry?.daily || "--",
       entry?.description || "--",
       entry?.attachment || "--",
@@ -320,9 +329,7 @@ export default function UserProfileSection({ employee, onClose }) {
                     </div>
                   </td>
                   <td className="px-3 py-2">
-                    {formatWorkHours(
-                      calculateHours(entry.startTime, entry.endTime),
-                    ) || "--"}
+                    {formatWorkHours(getEntryTotalHours(entry)) || "--"}
                   </td>
                   <td className="px-3 py-2">{entry.daily || "--"}</td>
                   <td className="px-3 py-2"> {entry.description || "--"}</td>

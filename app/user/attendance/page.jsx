@@ -146,7 +146,7 @@ function TimerButton({
   const intervalRef = useRef();
   const queryClient = useQueryClient();
   const [buttonColor, setButtonColor] = useState(
-    "bg-blue-500 hover:bg-blue-600"
+    "bg-blue-500 hover:bg-blue-600",
   );
   const [errorMessage, setErrorMessage] = useState("");
   const [showStreakPetModal, setShowStreakPetModal] = useState(false);
@@ -252,7 +252,7 @@ function TimerButton({
           console.log("latitude:", latitude, "longitude:", longitude);
           try {
             const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`
+              `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
             );
             const data = await res.json();
             const address = data.address || {};
@@ -270,7 +270,7 @@ function TimerButton({
           }
         },
         () => setLocation("Permission denied"),
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000 },
       );
     } else {
       setLocation("Not supported");
@@ -368,7 +368,10 @@ function TimerButton({
     newY = Math.max(0, Math.min(newY, windowHeight - petSize.height));
 
     // Check if moved more than 5 pixels
-    if (petPosition && (Math.abs(newX - petPosition.x) > 5 || Math.abs(newY - petPosition.y) > 5)) {
+    if (
+      petPosition &&
+      (Math.abs(newX - petPosition.x) > 5 || Math.abs(newY - petPosition.y) > 5)
+    ) {
       setHasMoved(true);
     }
 
@@ -416,8 +419,14 @@ function TimerButton({
         const petSize = getPetSize();
 
         // Adjust position if pet is now off-screen
-        const newX = Math.max(0, Math.min(petPosition.x, windowWidth - petSize.width));
-        const newY = Math.max(0, Math.min(petPosition.y, windowHeight - petSize.height));
+        const newX = Math.max(
+          0,
+          Math.min(petPosition.x, windowWidth - petSize.width),
+        );
+        const newY = Math.max(
+          0,
+          Math.min(petPosition.y, windowHeight - petSize.height),
+        );
 
         if (newX !== petPosition.x || newY !== petPosition.y) {
           setPetPosition({ x: newX, y: newY });
@@ -443,8 +452,8 @@ function TimerButton({
                 const availableShifts = Array.isArray(shift)
                   ? shift
                   : shift
-                  ? [shift]
-                  : [];
+                    ? [shift]
+                    : [];
                 if (availableShifts.length > 1) {
                   setShowSelectShift(true);
                 } else {
@@ -459,10 +468,12 @@ function TimerButton({
             </Button>
 
             {/* Streak Pet - Bunny - Draggable */}
-            <div
+            {/* <div
               ref={petRef}
               className={`fixed cursor-move hover:scale-110 z-50 select-none touch-none transition-all ${
-                petPosition === null ? "right-4 sm:right-8 top-1/2 -translate-y-1/2" : ""
+                petPosition === null
+                  ? "right-4 sm:right-8 top-1/2 -translate-y-1/2"
+                  : ""
               } ${isDragging ? "opacity-80 scale-110" : "opacity-100"}`}
               style={
                 petPosition !== null
@@ -470,18 +481,22 @@ function TimerButton({
                       left: `${petPosition.x}px`,
                       top: `${petPosition.y}px`,
                       animation: !isDragging ? "bounce 1s infinite" : "none",
-                      filter: isDragging ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" : "none",
+                      filter: isDragging
+                        ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))"
+                        : "none",
                     }
                   : {
                       animation: !isDragging ? "bounce 1s infinite" : "none",
-                      filter: isDragging ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))" : "none",
+                      filter: isDragging
+                        ? "drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3))"
+                        : "none",
                     }
               }
               onMouseDown={handlePetMouseDown}
               onTouchStart={handlePetMouseDown}
             >
               <div className="text-4xl sm:text-5xl md:text-6xl">🐰</div>
-            </div>
+            </div> */}
           </div>
 
           {/* Streak Pet Modal */}
@@ -528,7 +543,7 @@ function TimerButton({
       )}
 
       {/* Rating Dialog */}
-      <RatingDialog
+      {/* <RatingDialog
         open={showRatingDialog}
         onClose={() => setShowRatingDialog(false)}
         message={ratingMessage}
@@ -536,7 +551,7 @@ function TimerButton({
           console.log("User rated:", rating);
           // You can add API call here to save the rating
         }}
-      />
+      /> */}
     </div>
   );
 }
@@ -641,7 +656,7 @@ export default function Attendance() {
 
   const [errorMessage, setErrorMessage] = useState("");
   const [buttonColor, setButtonColor] = useState(
-    "bg-blue-500 hover:bg-blue-600"
+    "bg-blue-500 hover:bg-blue-600",
   );
 
   // NEW: show tabs only after first Clock In

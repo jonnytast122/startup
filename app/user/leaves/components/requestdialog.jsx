@@ -9,7 +9,7 @@ import {
   DrawerClose,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Smile, Clock, AlertTriangle } from "lucide-react";
+import { ChevronLeft, Smile, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -30,62 +30,6 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMyPolicies, requestLeave } from "@/lib/api/userLeave";
 
-/* --------- inline TimeInput with scoped CSS to hide native icon --------- */
-function TimeInput({ label, value, onChange, disabled = false, step = 60 }) {
-  const ref = useRef(null);
-  return (
-    <div>
-      {label && <div className="text-xs text-gray-600 mb-1">{label}</div>}
-      <div className="relative">
-        <input
-          ref={ref}
-          type="time"
-          value={value}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.value)}
-          className="time-input-hide-native border rounded px-2 pr-10 py-1 w-full h-9 text-sm appearance-none cursor-pointer"
-          step={step}
-          inputMode="numeric"
-          style={{ WebkitAppearance: "none", MozAppearance: "textfield" }}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            try {
-              ref.current?.showPicker?.();
-            } catch {}
-            ref.current?.focus();
-          }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-gray-100 pointer-events-auto z-10"
-          aria-label="Open time picker"
-          disabled={disabled}
-        >
-          <Clock className="w-4 h-4 text-gray-600" />
-        </button>
-      </div>
-
-      {/* SCOPED styles: hide ONLY this input's native icon */}
-      <style jsx>{`
-        .time-input-hide-native::-webkit-calendar-picker-indicator {
-          display: none;
-          -webkit-appearance: none;
-        }
-        .time-input-hide-native::-webkit-clear-button,
-        .time-input-hide-native::-webkit-inner-spin-button,
-        .time-input-hide-native::-webkit-outer-spin-button {
-          display: none;
-          -webkit-appearance: none;
-        }
-        .time-input-hide-native {
-          -moz-appearance: textfield;
-        }
-      `}</style>
-    </div>
-  );
-}
-
-const overtimeTypes = ["Weekend", "Night", "Holiday", "Special"];
-
 export default function RequestDialog() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [successOpen, setSuccessOpen] = useState(false);
@@ -93,18 +37,16 @@ export default function RequestDialog() {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
-  const [overtimeType, setOvertimeType] = useState(overtimeTypes[0]);
   const [selectedPolicy, setSeletedPolicy] = useState({});
   const [allDay, setAllDay] = useState(true);
+  const [selectedType, setSelectedType] = useState("morning");
 
   // All-day ON range (default today)
   const [startDate, setStartDate] = useState(new Date());
   const [endDate, setEndDate] = useState(new Date());
 
-  // All-day OFF single date + times
+  // All-day OFF single date + session
   const [oneDayDate, setOneDayDate] = useState(new Date());
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("18:00");
 
   const [note, setNote] = useState("");
 
@@ -138,21 +80,18 @@ export default function RequestDialog() {
     setOpenOneDayPop(false);
   };
 
-  const toMin = (t) => {
-    if (!t || !t.includes(":")) return 0;
-    const [h, m] = t.split(":").map(Number);
-    return h * 60 + (m || 0);
-  };
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const normalizedStartDate = new Date(startDate);
+  normalizedStartDate.setHours(0, 0, 0, 0);
+  const normalizedEndDate = new Date(endDate);
+  normalizedEndDate.setHours(0, 0, 0, 0);
 
-  const timeDiff = (start, end) => {
-    const s = toMin(start);
-    const e = toMin(end);
-    return Math.max(0, e - s);
-  };
+  const inclusiveDays =
+    normalizedEndDate >= normalizedStartDate
+      ? Math.floor((normalizedEndDate - normalizedStartDate) / MS_PER_DAY) + 1
+      : 0;
 
-  const totalWorkMins = timeDiff(startTime, endTime);
-  const totalH = Math.floor(totalWorkMins / 60);
-  const totalM = String(totalWorkMins % 60).padStart(2, "0");
+  const totalLeaveDays = allDay ? inclusiveDays : 0.5;
 
   const handleSubmit = async () => {
     // Validation
@@ -166,8 +105,8 @@ export default function RequestDialog() {
       return;
     }
 
-    if (!allDay && toMin(endTime) <= toMin(startTime)) {
-      alert("End time must be after start time.");
+    if (allDay && endDate < startDate) {
+      alert("End date must be on or after start date.");
       return;
     }
 
@@ -185,17 +124,21 @@ export default function RequestDialog() {
       }
     } else {
       const start = new Date(oneDayDate);
-      start.setHours(...startTime.split(":").map(Number));
       const end = new Date(oneDayDate);
-      end.setHours(...endTime.split(":").map(Number));
+
+      if (selectedType === "afternoon") {
+        start.setHours(13, 0, 0, 0);
+        end.setHours(17, 0, 0, 0);
+      } else {
+        start.setHours(8, 0, 0, 0);
+        end.setHours(12, 0, 0, 0);
+      }
 
       dateTimes.push({
         start_time: start.toISOString(),
         end_time: end.toISOString(),
       });
     }
-
-    console.log(selectedPolicy);
 
     // Build payload
     const payload = {
@@ -204,6 +147,7 @@ export default function RequestDialog() {
       dateTime: dateTimes,
       startDate: dateTimes[0]?.start_time,
       endDate: dateTimes[dateTimes.length - 1]?.end_time,
+      totalLeave: totalLeaveDays,
       note,
     };
 
@@ -220,7 +164,6 @@ export default function RequestDialog() {
         }, 220);
       },
       onError: (err) => {
-        console.error(err);
         const serverMsg =
           err?.response?.data?.message ||
           err?.message ||
@@ -244,14 +187,14 @@ export default function RequestDialog() {
         <DrawerTrigger asChild>
           <Button
             variant="outline"
-            className="text-blue font-custom w-42 h-10 shadow-md border border-gray-400 bg-transparent rounded-full flex items-center hover:bg-blue-500 hover:text-white transition-colors duration-200"
+            className="text-blue font-custom w-auto lg:w-42 h-10 shadow-md border border-gray-400 bg-transparent rounded-full flex items-center hover:bg-blue-500 hover:text-white transition-colors duration-200"
             onClick={() => setDrawerOpen(true)}
           >
             Request Leave
           </Button>
         </DrawerTrigger>
 
-        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
+        <DrawerContent className="fixed inset-y-0 right-0 left-auto z-50 w-full lg:w-[420px] md:w-[480px] bg-transparent p-0 border-none outline-none h-screen max-h-screen min-h-screen">
           <DialogTitle></DialogTitle>
           <div className="h-full min-h-screen max-h-screen w-full bg-gray-100 font-custom flex flex-col border-l border-gray-200">
             {/* Header */}
@@ -274,7 +217,9 @@ export default function RequestDialog() {
               {/* Leave type */}
               <section className="bg-white rounded-md p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-sm font-medium whitespace-nowrap">Leave Policies</span>
+                  <span className="text-sm font-medium whitespace-nowrap">
+                    Leave Policies
+                  </span>
                   <Select
                     value={selectedPolicy?._id || ""}
                     onValueChange={(id) => {
@@ -285,13 +230,17 @@ export default function RequestDialog() {
                     <SelectTrigger className="h-9 min-w-[120px] max-w-[180px] rounded-full text-sm">
                       <SelectValue placeholder="Select leave type" />
                     </SelectTrigger>
-                    <SelectContent className="max-w-[250px] z-[100]" position="popper" sideOffset={5}>
+                    <SelectContent
+                      className="max-w-[250px] z-[100] text-custom"
+                      position="popper"
+                      sideOffset={5}
+                    >
                       {policies && policies.length > 0 ? (
                         policies.map((policy) => (
                           <SelectItem
                             key={policy._id}
                             value={policy._id}
-                            className="text-sm capitalize"
+                            className="text-sm capitalize font-custom"
                           >
                             {policy.name}
                           </SelectItem>
@@ -315,6 +264,7 @@ export default function RequestDialog() {
                     checked={allDay}
                     onCheckedChange={(v) => {
                       setAllDay(v);
+                      if (!v) setOneDayDate(startDate);
                       closeAllCalendars();
                     }}
                     className="data-[state=checked]:bg-green-500"
@@ -415,7 +365,7 @@ export default function RequestDialog() {
 
                     {/* Info row */}
                     <div className="mt-4 text-xs text-gray-600">
-                      Total time leaves: 24 hours
+                      Total leave balance used: {totalLeaveDays} day(s)
                     </div>
                   </>
                 ) : (
@@ -465,28 +415,30 @@ export default function RequestDialog() {
                     </div>
 
                     {/* Reliable time pickers (native icon hidden, custom icon shown) */}
-                    <div className="grid grid-cols-2 gap-3">
-                      <TimeInput
-                        label="Starts"
-                        value={startTime}
-                        onChange={setStartTime}
-                        disabled={false}
-                      />
-                      <TimeInput
-                        label="Ends"
-                        value={endTime}
-                        onChange={setEndTime}
-                        disabled={false}
-                      />
+                    <div className="grid grid-cols-2 gap-3 items-center">
+                      <div className="flex gap-3 w-full md:w-2/3">
+                        {["morning", "afternoon"].map((type) => (
+                          <div
+                            key={type}
+                            onClick={() => setSelectedType(type)}
+                            className={`flex-1 border rounded-lg px-2 py-2 text-center transition-colors ${
+                              selectedType === type
+                                ? "border-blue-500 bg-blue-300"
+                                : "border-gray-300"
+                            } cursor-pointer`}
+                          >
+                            <span className="text-gray-700">
+                              {type === "morning" ? "Morning" : "Afternoon"}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     {/* Duration preview */}
                     <div className="mt-3 text-xs text-gray-700">
-                      Total time leaves:{" "}
-                      <span className="font-semibold">
-                        {totalH}:{totalM}
-                      </span>{" "}
-                      hours
+                      Total leave balance used:{" "}
+                      <span className="font-semibold">0.5 day</span>
                     </div>
                   </>
                 )}
@@ -500,7 +452,7 @@ export default function RequestDialog() {
                     rows={4}
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
-                    placeholder="Hi boss, today is my graduation day. I would like to ask for permission."
+                    placeholder="Note"
                     className="w-full resize-none rounded-[10px] bg-white p-3 text-sm outline-none"
                   />
                 </div>
@@ -515,7 +467,7 @@ export default function RequestDialog() {
             {/* Footer */}
             <DrawerFooter className="pt-0 px-5 pb-4 flex-shrink-0">
               <Button
-                className="w-full h-11 rounded-full text-base font-semibold"
+                className="w-full h-11 rounded-full "
                 onClick={handleSubmit}
               >
                 Send for approval
@@ -545,9 +497,7 @@ export default function RequestDialog() {
           <DialogTitle className="text-2xl font-custom text-red-700 mb-1">
             Request Failed
           </DialogTitle>
-          <div className="text-base text-red-700">
-            {errorMessage}
-          </div>
+          <div className="text-base text-red-700">{errorMessage}</div>
         </DialogContent>
       </Dialog>
     </>

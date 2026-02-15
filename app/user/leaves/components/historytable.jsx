@@ -32,122 +32,177 @@ import { useQuery } from "@tanstack/react-query";
 
 const columns = [
   {
-    id: "empty",
-    header: () => null,
-    cell: () => null,
-    size: 36,
+    accessorKey: "leaveDate",
+    header: "Leave Date",
+    cell: ({ row }) => row.original.leaveDate || "--",
   },
   {
-    accessorKey: "date",
-    header: "Date",
+    accessorKey: "leavePolicy",
+    header: "Leave Policy",
+    cell: ({ row }) => row.original.leavePolicy || "--",
+  },
+  {
+    accessorKey: "leaveType",
+    header: "Leave Type",
     cell: ({ row }) => {
-      let d = row.original.date;
-      if (!d) return "--";
-      if (typeof d === "string") d = new Date(d);
-      return d.toLocaleDateString("en-GB", {
-        weekday: "short",
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+      const type = row.original.leaveType || "paid";
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            type === "paid"
+              ? "text-blue-500 bg-blue-100"
+              : type === "unpaid"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
+          }`}
+        >
+          {type}
+        </span>
+      );
     },
   },
   {
-    accessorKey: "policy",
-    header: "Policy",
-    cell: ({ row }) => (row.original.policy ? row.original.policy : "--"),
-  },
-  {
-    accessorKey: "requestedOn",
-    header: "Requested on",
-    cell: ({ row }) => {
-      const v = row.original.requestedOn;
-      if (!v) return "--";
-      const d = typeof v === "string" ? new Date(v) : v;
-      return d.toLocaleDateString("en-GB", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
-    },
-  },
-  {
-    accessorKey: "totalOvertime",
-    header: "Total requested",
-    cell: ({ row }) =>
-      row.original.totalOvertime ? row.original.totalOvertime : "--",
+    accessorKey: "totalLeave",
+    header: "Total Leave",
+    cell: ({ row }) => `${row.original.totalLeave} day(s)`,
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const s = row.original.status;
-      if (!s) return "--";
-      const color =
-        s.toLowerCase() === "approved"
-          ? "text-blue-600"
-          : s.toLowerCase() === "pending"
-          ? "text-yellow-600"
-          : "text-red-600";
-      return <span className={`font-medium ${color}`}>{s}</span>;
+      const status = row.original.status || "Pending";
+      return (
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-semibold${
+            status === "Approved"
+              ? "text-blue-500 bg-blue-100"
+              : status === "Rejected"
+                ? "text-red-500 bg-red-100"
+                : "text-yellow-500 bg-yellow-100"
+          }`}
+        >
+          {status}
+        </span>
+      );
     },
   },
   {
-    accessorKey: "totalHour",
-    header: "Total hour",
-    cell: ({ row }) => (row.original.totalHour ? row.original.totalHour : "--"),
+    accessorKey: "managerNote",
+    header: "Manager Note",
+    cell: ({ row }) => row.original.managerNote || "--",
+  },
+  {
+    accessorKey: "actionBy",
+    header: "Approved/Rejected By",
+    cell: ({ row }) => row.original.actionBy || "--",
   },
   {
     accessorKey: "note",
     header: "Note",
-    cell: ({ row }) => (row.original.note ? row.original.note : "--"),
+    cell: ({ row }) => row.original.note || "--",
+  },
+  {
+    accessorKey: "attachment",
+    header: "Attachment",
+    cell: ({ row }) => {
+      const attachment = row.original.attachment;
+      if (!attachment || attachment === "--") return "--";
+      return (
+        <a
+          href={attachment}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 underline"
+        >
+          See Attachment
+        </a>
+      );
+    },
+  },
+  {
+    accessorKey: "requestedOn",
+    header: "Requested On",
+    cell: ({ row }) => row.original.requestedOn || "--",
   },
 ];
 
 // 🔹 Transform API data into flat rows for table
 function normalizeRequests(requests) {
-  return requests.flatMap((req) =>
-    req.dateTime.map((dt) => {
-      const start = new Date(dt.start_time);
-      const end = new Date(dt.end_time);
-      const diffHrs = Math.floor((end - start) / (1000 * 60 * 60));
-      const diffMin = Math.floor(((end - start) % (1000 * 60 * 60)) / (1000 * 60));
+  return requests.map((req) => {
+    const totalLeaveRaw =
+      req.totalLeaveBalance ?? req.totalLeave ?? req.totalLeaveDays ?? 0;
+    const totalLeave = Number(totalLeaveRaw);
 
-      return {
-        date: dt.start_time,
-        policy: req.type?.name || "--",
-        requestedOn: req.createdAt,
-        totalOvertime: "--", // adjust if you track OT separately
-        status: req.status
-          ? req.status.charAt(0).toUpperCase() + req.status.slice(1)
-          : "--",
-        totalHour: `${String(diffHrs).padStart(2, "0")}:${String(
-          diffMin
-        ).padStart(2, "0")}`,
-        note: req.note || "--",
-      };
-    })
-  );
+    const start = req.startDate ? new Date(req.startDate) : null;
+    const end = req.endDate ? new Date(req.endDate) : null;
+    const leaveDate =
+      start && end
+        ? `${start.toLocaleDateString("en-GB")} - ${end.toLocaleDateString("en-GB")}`
+        : "--";
+
+    const status = req.status
+      ? req.status.charAt(0).toUpperCase() + req.status.slice(1)
+      : "Pending";
+
+    const actionBy =
+      status === "Approved"
+        ? req.approvedBy?.name || "--"
+        : status === "Rejected"
+          ? req.rejectedBy?.name || "--"
+          : "--";
+
+    return {
+      leaveDate,
+      leavePolicy: req.type?.name || "--",
+      leaveType: req.type?.type || "paid",
+      requestedOn: req.createdAt
+        ? new Date(req.createdAt).toLocaleDateString("en-GB")
+        : "--",
+      totalLeave: Number.isFinite(totalLeave)
+        ? Number(totalLeave.toFixed(2))
+        : 0,
+      status,
+      managerNote: req.managerNote || req.response || "--",
+      actionBy,
+      note: req.note || "--",
+      attachment: req.attachment || "--",
+    };
+  });
 }
 
 export default function TimesheetTable() {
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [selectedRange, setSelectedRange] = useState({
-    startDate: new Date(2025, 6, 1),
-    endDate: new Date(2025, 6, 31),
-    key: "selection",
+  const [selectedRange, setSelectedRange] = useState(() => {
+    const now = new Date();
+    return {
+      startDate: new Date(now.getFullYear(), now.getMonth(), 1),
+      endDate: now,
+      key: "selection",
+    };
   });
   const datePickerRef = useRef(null);
   const buttonRef = useRef(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
 
-  const { data: requests = [] } = useQuery({
-    queryKey: ["user-leave-requests"],
-    queryFn: getMyRequests,
+  const startDateParam = selectedRange.startDate.toISOString().split("T")[0];
+  const endDateParam = selectedRange.endDate.toISOString().split("T")[0];
+
+  const { data: requestResponse, isLoading } = useQuery({
+    queryKey: ["user-leave-requests", startDateParam, endDateParam],
+    queryFn: () =>
+      getMyRequests({
+        startDate: startDateParam,
+        endDate: endDateParam,
+      }),
   });
+
+  const requests = Array.isArray(requestResponse?.data)
+    ? requestResponse.data
+    : [];
 
   // 🔹 transform requests
   const data = useMemo(() => normalizeRequests(requests), [requests]);
+  const totalLeaveUsed = Number(requestResponse?.summary?.approvedTotalLeave ?? 0);
 
   const table = useReactTable({
     columns,
@@ -187,7 +242,7 @@ export default function TimesheetTable() {
 
   return (
     <div className="w-full overflow-x-auto">
-      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-[800px]">
+      <div className="bg-white rounded-xl shadow-md py-6 px-2 sm:px-6 border mt-5 mb-10 min-w-full">
         <div className="mb-3">
           <div className="flex items-center gap-3 w-full flex-nowrap">
             <div className="ml-2 font-custom text-xl font-semibold whitespace-nowrap">
@@ -236,7 +291,7 @@ export default function TimesheetTable() {
             </div>
 
             <div className="ml-auto">
-              <Select>
+              {/* <Select>
                 <SelectTrigger className="w-28 font-custom rounded-full shrink-0">
                   <SelectValue placeholder="Export" />
                 </SelectTrigger>
@@ -247,7 +302,7 @@ export default function TimesheetTable() {
                     </SelectItem>
                   ))}
                 </SelectContent>
-              </Select>
+              </Select> */}
             </div>
           </div>
         </div>
@@ -255,11 +310,14 @@ export default function TimesheetTable() {
         <div className="ml-2 mb-2 mt-2 flex flex-col sm:flex-row gap-4 text-base font-custom">
           <span>
             <span className="font-semibold text-black">Total Leaves:</span>{" "}
-            {data.length} day
+            {Number.isInteger(totalLeaveUsed)
+              ? totalLeaveUsed
+              : totalLeaveUsed.toFixed(2)}{" "}
+            day(s)
           </span>
         </div>
 
-        <div className="w-full ml-2">
+        <div className="w-full ml-2 overflow-y-auto">
           <Table className="min-w-[750px] w-full">
             <TableHeader>
               {table.getHeaderGroups().map((hg) => (
@@ -280,7 +338,16 @@ export default function TimesheetTable() {
             </TableHeader>
 
             <TableBody>
-              {data.length === 0 ? (
+              {isLoading ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={columns.length}
+                    className="text-center text-gray-400 font-custom"
+                  >
+                    Loading leave history...
+                  </TableCell>
+                </TableRow>
+              ) : data.length === 0 ? (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}

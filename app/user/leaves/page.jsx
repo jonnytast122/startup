@@ -53,23 +53,24 @@ export default function Leaves() {
           Leave Balance
         </h2>
 
-        <div className="flex justify-center gap-6 flex-wrap">
-          {balance?.map((policy, index) => (
-            <div
-              key={index}
-              className="bg-blue-100 rounded-lg shadow-sm w-48 h-32 flex flex-col items-center justify-center p-4"
-            >
-              <span className="text-sm font-custom">
-                {policy.leavePolicy.name}
-              </span>
-              <div className="w-2/3 h-px bg-gray-500 my-2"></div>
-              <span className="text-base font-custom">
-                {policy.balance.remainingBalance !== 0
-                  ? `${policy.balance.remainingBalance} days`
-                  : "--"}
-              </span>
-            </div>
-          ))}
+        <div className="overflow-x-auto pb-2">
+          <div className="inline-flex gap-3 min-w-max">
+            {balance?.map((policy, index) => (
+              <div
+                key={index}
+                className="bg-blue-100 rounded-lg shadow-sm w-52 h-36 shrink-0 flex flex-col items-center justify-center p-4"
+              >
+                <span className="text-sm font-custom">
+                  {policy.leavePolicy.name}
+                </span>
+                <div className="w-2/3 h-px bg-gray-500 my-2"></div>
+                <span className="text-sm font-custom text-gray-700">
+                  {policy?.balance?.daysTaken ?? 0}/
+                  {policy?.balance?.remainingBalance ?? 0} day(s)
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
