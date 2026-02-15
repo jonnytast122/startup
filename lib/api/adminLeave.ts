@@ -3,7 +3,7 @@ import api from "../api";
 
 export const getLeave = async (params) => {
   const response = await api.get(ApiRoutes.adminLeave.getLeave, { params });
-  return response.data.data;
+  return response.data;
 };
 
 export const getLeaveRequest = async () => {

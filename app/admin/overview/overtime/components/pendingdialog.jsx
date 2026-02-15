@@ -233,10 +233,14 @@ const useTransformedOvertimeData = (apiData) => {
     return apiData.map((item) => {
       const startTime = item.startTime || "";
       const endTime = item.endTime || "";
-      const otHours =
-        startTime && endTime
-          ? formatWorkHours(calculateHours(startTime, endTime))
-          : formatWorkHours(0);
+      const apiHours = Number(item.totalHours);
+      const totalHours =
+        Number.isFinite(apiHours) && apiHours >= 0
+          ? apiHours
+          : startTime && endTime
+            ? calculateHours(startTime, endTime)
+            : 0;
+      const otHours = formatWorkHours(totalHours);
 
       return {
         id: item._id,
@@ -248,6 +252,7 @@ const useTransformedOvertimeData = (apiData) => {
         lastname: item.employee?.name?.split(" ")[1] || "",
         job: item.employee?.info?.job || "--",
         shifttype: item.shifttype || "Schedule",
+        totalHours,
         otrequest: otHours,
         otassigned: otHours,
         ottotal: otHours,
@@ -292,9 +297,13 @@ const PendingDialog = ({ onClose }) => {
     enabled: open,
   });
 
-  const transformedOvertimeData = useTransformedOvertimeData(
-    overtimeRespone?.data,
-  );
+  const overtimeRows = Array.isArray(overtimeRespone?.data)
+    ? overtimeRespone.data
+    : Array.isArray(overtimeRespone)
+      ? overtimeRespone
+      : [];
+
+  const transformedOvertimeData = useTransformedOvertimeData(overtimeRows);
 
   const datePickerRef = useRef(null);
 
@@ -410,7 +419,7 @@ const PendingDialog = ({ onClose }) => {
 
         {transformedOvertimeData.length === 0 ? (
           <p className="text-center text-gray-300 mt-4 text-xl font-custom">
-            No Data Available
+            No pending OT requests.
           </p>
         ) : (
           <div className="rounded-t-lg overflow-hidden">

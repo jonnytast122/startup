@@ -217,8 +217,6 @@ export default function RequestDialog() {
       description: note,
     };
 
-    console.log("Payload:", payload);
-
     requestOvertimeMutation.mutate(payload, {
       onSuccess: () => {
         setDrawerOpen(false);

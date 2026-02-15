@@ -18,7 +18,7 @@ export const requestLeave = async (data) => {
   return response.data;
 };
 
-export const getMyRequests = async () => {
-  const response = await api.get(ApiRoutes.userLeave.getRequests);
-  return response.data.data;
+export const getMyRequests = async (params = {}) => {
+  const response = await api.get(ApiRoutes.userLeave.getRequests, { params });
+  return response.data;
 };
