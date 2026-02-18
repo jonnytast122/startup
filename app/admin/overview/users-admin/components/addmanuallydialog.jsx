@@ -49,6 +49,7 @@ import SuccessDialog from "./successdialog";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addUsers, fetchUsers } from "@/lib/api/user";
 import { getDepartmentsByBranch } from "@/lib/api/department";
+import { fetchSections } from "@/lib/api/group";
 
 export default function AddUserManuallyDialog({
   open,
@@ -63,6 +64,20 @@ export default function AddUserManuallyDialog({
     queryKey: ["users"],
     queryFn: fetchUsers,
   });
+
+  const { data: sections = [] } = useQuery({
+    queryKey: ["sections"],
+    queryFn: fetchSections,
+  });
+
+  const allGroups = useMemo(() => {
+    return sections.flatMap((section) =>
+      (section.groups || []).map((group) => ({
+        id: group._id,
+        name: group.name,
+      }))
+    );
+  }, [sections]);
 
   const countryCodes = [
     {
@@ -143,7 +158,7 @@ export default function AddUserManuallyDialog({
       numberOfChildren: "",
       otherName: "",
       nssfId: "",
-      groups: "",
+      groups: [],
       allowedRemoteCheckIn: "",
       dailyRate: "",
       hourlyRate: "",
@@ -182,7 +197,7 @@ export default function AddUserManuallyDialog({
       numberOfChildren: "",
       otherName: "",
       nssfId: "",
-      groups: "",
+      groups: [],
       allowedRemoteCheckIn: "",
       dailyRate: "",
       hourlyRate: "",
@@ -312,6 +327,72 @@ export default function AddUserManuallyDialog({
     );
   }
 
+  function GroupMultiSelect({ value = [], onChange, options = [] }) {
+    const selected = Array.isArray(value) ? value.map(String) : [];
+
+    const [open, setOpen] = React.useState(false);
+
+    const toggle = (id) => {
+      onChange(
+        selected.includes(id)
+          ? selected.filter((v) => v !== id)
+          : [...selected, id],
+      );
+    };
+
+    const dialogContainer =
+      typeof document !== "undefined"
+        ? document.querySelector("[data-radix-dialog-content]")
+        : null;
+
+    return (
+      <Select open={open} onOpenChange={setOpen}>
+        <SelectTrigger className="w-full font-custom h-9 text-black border-gray-300">
+          <SelectValue
+            placeholder={
+              selected.length ? `${selected.length} Selected` : "Select Group"
+            }
+          />
+        </SelectTrigger>
+
+        <SelectContent
+          container={dialogContainer}
+          side="bottom"
+          align="start"
+          className="w-[var(--radix-select-trigger-width)] max-h-60 overflow-y-auto p-1 bg-white"
+          onPointerDown={(e) => e.preventDefault()}
+        >
+          {options.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-400">
+              No groups available
+            </div>
+          ) : (
+            options.map((group) => {
+              const id = String(group.id);
+              const checked = selected.includes(id);
+
+              return (
+                <div
+                  key={id}
+                  onClick={() => toggle(id)}
+                  className="flex w-full font-custom items-center gap-2 py-2 cursor-pointer rounded-sm hover:bg-gray-200"
+                >
+                  <Checkbox
+                    className="rounded-none"
+                    checked={checked}
+                    onCheckedChange={() => toggle(id)}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className="text-sm">{group.name}</span>
+                </div>
+              );
+            })
+          )}
+        </SelectContent>
+      </Select>
+    );
+  }
+
   // cell reusable component
   function EditableInputCell({ row, field, value, onChange, error, ...props }) {
     const [localValue, setLocalValue] = React.useState(value ?? "");
@@ -378,7 +459,7 @@ export default function AddUserManuallyDialog({
         rowErrors.hourlyRate = true;
       if (!row.salaryType?.trim()) rowErrors.salaryType = true;
       if (!row.bankProvider?.trim()) rowErrors.bankProvider = true;
-      if (!row.nssfId?.trim()) rowErrors.nssfId = true;
+      // if (!row.nssfId?.trim()) rowErrors.nssfId = true;
       if (!row.bankAccount?.trim()) rowErrors.bankAccount = true;
 
       if (Object.keys(rowErrors).length > 0) {
@@ -443,7 +524,7 @@ export default function AddUserManuallyDialog({
 
         shiftType: Array.isArray(row.shiftType) ? row.shiftType : [],
 
-        groups: row.groups,
+        groups: Array.isArray(row.groups) ? row.groups : [],
         allowedRemoteCheckIn: row.allowedRemoteCheckIn,
         isRequiredToCheckIn: row.isRequiredToCheckIn,
 
@@ -788,14 +869,12 @@ export default function AddUserManuallyDialog({
         accessorKey: "groups",
         header: "Groups",
         cell: ({ row }) => (
-          <Input
-            type="text"
-            value={row.original.groups}
-            onChange={(e) =>
-              handleInputChange(row.original.id, "groups", e.target.value)
+          <GroupMultiSelect
+            value={row.original.groups || []}
+            options={allGroups}
+            onChange={(val) =>
+              handleInputChange(row.original.id, "groups", val)
             }
-            placeholder="Groups"
-            className="font-custom h-9 text-black border-gray-300 placeholder:text-gray-400 rounded-md"
           />
         ),
       },
@@ -1137,7 +1216,7 @@ export default function AddUserManuallyDialog({
       {
         accessorKey: "NSSF ID",
         id: "nssfId",
-        header: "NSSF ID*",
+        header: "NSSF ID",
         cell: ({ row }) => (
           <Input
             type="text"
@@ -1250,7 +1329,7 @@ export default function AddUserManuallyDialog({
         ),
       },
     ],
-    [handleInputChange, handleDeleteRow, branches, workshift, workshiftLoading],
+    [handleInputChange, handleDeleteRow, branches, workshift, workshiftLoading, allGroups],
   );
 
   const table = useReactTable({
